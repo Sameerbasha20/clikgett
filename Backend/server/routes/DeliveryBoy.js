@@ -22,6 +22,8 @@ router
     // OTP confirmation (now parameterized against SQL injection)
     .post('/sendotp_order', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.Sendotp_Orders)
     .post('/verifyotp_order', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.Orders_VerifyOTP)
+    .post('/deliver/:OrderID', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.deliverOrder)
+    .post('/fcmtoken', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.updateFcmToken)
 
     // --- Modern Quick-Commerce Delivery Operations Extensions ---
     // Phase 1: Duty & Shift Management (ONLINE / OFFLINE / ON_BREAK)

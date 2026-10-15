@@ -341,7 +341,8 @@
   "scripts": {
     "start": "nodemon server/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:security": "node server/tests/test_security_regressions.js"
+    "test:security": "node server/tests/test_security_regressions.js",
+    "test:order-flow": "node server/tests/test_order_flow.js"
   },
   "author": "",
   "license": "ISC",

@@ -12,6 +12,8 @@ var fs = require('fs')
 const AWS = require('aws-sdk');
 const s3 = require('../utils/s3');
 const pool = require('../utils/db');
+const OrderLifecycle = require('../services/OrderLifecycle');
+const { ORDER_STATUS, STATUS_LABELS } = require('../utils/orderStatus');
 
 
 
@@ -110,6 +112,7 @@ const ordercontroller = {
                 } catch (e) {
                     results[0]['RemovedItems'] = [];
                 }
+                await addTrackingDetails(results[0]);
                 resp.json({ "Status": 1, "Orders": results[0] });
             }
             else {
@@ -186,6 +189,7 @@ const ordercontroller = {
             let sql = "INSERT INTO OrderPayments set ?";
 
             pool.query(sql, InsertOrderPayments, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('post method', results, err)
                 if (results.affectedRows === 1) {
                     return resp.status(200).json({ "Status": 1, "RazorpayOrderID": RazorpayOrderID, "OrderReceiptID": OrderReceiptID });
@@ -367,7 +371,8 @@ const ordercontroller = {
             const notificationBody = await CommonController.notificationMessages(8, body.OrderSequence);
             await CommonController.Send_Notification(notificationBody, req.UserID);
             resp.status(200).json({ "Status": 1, "Message": "Order placed successfully", "OrderID": createorder.insertId });
-            await CommonController.sendSmsForNewOrder(createorder.insertId)
+            await OrderLifecycle.addTimeline(createorder.insertId, ORDER_STATUS.RECEIVED, `Order received (${body.PaymentMethod || 'COD'}).`)
+            CommonController.sendSmsForNewOrder(createorder.insertId).catch((e) => console.log('new order sms failed', e.message))
 
         }
         catch (err) {
@@ -443,45 +448,20 @@ const ordercontroller = {
                 return resp.json({ "Status": 0, "Message": "Order does not exist" });
             }
 
-            const currentTime = moment(new Date()).format('YYYY-MM-DD HH:mm:ss');
-            const orderTime = moment(ResultOrder[0].CreatedAt).format('YYYY-MM-DD HH:mm:ss');
-            const timeDifference = moment.duration(moment(currentTime).diff(orderTime)).asMinutes();
-            if (timeDifference > 2) {
+            const minutesSincePlaced = moment.duration(moment().diff(moment(ResultOrder[0].CreatedAt))).asMinutes();
+            if (minutesSincePlaced > 2) {
                 return resp.json({ "Status": 0, "Message": "You can only cancel the order within 2 minutes of placing it." });
             }
 
-            const currentdatetime = moment(new Date(Date.now())).add(5, 'hours').add(30, 'minutes').format('YYYY-MM-DD HH:mm:ss');
-            const CancellationReason = Body.CancellationReason ? String(Body.CancellationReason) : null;
-
-            // Mark cancelled first, only if it is not already delivered (1), cancelled (4) or
-            // in a terminal state (3). The refund/restock below runs only when this row
-            // actually changed, so repeated or concurrent requests cannot refund twice.
-            const update = await CommonController.commonget(
-                "UPDATE Orders SET OrderStatus = 4, Delivered_Cancelled_datetime = ?, CancellationReason = COALESCE(?, CancellationReason) " +
-                "WHERE OrderID = ? AND UserID = ? AND OrderStatus NOT IN (1, 3, 4)",
-                [currentdatetime, CancellationReason, OrderID, req.UserID]
-            );
-            if (!update || update.affectedRows !== 1) {
-                return resp.json({ "Status": 0, "Message": "This order can no longer be cancelled" });
-            }
-
-            const ResultOrderItems = await CommonController.commonget("SELECT * FROM OrderItems WHERE OrderID = ?", [OrderID]);
-            await incvariantsQuantity(ResultOrderItems);
-
-            if (parseFloat(ResultOrder[0].WalletAmount) > 0) {
-                await incWalletAmount(ResultOrder[0].WalletAmount, ResultOrder[0].UserID, OrderID);
-            }
-
-            try {
-                let notificationBody = {};
-                notificationBody.Title = `Order Cancelled`;
-                notificationBody.Message = `Your order #${OrderID} has been cancelled as per your request`;
-                await CommonController.Send_Notification(notificationBody, req.UserID);
-            }
-            catch (err) { console.log("Error sending user canceled notificaion", err); }
+            await OrderLifecycle.transition(OrderID, ORDER_STATUS.CANCELLED_BY_CUSTOMER, { type: 'customer', id: req.UserID }, {
+                reason: Body.CancellationReason ? String(Body.CancellationReason) : null,
+            });
             return resp.json({ "Status": 1, "Message": "Order cancelled successfully" });
 
         } catch (err) {
+            if (err instanceof OrderLifecycle.LifecycleError) {
+                return resp.json({ "Status": 0, "Message": "This order can no longer be cancelled" });
+            }
             console.log("Exception in updating order:", err);
             return resp.status(500).json({ "Status": 0, "Message": "Error in updating order" });
         }
@@ -569,13 +549,37 @@ const ordercontroller = {
 
 
 
+// Tracking info for the customer: status label, timeline, rider details, and
+// the delivery OTP only once the rider has arrived.
+async function addTrackingDetails(order) {
+    order.StatusLabel = STATUS_LABELS[order.OrderStatus] || '';
+    if (Number(order.OrderStatus) !== ORDER_STATUS.ARRIVED) order.OTP = null;
+    try {
+        order.Timeline = await CommonController.commonget(
+            "SELECT OrderStatus, Notes, CreatedAt FROM OrderStatusTimeline WHERE OrderID = ? ORDER BY CreatedAt ASC, TimelineID ASC", [order.OrderID]);
+    } catch (e) {
+        order.Timeline = [];
+    }
+    order.Rider = null;
+    if (Number(order.DeliveryBoyID) > 0) {
+        const riders = await CommonController.commonget(
+            "SELECT AdminID, FirstName, LastName, MobileNumber FROM AdminUsers WHERE AdminID = ? AND Role = 2", [order.DeliveryBoyID]);
+        if (riders.length) {
+            order.Rider = {
+                Name: `${riders[0].FirstName || ''} ${riders[0].LastName || ''}`.trim(),
+                Phone: riders[0].MobileNumber || null,
+            };
+        }
+    }
+}
+
 function decWalletAmount(WalletAmount, UserID, OrderID) {
     try {
         return new Promise(async function (resolve, reject) {
             let updateWallets = `update Users set WalletAmount=WalletAmount-${parseFloat(WalletAmount)} where UserID=${UserID}`
             console.log(updateWallets)
             let update_Wallets = await CommonController.commonget(updateWallets)
-            await CommonController.Add_To_Wallet_Debit(UserID, process.env.OrderPlace, OrderID, WalletAmount)
+            await CommonController.Add_To_Wallet_Debit(UserID, (process.env.OrderPlace || 3), OrderID, WalletAmount)
             resolve(1);
         });
     }
@@ -590,7 +594,7 @@ function incWalletAmount(WalletAmount, UserID, OrderID) {
             let updateWallets = `update Users set WalletAmount=WalletAmount+${parseFloat(WalletAmount)} where UserID=${UserID}`
             console.log(updateWallets)
             let update_Wallets = await CommonController.commonget(updateWallets)
-            await CommonController.Add_To_Wallet(UserID, process.env.OrderCancel, OrderID, WalletAmount)
+            await CommonController.Add_To_Wallet(UserID, (process.env.OrderCancel || 4), OrderID, WalletAmount)
             resolve(1);
         });
     }
@@ -979,6 +983,7 @@ function createcart(CartID, UserID) {
             let sql = "INSERT INTO Carts set ?";
             console.log('Insertcarts :', Insertcarts)
             pool.query(sql, Insertcarts, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('post method', results, err)
                 if (results.affectedRows === 1) {
                     resolve(1)
@@ -1004,6 +1009,7 @@ function createcartItems(body, CartID) {
             let sql = "INSERT INTO CartItems set ?";
             console.log('InsertcartItems :', InsertcartItems)
             pool.query(sql, InsertcartItems, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('post method', results, err)
                 if (results.affectedRows === 1) {
                     resolve(1)

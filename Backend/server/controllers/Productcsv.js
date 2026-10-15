@@ -309,7 +309,7 @@ function getproductdetails() {
             return new Promise(function (resolve, reject) {
                 query="SELECT OI.ProductName,metrictype,metricvalue,sum(OI.Quantity) as TotalQuantity FROM OrderItems OI inner join Orders O on\
                 O.OrderID=OI.OrderID where \
-                OrderStatus=2 group by OI.ProductID,OI.VariantID order by ProductName asc"
+                OrderStatus in (8,9) group by OI.ProductID,OI.VariantID order by ProductName asc"
                 console.log(query)
                 pool.query(query,function (err, results, fields) {
                     if (err) {               

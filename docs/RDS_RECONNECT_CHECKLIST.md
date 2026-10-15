@@ -32,6 +32,12 @@ Columns added locally since then should be compared the same way: dump RDS with
 The reverse direction (RDS tables/columns missing locally) is handled by
 `docker/mysql/schema_sync_rds.sql`, which is additive and safe to re-run.
 
+Then run the backend migrations against RDS (each is idempotent), including:
+
+```sh
+node server/migrations/order_lifecycle_migration.js   # AdminUsers.FCMToken, Orders.RefundStatus/RefundID
+```
+
 ## 3. Switch
 
 ```sh
@@ -41,6 +47,8 @@ cp Backend/.env.rds Backend/.env      # then edit:
 #   DB_SSL_CA=/path/to/<region>-bundle.pem   (https://truststore.pki.rds.amazonaws.com)
 #   CRON_SECRET=<long random value>          (for the abandoned-cart / win-back scheduler)
 #   remove S3_ENDPOINT so uploads go to AWS S3; set S3_REGION=ap-south-1
+#   OrderPlace=3, OrderCancel=4               (wallet transaction type codes)
+#   ADMIN_ALERT_MOBILE=<store owner's mobile>  (new-order SMS; defaults to the old number in production)
 ```
 
 In `NODE_ENV=development` the backend refuses to start against an

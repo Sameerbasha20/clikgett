@@ -1191,6 +1191,7 @@ function CreateUser(inputs, UserID, MyReferralCode) {
             let sql = "INSERT INTO Users set ?";
 
             pool.query(sql, InsertUsers, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 logger.info('post method', results, err)
                 if (results.affectedRows === 1) {
                     logger.info("Added to Users table: ", results.affectedRows);

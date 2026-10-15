@@ -177,6 +177,12 @@ services:
       RAZORPAYID: ${RAZORPAYID:-rzp_test_local_mock_key}
       RAZORPAYSECRET: ${RAZORPAYSECRET:-local_mock_secret}
       TEXTSPEED_APIKEY: ${TEXTSPEED_APIKEY:-}
+      # Wallets.ContentType codes for order debit / cancellation refund
+      OrderPlace: ${OrderPlace:-3}
+      OrderCancel: ${OrderCancel:-4}
+      ADMIN_ALERT_MOBILE: ${ADMIN_ALERT_MOBILE:-}
+      GOOGLE_APIKEY: ${GOOGLE_APIKEY:-}
+      SMS_APIKEY: ${SMS_APIKEY:-}
       CRON_SECRET: ${CRON_SECRET:-}
       S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://127.0.0.1:9100}
       S3_REGION: ${S3_REGION:-us-east-1}

@@ -1,5 +1,6 @@
 const pool = require('../utils/db.js');
 const moment = require('moment');
+const OrderLifecycle = require('../services/OrderLifecycle');
 
 // Helper to execute MySQL queries with promises
 function queryAsync(sql, params = []) {
@@ -886,7 +887,7 @@ const DeliveryOperations = {
             if (order.OrderStatus === 1) {
                 return resp.status(400).json({ Status: 0, Message: "Order delivered cannot be assigned" });
             }
-            if (order.OrderStatus === 4 || order.OrderStatus === 3) {
+            if (order.OrderStatus === 4 || order.OrderStatus === 3 || order.OrderStatus === 6) {
                 return resp.status(400).json({ Status: 0, Message: "Order cancelled cannot be assigned" });
             }
 
@@ -931,38 +932,8 @@ const DeliveryOperations = {
             const previousDriverId = order.DeliveryBoyID;
             const isReassignment = previousDriverId && previousDriverId > 0 && previousDriverId !== DeliveryBoyID;
 
-            // 7. Update order state: DeliveryBoyID, IsAssigned = 1, OrderStatus = 2 (Assigned)
-            await queryAsync(
-                `UPDATE Orders 
-                 SET DeliveryBoyID = ?, IsAssigned = 1, OrderStatus = 2, AssignedAt = NOW(), UpdatedAt = NOW() 
-                 WHERE OrderID = ?`,
-                [DeliveryBoyID, orderId]
-            );
-
-            // 8. Update driver ActiveOrdersCount in AdminUsers
-            await queryAsync(
-                "UPDATE AdminUsers SET ActiveOrdersCount = (SELECT COUNT(*) FROM Orders WHERE DeliveryBoyID = ? AND OrderStatus IN (2, 5, 7)) WHERE AdminID = ?",
-                [DeliveryBoyID, DeliveryBoyID]
-            );
-            if (isReassignment) {
-                await queryAsync(
-                    "UPDATE AdminUsers SET ActiveOrdersCount = (SELECT COUNT(*) FROM Orders WHERE DeliveryBoyID = ? AND OrderStatus IN (2, 5, 7)) WHERE AdminID = ?",
-                    [previousDriverId, previousDriverId]
-                );
-            }
-
-            // 9. Audit logging in OrderStatusTimeline
-            let timelineNote = "";
-            if (isReassignment) {
-                timelineNote = `Order reassigned from driver #${previousDriverId} to ${driverName} (#${DeliveryBoyID}) by Admin #${adminId}. Reason: ${Reason || 'Operational dispatcher action'}`;
-            } else {
-                timelineNote = `Order assigned to driver ${driverName} (#${DeliveryBoyID}) by Admin #${adminId}`;
-            }
-
-            await queryAsync(
-                "INSERT INTO OrderStatusTimeline (OrderID, OrderStatus, Notes, CreatedAt) VALUES (?, 2, ?, NOW())",
-                [orderId, timelineNote]
-            );
+            // 7. Assign through the order lifecycle (status, timeline, rider load, push to rider/customer)
+            await OrderLifecycle.assignRider(orderId, DeliveryBoyID, { type: 'admin', id: adminId }, { riderName: driverName, reason: Reason });
 
             // 10. Auto-resolve any open OrderIssues if this was a reassignment
             if (isReassignment) {
@@ -987,6 +958,9 @@ const DeliveryOperations = {
                 IsReassignment: !!isReassignment
             });
         } catch (err) {
+            if (err instanceof OrderLifecycle.LifecycleError) {
+                return resp.status(err.httpStatus).json({ Status: 0, Message: err.message });
+            }
             console.error("Error assigning order to delivery boy:", err);
             return resp.status(500).json({ Status: 0, Message: "Internal server error assigning order" });
         }

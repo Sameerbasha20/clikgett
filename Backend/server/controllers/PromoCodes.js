@@ -428,6 +428,7 @@ function add_PromoCodes(body) {
 
         let sql = "INSERT INTO PromoCodes set ?";
         pool.query(sql, InsertPromoCodes, (err, results) => {
+            if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
             console.log('post method', results, err)
             if (results.affectedRows === 1) {
 

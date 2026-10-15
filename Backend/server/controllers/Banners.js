@@ -108,6 +108,7 @@ const bannercontroller = {
             let sql = "INSERT INTO Banners set ?";
 
             pool.query(sql, Insertbanner, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('post method', results, err)
                 if (results.affectedRows === 1) {
                     BannerID = results.insertId

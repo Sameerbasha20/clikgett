@@ -43,7 +43,7 @@ function CancelOrderModal({ show, onHide, order, token, onSuccess }) {
 
         setLoading(true);
         const payload = {
-            OrderStatus: 4,
+            OrderStatus: 3,
             UserID: order?.UserID,
             CancellationReason: finalReason
         };

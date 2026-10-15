@@ -226,11 +226,13 @@ function Products() {
             case 1:
                 return { color: "green", statusName: "DELIVERED" };
             case 2:
+                return { color: "orange", statusName: "RIDER ASSIGNED" };
+            case 9:
                 return { color: "orange", statusName: "PACKING" };
             case 3:
-                return { color: "red", statusName: "Admin cancel order" };
+                return { color: "red", statusName: "CANCELLED (STORE)" };
             case 4:
-                return { color: "red", statusName: "CANCELLED" };
+                return { color: "red", statusName: "CANCELLED (CUSTOMER)" };
             case 5:
                 return {
                     color: "yellow",
@@ -387,12 +389,13 @@ function Products() {
                     disabled={cell == 1 || cell == 4}
                     onChange={(e) => statusHandler(e, cellContent)}>
                     {" "}
-                    <option value={8}>RECEIVED</option>
-                    <option value={2}>PACKING</option>
+                    <option value={8} disabled>RECEIVED</option>
+                    <option value={9}>PACKING</option>
+                    <option value={2} disabled>RIDER ASSIGNED</option>
                     <option value={5}>PICKED UP</option>
                     <option value={7}>ARRIVED</option>
                     <option value={1}>DELIVERED </option>
-                    <option value={4}>CANCELLED </option>
+                    <option value={3}>CANCEL ORDER</option>
                 </select>
             </div>
         );

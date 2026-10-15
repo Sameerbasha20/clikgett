@@ -124,6 +124,7 @@ const addresscontroller={
             let sql = "INSERT INTO Address set ?";
             
             pool.query(sql, InsertAddress, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('Post method result', results, err);
                 if (results.affectedRows === 1) {
                     return resp.status(200).json({ "Status": 1, "Message": "Address added successfully" });

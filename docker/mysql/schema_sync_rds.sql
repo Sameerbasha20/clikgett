@@ -394,3 +394,35 @@ PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 -- inserts written against the production schema (e.g. win-back coupons) succeed.
 SET @s = (SELECT IF(COUNT(*) = 1, 'ALTER TABLE `PromoCodes` MODIFY COLUMN `DiscountValue` decimal(10,2) NOT NULL DEFAULT 0', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'PromoCodes' AND column_name = 'DiscountValue');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+
+-- Local-only column that no code sets (production has no OrderNumber); it must not block inserts.
+SET @s = (SELECT IF(COUNT(*) = 1, 'ALTER TABLE `Orders` MODIFY COLUMN `OrderNumber` varchar(60) NULL', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'Orders' AND column_name = 'OrderNumber' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+
+-- Columns that are NOT NULL locally but nullable in production; match production.
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `Address` MODIFY COLUMN `Address` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'Address' AND column_name = 'Address' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `Address` MODIFY COLUMN `Latitude` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'Address' AND column_name = 'Latitude' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `Address` MODIFY COLUMN `Longitude` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'Address' AND column_name = 'Longitude' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `Address` MODIFY COLUMN `UserID` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'Address' AND column_name = 'UserID' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `CartItems` MODIFY COLUMN `VariantID` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'CartItems' AND column_name = 'VariantID' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `OrderItems` MODIFY COLUMN `OfferPrice` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'OrderItems' AND column_name = 'OfferPrice' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `OrderItems` MODIFY COLUMN `Price` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'OrderItems' AND column_name = 'Price' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `OrderItems` MODIFY COLUMN `VariantID` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'OrderItems' AND column_name = 'VariantID' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `Orders` MODIFY COLUMN `UserID` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'Orders' AND column_name = 'UserID' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `UserNotifications` MODIFY COLUMN `Message` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'UserNotifications' AND column_name = 'Message' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `UserNotifications` MODIFY COLUMN `Title` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'UserNotifications' AND column_name = 'Title' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `Users` MODIFY COLUMN `FirstName` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'Users' AND column_name = 'FirstName' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+SET @s = (SELECT IF(COUNT(*) = 1, CONCAT('ALTER TABLE `Users` MODIFY COLUMN `MobileNumber` ', column_type, ' NULL'), 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'Users' AND column_name = 'MobileNumber' AND is_nullable = 'NO');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;

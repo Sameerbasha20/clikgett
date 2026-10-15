@@ -273,6 +273,7 @@ function createsubcategories(body) {
             let sql = "INSERT INTO SubCategories set ?";
 
             pool.query(sql, InsertSubCategories, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('post method', results, err)
                 if (results.affectedRows === 1) {
 

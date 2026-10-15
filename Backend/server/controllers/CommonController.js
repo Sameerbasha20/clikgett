@@ -500,8 +500,7 @@ CommonController.Add_To_Wallet = (RefferedUserID, ContentType, ContentID, Amount
             let sql = "INSERT INTO Wallets  set ?";
 
             pool.query(sql, Insert_Notifications, (err, results) => {
-                console.log('error in adding Wallets ', err, results)
-                if (results.affectedRows === 1) {
+                if (!err && results && results.affectedRows === 1) {
                     return resolve(results.insertId)
                 }
                 else {
@@ -536,8 +535,7 @@ CommonController.Add_To_Wallet_Debit = (RefferedUserID, ContentType, ContentID, 
             let sql = "INSERT INTO Wallets  set ?";
 
             pool.query(sql, Insert_Notifications, (err, results) => {
-                console.log('error in adding Wallets ', err, results)
-                if (results.affectedRows === 1) {
+                if (!err && results && results.affectedRows === 1) {
                     return resolve(results.insertId)
                 }
                 else {
@@ -1078,11 +1076,14 @@ CommonController.sendSms = async (number, otp) => {
 };
 
 CommonController.sendSmsForNewOrder = async (orderId) => {
+    // Store owner's number for new-order alerts. Local development sends none unless configured.
+    const alertNumber = process.env.ADMIN_ALERT_MOBILE || (process.env.NODE_ENV === 'production' ? '9133446636' : '');
+    if (!/^[6-9][0-9]{9}$/.test(alertNumber)) return;
     const message = encodeURIComponent(
         `Hi Srikar, you've received a new order ${orderId} on your store. Please check your dashboard for details. from mTouch Labs`
     );
 
-    const url1 = `https://sms.textspeed.in/vb/apikey.php?apikey=${process.env.TEXTSPEED_APIKEY}&senderid=CLKGET&templateid=1777179228622362064&number=9133446636&message=${message}`
+    const url1 = `https://sms.textspeed.in/vb/apikey.php?apikey=${process.env.TEXTSPEED_APIKEY}&senderid=CLKGET&templateid=1777179228622362064&number=${alertNumber}&message=${message}`
 
     const response = await axios.post(url1);
     console.log("balance", response.data?.description, "status", response.data?.status);

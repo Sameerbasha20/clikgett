@@ -521,7 +521,7 @@ function Products() {
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <h6 className="fw-bold mb-1 text-danger">
-                                                    ⚠️ Order Cancelled {orders.OrderStatus == 4 ? "(By Admin)" : "(By Customer)"}
+                                                    ⚠️ Order Cancelled {orders.OrderStatus == 3 ? "(By Store)" : "(By Customer)"}
                                                 </h6>
                                                 <div className="small text-dark mt-1">
                                                     <strong>Cancellation Reason:</strong> {orders.CancellationReason || "Admin Cancelled the order"}
@@ -569,18 +569,17 @@ function Products() {
                                                     onChange={
                                                         statuschangehandler
                                                     }
-                                                    disabled={
-                                                        orders.OrderStatus ==
-                                                            1 ||
-                                                        orders.OrderStatus == 4
-                                                    }
+                                                    disabled={[1, 3, 4, 6].includes(Number(orders.OrderStatus))}
                                                     value={status}>
                                                     {" "}
-                                                    <option value={8}>
+                                                    <option value={8} disabled>
                                                         RECEIVED
                                                     </option>
-                                                    <option value={2}>
+                                                    <option value={9}>
                                                         PACKING
+                                                    </option>
+                                                    <option value={2} disabled>
+                                                        RIDER ASSIGNED
                                                     </option>
                                                     <option value={5}>
                                                         PICKED UP
@@ -591,8 +590,8 @@ function Products() {
                                                     <option value={1}>
                                                         DELIVERED{" "}
                                                     </option>
-                                                    <option value={4}>
-                                                        CANCELLED{" "}
+                                                    <option value={3}>
+                                                        CANCEL ORDER{" "}
                                                     </option>
                                                 </select>
                                                 <button onClick={statusHandler}>
@@ -636,7 +635,7 @@ function Products() {
         <button
             type="button"
             className="btn btn-sm btn-primary fw-bold px-3 shadow-sm"
-            disabled={orders.OrderStatus == 1 || orders.OrderStatus == 4}
+            disabled={[1, 3, 4, 6].includes(Number(orders.OrderStatus))}
             onClick={() => setShowAssignModal(true)}
         >
             Assign Delivery Boy
@@ -650,7 +649,7 @@ function Products() {
         <button
             type="button"
             className="btn btn-sm btn-outline-warning fw-bold px-3"
-            disabled={orders.OrderStatus == 1 || orders.OrderStatus == 4}
+            disabled={[1, 3, 4, 6].includes(Number(orders.OrderStatus))}
             onClick={() => setShowAssignModal(true)}
         >
             Reassign Delivery Boy
@@ -766,8 +765,7 @@ function Products() {
                                                             )}
                                                         </p>
                                                     </div>
-                                                    {orders.OrderStatus ==
-                                                        4 && (
+                                                    {(orders.OrderStatus == 4 || orders.OrderStatus == 3) && (
                                                         <div
                                                             className={
                                                                 dashboardclasses[

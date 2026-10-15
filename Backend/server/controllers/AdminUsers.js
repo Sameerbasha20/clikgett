@@ -185,6 +185,7 @@ const usercontroller = {
             let sql = "INSERT INTO AdminUsers set ?";
 
             pool.query(sql, add_deliveryboy, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('post method', results, err)
                 if (results.affectedRows === 1) {
 
@@ -1295,6 +1296,7 @@ const usercontroller = {
             let sql = "INSERT INTO Wallets  set ?";
 
             pool.query(sql, addWalletTransaction, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('error in adding Wallets ', err, results)
                 if (results.affectedRows === 1) {
                     console.log(results.insertId)

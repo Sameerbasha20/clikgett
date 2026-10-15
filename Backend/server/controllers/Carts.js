@@ -481,6 +481,7 @@ function createcart(CartID, UserID) {
             let InsertCarts = { CartID: CartID, UserID: UserID, isOrderLinked: 1 }
             let sql = "INSERT INTO Carts set ?";
             pool.query(sql, InsertCarts, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('post method', results, err)
                 if (results.affectedRows === 1) {
                     resolve(1)
@@ -518,6 +519,7 @@ function createCartItems(body, CartID) {
             let InsertCartItems = { CartID: CartID, ProductID: body.ProductID, Quantity: body.Quantity, VariantID: body.VariantID, Type: body.Type }
             let sql = "INSERT INTO CartItems set ?";
             pool.query(sql, InsertCartItems, (err, results) => {
+                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('post method', results, err)
                 if (results.affectedRows === 1) {
                     resolve(1)

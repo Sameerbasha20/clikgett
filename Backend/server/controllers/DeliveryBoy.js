@@ -9,6 +9,17 @@ const CommonController = require("../controllers/CommonController");
 
 
 const pool = require('../utils/db');
+const OrderLifecycle = require('../services/OrderLifecycle');
+const { ORDER_STATUS } = require('../utils/orderStatus');
+
+// Returns the order if it is assigned to this rider, otherwise null.
+const riderOrder = (orderId, riderId) => new Promise((resolve, reject) => {
+    if (isNaN(orderId)) return resolve(null);
+    pool.query("SELECT * FROM Orders WHERE OrderID = ? AND DeliveryBoyID = ?", [orderId, riderId], (err, rows) => (err ? reject(err) : resolve(rows[0] || null)));
+});
+
+// OTP verifications from the current two-step app flow (verify, then mark delivered).
+const verifiedDeliveries = new Map();
 const s3 = require('../utils/s3');
 
 deliveryboy_s3 = "https://clikgett.s3.ap-south-1.amazonaws.com/deliveryboys/"
@@ -122,29 +133,22 @@ const deliveryboycontroller = {
     },
 
 
+    // The delivery OTP is generated when the rider marks "Arrived" (order lifecycle)
+    // and pushed to the customer. This endpoint re-sends that same OTP.
     Sendotp_Orders: async (req, resp, next) => {
         try {
-            let OrderID = parseInt(req.body.OrderID, 10);
+            const OrderID = parseInt(req.body.OrderID, 10);
             if (isNaN(OrderID)) {
                 return resp.status(400).json({ "Status": 0, "Message": "Invalid OrderID" });
             }
-            pool.query("SELECT * FROM Orders WHERE OrderID = ?", [OrderID], async (err, ResultOrders) => {
-                if (err) {
-                    console.log("exception in querying order for otp ", err);
-                    return resp.status(500).json({ "Status": 0, "Message": "Error querying order" });
-                }
-                if (!ResultOrders || ResultOrders.length == 0) {
-                    return resp.json({ "Status": 0, "Message": "Order doesnot exists" });
-                }
-                var OTP = Math.floor((Math.random() * 8999) + 1000);
-                pool.query("UPDATE Orders SET OTP = ? WHERE OrderID = ?", [OTP, OrderID], (updateErr) => {
-                    if (updateErr) {
-                        console.log("exception in updating otp ", updateErr);
-                        return resp.status(500).json({ "Status": 0, "Message": "Error in updating otp" });
-                    }
-                    return resp.status(200).json({ "Status": 1, "Message": "OTP sent successfully" });
-                });
-            });
+            const rows = await riderOrder(OrderID, req.AdminID);
+            if (!rows) return resp.status(403).json({ "Status": 0, "Message": "This order is not assigned to you" });
+            const order = rows;
+            if (Number(order.OrderStatus) !== ORDER_STATUS.ARRIVED || !order.OTP) {
+                return resp.json({ "Status": 0, "Message": "Mark the order as arrived first" });
+            }
+            await OrderLifecycle.notifyCustomer(order, "📍 Your delivery OTP", `Share OTP ${order.OTP} with the rider to receive order #${String(OrderID).padStart(4, '0')}.`);
+            return resp.status(200).json({ "Status": 1, "Message": "OTP sent successfully" });
         }
         catch (err) {
             console.log("exception in sending otp to user ", err);
@@ -154,23 +158,19 @@ const deliveryboycontroller = {
 
     Orders_VerifyOTP: async (req, resp, next) => {
         try {
-            let Body = req.body;
-            let OrderID = parseInt(Body.OrderID, 10);
-            let OTP = Body.OTP ? Body.OTP.toString().trim() : '';
+            const Body = req.body || {};
+            const OrderID = parseInt(Body.OrderID, 10);
+            const OTP = Body.OTP ? Body.OTP.toString().trim() : '';
             if (isNaN(OrderID) || !OTP) {
                 return resp.status(400).json({ "Status": 0, "Message": "OrderID and OTP required" });
             }
-            pool.query("SELECT * FROM Orders WHERE OrderID = ? AND OTP = ?", [OrderID, OTP], (err, ResultOrders) => {
-                if (err) {
-                    console.log("exception in verifying otp ", err);
-                    return resp.status(500).json({ "Status": 0, "Message": "Error in verify otpuser" });
-                }
-                if (!ResultOrders || ResultOrders.length == 0) {
-                    return resp.json({ "Status": 0, "Message": "Invalid OTP" });
-                }
-
-                return resp.status(200).json({ "Status": 1, "Message": "OTP verified successfully" });
-            });
+            const order = await riderOrder(OrderID, req.AdminID);
+            if (!order) return resp.status(403).json({ "Status": 0, "Message": "This order is not assigned to you" });
+            if (Number(order.OrderStatus) !== ORDER_STATUS.ARRIVED || String(order.OTP) !== OTP) {
+                return resp.json({ "Status": 0, "Message": "Invalid OTP" });
+            }
+            verifiedDeliveries.set(OrderID, { riderId: req.AdminID, at: Date.now() });
+            return resp.status(200).json({ "Status": 1, "Message": "OTP verified successfully" });
         }
         catch (err) {
             console.log("exception in verify otp userorder ", err);
@@ -178,6 +178,49 @@ const deliveryboycontroller = {
         }
     },
 
+    // Verifies the customer's OTP and marks the order delivered in one step.
+    // POST /deliveryboy/deliver/:OrderID  { OTP, Latitude, Longitude }
+    deliverOrder: async (req, resp) => {
+        try {
+            const OrderID = parseInt(req.params.OrderID, 10);
+            const OTP = req.body && req.body.OTP ? String(req.body.OTP).trim() : '';
+            if (isNaN(OrderID) || !OTP) {
+                return resp.status(400).json({ "Status": 0, "Message": "OrderID and OTP required" });
+            }
+            const order = await riderOrder(OrderID, req.AdminID);
+            if (!order) return resp.status(403).json({ "Status": 0, "Message": "This order is not assigned to you" });
+            if (Number(order.OrderStatus) !== ORDER_STATUS.ARRIVED) {
+                return resp.json({ "Status": 0, "Message": "Mark the order as arrived first" });
+            }
+            if (String(order.OTP) !== OTP) {
+                return resp.json({ "Status": 0, "Message": "Invalid OTP" });
+            }
+            const lat = parseFloat(req.body.Latitude), lng = parseFloat(req.body.Longitude);
+            const note = !isNaN(lat) && !isNaN(lng) ? `Delivered at ${lat.toFixed(5)},${lng.toFixed(5)}.` : '';
+            await OrderLifecycle.transition(OrderID, ORDER_STATUS.DELIVERED, { type: 'rider', id: req.AdminID }, { note });
+            return resp.status(200).json({ "Status": 1, "Message": "Order delivered", "OrderStatus": ORDER_STATUS.DELIVERED });
+        }
+        catch (err) {
+            if (err instanceof OrderLifecycle.LifecycleError) {
+                return resp.status(err.httpStatus).json({ "Status": 0, "Message": err.message });
+            }
+            console.log("exception in delivering order", err);
+            return resp.status(500).json({ "Status": 0, "Message": "Error in delivering order" });
+        }
+    },
+
+    // POST /deliveryboy/fcmtoken { FCMToken }
+    updateFcmToken: async (req, resp) => {
+        try {
+            const token = req.body && req.body.FCMToken ? String(req.body.FCMToken).trim() : '';
+            if (!token) return resp.status(400).json({ "Status": 0, "Message": "FCMToken required" });
+            await new Promise((res, rej) => pool.query("UPDATE AdminUsers SET FCMToken = ? WHERE AdminID = ? AND Role = 2", [token, req.AdminID], (e) => (e ? rej(e) : res())));
+            return resp.json({ "Status": 1, "Message": "Token saved" });
+        } catch (err) {
+            console.log("exception saving rider fcm token", err);
+            return resp.status(500).json({ "Status": 0, "Message": "Error saving token" });
+        }
+    },
 
     // deliveryboylogin : async (req, resp, next) => {
     //     try {
@@ -271,7 +314,9 @@ const deliveryboycontroller = {
 
     myorder: async (req, resp, next) => {
         try {
-            myorder = await getorder(req.query.OrderID)
+            const owned = await riderOrder(parseInt(req.query.OrderID, 10), req.AdminID);
+            if (!owned) return resp.status(403).json({ "Status": 0, "Message": "This order is not assigned to you" });
+            const myorder = await getorder(req.query.OrderID)
             console.log(myorder.length)
             if (myorder != {}) {
                 // Check Admin visibility configuration for Delivery personnel
@@ -317,71 +362,44 @@ const deliveryboycontroller = {
         }
     },
 
-        updatestatus: async (req, resp, next) => {
+    updatestatus: async (req, resp, next) => {
         try {
-            const Body = req.body;
+            const Body = req.body || {};
             const OrderID = parseInt(req.params.OrderID, 10);
             const driverId = req.AdminID;
-
-            if (isNaN(OrderID)) {
-                return resp.status(400).json({ "Status": 0, "Message": "Invalid OrderID" });
-            }
-
-            const order = await getorderbyorderid(OrderID);
-            if (!order || order.length == 0) {
-                return resp.json({ "Status": 0, "Message": "order not found" });
-            }
-
-            const currentStatus = order[0].OrderStatus;
             const targetStatus = parseInt(Body.OrderStatus, 10);
-
-            if (isNaN(targetStatus)) {
-                return resp.status(400).json({ "Status": 0, "Message": "Valid numeric OrderStatus is required" });
+            if (isNaN(OrderID) || isNaN(targetStatus)) {
+                return resp.status(400).json({ "Status": 0, "Message": "Valid OrderID and OrderStatus are required" });
             }
 
-            if (currentStatus == 1 && targetStatus == 4) {
-                return resp.json({ "Status": 0, "Message": "Order delivered cannot be canceled" });
-            }
-            if (currentStatus == 1) {
-                return resp.json({ "Status": 0, "Message": "Order delivered cannot be updated to any other status" });
+            const order = await riderOrder(OrderID, driverId);
+            if (!order) return resp.status(403).json({ "Status": 0, "Message": "This order is not assigned to you" });
+
+            // Delivered requires the customer's OTP. The current app verifies it in a
+            // separate call first (verifyotp_order); newer builds use /deliver/:OrderID.
+            if (targetStatus === ORDER_STATUS.DELIVERED) {
+                const v = verifiedDeliveries.get(OrderID);
+                if (!v || v.riderId !== driverId || Date.now() - v.at > 15 * 60 * 1000) {
+                    return resp.status(400).json({ "Status": 0, "Message": "Verify the customer's OTP before marking delivered" });
+                }
+                verifiedDeliveries.delete(OrderID);
             }
 
-            // Status transition state machine validation
-            // 2 (Assigned/Packed) -> 5 (Picked Up / Out for Delivery)
-            // 5 (Picked Up) -> 7 (Arrived at Door)
-            // 7 (Arrived) -> 1 (Delivered via OTP verification)
-            if (targetStatus === 1 && currentStatus !== 7 && !Body.adminBypass) {
-                return resp.status(400).json({ 
-                    "Status": 0, 
-                    "Message": "Cannot mark order delivered before arriving at customer door." 
-                });
-            }
-            if (targetStatus === 7 && currentStatus !== 5 && !Body.adminBypass) {
-                return resp.status(400).json({ 
-                    "Status": 0, 
-                    "Message": "Cannot mark arrived before picking up the order from store." 
-                });
-            }
-
-            // Geofence Proximity Validation for Arrived at Door (Status 7)
-            if (targetStatus === 7) {
+            // Geofence check when marking "Arrived at door"
+            let note = '';
+            if (targetStatus === ORDER_STATUS.ARRIVED) {
                 const driverLat = parseFloat(Body.Latitude);
                 const driverLng = parseFloat(Body.Longitude);
-                const customerLat = parseFloat(order[0].Latitude);
-                const customerLng = parseFloat(order[0].Longitude);
-
+                const customerLat = parseFloat(order.Latitude);
+                const customerLng = parseFloat(order.Longitude);
                 if (!isNaN(driverLat) && !isNaN(driverLng) && !isNaN(customerLat) && !isNaN(customerLng)) {
-                    // Haversine distance calculation in meters
                     const R = 6371e3;
                     const phi1 = (driverLat * Math.PI) / 180;
                     const phi2 = (customerLat * Math.PI) / 180;
-                    const deltaPhi = ((customerLat - driverLat) * Math.PI) / 180;
-                    const deltaLambda = ((customerLng - driverLng) * Math.PI) / 180;
-                    const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-                              Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                    const distanceMeters = Math.round(R * c);
-
+                    const dPhi = ((customerLat - driverLat) * Math.PI) / 180;
+                    const dLambda = ((customerLng - driverLng) * Math.PI) / 180;
+                    const h = Math.sin(dPhi / 2) ** 2 + Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLambda / 2) ** 2;
+                    const distanceMeters = Math.round(R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)));
                     const GEOFENCE_RADIUS_METERS = 250;
                     if (distanceMeters > GEOFENCE_RADIUS_METERS && !Body.manualOverride) {
                         return resp.json({
@@ -391,76 +409,19 @@ const deliveryboycontroller = {
                             "Message": `You are ${distanceMeters}m away from customer destination. Please move closer or confirm manual arrival.`
                         });
                     }
-
                     if (Body.manualOverride) {
-                        const overrideReason = Body.overrideReason || "Driver confirmed manual arrival override (GPS/Address pin discrepancy)";
-                        pool.query(
-                            "INSERT INTO OrderStatusTimeline (OrderID, OrderStatus, Notes, CreatedAt) VALUES (?, 7, ?, NOW())",
-                            [OrderID, `Manual arrival override (${distanceMeters}m away). Reason: ${overrideReason}`]
-                        );
+                        note = `Manual arrival override (${distanceMeters}m away). Reason: ${Body.overrideReason || 'GPS/address pin mismatch'}`;
                     }
                 }
             }
 
-            var datetimenow = new Date(Date.now());
-            let currentdatetime = moment(datetimenow).add(5, 'hours').add(30, 'minutes').format('YYYY-MM-DD HH:mm:ss');
-            let deliveredDateTimeVal = (targetStatus === 1) ? currentdatetime : null;
-            let orderArrivedDateTimeVal = (targetStatus === 7) ? currentdatetime : null;
-            let pickedUpAtVal = (targetStatus === 5) ? currentdatetime : null;
-            let currentLegVal = (targetStatus === 5) ? 'OUT_FOR_DELIVERY' : ((targetStatus === 7) ? 'ARRIVED_DOOR' : ((targetStatus === 1) ? 'DELIVERED' : 'ASSIGNED'));
-
-            const updateSql = `
-                UPDATE Orders 
-                SET OrderStatus = ?, 
-                    DeliveryBoyID = COALESCE(?, DeliveryBoyID), 
-                    deliveredDateTime = COALESCE(?, deliveredDateTime), 
-                    Delivered_Cancelled_datetime = COALESCE(?, Delivered_Cancelled_datetime),
-                    OrderArrivedDateTime = COALESCE(?, OrderArrivedDateTime),
-                    PickedUpAt = COALESCE(?, PickedUpAt),
-                    CurrentLeg = ?,
-                    UpdatedAt = NOW()
-                WHERE OrderID = ?
-            `;
-
-            pool.query(updateSql, [
-                targetStatus, 
-                driverId, 
-                deliveredDateTimeVal, 
-                deliveredDateTimeVal, 
-                orderArrivedDateTimeVal, 
-                pickedUpAtVal, 
-                currentLegVal, 
-                OrderID
-            ], async (err, result) => {
-                if (err) {
-                    console.error("Error updating order status in DB: ", err);
-                    return resp.status(500).json({ "Status": 0, "Message": "Error updating database" });
-                }
-
-                // Push notifications
-                if (targetStatus == 5 || targetStatus == 8 || targetStatus == 7) {
-                    try {
-                        const notificationBody = await CommonController.notificationMessages(targetStatus, OrderID);
-                        if (req.body.UserID || order[0].UserID) {
-                            await CommonController.Send_Notification(notificationBody, req.body.UserID || order[0].UserID);
-                        }
-                    } catch (notifErr) {
-                        console.warn("Notification error: ", notifErr.message);
-                    }
-                }
-
-                // Log timeline event
-                const statusNames = { 2: "Assigned", 5: "Picked Up / Out for Delivery", 7: "Arrived at Door", 1: "Delivered", 4: "Cancelled" };
-                const noteText = `Order transitioned to ${statusNames[targetStatus] || targetStatus} by driver #${driverId}`;
-                pool.query(
-                    "INSERT INTO OrderStatusTimeline (OrderID, OrderStatus, Notes, CreatedAt) VALUES (?, ?, ?, NOW())",
-                    [OrderID, targetStatus, noteText]
-                );
-
-                return resp.status(200).json({ "Status": 1, "Message": "Order Update Successful", "OrderStatus": targetStatus });
-            });
+            const updated = await OrderLifecycle.transition(OrderID, targetStatus, { type: 'rider', id: driverId }, { note });
+            return resp.status(200).json({ "Status": 1, "Message": "Order Update Successful", "OrderStatus": updated.OrderStatus });
         }
         catch (err) {
+            if (err instanceof OrderLifecycle.LifecycleError) {
+                return resp.status(err.httpStatus).json({ "Status": 0, "Message": err.message });
+            }
             console.log("exception in updating Orders ", err);
             return resp.status(500).json({ "Status": 0, "Message": "Error in updating Orders" });
         }

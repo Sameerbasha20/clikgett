@@ -9,6 +9,8 @@ const CommonController = require('./CommonController');
 const PricingEngine = require('../services/PricingEngine');
 
 const pool = require('../utils/db');
+const OrderLifecycle = require('../services/OrderLifecycle');
+const { ORDER_STATUS } = require('../utils/orderStatus');
 
 const s3 = require('../utils/s3');
 
@@ -367,6 +369,11 @@ const PhotoOrdersController = {
 
             // 3. Atomically create canonical ClikGett order
             const chosenPayment = (paymentMethod || photoReq.PaymentMethod || 'COD').toUpperCase();
+            // Photo orders have no Razorpay checkout yet, so only cash on delivery is accepted
+            // (previously "ONLINE" was marked paid without any payment).
+            if (chosenPayment !== 'COD') {
+                return resp.status(400).json({ Status: 0, Message: 'Only Cash on Delivery is available for photo orders right now.' });
+            }
             const OrdersController = require('./Orders');
 
             // Format order body for canonical CreateOrders
@@ -463,6 +470,9 @@ const PhotoOrdersController = {
                     GrandTotal = ?
                 WHERE RequestID = ?
             `, [createdOrderId, pricingResult.GrandTotal, requestId]);
+
+            await OrderLifecycle.addTimeline(createdOrderId, ORDER_STATUS.RECEIVED, `Order received from photo order request #${requestId} (COD).`);
+            CommonController.sendSmsForNewOrder(createdOrderId).catch((e) => console.log('new order sms failed', e.message));
 
             // Audit timeline
             await queryAsync(`

@@ -8,6 +8,8 @@ const PricingEngine = require('../services/PricingEngine');
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
 const s3 = require('../utils/s3');
 const pool = require('../utils/db');
+const OrderLifecycle = require('../services/OrderLifecycle');
+const { ORDER_STATUS } = require('../utils/orderStatus');
 Products_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/"
 
 const ordercontroller = {
@@ -186,122 +188,29 @@ const ordercontroller = {
 
     updatestatus: async (req, resp, next) => {
         try {
-            Body = req.body
-            OrderID = req.params.OrderID
-
-            order = await getorderbyorderid(OrderID)
-
-            if (order.length == 0) {
-                return resp.json({ "Status": 0, "Message": "order not found" });
+            const Body = req.body || {};
+            const OrderID = req.params.OrderID;
+            let target = parseInt(Body.OrderStatus, 10);
+            if (isNaN(target)) {
+                return resp.status(400).json({ "Status": 0, "Message": "Valid OrderStatus is required" });
             }
-            else if (order[0].OrderStatus == 1 && Body.OrderStatus == 4)
-                return resp.json({ "Status": 0, "Message": "Order delivered cannot be canceled" });
-            else if (order[0].OrderStatus == 1)
-                return resp.json({ "Status": 0, "Message": "Order delivered cannot be updated to any other status" });
-            var datetimenow = new Date(Date.now());
-            currentdatetime = moment(datetimenow).add(5, 'hours').add(30, 'minutes').format('yyyy-MM-DD HH:mm:ss');
-            Delivered_Cancelled_datetime = "Delivered_Cancelled_datetime = Delivered_Cancelled_datetime,";
-            deliveredDateTime = "deliveredDateTime = deliveredDateTime,";
-            OrderArrivedDateTime = "OrderArrivedDateTime=OrderArrivedDateTime,"
-            DeliveryPoints = "DeliveryPoints = DeliveryPoints,";
-            let CancellationReason = "CancellationReason = CancellationReason,";
-            if (Body.OrderStatus != null || Body.OrderStatus != undefined) {
+            // Compatibility with the current admin UI: it labels 2 as "Packing" and
+            // uses 4 for its cancel action. Rider assignment has its own endpoint.
+            if (target === ORDER_STATUS.ASSIGNED) target = ORDER_STATUS.PACKING;
+            if (target === ORDER_STATUS.CANCELLED_BY_CUSTOMER) target = ORDER_STATUS.CANCELLED_BY_STORE;
 
-                if (Body.OrderStatus == 4 || Body.OrderStatus == 3) {
-                    let GetOrderItems = `SELECT * FROM OrderItems WHERE OrderID = ${pool.escape(OrderID)}`;
-                    let ResultOrderItems = await CommonController.commonget(GetOrderItems);
-
-                    let increasevariantsQuantity = await incvariantsQuantity(ResultOrderItems)
-
-                    if (parseFloat(order[0]['WalletAmount']) != 0) {
-                        await incWalletAmount(order[0].WalletAmount, order[0].UserID, order[0].OrderID)
-                    }
-                    Delivered_Cancelled_datetime = "Delivered_Cancelled_datetime=" + pool.escape(currentdatetime) + ","
-
-                    let adminReason = "Admin Cancelled the order";
-                    if (Body.CancellationReason && String(Body.CancellationReason).trim().length > 0) {
-                        adminReason = String(Body.CancellationReason).trim();
-                    } else if (Body.Reason && String(Body.Reason).trim().length > 0) {
-                        adminReason = String(Body.Reason).trim();
-                    }
-
-                    if (Body.OrderStatus == 4) {
-                        CancellationReason = 'CancellationReason = ' + pool.escape(adminReason) + ',';
-                        pool.query(
-                            "INSERT INTO OrderStatusTimeline (OrderID, OrderStatus, Notes, CreatedAt) VALUES (?, 4, ?, NOW())",
-                            [OrderID, "Cancelled by Admin. Reason: " + adminReason],
-                            (tErr) => { if (tErr) console.error("Error inserting timeline:", tErr); }
-                        );
-                    }
-                }
-
-                if (Body.OrderStatus == 1) {
-                    console.log("Delivered refer")
-                    await CommonController.GetReferredDetails(req.body.UserID, OrderID);
-                    if (CommonController.ProcessOrderCashback) { await CommonController.ProcessOrderCashback(OrderID, req.body.UserID || order[0].UserID); }
-                    deliveredDateTime = "deliveredDateTime=" + pool.escape(currentdatetime) + ","
-                    Delivered_Cancelled_datetime = "Delivered_Cancelled_datetime=" + pool.escape(currentdatetime) + ","
-                    DeliveryPoints = "DeliveryPoints=" + order[0]['Distance'] * 10 + ","
-                }
-                if (Body.OrderStatus == 7){
-                    var OTP = Math.floor((Math.random() * 8999) + 1000);
-                    OrderArrivedDateTime = "OTP=" + pool.escape(OTP) + ",OrderArrivedDateTime=" + pool.escape(currentdatetime) + ","
-                }
-                OrderStatus = "OrderStatus=" + pool.escape(Body.OrderStatus)
-            }
-            else {
-                OrderStatus = "OrderStatus = OrderStatus";
-            }
-
-
-            queryString = "UPDATE Orders SET " + Delivered_Cancelled_datetime + OrderArrivedDateTime + CancellationReason + deliveredDateTime + DeliveryPoints + OrderStatus + " WHERE OrderID=" + pool.escape(OrderID) + ";";
-            console.log(queryString);
-            let notificationBody={};
-            const targetUserId = req.body.UserID || (order && order[0] ? order[0].UserID : null);
-            const displaySeq = (order && order[0] && order[0].OrderSequence) ? order[0].OrderSequence : ((order && order[0] && order[0].OrderID) ? order[0].OrderID : OrderID);
-
-            if (Body.OrderStatus == 4) {
-                let reasonText = (Body.CancellationReason && String(Body.CancellationReason).trim().length > 0)
-                    ? String(Body.CancellationReason).trim()
-                    : ((Body.Reason && String(Body.Reason).trim().length > 0) ? String(Body.Reason).trim() : "Admin Cancelled the order");
-                notificationBody.Title = `Order #${displaySeq} Cancelled`;
-                notificationBody.Message = `Your order #${displaySeq} has been cancelled by ClikGett. Reason: ${reasonText}. ${(order && order[0] && parseFloat(order[0].WalletAmount) > 0) ? 'Your wallet balance has been refunded.' : ''}`.trim();
-            }
-
-            if(Body.OrderStatus == 5 || Body.OrderStatus == 8 || Body.OrderStatus == 7 ){
-              notificationBody = await CommonController.notificationMessages(Body.OrderStatus * 1, OrderID)
-            }
-
-            if(Body.OrderStatus==4 || Body.OrderStatus == 5 || Body.OrderStatus == 8 || Body.OrderStatus == 7 ) {
-               if (targetUserId) {
-                   await CommonController.Send_Notification(notificationBody, targetUserId);
-               }
-            }
-
-            return new Promise(function (resolve, reject) {
-                pool.query(queryString, function (err, result, fields) {
-                    if (err) {
-                        console.log(err)
-                        resp.status(400).json({ "Status": 0, "Message": "Error in updating the DB" }); return resolve(-1);
-                    }
-                    else {
-                        console.log("update :" + result.affectedRows);
-                        if (result.affectedRows > 0) {
-                            console.log('update successful')
-                            resp.status(200).json({ "Status": 1, "Message": "Order Update Successful" }); return resolve(result);
-                        }
-                        else {
-                            console.log("Order update failed", err);
-                            resp.status(400).json({ "Status": 0, "Message": "No changes to update" }); return resolve(0);
-                        }
-
-                    }
-                });
+            const reason = [Body.CancellationReason, Body.Reason].map((r) => (r ? String(r).trim() : '')).find(Boolean) || null;
+            const updated = await OrderLifecycle.transition(OrderID, target, { type: 'admin', id: req.AdminID }, {
+                reason,
+                // Admin may complete rider steps on the rider's behalf (e.g. phone died).
+                override: [ORDER_STATUS.OUT_FOR_DELIVERY, ORDER_STATUS.ARRIVED, ORDER_STATUS.DELIVERED].includes(target),
             });
-
-
+            return resp.status(200).json({ "Status": 1, "Message": "Order Update Successful", "OrderStatus": updated.OrderStatus });
         }
         catch (err) {
+            if (err instanceof OrderLifecycle.LifecycleError) {
+                return resp.status(err.httpStatus).json({ "Status": 0, "Message": err.message });
+            }
             console.log("exception in updating Orders ", err);
             return resp.status(500).json({ "Status": 0, "Message": "Error in updating Orders" });
         }
@@ -523,7 +432,7 @@ function incWalletAmount(WalletAmount, UserID, OrderID) {
             let updateWallets = `update Users set WalletAmount=WalletAmount+${parseFloat(WalletAmount)} where UserID=${UserID}`
             console.log(updateWallets)
             let update_Wallets = await CommonController.commonget(updateWallets)
-            await CommonController.Add_To_Wallet(UserID, process.env.OrderCancel, OrderID, WalletAmount)
+            await CommonController.Add_To_Wallet(UserID, (process.env.OrderCancel || 4), OrderID, WalletAmount)
             resolve(1);
         });
     }
