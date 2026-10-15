@@ -4,7 +4,7 @@ import TopNav from "../../Navbar/topNav";
 import SideNav from "../../Navbar/sideNav";
 import dashboardclasses from "../dashboard.module.css";
 import styles from "./photoOrders.module.css";
-import { Services } from "../../../Services";
+import { Services, apiUrl } from "../../../Services";
 import { toast } from "react-toastify";
 import Moment from "react-moment";
 import {
@@ -28,6 +28,36 @@ function PhotoOrderDetail() {
     const [searchResults, setSearchResults] = useState([]);
     const [searching, setSearching] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [imageSrc, setImageSrc] = useState(null);
+    const [imageState, setImageState] = useState("loading"); // loading | ready | error
+
+    // The image endpoint requires the admin Authorization header, which an <img src>
+    // cannot send, so download it with fetch and show it from a local blob URL.
+    useEffect(() => {
+        if (!request?.RequestID) return undefined;
+        let objectUrl = null;
+        let cancelled = false;
+        setImageState("loading");
+        fetch(apiUrl(`admin/photo-orders/image/${request.RequestID}`), { headers: token })
+            .then((res) => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.blob();
+            })
+            .then((blob) => {
+                if (cancelled) return;
+                objectUrl = URL.createObjectURL(blob);
+                setImageSrc(objectUrl);
+                setImageState("ready");
+            })
+            .catch(() => {
+                if (!cancelled) setImageState("error");
+            });
+        return () => {
+            cancelled = true;
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [request?.RequestID]);
 
     const fetchDetail = () => {
         setLoading(true);
@@ -250,8 +280,6 @@ function PhotoOrderDetail() {
         );
     }
 
-    const imageUrl = `/api/admin/photo-orders/image/${request.RequestID}`;
-
     return (
         <div className={dashboardclasses["dashboard-wrapper"]}>
             <div className={dashboardclasses["dashboard-leftside"]}>
@@ -332,15 +360,19 @@ function PhotoOrderDetail() {
                                     Uploaded Photo / List
                                 </h3>
                                 <div className={styles.imagePreviewBox}>
-                                    <img
-                                        src={imageUrl}
-                                        alt="Customer Upload"
-                                        className={styles.photoImg}
-                                        onError={(e) => {
-                                            e.target.onerror = null;
-                                            e.target.src = "https://via.placeholder.com/400x300?text=Secure+Image";
-                                        }}
-                                    />
+                                    {imageState === "ready" && (
+                                        <a href={imageSrc} target="_blank" rel="noreferrer" title="Open full size">
+                                            <img src={imageSrc} alt="Customer Upload" className={styles.photoImg} />
+                                        </a>
+                                    )}
+                                    {imageState === "loading" && (
+                                        <span style={{ color: "#cbd5e1" }}>Loading photo...</span>
+                                    )}
+                                    {imageState === "error" && (
+                                        <span style={{ color: "#fca5a5", padding: 16, textAlign: "center" }}>
+                                            Photo could not be loaded. It may have been removed from the server.
+                                        </span>
+                                    )}
                                 </div>
                                 <div style={{ marginTop: 16 }}>
                                     <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>

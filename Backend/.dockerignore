@@ -9,3 +9,6 @@ tests
 logs
 179*
 images/INV*.pdf
+server/images/photo_orders
+server/images/product_requests
+server/images/*.pdf

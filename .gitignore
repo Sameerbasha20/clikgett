@@ -55,3 +55,8 @@ Backend/images/*_33.png
 *.save
 *.before-*
 *~
+
+# Customer uploads and generated invoices (runtime data, never commit)
+Backend/server/images/photo_orders/
+Backend/server/images/product_requests/
+Backend/server/images/*.pdf

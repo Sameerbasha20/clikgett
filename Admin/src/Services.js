@@ -1,4 +1,75 @@
+// Builds the full API URL for a path like "adminuser/login" (shared by httpcall and blob downloads).
+const getBaseApiUrl = () => {
+    const envUrl = (process.env.REACT_APP_BASE_URL || "").trim();
+    if (!envUrl || envUrl === "/api") {
+        return "/api";
+    }
+    // If configured with localhost in development, use relative '/api'
+    // so CRA development proxy handles requests locally and across tunnels.
+    if (envUrl.includes("localhost") || envUrl.includes("127.0.0.1")) {
+        return "/api";
+    }
+    return envUrl;
+};
+
+const normalizeUrl = (rawUrl) => {
+    if (!rawUrl || typeof rawUrl !== "string") {
+        return "/api";
+    }
+    const trimmed = rawUrl.trim();
+    if (!trimmed) {
+        return "/api";
+    }
+    // Pass through external absolute URLs untouched
+    if (/^https?:\/\//i.test(trimmed)) {
+        return trimmed;
+    }
+
+    // Separate query string/hash from pathname
+    const [pathWithHash, ...queryParts] = trimmed.split("?");
+    const queryString = queryParts.length > 0 ? `?${queryParts.join("?")}` : "";
+
+    // Strip leading/trailing slashes and collapse duplicate consecutive slashes
+    let cleanPath = pathWithHash
+        .replace(/^\/+/, "")
+        .replace(/\/+$/, "")
+        .replace(/\/+/g, "/");
+
+    // Prevent duplicate /api/ prefixes
+    while (cleanPath.startsWith("api/")) {
+        cleanPath = cleanPath.slice(4);
+    }
+    if (cleanPath === "api") {
+        cleanPath = "";
+    }
+
+    const base = getBaseApiUrl();
+
+    // If base is an external absolute URL (e.g. remote deployment)
+    if (/^https?:\/\//i.test(base)) {
+        const cleanBase = base.replace(/\/+$/, "");
+        if (cleanBase.endsWith("/api")) {
+            return cleanPath ? `${cleanBase}/${cleanPath}${queryString}` : `${cleanBase}${queryString}`;
+        }
+        return cleanPath ? `${cleanBase}/api/${cleanPath}${queryString}` : `${cleanBase}/api${queryString}`;
+    }
+
+    // Relative same-origin base (default: '/api')
+    let cleanBase = (base || "/api").trim().replace(/^\/+/, "").replace(/\/+$/, "");
+    if (!cleanBase) {
+        cleanBase = "api";
+    }
+    if (cleanBase !== "api" && !cleanBase.endsWith("/api")) {
+        cleanBase = `${cleanBase}/api`;
+    }
+
+    return cleanPath ? `/${cleanBase}/${cleanPath}${queryString}` : `/${cleanBase}${queryString}`;
+};
+
+
 // Authorization: `token ${token}`,
+export const apiUrl = (path) => normalizeUrl(path);
+
 const httpcall = (url, method, body, token) => {
     let authHeader = {};
     if (token) {
@@ -33,73 +104,6 @@ const httpcall = (url, method, body, token) => {
             }
         }
     }
-
-    const getBaseApiUrl = () => {
-        const envUrl = (process.env.REACT_APP_BASE_URL || "").trim();
-        if (!envUrl || envUrl === "/api") {
-            return "/api";
-        }
-        // If configured with localhost in development, use relative '/api'
-        // so CRA development proxy handles requests locally and across tunnels.
-        if (envUrl.includes("localhost") || envUrl.includes("127.0.0.1")) {
-            return "/api";
-        }
-        return envUrl;
-    };
-
-    const normalizeUrl = (rawUrl) => {
-        if (!rawUrl || typeof rawUrl !== "string") {
-            return "/api";
-        }
-        const trimmed = rawUrl.trim();
-        if (!trimmed) {
-            return "/api";
-        }
-        // Pass through external absolute URLs untouched
-        if (/^https?:\/\//i.test(trimmed)) {
-            return trimmed;
-        }
-
-        // Separate query string/hash from pathname
-        const [pathWithHash, ...queryParts] = trimmed.split("?");
-        const queryString = queryParts.length > 0 ? `?${queryParts.join("?")}` : "";
-
-        // Strip leading/trailing slashes and collapse duplicate consecutive slashes
-        let cleanPath = pathWithHash
-            .replace(/^\/+/, "")
-            .replace(/\/+$/, "")
-            .replace(/\/+/g, "/");
-
-        // Prevent duplicate /api/ prefixes
-        while (cleanPath.startsWith("api/")) {
-            cleanPath = cleanPath.slice(4);
-        }
-        if (cleanPath === "api") {
-            cleanPath = "";
-        }
-
-        const base = getBaseApiUrl();
-
-        // If base is an external absolute URL (e.g. remote deployment)
-        if (/^https?:\/\//i.test(base)) {
-            const cleanBase = base.replace(/\/+$/, "");
-            if (cleanBase.endsWith("/api")) {
-                return cleanPath ? `${cleanBase}/${cleanPath}${queryString}` : `${cleanBase}${queryString}`;
-            }
-            return cleanPath ? `${cleanBase}/api/${cleanPath}${queryString}` : `${cleanBase}/api${queryString}`;
-        }
-
-        // Relative same-origin base (default: '/api')
-        let cleanBase = (base || "/api").trim().replace(/^\/+/, "").replace(/\/+$/, "");
-        if (!cleanBase) {
-            cleanBase = "api";
-        }
-        if (cleanBase !== "api" && !cleanBase.endsWith("/api")) {
-            cleanBase = `${cleanBase}/api`;
-        }
-
-        return cleanPath ? `/${cleanBase}/${cleanPath}${queryString}` : `/${cleanBase}${queryString}`;
-    };
 
     const requestUrl = normalizeUrl(url);
 

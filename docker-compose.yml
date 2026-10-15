@@ -144,6 +144,10 @@ services:
     ports:
       # Reachable from phones on the LAN (http://<PC Wi-Fi IP>:5001). Set BACKEND_BIND_ADDRESS=127.0.0.1 to keep it local-only.
       - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:5001:5000"
+    volumes:
+      # Customer uploads must survive container rebuilds.
+      - clikgett_photo_orders:/app/server/images/photo_orders
+      - clikgett_product_requests:/app/server/images/product_requests
     depends_on:
       mysql:
         condition: service_healthy
@@ -224,6 +228,10 @@ volumes:
     name: clikgett_redis_data
   clikgett_minio_data:
     name: clikgett_minio_data
+  clikgett_photo_orders:
+    name: clikgett_photo_orders
+  clikgett_product_requests:
+    name: clikgett_product_requests
 
 # =============================================================================
 # Isolated Bridge Network
