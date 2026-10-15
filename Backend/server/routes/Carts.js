@@ -9,6 +9,7 @@ router
 .post('/validate_cart',util.authenticate.userAuthenticate,cartcontroller.ValidateCart)
 
 .post('/mycart',util.authenticate.userAuthenticate,cartcontroller.getcartbyyserid)
+.post('/bill',util.authenticate.userAuthenticate,cartcontroller.checkoutBill)
 
 .post('/addcart', util.authenticate.userAuthenticate, validate.user_mandatoryfields.cart_mandatoryfields,cartcontroller.addcart)
 

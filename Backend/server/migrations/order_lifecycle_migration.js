@@ -33,6 +33,11 @@ async function runMigration() {
     await addColumnIfNotExists('Orders', 'RefundStatus', "VARCHAR(30) NULL");
     await addColumnIfNotExists('Orders', 'RefundID', "VARCHAR(64) NULL");
 
+    // Each Razorpay payment can be redeemed once (order or wallet top-up)
+    await addColumnIfNotExists('OrderPayments', 'PaymentID', "VARCHAR(64) NULL");
+    await addColumnIfNotExists('OrderPayments', 'ConsumedAt', "DATETIME NULL");
+    await addColumnIfNotExists('OrderPayments', 'Purpose', "VARCHAR(20) NULL");
+
     console.log("=== Order Lifecycle Migration Complete ===");
 }
 

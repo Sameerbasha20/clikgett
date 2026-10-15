@@ -588,16 +588,17 @@ const usercontroller = {
             if (expectedSignature != body.razorpay_signature) {
                 return resp.json({ 'Status': 0, "Message": "invalid signature" })
             }
-            else {
-                paymentdetails = await getpaymentdetails(body.razorpay_payment_id)
-                console.log(paymentdetails, 'payment details')
-                body.PaymentTransactionID = paymentdetails.id;
-                body.PaymentStatus = 1
-            }
+            const paymentdetails = await getpaymentdetails(body.razorpay_payment_id)
+            if (!paymentdetails || paymentdetails.order_id !== RazorpayOrderID)
+                return resp.status(400).json({ Status: 0, Message: "Payment not found" });
+            // Credit what was actually paid, once per payment.
+            const paidAmount = Math.round(parseFloat(paymentdetails.amount) || 0) / 100;
+            const consumed = await require('./Orders').consumePayment(RazorpayOrderID, body.razorpay_payment_id, req.UserID);
+            if (!consumed)
+                return resp.status(400).json({ Status: 0, Message: "This payment has already been added to your wallet." });
 
-
-            await CommonController.Add_To_Wallet(req.UserID, 3, req.UserID, body.Amount)
-            await CommonController.save_to_users_wallets(req.UserID, body.Amount)
+            await CommonController.Add_To_Wallet(req.UserID, 3, req.UserID, paidAmount)
+            await CommonController.save_to_users_wallets(req.UserID, paidAmount)
 
             return resp.status(200).json({ "Status": 1, "Message": "Money added to wallet successfully" });
 

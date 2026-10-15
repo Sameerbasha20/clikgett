@@ -1,0 +1,137 @@
+// Single source of truth for what a customer pays at checkout.
+// The cart screen shows this bill and addorder / orderpayments recompute it,
+// so the app can never charge something different from what the server stores.
+const pool = require('../utils/db');
+const PricingEngine = require('./PricingEngine');
+
+const MAX_TIP = 1000;
+const DEFAULT_TIP_PRESETS = [10, 20, 30, 50];
+
+const queryAsync = (sql, params = []) => new Promise((resolve, reject) => {
+    pool.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+});
+
+const money = (n) => Math.round((parseFloat(n) || 0) * 100) / 100;
+
+async function loadSettings() {
+    const rows = await queryAsync('SELECT SettingKey, SettingValue FROM Settings');
+    const s = {};
+    (rows || []).forEach((r) => { s[r.SettingKey] = r.SettingValue; });
+    let tipPresets = DEFAULT_TIP_PRESETS;
+    try {
+        const parsed = JSON.parse(s.TipPresets || 'null');
+        if (Array.isArray(parsed) && parsed.length) tipPresets = parsed.map(Number).filter((n) => n > 0);
+    } catch (_) { /* keep defaults */ }
+    return {
+        minOrderValue: parseFloat(s.MinOrderValue || 149),
+        minOrderForFullWallet: parseFloat(s.Minordervalue_wallet || 399),
+        smallOrderWalletCap: parseFloat(s.MinUseOfWallet || 40),
+        freeDeliveryThreshold: parseFloat(s.FreeDelivery_CartAmount || 499),
+        tipPresets,
+    };
+}
+
+async function loadCart(userId) {
+    const carts = await queryAsync('SELECT CartID FROM Carts WHERE UserID = ? AND IsOrderLinked = 1 ORDER BY CartID DESC LIMIT 1', [userId]);
+    if (!carts.length) return { cartId: null, items: [] };
+    const cartId = carts[0].CartID;
+    const items = await queryAsync(
+        `SELECT CI.ProductID, CI.Type, P.ProductName, P.ImageUrl, V.AvailableQty, CI.VariantID, CI.Quantity,
+                V.metricvalue, V.metrictype, V.Price, V.OfferPrice, V.Buy2Price, 0 AS KitID,
+                P.CategoryID, P.SubCategoryID, V.maxQty
+           FROM CartItems CI
+           JOIN Products P ON P.ProductID = CI.ProductID
+           JOIN ProductVariants V ON V.VariantID = CI.VariantID
+          WHERE P.Status = 1 AND V.AvailableQty > 0 AND CI.CartID = ?`,
+        [cartId]
+    );
+    return { cartId, items };
+}
+
+/**
+ * Wallet rule (from Settings):
+ *  - order total >= Minordervalue_wallet  -> wallet can cover the whole order
+ *  - smaller orders                       -> at most MinUseOfWallet from the wallet
+ */
+function walletUsable(balance, payableBeforeWallet, cfg) {
+    if (balance <= 0 || payableBeforeWallet <= 0) return 0;
+    const cap = payableBeforeWallet >= cfg.minOrderForFullWallet ? payableBeforeWallet : cfg.smallOrderWalletCap;
+    return money(Math.min(balance, cap, payableBeforeWallet));
+}
+
+/**
+ * @param {object} opts { userId, promoCode, latitude, longitude, tip, useWallet }
+ */
+async function computeBill(opts) {
+    const { userId } = opts;
+    const promoCode = opts.promoCode ? String(opts.promoCode).trim() : null;
+    const tip = Math.min(MAX_TIP, Math.max(0, Math.round(parseFloat(opts.tip) || 0)));
+
+    const [cfg, cart, users] = await Promise.all([
+        loadSettings(),
+        loadCart(userId),
+        queryAsync('SELECT WalletAmount FROM Users WHERE UserID = ?', [userId]),
+    ]);
+    const walletBalance = money(users.length ? users[0].WalletAmount : 0);
+
+    const location = {};
+    const lat = parseFloat(opts.latitude);
+    const lng = parseFloat(opts.longitude);
+    if (lat && lng) { location.latitude = lat; location.longitude = lng; }
+
+    const calc = await PricingEngine.calculateCart(cart.items, promoCode, userId, location);
+
+    const itemsTotal = money(calc.SubTotal);
+    const couponDiscount = money(calc.CouponDiscount);
+    const offerDiscount = money(calc.CartOfferDiscount);
+    const deliveryFee = money(calc.DeliveryCharges);
+    const itemsAfterDiscounts = money(itemsTotal - couponDiscount - offerDiscount);
+    const payableBeforeWallet = money(Math.max(0, itemsAfterDiscounts + deliveryFee + tip));
+    const usable = walletUsable(walletBalance, payableBeforeWallet, cfg);
+    const walletApplied = opts.useWallet ? usable : 0;
+    const toPay = money(payableBeforeWallet - walletApplied);
+
+    const stockIssues = (calc.Items || [])
+        .filter((i) => parseInt(i.Quantity, 10) > parseInt(i.AvailableQty, 10))
+        .map((i) => ({ ProductID: i.ProductID, VariantID: i.VariantID, ProductName: i.ProductName, AvailableQty: i.AvailableQty }));
+
+    return {
+        CartID: cart.cartId,
+        Items: calc.Items || [],
+        ItemCount: (calc.Items || []).reduce((n, i) => n + (parseInt(i.Quantity, 10) || 0), 0),
+        MRPTotal: money(calc.OriginalSubTotal),
+        ItemsTotal: itemsTotal,
+        ProductSavings: money(calc.OriginalSubTotal - itemsTotal),
+        PromoCode: couponDiscount > 0 ? promoCode : null,
+        CouponDiscount: couponDiscount,
+        CouponMessage: calc.CouponMessage || null,
+        CartOffer: calc.AppliedCartOffer,
+        CartOfferDiscount: offerDiscount,
+        DeliveryFee: deliveryFee,
+        FreeDeliveryApplied: !!calc.FreeDeliveryApplied,
+        FreeDeliveryThreshold: cfg.freeDeliveryThreshold,
+        AmountForFreeDelivery: calc.FreeDeliveryApplied ? 0 : money(Math.max(0, cfg.freeDeliveryThreshold - itemsTotal)),
+        Tip: tip,
+        TipPresets: cfg.tipPresets,
+        WalletBalance: walletBalance,
+        WalletUsable: usable,
+        WalletApplied: walletApplied,
+        ToPay: toPay,
+        TotalSavings: money(calc.OriginalSubTotal - itemsTotal + couponDiscount + offerDiscount),
+        MinOrderValue: cfg.minOrderValue,
+        MinOrderMet: itemsAfterDiscounts >= cfg.minOrderValue,
+        AmountForMinOrder: money(Math.max(0, cfg.minOrderValue - itemsAfterDiscounts)),
+        WalletRule: {
+            MinOrderForFullWallet: cfg.minOrderForFullWallet,
+            SmallOrderWalletCap: cfg.smallOrderWalletCap,
+        },
+        CashbackEarned: money(calc.CashbackEarned),
+        ApplicableCoupons: calc.ApplicableCoupons || [],
+        SuggestedCoupons: calc.SuggestedCoupons || [],
+        ProductUnlocks: calc.ProductUnlocks || [],
+        LargeCartNotice: calc.LargeCartNotice || null,
+        StockIssues: stockIssues,
+    };
+}
+
+module.exports = { computeBill, walletUsable, MAX_TIP };

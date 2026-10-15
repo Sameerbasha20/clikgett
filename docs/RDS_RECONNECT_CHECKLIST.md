@@ -35,7 +35,7 @@ The reverse direction (RDS tables/columns missing locally) is handled by
 Then run the backend migrations against RDS (each is idempotent), including:
 
 ```sh
-node server/migrations/order_lifecycle_migration.js   # AdminUsers.FCMToken, Orders.RefundStatus/RefundID
+node server/migrations/order_lifecycle_migration.js   # AdminUsers.FCMToken, Orders.RefundStatus/RefundID, OrderPayments.PaymentID/ConsumedAt/Purpose
 ```
 
 ## 3. Switch

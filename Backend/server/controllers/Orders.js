@@ -13,6 +13,8 @@ const AWS = require('aws-sdk');
 const s3 = require('../utils/s3');
 const pool = require('../utils/db');
 const OrderLifecycle = require('../services/OrderLifecycle');
+const CheckoutBill = require('../services/CheckoutBill');
+const PRODUCTS_S3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/";
 const { ORDER_STATUS, STATUS_LABELS } = require('../utils/orderStatus');
 
 
@@ -148,7 +150,23 @@ const ordercontroller = {
             console.log(req.body)
             const keys = Object.keys(body);
 
-            if (body.OrderAmount == undefined || body.OrderAmount == null) {
+            const purpose = String(body.Purpose || '').toUpperCase() === 'ORDER' ? 'ORDER' : 'WALLET';
+            if (purpose === 'ORDER') {
+                // Order payments are always for the server-calculated amount.
+                const bill = await CheckoutBill.computeBill({
+                    userId: req.UserID,
+                    promoCode: body.PromoCode && body.PromoCode !== 'NA' ? body.PromoCode : null,
+                    latitude: body.Latitude,
+                    longitude: body.Longitude,
+                    tip: body.TipAmount,
+                    useWallet: (parseFloat(body.WalletAmount) || 0) > 0,
+                });
+                if (!bill.Items.length) return resp.status(400).json({ Status: 0, Message: 'Your cart is empty.' });
+                if (!bill.MinOrderMet) return resp.status(400).json({ Status: 0, Message: `Minimum order value is Rs.${bill.MinOrderValue}.` });
+                if (bill.ToPay <= 0) return resp.status(400).json({ Status: 0, Message: 'Nothing to pay online for this order.' });
+                body.OrderAmount = bill.ToPay;
+            }
+            if (!(parseFloat(body.OrderAmount) >= 1)) {
                 return resp.json({ 'Status': 0, "Message": 'OrderAmount is a mandatory field' })
             }
             console.log("Payment Method: ",body.PaymentMethod);
@@ -183,7 +201,8 @@ const ordercontroller = {
 
             let InsertOrderPayments = {
                 OrderReceiptID: OrderReceiptID, UserID: req.UserID, OrderAmount: body.OrderAmount,
-                OrderCurrency: "INR", Notes: body.Notes, PaymentCapture: 1, RazorpayOrderID: RazorpayOrderID, Type: body.Type
+                OrderCurrency: "INR", Notes: body.Notes, PaymentCapture: 1, RazorpayOrderID: RazorpayOrderID, Type: body.Type,
+                Purpose: purpose
             }
 
             let sql = "INSERT INTO OrderPayments set ?";
@@ -192,7 +211,7 @@ const ordercontroller = {
                 if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
                 console.log('post method', results, err)
                 if (results.affectedRows === 1) {
-                    return resp.status(200).json({ "Status": 1, "RazorpayOrderID": RazorpayOrderID, "OrderReceiptID": OrderReceiptID });
+                    return resp.status(200).json({ "Status": 1, "RazorpayOrderID": RazorpayOrderID, "OrderReceiptID": OrderReceiptID, "OrderAmount": parseFloat(body.OrderAmount) });
                 }
                 else {
                     console.log("error in adding OrderPayments", results.affectedRows);
@@ -212,88 +231,95 @@ const ordercontroller = {
             console.log('Order Body', req.body)
             var body = req.body;
 
-            let GetConfig = await CommonController.Get_Configuration()
-            let minimumOrderAmount_wallet = 149;
-            let minimumOrderValue = 149;
-            var newArray = GetConfig.filter(function (el) {
-                if (el.SettingKey == 'Minordervalue_wallet') {
-                    minimumOrderAmount_wallet = parseFloat(el.SettingValue);
+            // Online payments that cannot become an order are refunded right away.
+            const isOnline = String(body.PaymentMethod || '').toUpperCase() === 'ONLINE';
+            const fail = async (status, message, extra = {}) => {
+                if (isOnline && body.razorpay_payment_id) {
+                    const refunded = await refundUnusedPayment(body.RazorpayOrderID, body.razorpay_payment_id, body.razorpay_signature, req.UserID);
+                    if (refunded) message += ' Your payment will be refunded.';
                 }
-                if (el.SettingKey == 'MinOrderValue') {
-                    minimumOrderValue = parseFloat(el.SettingValue);
-                }
-            });
-
-            console.log(minimumOrderValue, 'minimum Order Value for placing');
-
-            if (body.GrandTotal < minimumOrderValue)
-                return resp.status(400).json({ "Status": 0, "Message": "Minimum Order Value should be Rs.149 for placing new order" });
+                return resp.status(status).json({ Status: 0, Message: message, ...extra });
+            };
 
             // Authoritative backend serviceability verification: reject orders outside 20 km radius
             if (body.Latitude !== undefined && body.Longitude !== undefined && body.Latitude !== null && body.Longitude !== null) {
                 const deliveryDistance = await Calculate_customer_shop_distance(body.Latitude, body.Longitude);
                 if (parseFloat(deliveryDistance) > 20) {
-                    return resp.status(400).json({
-                        Status: 0,
-                        IsServiceable: false,
-                        Message: "Delivery not possible for this location. The delivery radius is limited to 20 km."
-                    });
+                    return fail(400, "Delivery not possible for this location. The delivery radius is limited to 20 km.", { IsServiceable: false });
                 }
                 body.Distance = deliveryDistance;
             }
 
-            const requestedWallet = parseFloat(body.WalletAmount) || 0;
-            if (requestedWallet < 0 || requestedWallet > (parseFloat(req.WalletAmount) || 0))
-                return resp.status(400).json({ "Status": 0, "Message": "Insufficient Wallet Balance to process this order." });
-
-	    if (!['ONLINE', 'COD'].includes(body.PaymentMethod) && body.WalletAmount != 0) {
-                if (body.GrandTotal < minimumOrderAmount_wallet)
-                    return resp.status(400).json({ "Status": 0, "Message": `Your Order Grand Total should be greater than Rs.${minimumOrderAmount_wallet} to use your wallet.`});
-
-                //if (body.WalletAmount <= req.WalletAmount)
-                //    return resp.status(400).json({ "Status": 0, "Message": "Insufficient Wallet Balance to process this order." });
+            // The server prices the order; amounts sent by the app are ignored.
+            const bill = await CheckoutBill.computeBill({
+                userId: req.UserID,
+                promoCode: body.PromoCode && body.PromoCode !== 'NA' ? body.PromoCode : null,
+                latitude: body.Latitude,
+                longitude: body.Longitude,
+                tip: body.TipAmount,
+                useWallet: (parseFloat(body.WalletAmount) || 0) > 0,
+            });
+            if (!bill.CartID || bill.Items.length === 0)
+                return fail(400, "Your cart is empty.");
+            if (body.PromoCode && body.PromoCode !== 'NA' && !bill.PromoCode)
+                return fail(400, bill.CouponMessage || "This coupon cannot be applied to your cart.");
+            if (!bill.MinOrderMet)
+                return fail(400, `Minimum order value is Rs.${bill.MinOrderValue}. Add Rs.${bill.AmountForMinOrder} more to place the order.`);
+            if (bill.StockIssues.length) {
+                const item = bill.StockIssues[0];
+                return fail(400, `${item.ProductName}: only ${item.AvailableQty} left in stock.`);
             }
-            else if (!['ONLINE', 'COD'].includes(body.PaymentMethod) && body.WalletAmount == 0)
-                return resp.status(400).json({ "Status": 0, "Message": "Insufficient Wallet Balance." });
+
+            let paymentMethod = String(body.PaymentMethod || 'COD').toUpperCase();
+            if (bill.ToPay === 0 && bill.WalletApplied > 0) paymentMethod = 'WALLET';
+            if (!['COD', 'ONLINE', 'WALLET'].includes(paymentMethod))
+                return fail(400, "Please choose a payment method.");
+            if (paymentMethod === 'WALLET' && bill.ToPay > 0)
+                return fail(400, "Your wallet balance does not cover this order. Choose cash or online payment for the rest.");
+
+            body.PaymentMethod = paymentMethod;
+            body.CartID = bill.CartID;
+            body.SubTotal = bill.ItemsTotal;
+            body.PromoCode = bill.PromoCode || undefined;
+            body.PromoAmount = Math.round((bill.CouponDiscount + bill.CartOfferDiscount) * 100) / 100;
+            body.Discount = body.PromoAmount;
+            body.DeliverCharges = bill.DeliveryFee;
+            body.TipAmount = bill.Tip;
+            body.WalletAmount = bill.WalletApplied;
+            body.GrandTotal = bill.ToPay;
+            body.OrderItems = bill.Items.map((i) => ({
+                ProductID: i.ProductID, VariantID: i.VariantID, ProductName: i.ProductName,
+                Quantity: i.Quantity, Price: i.Price, OfferPrice: i.UnitPrice,
+                metrictype: i.metrictype, metricvalue: i.metricvalue, Type: i.Type || 1,
+                ImageUrl: i.ImageUrl && i.ImageUrl !== 'NA' && !String(i.ImageUrl).startsWith('http') ? PRODUCTS_S3 + i.ImageUrl : i.ImageUrl,
+                KitID: 0, KitItems: [],
+            }));
+            const requestedWallet = bill.WalletApplied;
 
             console.log(body.PaymentMethod, 'PaymentMethod')
-            if (body.PaymentMethod == "ONLINE") {
-                //check receipt 
+            if (paymentMethod == "ONLINE") {
                 var RazorpayOrderID = body.RazorpayOrderID;
                 let signaturebody = RazorpayOrderID + "|" + body.razorpay_payment_id;
-                console.log(signaturebody)
                 var expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAYSECRET).update(signaturebody.toString()).digest('hex');
-
-                console.log("sig received ", body.razorpay_signature);
-                console.log("sig generated ", expectedSignature);
-
                 if (expectedSignature != body.razorpay_signature) {
                     return resp.json({ 'Status': 0, "Message": "invalid signature" })
                 }
-                else {
-                    let paymentdetails = await getpaymentdetails(body.razorpay_payment_id)
-                    console.log(paymentdetails, 'payment details')
-                    body.PaymentTransactionID = paymentdetails.id;
-                    body.PaymentStatus = 1
-
-                }
+                let paymentdetails = await getpaymentdetails(body.razorpay_payment_id)
+                const paidAmount = (parseFloat(paymentdetails.amount) || 0) / 100;
+                if (paymentdetails.order_id !== RazorpayOrderID || paidAmount + 0.5 < bill.ToPay)
+                    return fail(400, `Payment of Rs.${paidAmount.toFixed(2)} does not match the order total of Rs.${bill.ToPay.toFixed(2)}.`);
+                // A payment can be used for one order only.
+                const consumed = await consumePayment(RazorpayOrderID, body.razorpay_payment_id, req.UserID);
+                if (!consumed)
+                    return resp.status(400).json({ Status: 0, Message: "This payment has already been used." });
+                body.PaymentTransactionID = paymentdetails.id;
+                body.PaymentStatus = 1
             }
             else {
-                console.log('COD Order')
+                console.log('COD/Wallet Order')
                 RazorpayOrderID = 'NA'
                 body.PaymentTransactionID = "NA";
-                body.PaymentStatus = 0;
-            }
-
-            console.log(RazorpayOrderID, body.PaymentTransactionID, body.PaymentStatus, 'body.PaymentStatus')
-
-
-            // check Promocode
-            if (body.PromoCode != null || body.PromoCode != undefined) {
-                PromoCode = await getPromoCode(body.PromoCode)
-                if (PromoCode == 0) {
-                    return resp.json({ "Status": 0, "Message": "PromoCode doesnot exists" })
-                }
+                body.PaymentStatus = paymentMethod === 'WALLET' ? 1 : 0;
             }
 
             while (true) {
@@ -687,7 +713,8 @@ function CreateOrders(body, OrderID, RazorpayOrderID, expecteddate) {
                 expecteddate = moment().add(totalBaseMinutes, 'minutes').format('YYYY-MM-DD HH:mm:ss');
             }
 
-            body.GrandTotal = parseFloat(body.GrandTotal)||parseFloat(body.SubTotal); 
+            // 0 is a valid total (fully paid from the wallet)
+            body.GrandTotal = Number.isFinite(parseFloat(body.GrandTotal)) ? parseFloat(body.GrandTotal) : parseFloat(body.SubTotal);
 
             let Insertorder = {
                 MobileNumber: body.MobileNumber, CancellationReason: body.CancellationReason, City: body.City,
@@ -768,6 +795,34 @@ function Orderitemscreate(body, OrderID) {
     }
     catch (err) {
         return reject(-1)
+    }
+}
+
+// Marks a Razorpay payment as used; false when it was already redeemed.
+function consumePayment(RazorpayOrderID, paymentId, UserID) {
+    return new Promise((resolve) => {
+        pool.query(
+            "UPDATE OrderPayments SET PaymentID = ?, ConsumedAt = NOW() WHERE RazorpayOrderID = ? AND UserID = ? AND ConsumedAt IS NULL",
+            [paymentId, RazorpayOrderID, UserID],
+            (err, results) => {
+                if (err) { console.log('consumePayment failed', err.message); return resolve(false); }
+                resolve(results.affectedRows === 1);
+            }
+        );
+    });
+}
+
+// Refunds a verified, not-yet-used payment when the order could not be placed.
+async function refundUnusedPayment(RazorpayOrderID, paymentId, signature, UserID) {
+    try {
+        const expected = crypto.createHmac('sha256', process.env.RAZORPAYSECRET).update(`${RazorpayOrderID}|${paymentId}`).digest('hex');
+        if (expected !== signature) return false;
+        if (!(await consumePayment(RazorpayOrderID, paymentId, UserID))) return false;
+        await instance.payments.refund(paymentId);
+        return true;
+    } catch (err) {
+        console.log('refund of unused payment failed', paymentId, err && (err.error || err.message));
+        return false;
     }
 }
 
@@ -1863,3 +1918,4 @@ async function Calculate_customer_shop_distance(Cust_Latitude, Cust_Longitude) {
 // }
 
 module.exports = ordercontroller
+module.exports.consumePayment = consumePayment

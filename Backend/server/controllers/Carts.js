@@ -7,6 +7,7 @@ const https = require('https');
 const querystring = require('querystring');
 const CommonController = require("../controllers/CommonController");
 const RetentionEngine = require('../services/RetentionEngine');
+const CheckoutBill = require('../services/CheckoutBill');
 
 const pool = require('../utils/db');
 // products_s3="https://d3g1psimbpucs1.cloudfront.net/"
@@ -146,11 +147,12 @@ const cartcontroller = {
                 let cartitems = await getcartitems(cart[0]['CartID']);
                 
                 // Run Central Pricing & Restriction Engine
+                const body = req.body || {};
                 const calculation = await PricingEngine.calculateCart(
-                    cartitems, 
-                    req.body.PromoCode, 
-                    req.UserID, 
-                    req.body
+                    cartitems,
+                    body.PromoCode,
+                    req.UserID,
+                    { latitude: body.latitude || body.Latitude, longitude: body.longitude || body.Longitude }
                 );
 
                 cart[0]['CartItems'] = calculation.Items;
@@ -184,6 +186,25 @@ const cartcontroller = {
         }
     },
 
+
+    // Checkout bill: the exact amounts the order will be charged (see services/CheckoutBill.js).
+    checkoutBill: async (req, resp) => {
+        try {
+            const body = req.body || {};
+            const bill = await CheckoutBill.computeBill({
+                userId: req.UserID,
+                promoCode: body.PromoCode,
+                latitude: body.Latitude,
+                longitude: body.Longitude,
+                tip: body.Tip,
+                useWallet: body.UseWallet === true || body.UseWallet === 1 || body.UseWallet === '1' || body.UseWallet === 'true',
+            });
+            return resp.json({ Status: 1, Bill: bill });
+        } catch (err) {
+            console.log('checkout bill failed', err);
+            return resp.status(500).json({ Status: 0, Message: 'Could not calculate your bill' });
+        }
+    },
 
     ValidateCart: async (req, resp, next) => {
         try {

@@ -342,7 +342,8 @@
     "start": "nodemon server/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:security": "node server/tests/test_security_regressions.js",
-    "test:order-flow": "node server/tests/test_order_flow.js"
+    "test:order-flow": "node server/tests/test_order_flow.js",
+    "test:checkout": "node server/tests/test_checkout.js"
   },
   "author": "",
   "license": "ISC",
