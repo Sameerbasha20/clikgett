@@ -1,0 +1,17 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme for dark mode. -->
+    <style name="Theme.Deliveryparent" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/clikgett_green_primary</item>
+        <item name="colorPrimaryVariant">@color/clikgett_green_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/clikgett_green_accent</item>
+        <item name="colorSecondaryVariant">@color/clikgett_green_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">@color/clikgett_green_dark</item>
+    </style>
+
+    <style name="Theme.NutriproDeliveryBoy" parent="Theme.Deliveryparent" />
+</resources>

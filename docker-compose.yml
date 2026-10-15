@@ -1,0 +1,233 @@
+services:
+  # ===========================================================================
+  # 1. MySQL Service (Authoritative Local Database)
+  # ===========================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: clikgett-mysql
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3306:3306"
+    command: [
+      "--default-authentication-plugin=mysql_native_password",
+      "--sql-mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
+    ]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-clikgett_root_dev}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-clikgett-dev}
+      MYSQL_USER: ${MYSQL_USER:-clikgett_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-clikgett_dev_password}
+    volumes:
+      - clikgett_mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./docker/mysql/schema_sync_rds.sql:/docker-entrypoint-initdb.d/02-schema-sync-rds.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "clikgett_user", "-pclikgett_dev_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - clikgett_network
+
+  # ===========================================================================
+  # 2. PostgreSQL Service (Planned Migration Target)
+  # ===========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: clikgett-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-clikgett_pg_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-clikgett_pg_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clikgett_pg_dev_password}
+    volumes:
+      - clikgett_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clikgett_pg_user -d clikgett_pg_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - clikgett_network
+
+  # ===========================================================================
+  # 3. Redis Service (Local Cache & Session Store)
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: clikgett-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-clikgett_redis_dev_secret}", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - clikgett_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-clikgett_redis_dev_secret}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - clikgett_network
+
+  # ===========================================================================
+  # 4. MinIO Service (Local S3-Compatible Object Storage)
+  # ===========================================================================
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: clikgett-minio
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "127.0.0.1:9100:9000"
+      - "127.0.0.1:9101:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-clikgett_minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-clikgett_minio_pass123}
+    volumes:
+      - clikgett_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - clikgett_network
+
+  # ===========================================================================
+  # 5. MinIO Bucket Initialization (Idempotent Setup)
+  # ===========================================================================
+  minio-init:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: clikgett-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-clikgett_minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-clikgett_minio_pass123}
+    volumes:
+      - ./docker/minio/init.sh:/init.sh:ro
+    entrypoint: ["/bin/bash", "/init.sh"]
+    networks:
+      - clikgett_network
+
+  # ===========================================================================
+  # 6. Mailpit Service (Local SMTP & Email Capture)
+  # ===========================================================================
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: clikgett-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    networks:
+      - clikgett_network
+
+  # ===========================================================================
+  # 7. Node.js Backend Service (Express + MySQL + Redis + MinIO)
+  # ===========================================================================
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: clikgett-backend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5001:5000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      HOST: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${MYSQL_USER:-clikgett_user}
+      PASSWORD: ${MYSQL_PASSWORD:-clikgett_dev_password}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-clikgett_dev_password}
+      db: ${MYSQL_DATABASE:-clikgett-dev}
+      DB_NAME: ${MYSQL_DATABASE:-clikgett-dev}
+      SECRET_KEY: ${SECRET_KEY:-local_clikgett_dev_jwt_secret_key_32chars_min!}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-clikgett_redis_dev_secret}
+      REDIS_ENABLED: "true"
+      S3_ENDPOINT: http://minio:9000
+      S3AccessKey: ${MINIO_ROOT_USER:-clikgett_minio_admin}
+      S3SecretKey: ${MINIO_ROOT_PASSWORD:-clikgett_minio_pass123}
+      S3Bucket: clikgett-media
+      bucketname: clikgett-media
+      RAZORPAYID: ${RAZORPAYID:-rzp_test_local_mock_key}
+      RAZORPAYSECRET: ${RAZORPAYSECRET:-local_mock_secret}
+      TEXTSPEED_APIKEY: ${TEXTSPEED_APIKEY:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://127.0.0.1:9100}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      ADMIN_2FA_DEMO_OTP: ${ADMIN_2FA_DEMO_OTP:-123456}
+      ADMIN_2FA_FIXED_DEMO_OTP: ${ADMIN_2FA_FIXED_DEMO_OTP:-123456}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:5000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - clikgett_network
+
+  # ===========================================================================
+  # 8. React Admin Web Frontend (Nginx Production Bundle)
+  # ===========================================================================
+  admin:
+    build:
+      context: ./Admin
+      dockerfile: Dockerfile
+    container_name: clikgett-admin
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - clikgett_network
+
+# =============================================================================
+# Persistent Named Volumes
+# =============================================================================
+volumes:
+  clikgett_mysql_data:
+    name: clikgett_mysql_data
+  clikgett_postgres_data:
+    name: clikgett_postgres_data
+  clikgett_redis_data:
+    name: clikgett_redis_data
+  clikgett_minio_data:
+    name: clikgett_minio_data
+
+# =============================================================================
+# Isolated Bridge Network
+# =============================================================================
+networks:
+  clikgett_network:
+    name: clikgett_network
+    driver: bridge

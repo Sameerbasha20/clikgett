@@ -1,0 +1,121 @@
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services' // ✅ Firebase plugin added
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+// Override per build: ./gradlew assembleRelease -PapiBaseUrl=https://api.example.com/api/
+def apiBaseUrl = project.findProperty('apiBaseUrl') ?: 'http://192.168.1.8:5000/api/'
+
+android {
+    namespace 'com.deliveryboy_clickget'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.deliveryboy_clickget"
+        minSdk 21
+        targetSdk 35
+        versionCode 6
+        versionName "1.5"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
+        buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrl}\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // Uses key.properties (git-ignored, see key.properties.example) when present,
+            // otherwise the debug key; debug-signed builds cannot go to the Play Store.
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    packagingOptions {
+        exclude 'META-INF/androidx.localbroadcastmanager_localbroadcastmanager.version'
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    // AndroidX core dependencies
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // UI Components
+    implementation 'com.tbuonomo:dotsindicator:4.3'
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+    implementation 'tk.zielony:carbon:0.16.0.1'
+    implementation 'com.ncorti:slidetoact:0.9.0'
+
+    // WebSocket / Socket.IO (fixed)
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+    implementation('io.socket:socket.io-client:2.1.0') {
+        exclude group: 'org.json', module: 'json'
+    }
+
+    // Location services
+    implementation 'com.google.android.gms:play-services-location:18.0.0'
+
+    // Payment Gateway
+    implementation 'com.razorpay:checkout:1.6.19'
+
+    // Networking
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.android.volley:volley:1.2.1'
+    implementation 'com.squareup.picasso:picasso:2.71828'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+
+    // Permissions
+    implementation 'com.karumi:dexter:5.0.0'
+
+    // AWS SDKs
+    implementation('com.amazonaws:aws-android-sdk-mobile-client:2.17.1@aar') {
+        transitive = true
+    }
+    implementation 'com.amazonaws:aws-android-sdk-s3:2.18.0'
+    implementation 'com.amazonaws:aws-android-sdk-cognito:2.20.1'
+    implementation 'com.amazonaws:aws-android-sdk-cognitoidentityprovider:2.18.0'
+
+    // Firebase
+    implementation 'com.google.firebase:firebase-core:17.5.0'
+    implementation 'com.google.firebase:firebase-messaging:23.1.0'
+
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}

@@ -1,0 +1,57 @@
+node_modules/
+build/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+logs/
+*.log
+
+# Secrets and credentials (share out-of-band, never commit)
+.env
+**/.env
+.env.*
+**/.env.*
+!**/.env.example
+Backend/server/utils/clikgett.json
+**/*firebase-adminsdk*.json
+**/*.jks
+**/*.keystore
+**/key.properties
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Customer data exports (PII)
+Backend/179*
+Backend/**/*.xlsx
+Backend/**/*.csv
+
+# Build output
+**/build/
+**/*.apk
+**/*.aab
+Flutter/**/.dart_tool/
+Flutter/**/.gradle/
+**/local.properties
+
+# Universal QA artifacts and temporary test runners
+universal_qa.py
+qa_report.json
+qa_report.md
+QA_FIX_REPORT.md
+application_inventory.json
+screenshots/
+trace_exact_errors.py
+diagnose_console_errors.py
+.diff.txt
+
+# Generated invoices and uploads
+Backend/logs/
+Backend/images/*.pdf
+Backend/images/*_33.png
+
+# Backup and editor leftovers
+*.backup
+*.save
+*.before-*
+*~

@@ -1,0 +1,6 @@
+# Copy to android/key.properties (git-ignored) and fill in. Keep the keystore
+# itself outside the repository, e.g. storeFile=C:/secure/clikgett-upload.jks
+storePassword=
+keyPassword=
+keyAlias=
+storeFile=

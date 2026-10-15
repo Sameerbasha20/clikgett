@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Clikgett Delivery Partner</string>
+    <string name="open_drawer">Open Drawer</string>
+    <string name="close_drawer">Close Drawer</string>
+    <string name="str_no_network">No network connection</string>
+    <string name="orders">Orders</string>
+    <string name="stats">Stats</string>
+    <string name="logout">Logout</string>
+    <string name="please_enter_the_verification">Please Enter the verification</string>
+    <string name="otp_verification">OTP Verification</string>
+    <string name="code_sent_to">code sent to</string>
+    <string name="_91_9553290143">+91 9553290143</string>
+    <string name="enter_otp">Enter OTP</string>
+    <string name="verify_otp">Verify OTP</string>
+    <string name="resend_otp_in">Resend OTP in</string>
+    <string name="no_records_found">No records found</string>
+</resources>

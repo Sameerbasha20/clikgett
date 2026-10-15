@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ClikGett Primary Brand Colors -->
+    <color name="purple_200">#16A34A</color>
+    <color name="purple_500">#16A34A</color>
+    <color name="purple_700">#15803D</color>
+    <color name="teal_200">#22C55E</color>
+    <color name="teal_700">#15803D</color>
+
+    <color name="clikgett_green_primary">#16A34A</color>
+    <color name="clikgett_green_dark">#15803D</color>
+    <color name="clikgett_green_light">#DCFCE7</color>
+    <color name="clikgett_green_accent">#22C55E</color>
+
+    <!-- Surfaces & Neutrals -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="clikgett_surface_bg">#F8FAFC</color>
+    <color name="clikgett_card_surface">#FFFFFF</color>
+    <color name="clikgett_card_stroke">#E2E8F0</color>
+    <color name="clikgett_divider">#E2E8F0</color>
+
+    <!-- High-Contrast Typography (Slate scale) -->
+    <color name="clikgett_text_primary">#0F172A</color>
+    <color name="clikgett_text_secondary">#475569</color>
+    <color name="clikgett_text_muted">#94A3B8</color>
+
+    <!-- Operational quick-commerce status colors -->
+    <color name="color_online">#16A34A</color>
+    <color name="color_online_bg">#DCFCE7</color>
+    <color name="color_offline">#64748B</color>
+    <color name="color_offline_bg">#F1F5F9</color>
+    <color name="color_break">#EA580C</color>
+    <color name="color_break_bg">#FFEDD5</color>
+    <color name="color_delivery">#2563EB</color>
+    <color name="color_delivery_bg">#DBEAFE</color>
+    <color name="color_card_bg">#FFFFFF</color>
+    <color name="color_border">#E2E8F0</color>
+    <color name="color_danger">#DC2626</color>
+    <color name="color_danger_bg">#FEE2E2</color>
+    <color name="color_warning">#D97706</color>
+    <color name="color_warning_bg">#FEF3C7</color>
+    <color name="color_blue_call">#2563EB</color>
+    <color name="color_blue_call_bg">#EFF6FF</color>
+</resources>

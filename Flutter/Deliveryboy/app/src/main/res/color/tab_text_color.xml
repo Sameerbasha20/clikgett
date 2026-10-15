@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Color when tab is selected -->
+    <item android:color="@color/purple_200" android:state_selected="true" />
+    <!-- Color when tab is unselected -->
+    <item android:color="@color/purple_200" />
+</selector>

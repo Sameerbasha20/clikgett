@@ -1,0 +1,268 @@
+* {
+    margin: 0;
+    padding: 0;
+    font-family: "Open Sans", sans-serif;
+
+}
+.table-checkbox {
+    margin-left: 0.6rem;
+}
+.react-bootstrap-table table thead {
+    border-bottom: 1px solid #e5e7eb !important;
+}
+.react-bootstrap-table table th {
+    border: none;
+    background-color: rgba(229, 231, 235, 0.6);
+    padding: 1rem;
+}
+.react-bootstrap-table table tbody tr td {
+    color: #24262d !important;
+    font-size: 14px;
+    font-family: 'Open Sans', sans-serif;
+    border: none;
+    font-weight: 450;
+    padding: 1rem;
+    vertical-align: middle;
+}
+.table_order table tbody tr td,.table_order table th{
+text-align: center;
+}
+.react-bootstrap-table table tbody tr {
+    background-color: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+.table-center .react-bootstrap-table table tbody tr{
+    text-align: center;
+}
+.category-table {
+    border: 1px solid #e5e7eb;
+    overflow: scroll;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.category-table::-webkit-scrollbar {
+    display: none;
+}
+.react-bootstrap-table table {
+    table-layout: auto;
+    overflow: scroll;
+    width: 100%;
+    min-width: 800px;
+}
+.react-bootstrap-table table::-webkit-scrollbar {
+    display: none;
+}
+.react-bootstrap-table-pagination {
+    --bs-gutter-x:: 0;
+}
+.table > :not(:first-child) {
+    border-top: 0;
+}
+.rti--container {
+    max-width: 590px;
+    --rti-tag: #edf2f7 !important;
+  /* --rti-main: #3182ce; */
+  --rti-radius: 0.5rem;
+  --rti-s: 1rem; 
+}
+
+/* -----------react tags --------- */
+.ReactTags__tags {
+    position: relative;
+  }
+
+  .ReactTags__clearAll {
+    cursor: pointer;
+    padding: 10px;
+    margin: 10px;
+    background: #f88d8d;
+    color: #fff;
+    border: none;
+  }
+
+  /* Styles for the input */
+  /* .ReactTags__tagInput {
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .ReactTags__tagInput input.ReactTags__tagInputField,
+  .ReactTags__tagInput input.ReactTags__tagInputField:focus {
+    height: 31px;
+    margin: 0;
+    font-size: 12px;
+    border: 1px solid #eee;
+    min-width: 150px;
+  }
+
+  .ReactTags__editInput {
+    border-radius: 1px;
+  }
+
+  .ReactTags__editTagInput {
+    display: inline-flex;
+  } */
+
+  /* Styles for selected tags */
+  .ReactTags__selected span.ReactTags__tag {
+      margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    background: #63bcfd;
+    color: white;
+    font-size: 12px;
+    display: inline-block;
+    padding: 5px;
+    margin: 0 5px;
+    border-radius: 2px;
+  }
+  .ReactTags__selected span.ReactTags__tag:first-child {
+    margin-left: 0px;
+  }
+  .ReactTags__selected a.ReactTags__remove {
+    color: #aaa;
+    margin-left: 5px;
+    cursor: pointer;
+  }
+
+  /* Styles for suggestions */
+  .ReactTags__suggestions {
+    position: absolute;
+    top:60px;
+  }
+  .ReactTags__suggestions ul {
+    list-style-type: none;
+    box-shadow: 0.05em 0.01em 0.5em rgba(0, 0, 0, 0.2);
+    background: white;
+    width: 200px;
+  }
+  .ReactTags__suggestions li {
+    border-bottom: 1px solid #ddd;
+    padding: 5px 10px;
+    margin: 0;
+  }
+  .ReactTags__suggestions li mark {
+    text-decoration: underline;
+    background: none;
+    font-weight: 600;
+  }
+  .ReactTags__suggestions ul li.ReactTags__activeSuggestion {
+    background: #b7cfe0;
+    cursor: pointer;
+  }
+
+  .ReactTags__remove {
+    border: none;
+    cursor: pointer;
+    background: none;
+    color: white;
+  }
+  .Add-store {
+    justify-self: left;
+    width: fit-content;
+    background-color: rgba(14, 159, 110, 1);
+    color: white;
+    padding: 0.5rem 2rem;
+    border: none;
+    border-radius: 10px;
+}.checkbox-apple {
+  position: relative;
+  width: 50px;
+  height: 25px;
+  margin: 20px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.checkbox-apple label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50px;
+  height: 25px;
+  border-radius: 50px;
+  background: linear-gradient(to bottom, #b3b3b3, #e6e6e6);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.checkbox-apple label:after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.checkbox-apple input[type="checkbox"]:checked + label {
+  background: linear-gradient(to bottom, #4cd964, #5de24e);
+}
+
+.checkbox-apple input[type="checkbox"]:checked + label:after {
+  transform: translateX(25px);
+}
+
+.checkbox-apple label:hover {
+  background: linear-gradient(to bottom, #b3b3b3, #e6e6e6);
+}
+
+.checkbox-apple label:hover:after {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.yep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50px;
+  height: 25px;
+}
+
+/* src/App.css */
+.carousel {
+  position: relative;
+  max-width: 450px;
+
+  overflow: hidden;
+}
+
+.carousel-container {
+  position: relative;
+}
+
+.carousel-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.prev-button,
+.next-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 24px;
+}
+
+.prev-button {
+  left: 10px;
+}
+
+.next-button {
+  right: 10px;
+}
+
+.prev-button:hover,
+.next-button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
