@@ -9,7 +9,7 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 // Override per build: ./gradlew assembleRelease -PapiBaseUrl=https://api.example.com/api/
-def apiBaseUrl = project.findProperty('apiBaseUrl') ?: 'http://192.168.1.8:5000/api/'
+def apiBaseUrl = project.findProperty('apiBaseUrl') ?: 'http://192.168.1.8:5001/api/'
 
 android {
     namespace 'com.deliveryboy_clickget'

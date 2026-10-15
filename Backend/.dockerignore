@@ -6,3 +6,6 @@ npm-debug.log
 !.env.docker
 tests
 *.log
+logs
+179*
+images/INV*.pdf

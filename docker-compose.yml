@@ -142,7 +142,8 @@ services:
     container_name: clikgett-backend
     restart: unless-stopped
     ports:
-      - "127.0.0.1:5001:5000"
+      # Reachable from phones on the LAN (http://<PC Wi-Fi IP>:5001). Set BACKEND_BIND_ADDRESS=127.0.0.1 to keep it local-only.
+      - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:5001:5000"
     depends_on:
       mysql:
         condition: service_healthy

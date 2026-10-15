@@ -9,8 +9,8 @@ class Constants {
   static String razorPayLiveKey = 'rzp_live_9FPNRUvl1wCmD3';
   static String razorPayKey = razorPayTestKey;
 
-  static String baseUrlDev = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.8:5000/api");
-  static String baseUrlProd = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.8:5000/api");
+  static String baseUrlDev = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.8:5001/api");
+  static String baseUrlProd = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.8:5001/api");
   // static String baseUrlProd = "http://13.202.27.254:3001/api";
 
   static String whatsAppNumber = '919429690261';
