@@ -2,6 +2,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
 import 'package:fav_app/new/Controllers/category_controller.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
+import 'package:fav_app/new/NewScreens/Homepage/ItemDescription.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Categories/SubCategoryList.dart';
 import 'package:fav_app/old/Models/Home/home_model.dart' as homeModel;
 import 'package:flutter/material.dart';
@@ -40,6 +41,13 @@ class _HomeHeroBannerCarouselState extends State<HomeHeroBannerCarousel> {
             categoryController: categoryController,
             scrollController: ScrollController(),
           ),
+        ),
+      );
+    } else if (banner.destinationType == 'product' && banner.destinationId != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ItemDescription(id: banner.destinationId!, title: banner.bannerName ?? '', percent: 0),
         ),
       );
     } else if (banner.destinationType == 'category' && banner.destinationId != null) {

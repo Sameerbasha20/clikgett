@@ -41,17 +41,82 @@ const pool = require('../utils/db');
 
 
 
+// In-stock first, then best-selling (last 120 days), then newest.
+const POPULARITY_ORDER = `order by (select coalesce(max(pv.AvailableQty), 0) > 0 from ProductVariants pv where pv.ProductID = p.ProductID and pv.Status = 1) desc,
+    coalesce((select sum(oi.Quantity) from OrderItems oi inner join Orders o on o.OrderID = oi.OrderID
+              where oi.ProductID = p.ProductID and o.OrderStatus not in (3,4) and o.CreatedAt > NOW() - INTERVAL 120 DAY), 0) desc,
+    p.ProductID desc`;
+
+const sectionCategories = (sectionId) => CommonController.commonget(
+    "select c.CategoryID, c.CategoryName, c.CategoryImage, c.ImageUrl from HomeSectionCategories hsc inner join Categories c on c.CategoryID=hsc.CategoryID where c.Status=1 and hsc.HomeSectionID = ? order by hsc.DisplayOrder asc",
+    [sectionId]);
+
+const sectionSubcategories = (sectionId) => CommonController.commonget(
+    "select s.SubCategoryID, s.SubCategoryName, s.CategoryID from HomeSectionSubcategories hss inner join SubCategories s on s.SubCategoryID=hss.SubCategoryID where s.Status=1 and hss.HomeSectionID = ? order by hss.DisplayOrder asc",
+    [sectionId]);
+
+// Products for one home section. Used by the home page (limit 15) and the
+// section's "See all" screen (larger limit), so both always agree.
+async function sectionProducts(section, userId, limit, related = {}) {
+    const lim = Math.max(1, Math.min(200, parseInt(limit, 10) || 15));
+    const uid = parseInt(userId, 10) || 0;
+    const type = (section.SectionType || 'selected_products').toLowerCase();
+    const ids = (rows, key) => (rows || []).map((r) => parseInt(r[key], 10)).filter((n) => n > 0).join(',');
+
+    if (type === 'category_shelf') {
+        const catIds = ids(related.categories || await sectionCategories(section.HomeSectionID), 'CategoryID');
+        if (!catIds) return [];
+        return CommonController.getproducts(`select p.* from Products p where p.Status=1 and p.CategoryID in (${catIds}) ${POPULARITY_ORDER} limit 0,${lim}`);
+    }
+    if (type === 'subcategory_shelf') {
+        const subIds = ids(related.subcategories || await sectionSubcategories(section.HomeSectionID), 'SubCategoryID');
+        if (!subIds) return [];
+        return CommonController.getproducts(`select p.* from Products p where p.Status=1 and p.SubCategoryID in (${subIds}) ${POPULARITY_ORDER} limit 0,${lim}`);
+    }
+    if (type === 'bestsellers') {
+        return CommonController.getproducts(`select p.* from Products p
+            inner join (select oi.ProductID, sum(oi.Quantity) as Sold from OrderItems oi inner join Orders o on o.OrderID = oi.OrderID
+                        where o.OrderStatus not in (3,4) and o.CreatedAt > NOW() - INTERVAL 120 DAY group by oi.ProductID) s on s.ProductID = p.ProductID
+            where p.Status=1 and exists (select 1 from ProductVariants pv where pv.ProductID = p.ProductID and pv.Status = 1 and pv.AvailableQty > 0)
+            order by s.Sold desc limit 0,${lim}`);
+    }
+    if (type === 'recommendations') {
+        // Best-sellers from the categories this customer buys from; otherwise overall best-sellers.
+        if (uid > 0) {
+            const personal = await CommonController.getproducts(`select p.* from Products p where p.Status=1
+                and p.CategoryID in (select distinct p2.CategoryID from OrderItems oi2 inner join Orders o2 on o2.OrderID = oi2.OrderID
+                                     inner join Products p2 on p2.ProductID = oi2.ProductID where o2.UserID = ${uid})
+                and p.ProductID not in (select oi3.ProductID from OrderItems oi3 inner join Orders o3 on o3.OrderID = oi3.OrderID where o3.UserID = ${uid})
+                ${POPULARITY_ORDER} limit 0,${lim}`);
+            if (personal && personal.length >= 6) return personal;
+        }
+        return sectionProducts({ SectionType: 'bestsellers' }, 0, lim);
+    }
+    if (type === 'deals_and_offers') {
+        return CommonController.getproducts(`select p.* from Products p inner join ProductVariants pv on p.ProductID=pv.ProductID
+            where p.Status=1 and pv.Status=1 and pv.OfferPrice < pv.Price and pv.AvailableQty>0
+            group by p.ProductID order by max((pv.Price - pv.OfferPrice) / pv.Price) desc limit 0,${lim}`);
+    }
+    if (type === 'order_again') {
+        if (!uid) return [];
+        return CommonController.getproducts(`select p.* from OrderItems oi inner join Orders o on o.OrderID=oi.OrderID
+            inner join Products p on p.ProductID=oi.ProductID where o.UserID=${uid} and p.Status=1 and o.OrderStatus not in (3,4)
+            group by p.ProductID order by max(o.CreatedAt) desc limit 0,${lim}`);
+    }
+    if (type === 'promotional_banner' || type === 'shop_by_category') return [];
+    // 'selected_products': products the admin picked for this section
+    return CommonController.getproducts(
+        `select p.* from HomeSectionProducts hp inner join Products p on p.ProductID=hp.ProductID where p.Status=1 and hp.HomeSectionID = ${parseInt(section.HomeSectionID, 10) || 0} order by hp.DisplayOrder asc, hp.id asc limit 0,${lim}`);
+}
+
 async function fetchDynamicHomeSections(userId) {
     const finalSections = [];
     try {
-        const getSectionsQuery = "select Name, HomeSectionID, Description, ImageUrl, DisplayOrder, SectionType, SystemKey, IsBuiltIn, ConfigurationJSON from HomepageSections where Status=1 and (StartDate IS NULL OR StartDate <= NOW()) and (EndDate IS NULL OR EndDate >= NOW()) order by DisplayOrder asc, created_at desc";
-        const sections = await CommonController.commonget(getSectionsQuery);
-
+        const sections = await CommonController.commonget("select Name, HomeSectionID, Description, ImageUrl, DisplayOrder, SectionType, SystemKey, IsBuiltIn, ConfigurationJSON from HomepageSections where Status=1 and (StartDate IS NULL OR StartDate <= NOW()) and (EndDate IS NULL OR EndDate >= NOW()) order by DisplayOrder asc, created_at desc");
         if (!Array.isArray(sections)) return [];
 
         for (const section of sections) {
             section.SectionType = (section.SectionType || 'selected_products').toLowerCase();
-            
             let config = {};
             if (section.ConfigurationJSON) {
                 try {
@@ -62,71 +127,25 @@ async function fetchDynamicHomeSections(userId) {
             }
             section.Configuration = config;
 
-            let products = [];
             let categories = [];
             let subcategories = [];
-
             if (section.SectionType === 'shop_by_category') {
-                categories = await CommonController.commonget(
-                    "select c.CategoryID, c.CategoryName, c.CategoryImage, c.ImageUrl from HomeSectionCategories hsc inner join Categories c on c.CategoryID=hsc.CategoryID where c.Status=1 and hsc.HomeSectionID=" + section.HomeSectionID + " order by hsc.DisplayOrder asc"
-                );
+                categories = await sectionCategories(section.HomeSectionID);
                 if (!categories || categories.length === 0) {
                     categories = await CommonController.commonget("select CategoryID, CategoryName, CategoryImage, ImageUrl from Categories where Status=1 order by Priority asc, CategoryName asc limit 0,12");
                 }
             } else if (section.SectionType === 'category_shelf') {
-                const catRows = await CommonController.commonget(
-                    "select c.CategoryID, c.CategoryName, c.CategoryImage, c.ImageUrl from HomeSectionCategories hsc inner join Categories c on c.CategoryID=hsc.CategoryID where c.Status=1 and hsc.HomeSectionID=" + section.HomeSectionID + " order by hsc.DisplayOrder asc"
-                );
-                categories = catRows || [];
-                if (categories.length > 0) {
-                    const catIds = categories.map(c => c.CategoryID).join(',');
-                    products = await CommonController.getproducts(`select p.* from Products p where p.Status=1 and p.CategoryID in (${catIds}) limit 0,15`);
-                }
+                categories = await sectionCategories(section.HomeSectionID);
             } else if (section.SectionType === 'subcategory_shelf') {
-                const subRows = await CommonController.commonget(
-                    "select s.SubCategoryID, s.SubCategoryName, s.CategoryID from HomeSectionSubcategories hss inner join SubCategories s on s.SubCategoryID=hss.SubCategoryID where s.Status=1 and hss.HomeSectionID=" + section.HomeSectionID + " order by hss.DisplayOrder asc"
-                );
-                subcategories = subRows || [];
-                if (subcategories.length > 0) {
-                    const subIds = subcategories.map(s => s.SubCategoryID).join(',');
-                    products = await CommonController.getproducts(`select p.* from Products p where p.Status=1 and p.SubCategoryID in (${subIds}) limit 0,15`);
-                }
-            } else if (section.SectionType === 'bestsellers') {
-                products = await CommonController.getproducts(
-                    "select p.* from RecommendedProducts Rp inner join Products p on p.ProductID=Rp.ProductID inner join ProductVariants pv on p.ProductID=pv.ProductID where p.Status=1 and Rp.Status=1 and pv.AvailableQty>0 and pv.Status=1 group by p.ProductID limit 0,15"
-                );
-            } else if (section.SectionType === 'recommendations') {
-                products = await CommonController.getproducts(
-                    "select p.* from RecommendedProducts Rp inner join Products p on p.ProductID=Rp.ProductID where p.Status=1 and Rp.Status=1 limit 0,15"
-                );
-            } else if (section.SectionType === 'deals_and_offers') {
-                products = await CommonController.getproducts(
-                    "select p.* from Products p inner join ProductVariants pv on p.ProductID=pv.ProductID where p.Status=1 and pv.Status=1 and pv.OfferPrice < pv.Price and pv.AvailableQty>0 group by p.ProductID order by max(pv.Price - pv.OfferPrice) desc limit 0,15"
-                );
-            } else if (section.SectionType === 'order_again') {
-                if (userId) {
-                    products = await CommonController.getproducts(
-                        `select p.* from OrderItems oi inner join Orders o on o.OrderID=oi.OrderID inner join Products p on p.ProductID=oi.ProductID where o.UserID=${parseInt(userId, 10)} and p.Status=1 group by p.ProductID order by max(o.CreatedAt) desc limit 0,15`
-                    );
-                }
-            } else if (section.SectionType === 'promotional_banner') {
-                // Banner section
-            } else {
-                // Default: 'selected_products'
-                const getSectionProducts = "select p.* from HomeSectionProducts hp inner join Products p on p.ProductID=hp.ProductID where p.Status=1 and hp.HomeSectionID=" + section.HomeSectionID + " order by hp.DisplayOrder asc, hp.id asc limit 0,15";
-                products = await CommonController.getproducts(getSectionProducts);
+                subcategories = await sectionSubcategories(section.HomeSectionID);
             }
 
-            section.Products = products || [];
+            section.Products = (await sectionProducts(section, userId, 15, { categories, subcategories })) || [];
             section.Categories = categories || [];
             section.SubCategories = subcategories || [];
 
-            if (
-                (section.Products && section.Products.length > 0) ||
-                (section.Categories && section.Categories.length > 0) ||
-                section.SectionType === 'promotional_banner' ||
-                section.SectionType === 'order_again'
-            ) {
+            // Only send sections that have something to show
+            if (section.Products.length > 0 || section.Categories.length > 0 || section.SectionType === 'promotional_banner') {
                 finalSections.push(section);
             }
         }
@@ -611,12 +630,11 @@ const usercontroller = {
 
     HomepageSection_Products_all: async (req, resp, next) => {
         try {
-            GetSection_Products = "select p.* from HomeSectionProducts hp inner join Products p on\
-                    p.ProductID=hp.ProductID where p.Status=1 and \
-                    hp.HomeSectionID="+ pool.escape(req.params.HomeSectionId)
-            let ProductResult = await CommonController.getproducts(GetSection_Products)
-            resp.json({ "status": 1, "Products": ProductResult })
-
+            const rows = await CommonController.commonget(
+                "select HomeSectionID, Name, SectionType from HomepageSections where HomeSectionID = ? and Status = 1", [req.params.HomeSectionId]);
+            if (!rows.length) return resp.json({ "status": 1, "Products": [] });
+            const ProductResult = await sectionProducts(rows[0], req.UserID, 100);
+            resp.json({ "status": 1, "Name": rows[0].Name, "Products": ProductResult || [] })
         } catch (error) {
             logger.info(error)
             return resp.json({ "status": 0, "Message": 'error' })

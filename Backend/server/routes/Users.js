@@ -17,13 +17,13 @@ router
 
  .post('/signup', util.authenticate.userAuthenticate, usercontroller.Signup, util.authenticate.generateUserAuthToken)
 
- .get('/homepage', usercontroller.homepage)
+ .get('/homepage', util.authenticate.optionalUserAuthenticate, usercontroller.homepage)
 
- .get('/homepagesectionproducts', util.authenticate.userAuthenticate, usercontroller.HomepageSection_Products)
+ .get('/homepagesectionproducts', util.authenticate.optionalUserAuthenticate, usercontroller.HomepageSection_Products)
 
- .get('/homepagesectionproducts_all/:HomeSectionId', util.authenticate.userAuthenticate, usercontroller.HomepageSection_Products_all)
+ .get('/homepagesectionproducts_all/:HomeSectionId', util.authenticate.optionalUserAuthenticate, usercontroller.HomepageSection_Products_all)
 
- .get('/webhomepage', usercontroller.homepage)
+ .get('/webhomepage', util.authenticate.optionalUserAuthenticate, usercontroller.homepage)
 
  .put('/update', util.authenticate.userAuthenticate, usercontroller.updateuser)
 

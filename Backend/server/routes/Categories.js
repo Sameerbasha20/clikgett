@@ -7,10 +7,10 @@ const validate = require('../utils/validations');
 
 router
 
-.get('/subcategories_by_category/:CategoryID',util.authenticate.userAuthenticate,categorycontroller.categories_subcategories)
-.get('/allcategoriesuser',util.authenticate.userAuthenticate,categorycontroller.categories)
+.get('/subcategories_by_category/:CategoryID',util.authenticate.optionalUserAuthenticate,categorycontroller.categories_subcategories)
+.get('/allcategoriesuser',util.authenticate.optionalUserAuthenticate,categorycontroller.categories)
 .get('/websubcategories',categorycontroller.categories_subcategories)
-.get('/subcategorydetail/:SubCategoryID',util.authenticate.userAuthenticate,categorycontroller.SubcategoryDetail)
+.get('/subcategorydetail/:SubCategoryID',util.authenticate.optionalUserAuthenticate,categorycontroller.SubcategoryDetail)
 
 .get('/allcategoriesadmin',util.authenticate.adminAuthenticate,categorycontroller.getallCategoriesforadmin)
 .get('/detail/:CategoryID',util.authenticate.adminAuthenticate,categorycontroller.categorydetail)

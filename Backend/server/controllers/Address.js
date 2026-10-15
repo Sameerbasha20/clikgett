@@ -356,12 +356,15 @@ const addresscontroller={
             }
 
             const isServiceable = distanceKm <= maxRadius;
+            // Delivery time for this address from the admin's distance-band ETA rules
+            const eta = await require('./DeliveryETA').calculateBaseETA(distanceKm);
 
             return resp.status(200).json({
                 Status: 1,
                 IsServiceable: isServiceable,
                 DistanceKm: distanceKm,
                 MaxDeliveryRadiusKm: maxRadius,
+                EtaMinutes: isServiceable ? eta.baseMinutes : null,
                 Message: isServiceable
                     ? "Delivery is available for this location"
                     : "Sorry! ClikGett is not available at your selected address right now. We're working to expand our delivery service."

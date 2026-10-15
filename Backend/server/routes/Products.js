@@ -7,13 +7,13 @@ const util=require("../utils/utils")
 
 router
 
-.get('/list',util.authenticate.userAuthenticate,productcontroller.productsbyCategory_subcategory)
+.get('/list',util.authenticate.optionalUserAuthenticate,productcontroller.productsbyCategory_subcategory)
 
-.get('/weblist',util.authenticate.userAuthenticate,productcontroller.productsbyCategory_subcategory)
+.get('/weblist',util.authenticate.optionalUserAuthenticate,productcontroller.productsbyCategory_subcategory)
 
-.get('/detail/:ProductID',util.authenticate.userAuthenticate,productcontroller.productsby_ProductID)
+.get('/detail/:ProductID',util.authenticate.optionalUserAuthenticate,productcontroller.productsby_ProductID)
 
-.get('/search/:SearchString',util.authenticate.userAuthenticate,productcontroller.searchProduct)
+.get('/search/:SearchString',util.authenticate.optionalUserAuthenticate,productcontroller.searchProduct)
 .get('/suggestions',util.authenticate.optionalUserAuthenticate,productcontroller.searchSuggestions)
 .get('/suggestions/:query',util.authenticate.optionalUserAuthenticate,productcontroller.searchSuggestions)
 .delete('/search-history',util.authenticate.optionalUserAuthenticate,productcontroller.clearSearchHistory)
@@ -24,9 +24,9 @@ router
 
 .get('/kitdetail/:KitID',util.authenticate.userAuthenticate,productcontroller.kitdetail)
 
-.get('/recommendedproducts',util.authenticate.userAuthenticate,productcontroller.RecommendedProducts_User)
+.get('/recommendedproducts',util.authenticate.optionalUserAuthenticate,productcontroller.RecommendedProducts_User)
 
-.get('/youmaylikeit',util.authenticate.userAuthenticate,productcontroller.YouMayLikeIt_Products)
+.get('/youmaylikeit',util.authenticate.optionalUserAuthenticate,productcontroller.YouMayLikeIt_Products)
 
 .get('/similar/:ProductID', util.authenticate.optionalUserAuthenticate, productcontroller.similarProducts)
 

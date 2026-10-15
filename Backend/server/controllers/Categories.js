@@ -349,61 +349,30 @@ const categoriescontroller = {
 
 
 
-// function subcategoriesbycategories(CategoryID) {
-//     try {
-//         return new Promise(function (resolve, reject) {
-//             pool.query("select * from SubCategories where CategoryID=? and Status=1 order by \
-//             SubCategoryName desc", [CategoryID], async (err, results) => {
-
-//                 if(err) {
-//                     console.log('err subcategoriesbycategories')
-//                     return reject(-1);
-//                 } 
-//                 else  {
-
-//                     console.log("retrived Products : ", results.length);
-//                     resolve(results)
-//                 }
-
-
-//             });
-//         });
-//     }
-//     catch (err) {
-//         console.log("error in retrieving Products");
-//         return reject(-1)
-//     }
-// }
-//NEWCODE
+// // Active subcategories of a category that have at least one active, in-catalog product.
 function subcategoriesbycategories(CategoryID) {
-    try {
-        return new Promise(function (resolve, reject) {
-            pool.query("SELECT * FROM SubCategories S \
-             inner join Products p on p.SubCategoryID=S.SubCategoryID\
-             inner join ProductVariants pv on p.ProductID=pv.ProductID\
-             WHERE S.CategoryID=? AND S.Status=1 and p.Status=1 and pv.Status=1 \
-             group by S.SubCategoryID ORDER BY S.DisplayOrder ASC, S.SubCategoryName ASC  ", [CategoryID], async (err, results) => {
+    return new Promise(function (resolve, reject) {
+        pool.query(
+            `SELECT S.SubCategoryID, S.SubCategoryName, S.CategoryID, S.SubCategoryImage, S.DisplayOrder, S.Status
+             FROM SubCategories S
+             WHERE S.CategoryID = ? AND S.Status = 1
+               AND EXISTS (SELECT 1 FROM Products p INNER JOIN ProductVariants pv ON pv.ProductID = p.ProductID
+                           WHERE p.SubCategoryID = S.SubCategoryID AND p.Status = 1 AND pv.Status = 1)
+             ORDER BY S.DisplayOrder ASC, S.SubCategoryName ASC`,
+            [CategoryID],
+            (err, results) => {
                 if (err) {
                     console.log(err, 'Error in subcategoriesbycategories');
                     return reject(-1);
-                } else {
-                    const validSubcategories = [];
-                    for (const subcategory of results) {
-                        // Check if products exist for each subcategory
-                        const products = await getProductsBySubCategory(subcategory.SubCategoryID);
-                        if (products.length > 0) {
-                            validSubcategories.push(subcategory); // Only include subcategories with products
-                        }
-                    }
-                    console.log("Retrieved SubCategories with products: ", validSubcategories.length);
-                    resolve(validSubcategories);
                 }
+                for (const sub of results) {
+                    if (sub.SubCategoryImage && sub.SubCategoryImage !== 'NA' && !String(sub.SubCategoryImage).startsWith('http')) {
+                        sub.SubCategoryImage = "https://d3c9kvg5gaqz48.cloudfront.net/SubCategories/" + sub.SubCategoryImage;
+                    }
+                }
+                resolve(results);
             });
-        });
-    } catch (err) {
-        console.log("Error in retrieving SubCategories");
-        return reject(-1);
-    }
+    });
 }
 
 // Helper function to get products by SubCategoryID

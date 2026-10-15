@@ -25,11 +25,17 @@ const productcontroller={
                 else
                     offset = 0;
                 console.log("Offset:", req.query);
-                query = `select p.* from Products p inner join ProductVariants pv on p.ProductID=pv.ProductID 
-                         where p.Status=1 and p.CategoryID=${pool.escape(req.query.CategoryID)} and 
-                         p.SubCategoryID=${pool.escape(req.query.SubCategoryID)} and p.Type=1 and pv.status=1 group by p.ProductID order by 
-                        CASE WHEN pv.AvailableQty = 0 THEN 1 ELSE 0 END,
-                        CONCAT(p.ProductName, '', pv.AvailableQty) ASC limit ${Math.max(0, parseInt(offset, 10) || 0)},${Math.max(0, parseInt(rowCount, 10) || 20)};`
+                // Sort: price_asc | price_desc | discount | default (in stock first, then name)
+                const sortOrders = {
+                    price_asc: 'min(pv.OfferPrice) ASC',
+                    price_desc: 'min(pv.OfferPrice) DESC',
+                    discount: 'max((pv.Price - pv.OfferPrice) / NULLIF(pv.Price, 0)) DESC',
+                };
+                const sortClause = sortOrders[req.query.Sort] || "CONCAT(p.ProductName, '', pv.AvailableQty) ASC";
+                const query = `select p.* from Products p inner join ProductVariants pv on p.ProductID=pv.ProductID 
+where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escape(req.query.SubCategoryID) : 'p.CategoryID=' + pool.escape(req.query.CategoryID)} and p.Type=1 and pv.status=1 group by p.ProductID order by 
+                        CASE WHEN max(pv.AvailableQty) = 0 THEN 1 ELSE 0 END,
+                        ${sortClause} limit ${Math.max(0, parseInt(offset, 10) || 0)},${Math.max(0, parseInt(rowCount, 10) || 20)};`
                 console.log("products",query)
                 let results = await CommonController.getproducts(query); 
 
@@ -111,10 +117,10 @@ const productcontroller={
 
             if (rawQuery.length < 2) {
                 const popularQuery = `
-                    SELECT Keyword, COUNT(*) as SearchCount
+                    SELECT MIN(TRIM(Keyword)) AS Keyword, COUNT(*) as SearchCount
                     FROM SearchLogs
-                    WHERE Keyword IS NOT NULL AND TRIM(Keyword) != ''
-                    GROUP BY Keyword
+                    WHERE CHAR_LENGTH(TRIM(Keyword)) >= 3 AND ResultCount > 0
+                    GROUP BY LOWER(TRIM(Keyword))
                     ORDER BY SearchCount DESC
                     LIMIT 8
                 `;
@@ -184,10 +190,10 @@ const productcontroller={
                 });
 
                 const popularSql = `
-                    SELECT Keyword
+                    SELECT MIN(TRIM(Keyword)) AS Keyword
                     FROM SearchLogs
-                    WHERE Keyword LIKE ? AND TRIM(Keyword) != ''
-                    GROUP BY Keyword
+                    WHERE Keyword LIKE ? AND CHAR_LENGTH(TRIM(Keyword)) >= 3 AND ResultCount > 0
+                    GROUP BY LOWER(TRIM(Keyword))
                     ORDER BY COUNT(*) DESC
                     LIMIT 5
                 `;
@@ -273,9 +279,26 @@ const productcontroller={
 
     RecommendedProducts_User : async (req, resp, next) => {
         try{
-            query="select P.* from RecommendedProducts Rp inner join Products P on P.ProductID=Rp.ProductID where \
-            P.Status=1 and Rp.Status=1 limit 0,30"
-            let results = await CommonController.getproducts(query);   
+            // Personalised: best-sellers in the categories this customer buys from.
+            // Guests / new customers: overall best-sellers; no sales yet: newest products.
+            const bestSellers = (whereExtra) => `select P.* from Products P
+                inner join (select OI.ProductID, sum(OI.Quantity) as Sold from OrderItems OI
+                    inner join Orders O on O.OrderID = OI.OrderID
+                    where O.OrderStatus not in (3,4) and O.CreatedAt > NOW() - INTERVAL 120 DAY
+                    group by OI.ProductID) S on S.ProductID = P.ProductID
+                where P.Status = 1 ${whereExtra} order by S.Sold desc limit 0,20`;
+            const userId = parseInt(req.UserID, 10);
+            let results = [];
+            if (userId > 0) {
+                results = await CommonController.getproducts(bestSellers(
+                    `and P.CategoryID in (select distinct P2.CategoryID from OrderItems OI2
+                        inner join Orders O2 on O2.OrderID = OI2.OrderID
+                        inner join Products P2 on P2.ProductID = OI2.ProductID where O2.UserID = ${userId})`));
+            }
+            if (!results || results.length < 6) results = await CommonController.getproducts(bestSellers(''));
+            if (!results || results.length === 0) {
+                results = await CommonController.getproducts("select P.* from Products P where P.Status = 1 order by P.ProductID desc limit 0,20");
+            }
             return resp.json({"Status":1,"BestItems":results})                  
         }
         catch(e){

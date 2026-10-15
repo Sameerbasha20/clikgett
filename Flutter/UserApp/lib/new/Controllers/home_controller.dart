@@ -1,6 +1,7 @@
 import 'package:fav_app/new/Controllers/adress_controller.dart';
 import 'package:fav_app/new/NewModel/sale_model.dart';
 import 'package:fav_app/new/Services/Sale/sale_services.dart';
+import 'package:fav_app/new/Services/storefront_services.dart';
 import 'package:fav_app/old/Models/Home/home_model.dart' as homemodel;
 import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
@@ -14,6 +15,24 @@ import '../../old/Services/common/network_check.dart';
 import '../NewScreens/Widgets/customToast.dart';
 
 class HomeController extends GetxController {
+  /// Delivery time (minutes) for the selected location, from the admin's ETA rules.
+  final RxnInt etaMinutes = RxnInt();
+  final RxBool locationServiceable = true.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Re-estimate delivery time whenever the selected location changes.
+    everAll([latitude, longitude], (_) => refreshEta());
+  }
+
+  Future<void> refreshEta() async {
+    final estimate = await StorefrontServices.deliveryEstimate(latitude.value, longitude.value);
+    if (estimate == null) return;
+    locationServiceable(estimate.serviceable);
+    etaMinutes.value = estimate.etaMinutes;
+  }
+
   var areaName = ''.obs; // Reactive variable to store area name
   var notificationsCount =
       0.obs; // Reactive variable to store notifications count

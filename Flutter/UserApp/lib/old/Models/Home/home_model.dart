@@ -208,6 +208,8 @@ class ProductVariant {
   int? maxQty;
   double? price;
   double? offerPrice;
+  /// Per-unit price when buying 2 or more (null when there is no buy-more deal).
+  double? buy2Price;
   int? status;
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -221,6 +223,7 @@ class ProductVariant {
     this.maxQty,
     this.price,
     this.offerPrice,
+    this.buy2Price,
     this.status,
     this.createdAt,
     this.updatedAt,
@@ -239,6 +242,7 @@ class ProductVariant {
         maxQty: json["maxQty"],
         price: json["Price"]?.toDouble() ?? 0.0,
         offerPrice: json["OfferPrice"]?.toDouble() ?? 0.0,
+        buy2Price: json["Buy2Price"] is num ? (json["Buy2Price"] as num).toDouble() : double.tryParse('${json["Buy2Price"] ?? ''}'),
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null
@@ -257,6 +261,7 @@ class ProductVariant {
         "maxQty": maxQty,
         "Price": price ?? 0.0,
         "OfferPrice": offerPrice ?? 0.0,
+        "Buy2Price": buy2Price,
         "Status": status,
         "CreatedAt": createdAt?.toIso8601String(),
         "UpdatedAt": updatedAt?.toIso8601String(),

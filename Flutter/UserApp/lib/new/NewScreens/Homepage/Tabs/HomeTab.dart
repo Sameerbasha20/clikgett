@@ -1,31 +1,25 @@
 import 'package:fav_app/Models/Home/TimingProvider.dart';
 import 'package:fav_app/new/Constants/colors.dart';
-import 'package:fav_app/new/Constants/dialogue_box.dart';
 import 'package:fav_app/new/Constants/static_loader.dart';
 import 'package:fav_app/new/Controllers/adress_controller.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
-import 'package:fav_app/new/Controllers/kits_controller.dart';
 import 'package:fav_app/new/Controllers/orders_controller.dart';
 import 'package:fav_app/new/Controllers/profile_controller.dart';
 import 'package:fav_app/new/Controllers/wallet.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_bestsellers_section.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_category_shelf_section.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_deals_and_offers_section.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_dynamic_shelves_section.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_header_widget.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Storefront/category_grid.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Storefront/home_header.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Storefront/section_product_rail.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Tabs/flash_sale_section.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_hero_banner_carousel.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_order_again_section.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_recommended_section.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_shop_by_category_grid.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
+import 'package:fav_app/old/Models/Home/home_model.dart' as home_model;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Redesigned ClikGett Home Screen
-/// Inspires from Blinkit's layout, card density, and multi-section richness
-/// while preserving ClikGett's signature green-and-white identity.
+/// Home: delivery-time header, pinned search, then the sections the admin
+/// configured in "Home Sections" (in that order).
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
 
@@ -41,244 +35,161 @@ class _HomeTabState extends State<Home> {
   final WalletController walletController = Get.find<WalletController>();
   final CartController cartController = Get.find<CartController>();
   final OrdersController ordersController = Get.find<OrdersController>();
-  final KitsController kitsController = Get.find<KitsController>();
 
-  String? token;
+  bool _isLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
-    _initData();
+    _load();
   }
 
-  Future<void> _initData() async {
-    token = await CommonServices.getToken();
-    if (token != null && token!.isNotEmpty) {
-      await _fetchUserData();
-      timingController.checkTiming(token!);
-    } else {
-      await Future.wait<void>([
-        homeController.getHome(context: context),
-        homeController.fetchActiveSales(),
-      ]);
-    }
-
-    final SharedPreferences pref = await SharedPreferences.getInstance();
-    final double? latitude = pref.getDouble('latitude');
-    debugPrint("Init Location Lat: $latitude");
-  }
-
-  Future<void> _fetchUserData() async {
-    ordersController.getcurrentorder(context: context);
-    ordersController.getpastorder(context: context);
-
-    await Future.wait([
-      adressController.getAdresses(context: context),
-      homeController.getHome(context: context),
-      homeController.fetchActiveSales(),
-      Future(() => homeController.getstoredLocation(adressController.address)),
-      profileController.getuserDetails(context: context),
-      walletController.getWallet(context: context),
-      cartController.getCart(
-        context: context,
-        longitude: homeController.longitude,
-        latitude: homeController.latitude,
-      ),
-    ]);
-  }
-
-  Future<void> _onRefresh() async {
-    token = await CommonServices.getToken();
-    if (token != null && token!.isNotEmpty) {
-      await _fetchUserData();
-    } else {
+  Future<void> _load() async {
+    final token = await CommonServices.getToken();
+    _isLoggedIn = token.isNotEmpty;
+    if (mounted) setState(() {});
+    if (_isLoggedIn) {
+      timingController.checkTiming(token);
+      ordersController.getcurrentorder(context: context);
+      ordersController.getpastorder(context: context);
       await Future.wait([
+        adressController.getAdresses(context: context),
         homeController.getHome(context: context),
         homeController.fetchActiveSales(),
+        profileController.getuserDetails(context: context),
+        walletController.getWallet(context: context),
       ]);
+      homeController.getstoredLocation(adressController.address);
+      if (mounted) {
+        await cartController.getCart(context: context, longitude: homeController.longitude, latitude: homeController.latitude);
+      }
+    } else {
+      await Future.wait([homeController.getHome(context: context), homeController.fetchActiveSales()]);
     }
+    homeController.refreshEta();
+  }
+
+  List<String> get _searchHints {
+    final names = homeController.categories
+        .map((c) => (c.categoryName ?? '').split(RegExp(r'[,&]')).first.trim())
+        .where((n) => n.isNotEmpty)
+        .toList();
+    return names.take(6).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        logOutDialogue(context);
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF4F5F7),
-        body: Obx(() {
-          if (homeController.isLoading.isTrue) {
-            return Center(
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.8,
-                child: CustomLoader(),
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            backgroundColor: Colors.white,
-            color: Appprimary,
-            onRefresh: _onRefresh,
-            child: ListView(
-              padding: EdgeInsets.zero,
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                // 1. ClikGett Green Brand Header & Category Shortcuts
-                HomeHeaderWidget(
-                  homeController: homeController,
-                  adressController: adressController,
-                  timingController: timingController,
-                  walletController: walletController,
-                  cartController: cartController,
-                ),
-
-                // 2. Synchronized Home Sections (driven by Admin configuration & order)
-                ..._buildHomepageSections(),
-
-                // 3. Safe area clearance so floating cart bar never obscures product cards
-                const SizedBox(height: 120),
-              ],
-            ),
-          );
-        }),
-      ),
+    return Scaffold(
+      backgroundColor: bg,
+      body: Obx(() {
+        if (homeController.isLoading.isTrue && homeController.homepagesectionList.isEmpty) {
+          return Center(child: CustomLoader());
+        }
+        return RefreshIndicator(
+          color: primary,
+          onRefresh: _load,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(child: StorefrontHeader(isLoggedIn: _isLoggedIn)),
+              SliverPersistentHeader(pinned: true, delegate: StickySearchBarDelegate(hints: _searchHints)),
+              SliverToBoxAdapter(child: _StoreClosedCard(timingController: timingController)),
+              SliverList(delegate: SliverChildListDelegate(_sections())),
+              const SliverToBoxAdapter(child: SizedBox(height: 120)), // room for the floating cart bar
+            ],
+          ),
+        );
+      }),
     );
   }
 
-  List<Widget> _buildHomepageSections() {
+  List<Widget> _sections() {
     final sections = homeController.homepagesectionList;
-
-    // Fallback if dynamic sections list is empty (e.g. offline, initial load, or error)
     if (sections.isEmpty) {
+      // No sections configured: show real categories and best-sellers only.
       return [
         HomeHeroBannerCarousel(homeController: homeController),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeShopByCategoryGrid(homeController: homeController),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeBestsellersSection(homeController: homeController),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeCategoryShelfSection(
-            homeController: homeController,
-            title: "Grocery & Kitchen",
-            icon: Icons.kitchen_rounded,
-            iconBgColor: const Color(0xFFE8F5E9),
-            iconColor: const Color(0xFF2E7D32),
-            targetCategoryIds: const {1, 2, 4, 5, 6, 7},
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeCategoryShelfSection(
-            homeController: homeController,
-            title: "Snacks & Drinks",
-            icon: Icons.fastfood_rounded,
-            iconBgColor: const Color(0xFFFFF3E0),
-            iconColor: const Color(0xFFE65100),
-            targetCategoryIds: const {8, 9, 10, 11, 12},
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
-          child: HomeDealsAndOffersSection(),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeRecommendedSection(homeController: homeController),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeOrderAgainSection(ordersController: ordersController),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeDynamicShelvesSection(homeController: homeController),
-        ),
+        CategoryGrid(title: 'Shop by category', categories: homeController.categories),
+        SectionProductRail(title: 'Bestsellers', products: homeController.bestItems),
       ];
     }
+    return sections.map(_section).toList();
+  }
 
-    final List<Widget> widgets = [];
+  Widget _section(home_model.HomePageSectionProduct s) {
+    final type = (s.sectionType ?? 'selected_products').toLowerCase();
+    final name = (s.name ?? '').trim();
+    final products = s.products ?? [];
+    final categories = s.categories ?? [];
 
-    for (final section in sections) {
-      final key = section.systemKey?.toLowerCase();
-      final type = (section.sectionType ?? 'selected_products').toLowerCase();
-
-      if (key == 'hero_banners' || (type == 'promotional_banner' && (homeController.banners.isNotEmpty || (section.imageUrl != null && section.imageUrl!.isNotEmpty)))) {
-        widgets.add(HomeHeroBannerCarousel(homeController: homeController));
-      } else if (key == 'shop_by_category' || type == 'shop_by_category') {
-        widgets.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeShopByCategoryGrid(homeController: homeController),
-        ));
-      } else if (key == 'bestsellers' || type == 'bestsellers') {
-        widgets.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeBestsellersSection(homeController: homeController),
-        ));
-      } else if (key == 'grocery_kitchen') {
-        final catIds = (section.categories != null && section.categories!.isNotEmpty)
-            ? section.categories!.map((c) => c.categoryId ?? 0).where((id) => id > 0).toSet()
-            : const {1, 2, 4, 5, 6, 7};
-        widgets.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeCategoryShelfSection(
-            homeController: homeController,
-            title: section.name?.isNotEmpty == true ? section.name! : "Grocery & Kitchen",
-            icon: Icons.kitchen_rounded,
-            iconBgColor: const Color(0xFFE8F5E9),
-            iconColor: const Color(0xFF2E7D32),
-            targetCategoryIds: catIds,
-          ),
-        ));
-      } else if (key == 'snacks_drinks') {
-        final catIds = (section.categories != null && section.categories!.isNotEmpty)
-            ? section.categories!.map((c) => c.categoryId ?? 0).where((id) => id > 0).toSet()
-            : const {8, 9, 10, 11, 12};
-        widgets.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeCategoryShelfSection(
-            homeController: homeController,
-            title: section.name?.isNotEmpty == true ? section.name! : "Snacks & Drinks",
-            icon: Icons.fastfood_rounded,
-            iconBgColor: const Color(0xFFFFF3E0),
-            iconColor: const Color(0xFFE65100),
-            targetCategoryIds: catIds,
-          ),
-        ));
-      } else if (key == 'deals_offers' || type == 'deals_and_offers') {
-        widgets.add(const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
-          child: HomeDealsAndOffersSection(),
-        ));
-      } else if (key == 'recommended_for_you' || type == 'recommendations') {
-        widgets.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeRecommendedSection(homeController: homeController),
-        ));
-      } else if (key == 'order_again' || type == 'order_again') {
-        widgets.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeOrderAgainSection(ordersController: ordersController),
-        ));
-      } else {
-        // Custom Curated Shelves & other category/subcategory dynamic shelves
-        widgets.add(Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: HomeDynamicShelvesSection(
-            homeController: homeController,
-            singleSection: section,
-          ),
-        ));
-      }
+    switch (type) {
+      case 'promotional_banner':
+        return HomeHeroBannerCarousel(homeController: homeController);
+      case 'shop_by_category':
+        return CategoryGrid(title: name.isEmpty ? 'Shop by category' : name, categories: categories, maxTiles: 12);
+      case 'category_shelf':
+      case 'subcategory_shelf':
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CategoryGrid(title: name, categories: categories, maxTiles: 8),
+            SectionProductRail(
+              title: 'Popular in $name',
+              products: products,
+              homeSectionId: s.homeSectionId,
+            ),
+          ],
+        );
+      case 'deals_and_offers':
+        return Column(
+          children: [
+            if (homeController.activeSales.isNotEmpty) const FlashSaleSection(),
+            SectionProductRail(title: name, subtitle: s.description, products: products, homeSectionId: s.homeSectionId),
+          ],
+        );
+      default:
+        return SectionProductRail(title: name, subtitle: s.description, products: products, homeSectionId: s.homeSectionId);
     }
+  }
+}
 
-    return widgets;
+class _StoreClosedCard extends StatelessWidget {
+  final TimingController timingController;
+
+  const _StoreClosedCard({required this.timingController});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final res = timingController.timingResponse.value;
+      if (res.status != 0) return const SizedBox.shrink();
+      final closed = res.message == "We're closed now";
+      return Container(
+        margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF7ED),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFFED7AA)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.storefront_outlined, color: amberWarning, size: 30),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(closed ? 'We are closed right now' : "We'll be back shortly",
+                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: tColor)),
+                  Text('You can still add items and place the order when we open.',
+                      style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }

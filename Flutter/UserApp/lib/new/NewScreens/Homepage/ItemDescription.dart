@@ -13,6 +13,8 @@ import 'package:fav_app/new/NewModel/product_details_model.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Cart/Cart.dart';
 import 'package:fav_app/new/NewScreens/Widgets/buttonWidget.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
+import 'package:fav_app/new/NewScreens/Auth/Login.dart';
+import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:get/get.dart';
@@ -579,8 +581,17 @@ class _ItemDescriptionState extends State<ItemDescription> {
             width: 2.w,
             height: 4.h,
             borderRadius: 0.5.h,
-            onTap: () {
-              _showPurchaseOptions(context);
+            onTap: () async {
+              // One tap adds a single unit; guests are asked to log in first.
+              final token = await CommonServices.getToken();
+              if (token.isEmpty) {
+                customToast(message: 'Please login to add items to your cart');
+                if (context.mounted) {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => Login()));
+                }
+                return;
+              }
+              quantityAdd(addOrRemove: true);
             },
             context: context,
             borderColor: primary,

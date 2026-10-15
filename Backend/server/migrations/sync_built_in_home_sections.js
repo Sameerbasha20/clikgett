@@ -81,7 +81,8 @@ async function run() {
             sectionType: 'category_shelf',
             displayOrder: 4,
             config: { theme: 'mint', icon: 'kitchen_rounded', viewAllLabel: 'See all' },
-            categoryIds: [1, 2, 4, 5, 6, 7]
+            // Matched by category name so this works on any database (local or production)
+            categoryNames: ['cooking', 'vegetable', 'fruit', 'oil', 'ghee', 'atta', 'rice', 'dal', 'dry fruit', 'breakfast', 'spice', 'masala', 'dairy', 'egg', 'ready-to-cook', 'noodle']
         },
         {
             systemKey: 'snacks_drinks',
@@ -90,14 +91,23 @@ async function run() {
             sectionType: 'category_shelf',
             displayOrder: 5,
             config: { theme: 'orange', icon: 'fastfood_rounded', viewAllLabel: 'See all' },
-            categoryIds: [8, 9, 10, 11, 12]
+            categoryNames: ['tea', 'coffee', 'drink', 'juice', 'biscuit', 'cookie', 'snack', 'chocolate', 'sweet', 'coconut']
+        },
+        {
+            systemKey: 'personal_home_care',
+            name: 'Personal & Home Care',
+            description: 'Bath, hair and oral care, cleaning and home needs',
+            sectionType: 'category_shelf',
+            displayOrder: 6,
+            config: { theme: 'sky', icon: 'spa_rounded', viewAllLabel: 'See all' },
+            categoryNames: ['bath', 'body', 'hair', 'oral', 'cleaning', 'home need', 'baby', 'feminine', 'hygiene', 'pooja']
         },
         {
             systemKey: 'deals_offers',
             name: 'Deals & Offers',
             description: 'Special markdown prices and limited-time flash discount offers',
             sectionType: 'deals_and_offers',
-            displayOrder: 6,
+            displayOrder: 7,
             config: { theme: 'orange', badgeText: 'Save Big' }
         },
         {
@@ -105,7 +115,7 @@ async function run() {
             name: 'Recommended for You',
             description: 'Personalized product recommendations based on shopping patterns',
             sectionType: 'recommendations',
-            displayOrder: 7,
+            displayOrder: 8,
             config: { theme: 'lavender', badgeText: 'For You' }
         },
         {
@@ -113,7 +123,7 @@ async function run() {
             name: 'Order Again',
             description: 'Quick one-tap repeat purchases from your recent order history',
             sectionType: 'order_again',
-            displayOrder: 8,
+            displayOrder: 9,
             config: { theme: 'sky', badgeText: 'Repeat' }
         }
     ];
@@ -144,6 +154,14 @@ async function run() {
                 [s.name, s.description, s.sectionType, s.systemKey, s.displayOrder, JSON.stringify(s.config)]
             );
             sectionId = insRes.insertId;
+        }
+
+        // Resolve category names to this database's category IDs
+        if (s.categoryNames && s.categoryNames.length > 0) {
+            const cats = await query("SELECT CategoryID, CategoryName FROM Categories WHERE Status = 1 ORDER BY Priority ASC, CategoryID ASC");
+            s.categoryIds = cats
+                .filter((c) => s.categoryNames.some((n) => String(c.CategoryName || '').toLowerCase().includes(n)))
+                .map((c) => c.CategoryID);
         }
 
         // Handle category associations if defined
