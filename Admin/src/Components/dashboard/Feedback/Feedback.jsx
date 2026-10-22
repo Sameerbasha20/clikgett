@@ -197,6 +197,12 @@ function Feedback() {
                     fetchFeedbacks();
                 } else {
                     toast.error((res && (res.message || res.Message)) || "Failed to credit cashback");
+                    if (res && res.alreadyRewarded) {
+                        // One cashback per customer: the row is now "Not Eligible", so refresh it.
+                        setCreditConfirmModal(null);
+                        setSelectedFeedback(null);
+                        fetchFeedbacks();
+                    }
                 }
             })
             .catch((err) => {

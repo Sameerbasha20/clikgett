@@ -1108,16 +1108,11 @@ ordercontrollerExtensions.removeItemFromOrder = async (req, resp, next) => {
         const differenceAmount = parseFloat((newGrandTotal - previousGrandTotal).toFixed(2));
         const refundAmount = differenceAmount < 0 ? Math.abs(differenceAmount) : 0;
 
-        // 5. Authoritative ETA Recalculation:
-        // if totalItems <= 10: 30 mins else: 30 + ceil((totalItems - 10) / 10) * 10
+        // 5. ETA for the remaining items (services/DeliveryTime.js)
         const newTotalItems = calculation.TotalItemQuantity;
-        let newOrderSizeBuffer = 0;
-        if (newTotalItems <= 10) {
-            newOrderSizeBuffer = 0;
-        } else {
-            newOrderSizeBuffer = Math.ceil((newTotalItems - 10) / 10) * 10;
-        }
-        const baseDeliveryMinutes = 30;
+        const eta = await require('../services/DeliveryTime').estimate({ distanceKm: order.Distance, items: calculation.Items || [] });
+        const newOrderSizeBuffer = eta.itemMinutes + eta.fruitMinutes;
+        const baseDeliveryMinutes = parseInt(order.BaseETAMinutes, 10) || eta.distanceMinutes;
         const operationalDelayMinutes = parseInt(order.TotalDelayMinutes || 0, 10);
         const newTotalETAMinutes = baseDeliveryMinutes + newOrderSizeBuffer + operationalDelayMinutes;
         const newEstimateDateTime = moment(order.CreatedAt).add(newTotalETAMinutes, 'minutes').format('YYYY-MM-DD HH:mm:ss');

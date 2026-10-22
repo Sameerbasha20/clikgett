@@ -1,0 +1,282 @@
+/* The top bar is fixed (about 69px tall), so pages start below it. */
+.page {
+    padding: calc(69px + 1.75rem) 2rem 3rem;
+    max-width: 1280px;
+}
+.pageHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+.pageHead h2 {
+    margin: 0 0 0.2rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+.muted {
+    color: #64748b;
+    font-size: 0.82rem;
+}
+.refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    color: #334155;
+    cursor: pointer;
+}
+.refresh:disabled {
+    opacity: 0.6;
+}
+.spin {
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+.error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 1rem;
+}
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    text-align: left;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tile:hover:not(:disabled) {
+    border-color: #16a34a;
+    box-shadow: 0 2px 10px rgba(22, 163, 74, 0.12);
+}
+.tile:disabled {
+    cursor: default;
+}
+.tile-alert {
+    border-color: #f59e0b;
+    background: #fffbeb;
+}
+.tileLabel {
+    font-size: 0.8rem;
+    color: #475569;
+    font-weight: 600;
+}
+.tileValue {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+}
+.tileHint {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.cardHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.cardHead h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+.count {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    font-size: 0.8rem;
+    color: #334155;
+}
+.linkBtn {
+    border: none;
+    background: none;
+    color: #15803d;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.pipeline {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+.twoCol {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 16px;
+}
+@media (max-width: 1000px) {
+    .twoCol {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Week chart: one series, bars anchored to the baseline */
+.chart {
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    height: 200px;
+    padding-top: 18px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.barSlot {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    cursor: default;
+}
+.bar {
+    width: 60%;
+    max-width: 44px;
+    background: #16a34a;
+    border-radius: 4px 4px 0 0;
+}
+.barHover {
+    background: #15803d;
+}
+.barValue {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #334155;
+    min-height: 1rem;
+}
+.barLabel {
+    position: absolute;
+    bottom: -22px;
+    font-size: 0.72rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+.barLabelToday {
+    color: #0f172a;
+    font-weight: 700;
+}
+.tooltip {
+    position: absolute;
+    bottom: calc(100% - 10px);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    background: #0f172a;
+    color: white;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.attention {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.attention li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 4px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #334155;
+}
+.attention li:last-child {
+    border-bottom: none;
+}
+.attention li:hover {
+    background: #f8fafc;
+}
+.attention b {
+    font-size: 1rem;
+    color: #64748b;
+}
+.hot {
+    color: #b45309 !important;
+    font-weight: 700;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+.table th {
+    text-align: left;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 6px 8px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    vertical-align: middle;
+}
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+.table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.table .actions {
+    text-align: right;
+    white-space: nowrap;
+}
+.actionGroup {
+    display: inline-flex;
+    gap: 14px;
+    justify-content: flex-end;
+}
+.clickRow {
+    cursor: pointer;
+}
+.clickRow:hover {
+    background: #f8fafc;
+}

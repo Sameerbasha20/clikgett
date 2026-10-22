@@ -1,4 +1,5 @@
 const express = require('express');
+const passwords = require('../utils/password');
 const mysql = require('mysql');
 const AWS = require('aws-sdk');
 require('dotenv').config()
@@ -180,7 +181,7 @@ const usercontroller = {
 
 
 
-            let add_deliveryboy = { FirstName: body.FirstName, LastName: body.LastName, MobileNumber: body.MobileNumber, Role: 2, Status: 1, EmailID: body.EmailID, Password: body.Password, ProfilePic: "NA" }
+            let add_deliveryboy = { FirstName: body.FirstName, LastName: body.LastName, MobileNumber: body.MobileNumber, Role: 2, Status: 1, EmailID: body.EmailID, Password: body.Password ? passwords.hash(body.Password) : 'NA', ProfilePic: "NA" }
 
             let sql = "INSERT INTO AdminUsers set ?";
 
@@ -324,7 +325,7 @@ const usercontroller = {
     Userslist: async (req, resp, next) => {
         try {
             console.log(req.AdminID);
-            pool.query("select * from Users where Status!=0 order by CreatedAt desc;", async (err, results) => {
+            pool.query("select * from Users where Status NOT IN (0,2) order by CreatedAt desc;", async (err, results) => {
                 console.log('connecting')
                 if (err) {
                     return resp.json({ "status": 0, "Message": err.sqlMessage });
@@ -337,10 +338,10 @@ const usercontroller = {
                         }
                     }
                     const url = await CommonController.generateCsv(results)
-                    resp.json({ "status": 1, "Users": results, url })
+                    resp.json({ "status": 1, "Status": 1, "Users": results, url })
                 }
                 else {
-                    resp.json({ "Status": 1, "Users": [] })
+                    resp.json({ "status": 1, "Status": 1, "Users": [] })
                 }
 
             });
@@ -876,6 +877,39 @@ const usercontroller = {
                 return resp.status(400).json({ status: 0, Status: 0, Message: "Reward already credited concurrently." });
             }
 
+            // Feedback cashback is once per customer. Locking the customer row serialises
+            // credits for their other feedback, so two can't both pass this check.
+            const earlierReward = await new Promise((resolve, reject) => {
+                connection.query("SELECT UserID FROM Users WHERE UserID = ? FOR UPDATE", [item.UserID], (lockErr) => {
+                    if (lockErr) return reject(lockErr);
+                    connection.query(
+                        "SELECT FeedbackID, OrderID FROM Feedback WHERE UserID = ? AND RewardStatus = 'credited' AND FeedbackID <> ? LIMIT 1",
+                        [item.UserID, FeedbackID],
+                        (err, rows) => (err ? reject(err) : resolve(rows && rows[0]))
+                    );
+                });
+            });
+
+            if (earlierReward) {
+                await new Promise((resolve, reject) => {
+                    connection.query(
+                        "UPDATE Feedback SET RewardStatus = 'not_eligible', UpdatedAt = NOW() WHERE FeedbackID = ?",
+                        [FeedbackID],
+                        (err) => (err ? reject(err) : resolve())
+                    );
+                });
+                await new Promise((resolve, reject) => connection.commit((err) => (err ? reject(err) : resolve())));
+                connection.release();
+                connection = null;
+                return resp.status(400).json({
+                    status: 0,
+                    Status: 0,
+                    Message: `This customer already received feedback cashback (Feedback #${earlierReward.FeedbackID}, Order #${earlierReward.OrderID}). Feedback cashback is given only once per customer.`,
+                    alreadyRewarded: true,
+                    RewardStatus: 'not_eligible'
+                });
+            }
+
             // 1. Insert into Wallets ledger (ContentType 4 = Cashback, Credited_Debited 1 = Credit)
             const expiryDays = 30;
             const desc = `Feedback reward for Order #${item.OrderID} (Feedback #${item.FeedbackID})`;
@@ -1126,6 +1160,24 @@ const usercontroller = {
     updatesettings: async (req, resp, next) => {
         try {
             Body = req.body
+            // Keys are fixed (the apps read them by name); only values change here.
+            delete Body.SettingKey;
+            const [current] = await CommonController.commonget("SELECT SettingKey FROM Settings WHERE ID = ?", [req.params.ID]);
+            const listKeys = ['TipPresets', 'WalletTopupAmounts', 'FAQs', 'DeliveryTypes'];
+            const numberKeys = ['MinOrderValue', 'FreeDelivery_CartAmount', 'DeliveryCharges', 'ReferAmount', 'Refferal_SignupBonus',
+                'Referral_firstorderBonus', 'MinUseOfWallet', 'Minordervalue_wallet', 'FeedbackRewardAmount'];
+            if (current && Body.SettingValue != null) {
+                if (listKeys.includes(current.SettingKey)) {
+                    try {
+                        if (!Array.isArray(JSON.parse(Body.SettingValue))) throw new Error('not a list');
+                    } catch (e) {
+                        return resp.json({ "status": 0, "Status": 0, "Message": `${current.SettingKey} must be a JSON list, e.g. [10,20,30]` });
+                    }
+                }
+                if (numberKeys.includes(current.SettingKey) && !(parseFloat(Body.SettingValue) >= 0)) {
+                    return resp.json({ "status": 0, "Status": 0, "Message": `${current.SettingKey} must be a number` });
+                }
+            }
 
 
             if (Body.SettingKey != null || Body.SettingKey != undefined)
@@ -1377,6 +1429,9 @@ const usercontroller = {
             if (!firstName || !emailId || !password) {
                 return resp.json({ 'Status': 0, "Message": "Name, Email and Password are required" });
             }
+            if (String(password).length < 8) {
+                return resp.json({ 'Status': 0, "Message": "Password must be at least 8 characters" });
+            }
 
             const emaildata = await Verifyemail({ EmailID: emailId });
             if (emaildata === 1) {
@@ -1387,8 +1442,8 @@ const usercontroller = {
                 FirstName: firstName,
                 LastName: body.lastName || body.LastName || 'NA',
                 EmailID: emailId,
-                Password: password,
-                Role: role,
+                Password: passwords.hash(password),
+                Role: 1, // this endpoint creates admins only (riders are added from the Riders page)
                 Status: 1,
                 ProfilePic: "NA"
             };
@@ -1461,17 +1516,16 @@ const usercontroller = {
                 updates.push("EmailID = ?");
                 params.push(email);
             }
-            if (Body.role !== undefined) {
-                updates.push("Role = ?");
-                params.push(Body.role);
-            }
             if (Body.status !== undefined) {
                 updates.push("Status = ?");
                 params.push(Body.status);
             }
             if (Body.password && Body.password !== "**********") {
+                if (String(Body.password).length < 8) {
+                    return resp.json({ "Status": 0, "Message": "Password must be at least 8 characters" });
+                }
                 updates.push("Password = ?");
-                params.push(Body.password);
+                params.push(passwords.hash(Body.password));
             }
 
             if (updates.length === 0) {
@@ -1499,13 +1553,17 @@ const usercontroller = {
     deleteadmindata: async (req, resp, next) => {
         try {
             const AdminID = req.params.AdminID || req.params.id;
-            const query = "UPDATE AdminUsers SET Status=0 WHERE AdminID = ?";
+            if (String(AdminID) === String(req.AdminID)) {
+                return resp.json({ "Status": 0, "Message": "You cannot remove your own account" });
+            }
+            const query = "UPDATE AdminUsers SET Status=0 WHERE AdminID = ? AND Role = 1";
             pool.query(query, [AdminID], (err, result) => {
                 if (err) {
                     console.log("Error deleting admin user:", err);
                     return resp.json({ "Status": 0, "Message": "Error in updating the DB" });
                 }
-                return resp.json({ "Status": 1, "Message": "Admin User Deleted Successfully" });
+                if (!result.affectedRows) return resp.json({ "Status": 0, "Message": "Admin user not found" });
+                return resp.json({ "Status": 1, "Message": "Admin user removed" });
             });
         } catch (err) {
             console.log("exception in deleting admin user", err);

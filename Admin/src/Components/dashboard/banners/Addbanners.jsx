@@ -21,8 +21,17 @@ function AddCategory(props) {
     // eslint-disable-next-line
     const [categoryItems, setCategoryItems] = useState([]);
     const [subCategoryItems, setSubCategoryItems] = useState([]);
-    const [destType, setDestType] = useState("subcategory");
+    // Where a tap on the banner takes the customer in the app.
+    const [destType, setDestType] = useState("none");
+    const [destId, setDestId] = useState("");
+    const [products, setProducts] = useState([]);
+    const [productQuery, setProductQuery] = useState("");
     useEffect(() => {
+        Services.getAllProducts("GET", null, token)
+            .then((res) => {
+                if (res.Status === 1) setProducts(res.Products || []);
+            })
+            .catch(console.error);
         Services.GetSubCategoryAll("GET", null, token)
             .then((res) => {
                 if (res.Status === 1) {
@@ -62,6 +71,8 @@ function AddCategory(props) {
                     if (res?.status === 1) {
                         //res.categories.imageUrl
                         setFile(res.Banners.ImageUrl);
+                        setDestType(res.Banners.DestinationType || "none");
+                        setDestId(res.Banners.DestinationID ? String(res.Banners.DestinationID) : "");
 
                         reset({
                             BannerName: res.Banners.BannerName,
@@ -130,8 +141,22 @@ function AddCategory(props) {
             <p>(Only *.jpeg and *.png images will be accepted)</p>
         </div>
     );
+    const needsId = ["product", "category", "subcategory"].includes(destType);
+    const productLabel = (p) => `${p.ProductName.trim()} (#${p.ProductID})`;
+    useEffect(() => {
+        if (destType === "product" && destId && products.length && !productQuery) {
+            const p = products.find((x) => String(x.ProductID) === String(destId));
+            if (p) setProductQuery(productLabel(p));
+        }
+        // eslint-disable-next-line
+    }, [destType, destId, products]);
+
     const onSubmit = (data) => {
-        console.log(data);
+        if (needsId && !destId) {
+            toast.error(`Choose the ${destType} this banner should open`, { position: "top-center", autoClose: 1500, hideProgressBar: true });
+            return;
+        }
+        data = { ...data, DestinationType: destType, DestinationID: needsId ? Number(destId) : null };
         let image;
         if (base64.length > 0) {
             image = { ImageUrl: base64 };
@@ -307,6 +332,81 @@ function AddCategory(props) {
                             )}
                         </div>
                     </div> */}
+                    <div className={dashboardclasses["item-image-upload"]}>
+                        <label htmlFor="destType">When tapped, open</label>
+                        <div className={dashboardclasses["select"]}>
+                            <select
+                                id="destType"
+                                value={destType}
+                                onChange={(e) => {
+                                    setDestType(e.target.value);
+                                    setDestId("");
+                                    setProductQuery("");
+                                }}>
+                                <option value="none">The banner itself (full image and description)</option>
+                                <option value="category">A category</option>
+                                <option value="subcategory">A subcategory</option>
+                                <option value="product">A product</option>
+                                <option value="offers">Offers &amp; coupons page</option>
+                                <option value="bulk_deals">Buy more, save more page</option>
+                            </select>
+                        </div>
+                    </div>
+                    {destType === "category" && (
+                        <div className={dashboardclasses["item-image-upload"]}>
+                            <label htmlFor="destCategory">Category</label>
+                            <div className={dashboardclasses["select"]}>
+                                <select id="destCategory" value={destId} onChange={(e) => setDestId(e.target.value)}>
+                                    <option value="" disabled>Select category</option>
+                                    {categoryItems.map((item) => (
+                                        <option key={item.CategoryID} value={item.CategoryID}>{item.CategoryName}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    )}
+                    {destType === "subcategory" && (
+                        <div className={dashboardclasses["item-image-upload"]}>
+                            <label htmlFor="destSub">Subcategory</label>
+                            <div className={dashboardclasses["select"]}>
+                                <select id="destSub" value={destId} onChange={(e) => setDestId(e.target.value)}>
+                                    <option value="" disabled>Select subcategory</option>
+                                    {subCategoryItems.map((item) => (
+                                        <option key={item.SubCategoryID} value={item.SubCategoryID}>
+                                            {item.SubCategoryName}{item.CategoryName ? ` (${item.CategoryName})` : ""}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    )}
+                    {destType === "product" && (
+                        <div className={dashboardclasses["item-image-upload"]}>
+                            <label htmlFor="destProduct">Product</label>
+                            <div className={dashboardclasses["select"]}>
+                                <input
+                                    id="destProduct"
+                                    list="banner-products"
+                                    placeholder="Type to search products"
+                                    value={productQuery}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        setProductQuery(v);
+                                        const m = v.match(/\(#(\d+)\)\s*$/);
+                                        setDestId(m ? m[1] : "");
+                                    }}
+                                />
+                                <datalist id="banner-products">
+                                    {products.map((p) => (
+                                        <option key={p.ProductID} value={productLabel(p)} />
+                                    ))}
+                                </datalist>
+                                {productQuery && !destId && (
+                                    <p className={dashboardclasses["error"]}>Pick a product from the list</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
                     {props.editable && (
                         <div className={dashboardclasses["item-image-upload"]}>
                             <label htmlFor=" status">Status</label>

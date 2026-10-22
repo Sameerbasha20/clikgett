@@ -1090,11 +1090,13 @@ const DeliveryOperations = {
             const t2Items = shopSettings[0] ? (shopSettings[0].LargeCartThreshold2Items || 20) : 20;
             const t2Mins = shopSettings[0] ? (shopSettings[0].LargeCartThreshold2Minutes || 10) : 10;
 
-            let orderSizeBuffer = 0;
-            if (totalItemQty <= 10) {
-                orderSizeBuffer = 0;
-            } else {
-                orderSizeBuffer = Math.ceil((totalItemQty - 10) / 10) * 10;
+            // Stored at order time (items + fresh fruit, services/DeliveryTime.js); recomputed for older orders.
+            let orderSizeBuffer = parseInt(order.OrderSizeBufferMinutes, 10);
+            if (isNaN(orderSizeBuffer)) {
+                const DeliveryTime = require('../services/DeliveryTime');
+                const items = await queryAsync("SELECT OI.Quantity, P.SubCategoryID FROM OrderItems OI LEFT JOIN Products P ON P.ProductID = OI.ProductID WHERE OI.OrderID = ?", [orderId]);
+                const eta = await DeliveryTime.estimate({ distanceKm: order.Distance, items });
+                orderSizeBuffer = eta.itemMinutes + eta.fruitMinutes;
             }
 
             const DeliveryETA = require('./DeliveryETA');

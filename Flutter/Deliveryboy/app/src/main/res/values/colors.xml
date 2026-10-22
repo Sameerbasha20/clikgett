@@ -42,4 +42,16 @@
     <color name="color_warning_bg">#FEF3C7</color>
     <color name="color_blue_call">#2563EB</color>
     <color name="color_blue_call_bg">#EFF6FF</color>
+
+    <!-- Order screen -->
+    <color name="order_header_start">#16A34A</color>
+    <color name="order_header_end">#0F766E</color>
+    <color name="white_80">#CCFFFFFF</color>
+    <color name="white_40">#66FFFFFF</color>
+    <color name="white_20">#33FFFFFF</color>
+    <color name="amber_bg">#FFF7ED</color>
+    <color name="amber_stroke">#FED7AA</color>
+    <color name="amber_text">#C2410C</color>
+    <color name="green_stroke">#BBF7D0</color>
+    <color name="checked_row_bg">#F0FDF4</color>
 </resources>

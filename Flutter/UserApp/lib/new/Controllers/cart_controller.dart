@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:fav_app/Models/Account/adresses.dart';
 import 'package:fav_app/new/Constants/colors.dart';
-import 'package:fav_app/new/Constants/fruit_category_helper.dart';
 import 'package:fav_app/new/Controllers/category_controller.dart';
 import 'package:fav_app/new/Controllers/config_controller.dart';
-import 'package:fav_app/new/Controllers/kits_controller.dart';
 import 'package:fav_app/new/Controllers/orders_controller.dart';
 import 'package:fav_app/new/Controllers/searchandrecomend_controller.dart';
 import 'package:fav_app/new/NewModel/promocodes_model.dart';
@@ -22,146 +20,6 @@ import '../Services/common/network_check.dart';
 import 'home_controller.dart';
 
 class CartController extends GetxController {
-  static const String kFruitTimerEndKey = 'fruit_delivery_timer_end_timestamp';
-  static const String kFruitExtensionMinutesKey = 'fruit_timer_extension_minutes';
-
-  final Rx<DateTime?> timerEndTime = Rx<DateTime?>(null);
-  final Rx<Duration> remainingDeliveryDuration = Rx<Duration>(Duration.zero);
-  final RxInt fruitExtensionMinutes = 0.obs;
-  final RxBool isTimerRunning = false.obs;
-  Timer? _deliveryCountdownTimer;
-  final Set<String> _processedFruitAdditions = <String>{};
-
-  @override
-  void onInit() {
-    super.onInit();
-    initTimerFromPreferences();
-  }
-
-  Future<void> initTimerFromPreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final endStr = prefs.getString(kFruitTimerEndKey);
-      final extMins = prefs.getInt(kFruitExtensionMinutesKey) ?? 0;
-
-      if (endStr != null && endStr.isNotEmpty) {
-        final savedEnd = DateTime.tryParse(endStr);
-        if (savedEnd != null) {
-          final now = DateTime.now();
-          final remaining = savedEnd.difference(now);
-          if (remaining > Duration.zero) {
-            timerEndTime.value = savedEnd;
-            remainingDeliveryDuration.value = remaining;
-            fruitExtensionMinutes.value = extMins;
-            isTimerRunning.value = true;
-            _startCountdownTicker();
-            update(['delivery-timer']);
-            return;
-          }
-        }
-        await _clearTimerPreferences();
-      }
-    } catch (e) {
-      debugPrint("Error initializing fruit timer: $e");
-    }
-  }
-
-  void _startCountdownTicker() {
-    _deliveryCountdownTimer?.cancel();
-    _deliveryCountdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (timerEndTime.value == null) {
-        _deliveryCountdownTimer?.cancel();
-        return;
-      }
-      final remaining = timerEndTime.value!.difference(DateTime.now());
-      if (remaining.isNegative || remaining.inSeconds <= 0) {
-        _deliveryCountdownTimer?.cancel();
-        remainingDeliveryDuration.value = Duration.zero;
-        isTimerRunning.value = false;
-        _clearTimerPreferences();
-      } else {
-        remainingDeliveryDuration.value = remaining;
-      }
-      update(['delivery-timer']);
-    });
-  }
-
-  Future<void> extendTimerForFruit({
-    required int productId,
-    required int variantId,
-    required int quantity,
-  }) async {
-    final String opKey = "${productId}_${variantId}_$quantity";
-    if (_processedFruitAdditions.contains(opKey)) {
-      return;
-    }
-    _processedFruitAdditions.add(opKey);
-
-    final now = DateTime.now();
-    DateTime newEndTime;
-    if (timerEndTime.value == null || timerEndTime.value!.isBefore(now)) {
-      newEndTime = now.add(const Duration(minutes: 40));
-      fruitExtensionMinutes.value = 10;
-    } else {
-      newEndTime = timerEndTime.value!.add(const Duration(minutes: 10));
-      fruitExtensionMinutes.value += 10;
-    }
-
-    timerEndTime.value = newEndTime;
-    remainingDeliveryDuration.value = newEndTime.difference(now);
-    isTimerRunning.value = true;
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(kFruitTimerEndKey, newEndTime.toIso8601String());
-      await prefs.setInt(kFruitExtensionMinutesKey, fruitExtensionMinutes.value);
-    } catch (e) {
-      debugPrint("Error persisting fruit timer: $e");
-    }
-
-    _startCountdownTicker();
-
-    if (Get.isRegistered<OrdersController>()) {
-      final ordersController = Get.find<OrdersController>();
-      if (ordersController.orders.isNotEmpty) {
-        for (var order in ordersController.orders) {
-          if (order.estimateDateTime != null) {
-            order.estimateDateTime =
-                order.estimateDateTime!.add(const Duration(minutes: 10));
-          }
-        }
-        ordersController.updateOrdersTab();
-      }
-    }
-
-    update(['delivery-timer', 'orders']);
-  }
-
-  Future<void> resetTimer() async {
-    _deliveryCountdownTimer?.cancel();
-    timerEndTime.value = null;
-    remainingDeliveryDuration.value = Duration.zero;
-    fruitExtensionMinutes.value = 0;
-    isTimerRunning.value = false;
-    _processedFruitAdditions.clear();
-    await _clearTimerPreferences();
-    update(['delivery-timer']);
-  }
-
-  Future<void> _clearTimerPreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(kFruitTimerEndKey);
-      await prefs.remove(kFruitExtensionMinutesKey);
-    } catch (_) {}
-  }
-
-  @override
-  void onClose() {
-    _deliveryCountdownTimer?.cancel();
-    super.onClose();
-  }
-
   final RxBool _isLoading = false.obs;
   RxBool get isLoading => _isLoading;
   CartModel? cartModel;
@@ -248,7 +106,6 @@ class CartController extends GetxController {
     double filterAmount = 0;
     double disfilterAmount = 0;
     final CategoryController categoryController = Get.find();
-    final KitsController kitsController = Get.find();
 
     Network.networkCheck(context).then((value) async => value != null
         ? {
@@ -312,18 +169,14 @@ class CartController extends GetxController {
                                           context: context,
                                           isRemoveLoader: true);
                                     }
-                                    kitsController
-                                        .addCartItemsFromCart(cartItems);
                                   } else {
-                                    removeValuesIfNoCart(
-                                        categoryController, kitsController);
+                                    removeValuesIfNoCart(categoryController);
                                     productsApi(
                                         categoryController: categoryController,
                                         context: context);
                                   }
                                 } else {
-                                  removeValuesIfNoCart(
-                                      categoryController, kitsController);
+                                  removeValuesIfNoCart(categoryController);
                                   productsApi(
                                       categoryController: categoryController,
                                       context: context);
@@ -339,7 +192,8 @@ class CartController extends GetxController {
                       }
                     : {customToast(message: 'Error'), _isLoading(false)})
                 .catchError((onError) {
-              customToast(message: onError.toString());
+              debugPrint('cart request failed: $onError');
+              customToast(message: 'Could not reach the store. Please check your internet and try again.');
               _isLoading(false);
               return <dynamic>{};
             })
@@ -452,13 +306,10 @@ class CartController extends GetxController {
     }
   }
 
-  removeValuesIfNoCart(
-      CategoryController categoryController, KitsController kitsController) {
+  removeValuesIfNoCart(CategoryController categoryController) {
     cartItems.clear();
     _quantity(0);
     categoryController.removeQuantity();
-    kitsController.removeQuantity();
-    resetTimer();
   }
 
   int get totalCartItemCount {
@@ -479,13 +330,9 @@ class CartController extends GetxController {
     _discountAmmount('');
     cart = null;
     cartModel = null;
-    resetTimer();
     try {
       if (Get.isRegistered<CategoryController>()) {
         Get.find<CategoryController>().removeQuantity();
-      }
-      if (Get.isRegistered<KitsController>()) {
-        Get.find<KitsController>().removeQuantity();
       }
     } catch (_) {}
   }
@@ -532,7 +379,8 @@ class CartController extends GetxController {
                       }
                     : {customToast(message: 'Error'), _isLoading(false)})
                 .catchError((onError) {
-              customToast(message: onError.toString());
+              debugPrint('cart request failed: $onError');
+              customToast(message: 'Could not reach the store. Please check your internet and try again.');
               _isLoading(false);
             })
           }
@@ -572,7 +420,6 @@ class CartController extends GetxController {
         isThroughProducts: isThroughProducts,
         isThroughProductsDetails: isThroughProductsDetails);
     final CategoryController categoryController = Get.find();
-    final KitsController kitsController = Get.find();
     await Network.networkCheck(context).then((onValue) async => onValue != null
         ? {
             await CartServices.deleteCart(id: cartId.value)
@@ -583,8 +430,6 @@ class CartController extends GetxController {
                             customToast(message: value.message),
                             _quantity(0),
                             categoryController.removeQuantity(),
-                            kitsController.removeQuantity,
-                            resetTimer(),
                             getCart(context: context),
                           }
                         else
@@ -596,7 +441,8 @@ class CartController extends GetxController {
                         customToast(message: 'Error'),
                       })
                 .catchError((onError) {
-              customToast(message: onError.toString());
+              debugPrint('cart request failed: $onError');
+              customToast(message: 'Could not reach the store. Please check your internet and try again.');
             })
           }
         : {
@@ -624,17 +470,6 @@ class CartController extends GetxController {
       categoryController.getProductsDetails(
           context: context,
           productId: categoryController.productIDforsubcategory.value);
-    }
-    if (comboDataLoader.isTrue) {
-      final KitsController kitsController = Get.find();
-      kitsController.getKitsData(context: context);
-    }
-    if (comboDescriptionLoader.isTrue) {
-      final KitsController kitsController = Get.find();
-      if (kitsController.kitIDforsubcategory.value != 0) {
-        kitsController.getKitsDetailsById(
-            context: context, kitId: kitsController.kitIDforsubcategory.value);
-      }
     }
   }
 
@@ -697,7 +532,8 @@ class CartController extends GetxController {
                         customToast(message: 'Error'),
                       })
                 .catchError((onError) {
-              customToast(message: onError.toString());
+              debugPrint('cart request failed: $onError');
+              customToast(message: 'Could not reach the store. Please check your internet and try again.');
               success = false;
             })
           }
@@ -742,7 +578,8 @@ class CartController extends GetxController {
                         customToast(message: 'Error'),
                       })
                 .catchError((onError) {
-              customToast(message: onError.toString());
+              debugPrint('cart request failed: $onError');
+              customToast(message: 'Could not reach the store. Please check your internet and try again.');
               success = false;
             })
           }
@@ -915,19 +752,6 @@ class CartController extends GetxController {
               resolvedSubCategoryId ??= newlyFetched.subCategoryId;
             }
           }
-
-          // Authoritative Fruit Check: Extend timer by 10 minutes ONLY on successful fruit additions
-          if (isAddition &&
-              FruitCategoryHelper.isFruitCategory(
-                categoryId: resolvedCategoryId,
-                subCategoryId: resolvedSubCategoryId,
-              )) {
-            await extendTimerForFruit(
-              productId: productId,
-              variantId: variantId,
-              quantity: quantity,
-            );
-          }
         }
       });
     }
@@ -1054,7 +878,8 @@ class CartController extends GetxController {
                         setIsApplyingPromo(false)
                       })
                 .catchError((onError) {
-              customToast(message: onError.toString());
+              debugPrint('cart request failed: $onError');
+              customToast(message: 'Could not reach the store. Please check your internet and try again.');
               setIsApplyingPromo(false);
             })
           }
@@ -1185,7 +1010,8 @@ class CartController extends GetxController {
                       })
                 .catchError((onError) {
               debugPrint(onError.toString());
-              customToast(message: onError.toString());
+              debugPrint('cart request failed: $onError');
+              customToast(message: 'Could not reach the store. Please check your internet and try again.');
               isPromoCodesLoading(false);
             })
           }
@@ -1223,7 +1049,8 @@ class CartController extends GetxController {
                     : {customToast(message: 'Error'), youmayLikeLoading(false)})
                 .catchError((onError) {
               debugPrint(onError.toString());
-              customToast(message: onError.toString());
+              debugPrint('cart request failed: $onError');
+              customToast(message: 'Could not reach the store. Please check your internet and try again.');
               youmayLikeLoading(false);
             })
           }

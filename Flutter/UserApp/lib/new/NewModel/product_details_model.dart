@@ -4,6 +4,9 @@
 
 import 'dart:convert';
 
+/// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
+double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
+
 ProductDetailsModel productDetailsModelFromJson(String str) =>
     ProductDetailsModel.fromJson(json.decode(str));
 
@@ -139,9 +142,9 @@ class ProductVariant {
         metricvalue: json["metricvalue"],
         availableQty: json["AvailableQty"],
         maxQty: json["maxQty"],
-        price: json["Price"]?.toDouble() ?? 0.0, // Ensure price is never null
+        price: _toDouble(json["Price"]) ?? 0.0, // Ensure price is never null
         offerPrice:
-            json["OfferPrice"]?.toDouble() ?? 0.0, // Handle null offerPrice
+            _toDouble(json["OfferPrice"]) ?? 0.0, // Handle null offerPrice
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null

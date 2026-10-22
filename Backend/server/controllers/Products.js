@@ -10,6 +10,20 @@ const pool = require('../utils/db');
 const Products_s3="https://d3c9kvg5gaqz48.cloudfront.net/Products/"
 
 const productcontroller={
+    // GET /products/bulk-deals: products that get cheaper when you buy more.
+    bulkDeals: async (req, resp) => {
+        try {
+            const ids = (await require('../services/ProductDeals').bulkDealProductIds())
+                .map((n) => parseInt(n, 10)).filter((n) => n > 0);
+            if (!ids.length) return resp.json({ Status: 1, Products: [] });
+            const results = await CommonController.getproducts(
+                `select p.* from Products p where p.Status=1 and p.ProductID in (${ids.join(',')}) order by p.ProductName asc limit 0,100`);
+            return resp.json({ Status: 1, Products: results || [] });
+        } catch (e) {
+            console.log('bulk deals failed', e);
+            return resp.json({ Status: 0, Message: 'error' });
+        }
+    },
 
     //send otp and insert into verifymob
 

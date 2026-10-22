@@ -4,6 +4,9 @@
 
 import 'dart:convert';
 
+/// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
+double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
+
 CurrentOrderModel currentOrderModelFromJson(String str) =>
     CurrentOrderModel.fromJson(json.decode(str));
 
@@ -98,19 +101,19 @@ class Order {
         mobileNumber: json["MobileNumber"],
         userId: json["UserID"],
         promoCode: json["PromoCode"],
-        subTotal: json["SubTotal"].toDouble(),
-        discount: json["Discount"].toDouble(),
-        taxAmount: json["TaxAmount"].toDouble(),
-        promoAmount: json["PromoAmount"].toDouble(),
-        deliverCharges: json["DeliverCharges"].toDouble(),
-        grandTotal: json["GrandTotal"].toDouble(),
+        subTotal: (_toDouble(json["SubTotal"]) ?? 0),
+        discount: (_toDouble(json["Discount"]) ?? 0),
+        taxAmount: (_toDouble(json["TaxAmount"]) ?? 0),
+        promoAmount: (_toDouble(json["PromoAmount"]) ?? 0),
+        deliverCharges: (_toDouble(json["DeliverCharges"]) ?? 0),
+        grandTotal: (_toDouble(json["GrandTotal"]) ?? 0),
         paymentMethod: json["PaymentMethod"],
         address: json["Address"],
         flatNo: json["FlatNo"],
         city: json["City"],
         landMark: json["LandMark"],
-        latitude: json["Latitude"].toDouble(),
-        longitude: json["Longitude"].toDouble(),
+        latitude: (_toDouble(json["Latitude"]) ?? 0),
+        longitude: (_toDouble(json["Longitude"]) ?? 0),
         paymentStatus: json["PaymentStatus"],
         paymentTransactionId: json["PaymentTransactionID"],
         orderStatus: json["OrderStatus"],

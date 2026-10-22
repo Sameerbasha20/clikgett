@@ -4,6 +4,9 @@
 
 import 'dart:convert';
 
+/// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
+double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
+
 AdressesModel adressesModelFromJson(String str) =>
     AdressesModel.fromJson(json.decode(str));
 
@@ -61,8 +64,8 @@ class Address {
         addressId: json["AddressID"],
         userId: json["UserID"],
         city: json["City"],
-        latitude: json["Latitude"].toDouble(),
-        longitude: json["Longitude"].toDouble(),
+        latitude: (_toDouble(json["Latitude"]) ?? 0),
+        longitude: (_toDouble(json["Longitude"]) ?? 0),
         address: json["Address"],
         flatNo: json["FlatNo"],
         landmark: json["Landmark"],

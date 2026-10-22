@@ -8,7 +8,7 @@ class ScheduledSlotInfo {
   final bool isScheduled;
   final DateTime? scheduledDate;
   final String? slotLabel;
-  final String? formattedScheduledDateTime; // e.g. "2026-10-07 07:00:00"
+  final String? formattedScheduledDateTime; // start of the chosen day, e.g. "2026-10-07 00:00:00"
 
   ScheduledSlotInfo({
     required this.isScheduled,
@@ -33,28 +33,6 @@ class DeliverySlotWidget extends StatefulWidget {
 class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
   bool isScheduled = false;
   int selectedDateIndex = 0; // 0 = Tomorrow, 1 = Day after tomorrow, 2 = 3 days later
-  int selectedSlotIndex = 0; // 0 = Morning, 1 = Afternoon, 2 = Evening
-
-  final List<Map<String, String>> timeSlots = [
-    {
-      "label": "Morning",
-      "time": "07:00 AM - 10:00 AM",
-      "dbTime": "07:00:00",
-      "icon": "🌅",
-    },
-    {
-      "label": "Afternoon",
-      "time": "01:00 PM - 04:00 PM",
-      "dbTime": "13:00:00",
-      "icon": "☀️",
-    },
-    {
-      "label": "Evening",
-      "time": "06:00 PM - 09:00 PM",
-      "dbTime": "18:00:00",
-      "icon": "🌆",
-    },
-  ];
 
   late List<DateTime> availableDates;
 
@@ -135,16 +113,15 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
         formattedScheduledDateTime: null,
       ));
     } else {
+      // Only a day is chosen; the order is released for delivery from the start of that day.
       final selectedDate = availableDates[selectedDateIndex];
-      final slot = timeSlots[selectedSlotIndex];
       final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
-      final formattedDateTime = "$dateStr ${slot['dbTime']}";
 
       widget.onSlotChanged(ScheduledSlotInfo(
         isScheduled: true,
         scheduledDate: selectedDate,
-        slotLabel: "${slot['label']} (${slot['time']})",
-        formattedScheduledDateTime: formattedDateTime,
+        slotLabel: DateFormat('EEE, d MMM').format(selectedDate),
+        formattedScheduledDateTime: "$dateStr 00:00:00",
       ));
     }
   }
@@ -395,71 +372,13 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-            Text(
-              "Select Time Slot",
-              style: GoogleFonts.poppins(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
             const SizedBox(height: 8),
-            Column(
-              children: List.generate(timeSlots.length, (index) {
-                final slot = timeSlots[index];
-                final isSelected = selectedSlotIndex == index;
-
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedSlotIndex = index;
-                    });
-                    _notifyChange();
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isSelected ? primary.withOpacity(0.08) : Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected ? primary : Colors.grey.shade200,
-                        width: isSelected ? 1.5 : 1.0,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(slot['icon'] ?? '', style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: 8),
-                        Text(
-                          slot['label'] ?? '',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.5.sp,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected ? primary : Colors.black87,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          slot['time'] ?? '',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11.5.sp,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected ? primary : Colors.grey.shade600,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                          color: isSelected ? primary : Colors.grey.shade400,
-                          size: 18,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+            Text(
+              "Your order will be delivered during the day you pick.",
+              style: GoogleFonts.poppins(
+                fontSize: 11.5.sp,
+                color: Colors.grey.shade600,
+              ),
             ),
           ],
         ],

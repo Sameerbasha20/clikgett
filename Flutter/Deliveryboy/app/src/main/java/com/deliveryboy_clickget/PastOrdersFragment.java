@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.deliveryboy_clickget.Model.OrderList;
 import com.deliveryboy_clickget.Model.OrdersListDeo;
 import com.deliveryboy_clickget.Utils.APIService;
+import com.deliveryboy_clickget.Utils.Session;
 import com.deliveryboy_clickget.Utils.RetrofitClient;
 
 import java.util.List;
@@ -81,6 +82,10 @@ public class PastOrdersFragment extends Fragment {
                     }
                 } catch (Exception ignored) {}
 
+                if (response.code() == 401 && getContext() != null) {
+                    Session.expire(getContext());
+                    return;
+                }
                 try {
                     OrdersListDeo ordersListDeo = response.body();
                     if (response.code() == 200 && ordersListDeo != null) {

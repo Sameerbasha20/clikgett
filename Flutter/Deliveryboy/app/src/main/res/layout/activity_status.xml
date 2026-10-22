@@ -1,216 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_layt"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/clikgett_card_surface">
+    android:background="@color/clikgett_surface_bg"
+    android:orientation="vertical">
 
-    <!-- App Bar -->
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:background="@color/clikgett_card_surface"
-        android:elevation="1dp"
-        android:paddingHorizontal="12dp">
+        android:background="@color/white"
+        android:elevation="2dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="16dp">
 
         <ImageView
             android:id="@+id/back_img"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
             android:padding="8dp"
-            android:src="@drawable/arrow_left"
-            app:tint="@color/clikgett_text_primary"
-            android:contentDescription="Back" />
+            android:src="@drawable/arrow_left" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_toEndOf="@id/back_img"
             android:layout_marginStart="8dp"
-            android:text="Performance &amp; Stats"
+            android:text="My deliveries &amp; earnings"
             android:textColor="@color/clikgett_text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
-    </RelativeLayout>
+    </LinearLayout>
 
-    <ScrollView
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="@color/clikgett_surface_bg"
-        android:fillViewport="true"
-        android:overScrollMode="never">
+        android:layout_height="match_parent">
 
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="match_parent">
 
-            <!-- Card 1: Total Orders Delivered -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/total_orders"
+            <LinearLayout
+                android:id="@+id/periods_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/clikgett_card_stroke"
-                app:strokeWidth="1dp"
-                app:cardBackgroundColor="@color/clikgett_card_surface">
+                android:orientation="vertical"
+                android:padding="12dp">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/cash_note_txt"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp"
-                    android:gravity="center_horizontal">
-
-                    <ImageView
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:src="@drawable/ic_check_circle"
-                        app:tint="@color/clikgett_green_primary" />
-
-                    <TextView
-                        android:id="@+id/total_orders_txt"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="0"
-                        android:textColor="@color/clikgett_text_primary"
-                        android:textSize="40sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Total Orders Delivered"
-                        android:textColor="@color/clikgett_text_secondary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Lifetime completed deliveries"
-                        android:textColor="@color/clikgett_text_muted"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Card 2: Cumulative Earnings -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/clikgett_card_stroke"
-                app:strokeWidth="1dp"
-                app:cardBackgroundColor="@color/clikgett_card_surface">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp"
-                    android:gravity="center_horizontal">
-
-                    <ImageView
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:src="@drawable/ic_baseline_currency_rupee_24"
-                        app:tint="@color/clikgett_green_primary" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="₹"
-                            android:textColor="@color/clikgett_green_primary"
-                            android:textSize="32sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/earningamount_txt"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0.00"
-                            android:textColor="@color/clikgett_green_primary"
-                            android:textSize="36sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Total Delivery Earnings"
-                        android:textColor="@color/clikgett_text_secondary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Earnings credited directly to your partner wallet"
-                        android:textColor="@color/clikgett_text_muted"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Card 3: Quality & Safety Tips -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="1dp"
-                app:strokeColor="@color/clikgett_card_stroke"
-                app:strokeWidth="1dp"
-                app:cardBackgroundColor="@color/clikgett_card_surface">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Fleet Partner Guidelines"
-                        android:textColor="@color/clikgett_text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="• Keep GPS active during your shift for accurate dispatch\n• Report delays immediately to protect your on-time score\n• Ensure safe delivery handling for all grocery items"
-                        android:textColor="@color/clikgett_text_secondary"
-                        android:textSize="13sp"
-                        android:lineSpacingExtra="4dp" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-        </LinearLayout>
-    </ScrollView>
-
+                    android:layout_marginBottom="12dp"
+                    android:background="@drawable/bg_card_surface"
+                    android:backgroundTint="@color/color_break_bg"
+                    android:padding="14dp"
+                    android:textColor="@color/color_break"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </ScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </LinearLayout>

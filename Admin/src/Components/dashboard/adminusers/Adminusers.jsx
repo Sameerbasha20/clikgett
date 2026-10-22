@@ -1,371 +1,144 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import TopNav from "../../Navbar/topNav";
 import SideNav from "../../Navbar/sideNav";
 import dashboardclasses from "../dashboard.module.css";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "react-bootstrap-table-next/dist/react-bootstrap-table2.css";
-import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css";
-import BootstrapTable from "react-bootstrap-table-next";
-import paginationFactory from "react-bootstrap-table2-paginator";
-import { FaRegEdit } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
-import "../../../App.css";
+import classes from "../Dashboard/Dashboard.module.css";
 import { Services } from "../../../Services";
-import { toast } from "react-toastify";
-import Addusers from "./addAdminusers";
-import { css } from "@emotion/react";
-import ScaleLoader from "react-spinners/ScaleLoader";
-import { useNavigate } from "react-router-dom";
-function Warehouse() {
-    const Navigate = useNavigate();
-    const [addUser, setAddUser] = useState(false);
-    const [id, setid] = useState();
-    const [editable, setEditable] = useState(false);
-    const [adminusers, setAdminUsers] = useState([]);
-    const [searchAdminUsers, setSearchAdminUsers] = useState([]);
-    const [warehousedata, setWarehouses] = useState([]);
-    let [loading, setLoading] = useState(true);
-    const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
-    const categoryHandler = () => {
-        setAddUser((prev) => !prev);
+
+const empty = { id: null, firstName: "", lastName: "", emailId: "", password: "" };
+const notify = (res, okMsg) => {
+    if (res && res.Status === 1) toast.success(okMsg || res.Message, { position: "top-center", autoClose: 1500 });
+    else toast.error((res && res.Message) || "Something went wrong", { position: "top-center" });
+};
+
+/**
+ * People who can log in to this admin panel (email + password + 2FA).
+ * Riders are managed on the Riders page.
+ */
+function AdminUsers() {
+    const [admins, setAdmins] = useState([]);
+    const [form, setForm] = useState(null);
+    const [saving, setSaving] = useState(false);
+    let me = null;
+    try {
+        me = JSON.parse(sessionStorage.getItem("admindata") || "null");
+    } catch (e) {
+        me = null;
+    }
+    const myId = me && (me.AdminID || me.adminId);
+
+    const load = async () => {
+        const res = await Services.getAdminusers("GET", null);
+        if (res && res.Status === 1) setAdmins(res.adminUsers || []);
     };
-    const headerstyles = {
-        color: "#707275",
-        fontWeight: 700,
-        fontSize: "0.8rem",
-    };
-    const override = css`
-        display: block;
-        margin: 0 auto;
-        border-color: red;
-    `;
-    const getAdminusers = () => {
-        Services.getAdminusers("GET", null, token)
-            .then((res) => {
-                console.log(res);
-                if (res.Status === 1) {
-                    setAdminUsers(res.adminUsers);
-                    setSearchAdminUsers(res.adminUsers);
-                    Services.getwarehouses("GET", null, token).then(
-                        (response) => {
-                            if (response.Status === 1) {
-                                console.log(response);
-                                setWarehouses(response.warehouses);
-                                setLoading(false);
-                            } else if (response.Status === 0) {
-                                setLoading(false);
-                                toast.error(`${res.Message}`, {
-                                    position: "top-center",
-                                    autoClose: 1000,
-                                    hideProgressBar: true,
-                                    closeOnClick: true,
-                                    pauseOnHover: true,
-                                    draggable: true,
-                                    progress: undefined,
-                                });
-                                if (res.Message == "Token expired") {
-                                    Navigate("/");
-                                }
-                            }
-                        }
-                    );
-                } else if (res.Status === 0) {
-                    setLoading(false);
-                    toast.error(`${res.Message}`, {
-                        position: "top-center",
-                        autoClose: 1000,
-                        hideProgressBar: true,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    });
-                    if (res.Message == "Token expired") {
-                        Navigate("/");
-                    }
-                }
-            })
-            .catch((err) => {
-                // alert(err);
-                alert("something went wrong please try again");
-                console.log(err);
-            });
-    };
+
     useEffect(() => {
-        getAdminusers();
-        // eslint-disable-next-line
+        load();
     }, []);
-    const iconformatter = (cell, cellcontent) => {
-        if (cell == 1) {
-            return <p>Admin</p>;
-        }
-        if (cell == 2) {
-            return <p>WareHouse Manager</p>;
-        }
-        if (cell == 3) {
-            return <p>Customer Support</p>;
-        }
-    };
-    const edithandler = (e) => {
-        console.log(e.currentTarget.getAttribute("id"));
-        setid(e.currentTarget.getAttribute("id"));
-        setEditable(true);
-        setAddUser(true);
-    };
-    const deleteHandler = (e) => {
-        if (window.confirm("are you sure you want to delete ")) {
-            Services.deleteAdmindata(
-                "DELETE",
-                null,
-                token,
-                e.currentTarget.getAttribute("id")
-            )
-                .then((res) => {
-                    if (res.Status === 1) {
-                        getAdminusers();
-                        toast.success(`${res.Message}`, {
-                            position: "top-center",
-                            autoClose: 1000,
-                            hideProgressBar: true,
-                            closeOnClick: true,
-                            pauseOnHover: true,
-                            draggable: true,
-                            progress: undefined,
-                        });
-                    } else if (res.Status === 0) {
-                        toast.error(`${res.Message}`, {
-                            position: "top-center",
-                            autoClose: 1000,
-                            hideProgressBar: true,
-                            closeOnClick: true,
-                            pauseOnHover: true,
-                            draggable: true,
-                            progress: undefined,
-                        });
-                        if (res.Message == "Token expired") {
-                            Navigate("/");
-                        }
-                    }
-                })
-                .catch((err) => {
-                    // alert(err);
-                    alert("something went wrong please try again");
-                    console.log(err);
-                });
-        }
-    };
-    const ActionFormatter = (cell, cellcontent) => {
-        return (
-            <div className={dashboardclasses.tablebtns}>
-                <button onClick={edithandler} id={cellcontent.adminUserId}>
-                    <FaRegEdit size={18} />
-                </button>
-                <button onClick={deleteHandler} id={cellcontent.adminUserId}>
-                    <MdDelete size={18} />
-                </button>
-            </div>
-        );
-    };
-    const statusFormatter = (cell, cellcontent) => {
-        let classname =
-            cell === 1
-                ? dashboardclasses["status_active"]
-                : dashboardclasses["status_inactive"];
-        return (
-            <p className={classname}>{cell === 1 ? "Active" : "Inactive"}</p>
-        );
-    };
-    const wareHouseFormatter = (cell) => {
-        // console.log(cell);
-        const warehousename = warehousedata.filter(
-            (item) => item.warehouseId == cell
-        );
-        // console.log(warehousedata);
-        // console.log(warehousename);
-        return (
-            <p>
-                {warehousename?.length > 0
-                    ? warehousename[0]?.warehouseName
-                    : "Not Assigned"}
-            </p>
-        );
-    };
-    const columns = [
-        {
-            dataField: "firstName",
-            text: "NAME",
-            sort: false,
-            headerStyle: (colum, colIndex) => {
-                return { ...headerstyles };
-            },
-        },
-        {
-            dataField: "emailId",
-            text: "EMAIL",
-            sort: false,
-            headerStyle: (colum, colIndex) => {
-                return { ...headerstyles };
-            },
-        },
-        {
-            dataField: "warehouseId",
-            text: "WareHouse",
-            sort: false,
-            formatter: wareHouseFormatter,
-            headerStyle: (colum, colIndex) => {
-                return { ...headerstyles };
-            },
-        },
-        {
-            dataField: "role",
-            text: "ROLE",
-            sort: false,
-            formatter: iconformatter,
-            headerStyle: (colum, colIndex) => {
-                return { ...headerstyles };
-            },
-        },
-        {
-            dataField: "status",
-            text: "status",
-            sort: false,
-            formatter: statusFormatter,
-            headerStyle: (colum, colIndex) => {
-                return { ...headerstyles };
-            },
-        },
 
-        {
-            dataField: "ACTIONS",
-            text: "ACTIONS",
-            sort: false,
-            formatter: ActionFormatter,
-            headerStyle: (colum, colIndex) => {
-                return { ...headerstyles, width: "100px" };
-            },
-        },
-    ];
-    const pagination = paginationFactory({
-        page: 1,
-        sizePerPage: 8,
-        lastPageText: ">>",
-        firstPageText: "<<",
-        nextPageText: ">",
-        prePageText: "<",
-        hideSizePerPage: true,
-        showTotal: true,
-        alwaysShowAllBtns: true,
-        onPageChange: function (page, sizePerPage) {
-            console.log("page", page);
-            console.log("sizePerPage", sizePerPage);
-        },
-        onSizePerPageChange: function (page, sizePerPage) {
-            console.log("page", page);
-            console.log("sizePerPage", sizePerPage);
-        },
-    });
-    const defaultSorted = [
-        {
-            dataField: "name",
-            order: "desc",
-        },
-    ];
-    const warehousefilter = (e) => {
-        //searchAdminUsers
-        const search = adminusers.filter(
-            (item) => item.warehouseId == e.target.value
-        );
-        setSearchAdminUsers(search);
+    const save = async (e) => {
+        e.preventDefault();
+        if (!form.id && form.password.length < 8) {
+            toast.error("Password must be at least 8 characters", { position: "top-center" });
+            return;
+        }
+        setSaving(true);
+        const body = { firstName: form.firstName, lastName: form.lastName, emailId: form.emailId };
+        if (form.password) body.password = form.password;
+        const res = form.id
+            ? await Services.updateAdmindata("PUT", body, null, form.id)
+            : await Services.addAdminUser("POST", body);
+        setSaving(false);
+        notify(res, form.id ? "Admin updated" : "Admin added");
+        if (res && res.Status === 1) {
+            setForm(null);
+            load();
+        }
     };
-    const namefilter = (e) => {
-        const search = adminusers.filter((item) =>
-            String(item.firstName.toLowerCase()).includes(
-                e.target.value.toLowerCase()
-            )
-        );
 
-        console.log(search);
-        console.log("search");
-        setSearchAdminUsers(search);
+    const remove = async (a) => {
+        if (!window.confirm(`Remove ${a.firstName} (${a.emailId})? They will no longer be able to log in.`)) return;
+        const res = await Services.deleteAdmindata("DELETE", null, null, a.AdminID);
+        notify(res, "Admin removed");
+        load();
     };
+
+    const reset2fa = async (a) => {
+        if (!window.confirm(`Reset two-factor login for ${a.firstName}? They will set up their authenticator again on next login.`)) return;
+        const res = await Services.reset2FA("POST", {}, null, a.AdminID);
+        notify(res, "Two-factor login reset");
+    };
+
+    const field = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+
     return (
-        <>
-            {addUser && (
-                <Addusers
-                    setmodal={setAddUser}
-                    editable={editable}
-                    id={id}
-                    setEditable={setEditable}
-                    getAdminusers={getAdminusers}
-                />
-            )}
+        <div className={dashboardclasses["dashboard-wrapper"]}>
+            <div className={dashboardclasses["dashboard-leftside"]}>
+                <SideNav isactive="user" />
+            </div>
+            <div className={dashboardclasses["dashboard-rightside"]}>
+                <TopNav />
+                <div className={classes.page}>
+                    <div className={classes.pageHead}>
+                        <div>
+                            <h2>Admin users</h2>
+                            <span className={classes.muted}>People who can log in to this panel. Riders are on the Riders page.</span>
+                        </div>
+                        <button type="button" className={classes.refresh} onClick={() => setForm({ ...empty })}>+ Add admin</button>
+                    </div>
 
-            <div className={dashboardclasses["dashboard-wrapper"]}>
-                <div className={dashboardclasses["dashboard-leftside"]}>
-                    <SideNav isactive="user" />
-                </div>
-                <div className={dashboardclasses["dashboard-rightside"]}>
-                    <TopNav />
-
-                    <div className={dashboardclasses.CategoryWrapper}>
-                        <h3>Admin users</h3>
-
-                        {loading ? (
-                            <div className={dashboardclasses["loader"]}>
-                                <ScaleLoader
-                                    color={"black"}
-                                    loading={true}
-                                    css={override}
-                                    size={150}
-                                />
+                    {form && (
+                        <form className={classes.card} onSubmit={save}>
+                            <div className={classes.cardHead}><h3>{form.id ? "Edit admin" : "New admin"}</h3></div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+                                <label>First name
+                                    <input className="form-control" value={form.firstName} onChange={(e) => field("firstName", e.target.value)} required />
+                                </label>
+                                <label>Last name
+                                    <input className="form-control" value={form.lastName} onChange={(e) => field("lastName", e.target.value)} />
+                                </label>
+                                <label>Email
+                                    <input className="form-control" type="email" value={form.emailId} onChange={(e) => field("emailId", e.target.value)} required />
+                                </label>
+                                <label>{form.id ? "New password (leave empty to keep)" : "Password (8+ characters)"}
+                                    <input className="form-control" type="password" autoComplete="new-password" value={form.password} onChange={(e) => field("password", e.target.value)} required={!form.id} minLength={form.id ? undefined : 8} />
+                                </label>
                             </div>
-                        ) : (
-                            <>
-                                <div
-                                    className={
-                                        dashboardclasses["category-form"]
-                                    }>
-                                    <input
-                                        type={"text"}
-                                        placeholder="search by name"
-                                        onChange={namefilter}
-                                    />
+                            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                                <button type="submit" className="btn btn-success" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+                                <button type="button" className="btn btn-outline-secondary" onClick={() => setForm(null)}>Cancel</button>
+                            </div>
+                        </form>
+                    )}
 
-                                    <select
-                                        defaultValue=""
-                                        onChange={warehousefilter}>
-                                        <option value="" disabled>
-                                            warehouse
-                                        </option>
-                                        <option value="0">Not Assigned</option>
-                                        {warehousedata?.map((item) => (
-                                            <option key={item.warehouseId} value={item.warehouseId}>
-                                                {item.warehouseName}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <button onClick={categoryHandler}>
-                                        + Add User
-                                    </button>
-                                </div>
-                                <div className="category-table">
-                                    <BootstrapTable
-                                        bootstrap4
-                                        keyField="adminUserId"
-                                        data={searchAdminUsers}
-                                        columns={columns}
-                                        defaultSorted={defaultSorted}
-                                        pagination={pagination}
-                                        wrapperClasses="table-responsive"
-                                    />
-                                </div>
-                            </>
-                        )}
+                    <div className={classes.card}>
+                        <table className={classes.table}>
+                            <thead><tr><th>Name</th><th>Email</th><th>Status</th><th className={classes.actions}>Actions</th></tr></thead>
+                            <tbody>
+                                {admins.map((a) => (
+                                    <tr key={a.AdminID}>
+                                        <td><b>{`${a.firstName || ""} ${a.lastName && a.lastName !== "NA" ? a.lastName : ""}`.trim()}</b>{String(a.AdminID) === String(myId) && <span className={classes.count}>you</span>}</td>
+                                        <td>{a.emailId}</td>
+                                        <td>{Number(a.status) === 1 ? "Active" : "Inactive"}</td>
+                                        <td className={classes.actions}>
+                                            <div className={classes.actionGroup}>
+                                            <button type="button" className={classes.linkBtn} onClick={() => setForm({ id: a.AdminID, firstName: a.firstName || "", lastName: a.lastName && a.lastName !== "NA" ? a.lastName : "", emailId: a.emailId || "", password: "" })}>Edit</button>
+                                            <button type="button" className={classes.linkBtn} onClick={() => reset2fa(a)}>Reset 2FA</button>
+                                            {String(a.AdminID) !== String(myId) && (
+                                                <button type="button" className={classes.linkBtn} style={{ color: "#b91c1c" }} onClick={() => remove(a)}>Remove</button>
+                                            )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 
-export default Warehouse;
+export default AdminUsers;

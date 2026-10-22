@@ -7,6 +7,7 @@ const AWS = require('aws-sdk');
 const CommonController = require("../controllers/CommonController");
 
 const pool = require('../utils/db');
+const StoreHours = require('../services/StoreHours');
 
 const TimingController = {
   addTiming: async (req, res) => {
@@ -192,26 +193,11 @@ const TimingController = {
 
 checkOrderTiming: async (req, res) => {
   try {
-      let getShotStatus = `select * from AdminShopToggleSettings where ShopStatus=1`
-      let resultShopStatus = await CommonController.commonget(getShotStatus)
-      console.log(resultShopStatus);
-      if(resultShopStatus.length === 0){
-        return res.json({ status: 0, message: "We're not available now" });
-      }
-      // Step 1: Fetch the latest order timings
-      const query = `SELECT * FROM OrderTimings WHERE Status=1 and
-       CONVERT_TZ(CURTIME(), '+00:00', '+05:30') BETWEEN StartTime AND EndTime;`
-      pool.query(query, (err, results) => {
-          if (err) {
-              return res.json({ status: 0, message: err.sqlMessage });
-          }
-
-          if (results.length === 0) {
-              return res.json({ status: 0, message: "We're closed now" });
-          }
-          else{
-            return res.json({ status: 1, message: "We're available now" });
-          }
+      const state = await StoreHours.getState();
+      return res.json({
+          status: state.isOpen ? 1 : 0,
+          message: StoreHours.customerMessage(state),
+          OpensAt: StoreHours.opensAtText(state),
       });
   } catch (error) {
       console.log(error);
@@ -219,39 +205,44 @@ checkOrderTiming: async (req, res) => {
   }
 },
 
+  // Kept for older admin builds: 0 closes the store, 1 hands it back to the timings.
+  toggleShopStatus: async (req, res) => {
+      try {
+          const mode = String(req.query.status) === '0' ? 'CLOSED' : 'AUTO';
+          await StoreHours.setMode(mode, false);
+          return res.status(200).json({ "Status": 1, "Message": mode === 'CLOSED' ? 'Store closed' : 'Store follows its timings' });
+      } catch (err) {
+          console.error("Error in toggling shop status", err);
+          return res.status(500).json({ "Status": 0, "Message": "Error in toggling shop status" });
+      }
+  },
 
-  
-
-  toggleShopStatus: async(req,res)=>{
-        try {
-            const { status } = req.query;  // status = 1 for Open, 0 for Closed
-            
-            // Update Shop Status in the DB
-            const query = "UPDATE AdminShopToggleSettings SET ShopStatus = ?";
-            pool.query(query, [status], (err, result) => {
-                if (err) {
-                    console.error("Error in toggling shop status", err);
-                    return res.status(500).json({ "Status": 0, "Message": "Error in toggling shop status" });
-                }
-                return res.status(200).json({ "Status": 1, "Message": `Shop is now ${status == 1 ? 'Open' : 'Closed'}` });
-            });
-        } catch (err) {
-            console.error("Error in toggling shop status", err);
-            return res.status(500).json({ "Status": 0, "Message": "Error in toggling shop status" });
-        }
+  // PUT /admintiming/store-mode {Mode: AUTO|OPEN|CLOSED, UntilNextChange: bool}
+  setStoreMode: async (req, res) => {
+      try {
+          const mode = String((req.body && req.body.Mode) || '').toUpperCase();
+          if (!StoreHours.MODES.includes(mode)) {
+              return res.status(400).json({ Status: 0, Message: 'Choose Follow timings, Open now or Close now.' });
+          }
+          const state = await StoreHours.setMode(mode, !!req.body.UntilNextChange);
+          const msg = mode === 'AUTO' ? 'Store now follows its timings'
+              : `Store ${mode === 'OPEN' ? 'opened' : 'closed'}${state.modeUntil ? ' until the next scheduled opening or closing' : ''}`;
+          return res.json({ Status: 1, Message: msg, State: state });
+      } catch (err) {
+          console.error('Error in setting store mode', err);
+          return res.status(500).json({ Status: 0, Message: 'Could not change the store status' });
+      }
   },
 
   getShopStatus: async (req, res) => {
     try {
         const query = "SELECT * FROM AdminShopToggleSettings LIMIT 1";
-        
+        const state = await StoreHours.getState();
         pool.query(query, (err, results) => {
             if (err) {
                 return res.json({ status: 0, message: err.sqlMessage });
             }
-
-            return res.json({ status: 1, Shop: results[0]});
-            
+            return res.json({ status: 1, Shop: results[0], State: state });
         });
     } catch (error) {
         console.log("Error in fetching shop status:", error);
@@ -266,7 +257,7 @@ updateBanner : async (req, resp, next) => {
       const values = [];
 
       const allowedFields = [
-          'PricePerKm', 'Longitude', 'Latitude', 'ShopStatus',
+          'PricePerKm', 'BaseDeliveryCharge', 'Longitude', 'Latitude',
           'CashbackMode', 'LongDistanceFeeEnabled', 'LongDistanceThresholdKm', 'LongDistanceFee',
           'LargeCartThreshold1Items', 'LargeCartThreshold1Minutes',
           'LargeCartThreshold2Items', 'LargeCartThreshold2Minutes',

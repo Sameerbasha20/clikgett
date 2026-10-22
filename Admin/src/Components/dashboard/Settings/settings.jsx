@@ -8,7 +8,6 @@ import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.m
 import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from "react-bootstrap-table2-paginator";
 import { FaRegEdit, FaSave, FaSlidersH, FaTable, FaRoute, FaGift } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
 import "../../../App.css";
 import { Services } from "../../../Services";
 import { toast } from "react-toastify";
@@ -47,6 +46,9 @@ function SettingsPage() {
     const [longDistanceEnabled, setLongDistanceEnabled] = useState(false);
     const [longDistanceThreshold, setLongDistanceThreshold] = useState("8.00");
     const [longDistanceFee, setLongDistanceFee] = useState("40.00");
+    const [baseDeliveryCharge, setBaseDeliveryCharge] = useState("25");
+    const [pricePerKm, setPricePerKm] = useState("5");
+    const [freeDeliveryAbove, setFreeDeliveryAbove] = useState("");
     const [largeCartThreshold1Items, setLargeCartThreshold1Items] = useState("10");
     const [largeCartThreshold1Minutes, setLargeCartThreshold1Minutes] = useState("5");
     const [largeCartThreshold2Items, setLargeCartThreshold2Items] = useState("20");
@@ -94,6 +96,8 @@ function SettingsPage() {
                     setLongDistanceEnabled(Boolean(s.LongDistanceFeeEnabled));
                     setLongDistanceThreshold(s.LongDistanceThresholdKm ? String(s.LongDistanceThresholdKm) : "8.00");
                     setLongDistanceFee(s.LongDistanceFee ? String(s.LongDistanceFee) : "40.00");
+                    setBaseDeliveryCharge(s.BaseDeliveryCharge != null ? String(Number(s.BaseDeliveryCharge)) : "25");
+                    setPricePerKm(s.PricePerKm != null ? String(Number(s.PricePerKm)) : "5");
                     setLargeCartThreshold1Items(s.LargeCartThreshold1Items ? String(s.LargeCartThreshold1Items) : "10");
                     setLargeCartThreshold1Minutes(s.LargeCartThreshold1Minutes ? String(s.LargeCartThreshold1Minutes) : "5");
                     setLargeCartThreshold2Items(s.LargeCartThreshold2Items ? String(s.LargeCartThreshold2Items) : "20");
@@ -118,6 +122,8 @@ function SettingsPage() {
 
         const togglePayload = {
             CashbackMode: cashbackMode,
+            BaseDeliveryCharge: parseFloat(baseDeliveryCharge) >= 0 ? parseFloat(baseDeliveryCharge) : 25,
+            PricePerKm: parseFloat(pricePerKm) >= 0 ? parseFloat(pricePerKm) : 5,
             LongDistanceFeeEnabled: longDistanceEnabled ? 1 : 0,
             LongDistanceThresholdKm: parseFloat(longDistanceThreshold) || 8.00,
             LongDistanceFee: parseFloat(longDistanceFee) || 40.00,
@@ -132,6 +138,11 @@ function SettingsPage() {
         // 1. Save toggle settings
         Services.updateStoreData("PUT", JSON.stringify(togglePayload), token, shopSettingId)
             .then((res) => {
+                // Free-delivery threshold lives in the Settings table.
+                const freeSetting = categoryItems.find((x) => x.SettingKey === "FreeDelivery_CartAmount");
+                if (freeSetting && freeDeliveryAbove !== "" && String(freeSetting.SettingValue) !== String(freeDeliveryAbove)) {
+                    Services.updatesettings("PUT", JSON.stringify({ SettingValue: String(freeDeliveryAbove) }), token, freeSetting.ID);
+                }
                 // 2. Also update Minordervalue_wallet in Settings table if changed
                 const walletSetting = categoryItems.find((s) => s.SettingKey === "Minordervalue_wallet");
                 if (walletSetting && walletSetting.SettingValue !== minWalletOrderValue) {
@@ -161,26 +172,10 @@ function SettingsPage() {
         setCategory(true);
     };
 
-    const deleteHandler = (e) => {
-        if (window.confirm("Are you sure you want to delete this setting?")) {
-            Services.deletesettings("DELETE", null, token, e.currentTarget.getAttribute("id"))
-                .then((res) => {
-                    if (res.status === 1) {
-                        fetchAllSettings();
-                        toast.success(res.Message);
-                    }
-                })
-                .catch((err) => console.error(err));
-        }
-    };
-
     const ActionFormatter = (cell, cellcontent) => (
         <div className={dashboardclasses.tablebtns}>
             <button onClick={edithandler} id={cellcontent.ID}>
                 <FaRegEdit size={18} />
-            </button>
-            <button onClick={deleteHandler} id={cellcontent.ID}>
-                <MdDelete size={18} />
             </button>
         </div>
     );
@@ -310,6 +305,44 @@ function SettingsPage() {
                                                 <option value="disabled">Disabled</option>
                                             </select>
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Delivery fee: base + per km (+ long-distance extra), free above a cart value */}
+                                <div className="card p-3 mb-4" style={{ background: "#f8fafc" }}>
+                                    <h5 style={{ color: "#1e40af", marginBottom: "8px" }}>Delivery Fee</h5>
+                                    <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: "12px" }}>
+                                        Fee = base charge + price per km (distance from the store, rounded up), plus the long-distance extra below.
+                                        Orders at or above the free-delivery amount pay only the long-distance extra.
+                                    </p>
+                                    <div className="row">
+                                        <div className="col-md-4 form-group">
+                                            <label><strong>Base charge (₹):</strong></label>
+                                            <input type="number" min="0" step="1" className="form-control" value={baseDeliveryCharge} onChange={(e) => setBaseDeliveryCharge(e.target.value)} />
+                                        </div>
+                                        <div className="col-md-4 form-group">
+                                            <label><strong>Price per km (₹):</strong></label>
+                                            <input type="number" min="0" step="0.5" className="form-control" value={pricePerKm} onChange={(e) => setPricePerKm(e.target.value)} />
+                                        </div>
+                                        <div className="col-md-4 form-group">
+                                            <label><strong>Free delivery at cart value (₹):</strong></label>
+                                            <input type="number" min="0" step="1" className="form-control"
+                                                value={freeDeliveryAbove !== "" ? freeDeliveryAbove : ((categoryItems.find((x) => x.SettingKey === "FreeDelivery_CartAmount") || {}).SettingValue || "")}
+                                                onChange={(e) => setFreeDeliveryAbove(e.target.value)} />
+                                        </div>
+                                    </div>
+                                    <div style={{ marginTop: 8, fontSize: "0.85rem" }}>
+                                        <strong>Customer pays (below the free-delivery amount):</strong>{" "}
+                                        {[1, 3, 5, 8, 12, 20].map((km) => {
+                                            const base = parseFloat(baseDeliveryCharge) || 0;
+                                            const perKm = parseFloat(pricePerKm) || 0;
+                                            const extra = longDistanceEnabled && km > (parseFloat(longDistanceThreshold) || 0) ? (parseFloat(longDistanceFee) || 0) : 0;
+                                            return (
+                                                <span key={km} style={{ display: "inline-block", margin: "4px 10px 0 0", padding: "2px 8px", background: "white", border: "1px solid #e2e8f0", borderRadius: 6 }}>
+                                                    {km} km: <b>₹{Math.ceil(base + km * perKm) + extra}</b>
+                                                </span>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 

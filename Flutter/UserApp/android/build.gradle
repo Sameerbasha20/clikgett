@@ -16,6 +16,14 @@ allprojects {
             force 'androidx.browser:browser:1.8.0'
             force 'androidx.activity:activity:1.9.3'
             force 'androidx.activity:activity-ktx:1.9.3'
+        // razorpay_flutter asks for checkout:1.6.+ (and that for latest core libs), which
+        // makes Gradle look versions up online on every build. Pin them so builds work offline.
+        eachDependency { details ->
+            if (details.requested.group == 'com.razorpay') {
+                def pinned = [checkout: '1.6.41', 'standard-core': '1.7.20', core: '1.0.20']
+                if (pinned[details.requested.name]) details.useVersion pinned[details.requested.name]
+            }
+        }
         }
     }
 }

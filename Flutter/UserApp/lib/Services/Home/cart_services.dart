@@ -30,45 +30,4 @@ class CartServices {
       return ResponseModel.fromJson(jsonDecode(response.body));
     });
   }
-
-  static Future getCart() {
-    return client
-        .get(
-      Uri.parse('${Constants.baseUrl}/carts/mycart'),
-    )
-        .then((response) {
-      return CartModel.fromJson(jsonDecode(response.body));
-    });
-  }
-
-  static Future addCart({required body}) {
-    return client
-        .post(Uri.parse('${Constants.baseUrl}/carts/addcart'),
-            body: json.encode(body))
-        .then((response) {
-      // return jsonDecode(response.body);
-      return ResponseModel.fromJson(jsonDecode(response.body));
-    });
-  }
-
-  static Future deleteItemFromCart({required productId, required variantId}) {
-    return client
-        .delete(
-      Uri.parse(
-          '${Constants.baseUrl}/carts/deletecartitem/$productId/$variantId'),
-    )
-        .then((response) {
-      return ResponseModel.fromJson(jsonDecode(response.body));
-    });
-  }
-
-  static Future deleteCart({id}) {
-    return client
-        .delete(
-      Uri.parse('${Constants.baseUrl}/carts/deletecart/$id'),
-    )
-        .then((response) {
-      return ResponseModel.fromJson(jsonDecode(response.body));
-    });
-  }
 }

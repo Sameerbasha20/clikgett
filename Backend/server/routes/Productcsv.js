@@ -11,7 +11,6 @@ router
 .get('/pendingproductscsv',csvcontroller.pendingorders_csv)
 .get('/orderdetails',csvcontroller.orderdetails)
 .get('/productdetails',csvcontroller.productdetails)
-.get('/warehouse',csvcontroller.warehousedetails)
 module.exports=router
 
 

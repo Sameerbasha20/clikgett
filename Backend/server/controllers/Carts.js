@@ -432,7 +432,7 @@ const cartcontroller = {
                 [req.params.CartID],
                 () => {}
             );
-            return resp.json({ "Status": 1, "Message": "cart deleted successfully" });
+            return resp.json({ "Status": 1, "Message": "Cart cleared" });
 
         }
         catch (err) {

@@ -52,10 +52,19 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="location" />
+        <!-- Order pushes (assigned / cancelled / reassigned) -->
+        <service
+            android:name=".RiderMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
-        <activity
-            android:name=".VioVideo"
-            android:exported="false" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="orders" />
+
         <activity
             android:name=".VerifyOtpActivity"
             android:exported="true"
@@ -65,23 +74,11 @@
             android:exported="true"
             android:theme="@style/Theme.Deliveryparent" />
         <activity
-            android:name=".NavigationActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Deliveryparent" />
-        <activity
             android:name=".OrderDetailsActivity"
             android:theme="@style/Theme.Deliveryparent"
             android:exported="true" />
         <activity
-            android:name=".RouteIdActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Deliveryparent" />
-        <activity
             android:name=".StatusActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Deliveryparent" />
-        <activity
-            android:name=".LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.Deliveryparent" />
         <activity

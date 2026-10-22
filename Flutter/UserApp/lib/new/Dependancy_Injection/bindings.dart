@@ -4,7 +4,6 @@ import 'package:fav_app/new/Controllers/cart_controller.dart';
 import 'package:fav_app/new/Controllers/category_controller.dart';
 import 'package:fav_app/new/Controllers/config_controller.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
-import 'package:fav_app/new/Controllers/kits_controller.dart';
 import 'package:fav_app/new/Controllers/notification_controller.dart';
 import 'package:fav_app/new/Controllers/orders_controller.dart';
 import 'package:fav_app/new/Controllers/profile_controller.dart';
@@ -19,7 +18,6 @@ class AppBindings extends Bindings {
     Get.lazyPut(() => HomeController());
     Get.lazyPut(() => AdressController());
     Get.lazyPut(() => CategoryController());
-    Get.lazyPut(() => KitsController());
     Get.lazyPut(() => CartController());
     Get.lazyPut(() => NotificationController());
     Get.lazyPut(() => ProfileController());

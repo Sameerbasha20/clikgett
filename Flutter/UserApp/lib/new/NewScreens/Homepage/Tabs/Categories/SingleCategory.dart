@@ -16,12 +16,16 @@ class SingleCategory extends StatefulWidget {
       required this.categories,
       this.isFromHomeScreen = false,
       this.subCategory = false,
-      this.backtoCategories = false});
+      this.backtoCategories = false,
+      this.initialSubCategoryId});
 
   final SpecialCategory categories;
   final bool? isFromHomeScreen;
   final bool? subCategory;
   final bool? backtoCategories;
+
+  /// Opens with this subcategory selected (e.g. from a banner).
+  final int? initialSubCategoryId;
 
   @override
   State<SingleCategory> createState() => _SingleCategoryState();
@@ -69,6 +73,9 @@ class _SingleCategoryState extends State<SingleCategory> {
       setState(() {
         _subcategories = subs;
         _loadingSubs = false;
+        for (final sub in subs) {
+          if (sub.id == widget.initialSubCategoryId) _selected = sub;
+        }
       });
     } catch (_) {
       if (mounted) setState(() => _loadingSubs = false);

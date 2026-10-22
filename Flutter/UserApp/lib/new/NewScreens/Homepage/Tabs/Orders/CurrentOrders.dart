@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Services/order_tracking_services.dart';
 // ignore_for_file: prefer_const_constructors
 import 'package:fav_app/new/Constants/Constants.dart';
 import 'package:fav_app/new/Constants/colors.dart';
@@ -234,11 +235,11 @@ Widget ordersBody(
   if (orders.orderStatus == 1) {
     statusColor = primary;
     statusText = 'Delivered on ${DateFormat("dd MMM, hh:mm a").format(orders.deliveredCancelleddatetime ?? DateTime.now())}';
-  } else if (orders.orderStatus == 2) {
+  } else if (orders.orderStatus == OrderStatus.packing || orders.orderStatus == OrderStatus.assigned) {
     statusColor = Colors.orange.shade700;
-  } else if (orders.orderStatus == 3 || orders.orderStatus == 5) {
+  } else if (orders.orderStatus == OrderStatus.outForDelivery || orders.orderStatus == OrderStatus.arrived) {
     statusColor = Colors.blue.shade700;
-  } else if (orders.orderStatus == 4 || orders.orderStatus == 6) {
+  } else if (OrderStatus.isCancelled(orders.orderStatus ?? 0)) {
     statusColor = Colors.red.shade600;
     statusText = 'Cancelled on ${DateFormat("dd MMM, hh:mm a").format(orders.deliveredCancelleddatetime ?? DateTime.now())}';
   }
@@ -355,7 +356,7 @@ Widget ordersBody(
                 orders.orderStatus == 1
                     ? Icon(Icons.check_circle_rounded,
                         color: primary, size: 28)
-                    : (orders.orderStatus == 4 || orders.orderStatus == 6)
+                    : OrderStatus.isCancelled(orders.orderStatus ?? 0)
                         ? Icon(Icons.cancel_rounded,
                             color: Colors.red.shade600, size: 28)
                         : Lottie.asset(
@@ -371,25 +372,4 @@ Widget ordersBody(
       ));
 }
 
-String getOrderStatusText(int status) {
-  switch (status) {
-    case 1:
-      return "🎉 Order delivered. Thank you for choosing ClikGett";
-    case 2:
-      return "📦 Your items are being packed.";
-    case 3:
-      return "Shipment Created.";
-    case 4:
-      return "Order Cancelled.";
-    case 5:
-      return "🛵 Your order is en route.";
-    case 6:
-      return "Order Returned.";
-    case 7:
-      return "📍Arrived at your location and will hand over your order at your doorstep.";
-    case 8:
-      return "🕒 Order received — we’ll confirm and start packing soon.";
-    default:
-      return "Status Unknown.";
-  }
-}
+String getOrderStatusText(int status) => OrderStatus.message(status);

@@ -11,6 +11,7 @@ router
 
 .get('/weblist',util.authenticate.optionalUserAuthenticate,productcontroller.productsbyCategory_subcategory)
 
+.get('/bulk-deals',util.authenticate.optionalUserAuthenticate,productcontroller.bulkDeals)
 .get('/detail/:ProductID',util.authenticate.optionalUserAuthenticate,productcontroller.productsby_ProductID)
 
 .get('/search/:SearchString',util.authenticate.optionalUserAuthenticate,productcontroller.searchProduct)
@@ -18,11 +19,8 @@ router
 .get('/suggestions/:query',util.authenticate.optionalUserAuthenticate,productcontroller.searchSuggestions)
 .delete('/search-history',util.authenticate.optionalUserAuthenticate,productcontroller.clearSearchHistory)
 
-.get('/kits',util.authenticate.userAuthenticate,productcontroller.kits)
 
-.get('/allkits',util.authenticate.userAuthenticate,productcontroller.allKits)
 
-.get('/kitdetail/:KitID',util.authenticate.userAuthenticate,productcontroller.kitdetail)
 
 .get('/recommendedproducts',util.authenticate.optionalUserAuthenticate,productcontroller.RecommendedProducts_User)
 

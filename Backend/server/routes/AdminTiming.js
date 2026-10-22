@@ -1,4 +1,3 @@
-const Routecontroller=require("../controllers/Routes")
 const express = require('express'); 
 const router = express.Router();
 const util=require("../utils/utils")
@@ -11,6 +10,7 @@ router
 .get('/', util.authenticate.adminAuthenticate, TimingController.getTiming)
 .get('/shopstatus', util.authenticate.adminAuthenticate, TimingController.getShopStatus)
 .put('/toggle', util.authenticate.adminAuthenticate,TimingController.toggleShopStatus)
+.put('/store-mode', util.authenticate.adminAuthenticate, TimingController.setStoreMode)
 .delete('/delete/:TimingID', util.authenticate.adminAuthenticate, TimingController.deleteTiming)
 
 .put('/updatesettings/:SettingID', util.authenticate.adminAuthenticate, TimingController.updateBanner)

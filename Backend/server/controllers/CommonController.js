@@ -212,6 +212,12 @@ CommonController.getproducts = (query, params) => {
                                 }
                             }
                         }
+                        // Flash-sale prices and bulk tiers, so cards match the cart.
+                        try {
+                            await require('../services/ProductDeals').attachDeals(results);
+                        } catch (e) {
+                            console.log('attaching deals failed', e.message);
+                        }
                         resolve(results);
                         console.log("Final Products length by category Id: ", results.length);
                     }
@@ -379,8 +385,9 @@ CommonController.GetReferredDetails = (UserID, OrderID) => {
                         RefferedUserID = ResultReferral[0]['UserID']
                         // RefferedUserID = UserResults[0]['ReferredBy']
 
-                        let GetOrders = `select * from Orders where UserID = ? and OrderStatus in (1) order by CreatedAt asc`;
-                        let ResultOrders = await CommonController.commonget(GetOrders, [UserID]);
+                        // Earlier delivered orders only: this order is already marked delivered.
+                        let GetOrders = `select OrderID from Orders where UserID = ? and OrderStatus in (1) and OrderID <> ?`;
+                        let ResultOrders = await CommonController.commonget(GetOrders, [UserID, OrderID]);
                         console.log('referral amount resultorder', ResultOrders);
                         if (ResultOrders.length == 0) {
                             let referralRewardCredited = false;
@@ -1071,8 +1078,10 @@ CommonController.sendSms = async (number, otp) => {
 
     const response = await axios.post(url1);
     console.log("balance", response.data?.description, "status", response.data?.status);
-    if(response.data?.status=="Success")
+    const sent = response.data?.status == "Success";
+    if (sent)
        await updateOTPs_sent()
+    return sent;
 };
 
 CommonController.sendSmsForNewOrder = async (orderId) => {
@@ -1211,7 +1220,14 @@ CommonController.ProcessOrderCashback = async (OrderID, UserID) => {
             }
 
             if (cashbackMode === 'manual') {
-                // Route to CashbackPending table for manual admin review
+                // Route to CashbackPending table for manual admin review (once per order)
+                const queued = await new Promise(r => pool.query(
+                    "SELECT 1 FROM CashbackPending WHERE OrderID = ? LIMIT 1", [OrderID], (e, rows) => r(rows || [])
+                ));
+                if (queued.length) {
+                    console.log(`Cashback for Order #${OrderID} is already in the review queue`);
+                    return 0;
+                }
                 await new Promise(r => pool.query(
                     "INSERT INTO CashbackPending (OrderID, UserID, CashbackAmount, Status, CreatedAt) VALUES (?, ?, ?, 'pending', NOW())",
                     [OrderID, UserID, earnedCashback],

@@ -97,6 +97,32 @@ class StorefrontServices {
     return CategoryPage(list.map((e) => home_model.BestItem.fromJson(Map<String, dynamic>.from(e))).toList(), next);
   }
 
+  /// Bestsellers / personalised picks (used for "You might also like").
+  static Future<List<home_model.BestItem>> recommendedProducts() async {
+    try {
+      final response = await _client.get(Uri.parse('${Constants.baseUrl}/products/recommendedproducts'));
+      final data = jsonDecode(response.body);
+      final list = (data is Map ? (data['BestItems'] ?? data['Products']) : null) as List? ?? [];
+      return list.map((e) => home_model.BestItem.fromJson(Map<String, dynamic>.from(e))).toList();
+    } catch (e) {
+      debugPrint('recommendedProducts failed: $e');
+      return [];
+    }
+  }
+
+  /// Products that get cheaper when you buy more (bundles, slabs, "buy 2" prices).
+  static Future<List<home_model.BestItem>> bulkDeals() async {
+    try {
+      final response = await _client.get(Uri.parse('${Constants.baseUrl}/products/bulk-deals'));
+      final data = jsonDecode(response.body);
+      final list = (data is Map ? data['Products'] : null) as List? ?? [];
+      return list.map((e) => home_model.BestItem.fromJson(Map<String, dynamic>.from(e))).toList();
+    } catch (e) {
+      debugPrint('bulkDeals failed: $e');
+      return [];
+    }
+  }
+
   /// All products of one home section (the section's "See all" list).
   static Future<List<home_model.BestItem>> sectionProducts(int homeSectionId) async {
     final response = await _client.get(

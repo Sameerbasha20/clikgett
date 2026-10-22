@@ -553,3 +553,48 @@
         border-radius: 10px;
     }
 }
+
+.section-title {
+    margin: 14px 0 4px 18px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+.order-alert {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    margin-right: 12px;
+}
+.order-alert button {
+    position: relative;
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-size: 1.15rem;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.order-alert button:hover {
+    background: #f1f5f9;
+}
+.order-alert-badge {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: #dc2626;
+    color: white;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}

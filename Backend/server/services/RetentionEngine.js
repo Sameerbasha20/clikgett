@@ -155,6 +155,13 @@ class RetentionEngine {
                         VALUES (?, ?, ?, 1, 1, NOW())
                     `, [cart.UserID, title, message]);
 
+                    // Also as a phone notification (only reaches customers with notifications on).
+                    try {
+                        await require('../controllers/CommonController').send_push_notifications({ Title: title, Message: message }, cart.UserID);
+                    } catch (pushErr) {
+                        console.error('[RetentionEngine] cart reminder push failed:', pushErr && pushErr.message);
+                    }
+
                     // Update AbandonedCartLogs
                     await this.query(`
                         UPDATE AbandonedCartLogs 

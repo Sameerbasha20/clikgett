@@ -19,6 +19,25 @@ class _FeedBackState extends State<FeedBack> {
   final TextEditingController _controller = TextEditingController();
   double _rating = 5.0;
   bool _isSubmitting = false;
+  // Feedback cashback is once per customer; null until the server answers.
+  bool? _rewardAvailable;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRewardEligibility();
+  }
+
+  Future<void> _loadRewardEligibility() async {
+    try {
+      final res = await OrderServices.feedbackEligibility(resolvedOrderId);
+      final program = res?['rewardProgram'];
+      if (!mounted) return;
+      setState(() => _rewardAvailable = program is Map && program['enabled'] == true);
+    } catch (_) {
+      if (mounted) setState(() => _rewardAvailable = false);
+    }
+  }
 
   int get resolvedOrderId {
     final raw = widget.orderId ?? widget.userId;
@@ -118,6 +137,7 @@ class _FeedBackState extends State<FeedBack> {
               message,
               style: const TextStyle(fontSize: 14, color: Color(0xFF334155)),
             ),
+            if (_rewardAvailable == true) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
@@ -135,6 +155,7 @@ class _FeedBackState extends State<FeedBack> {
                 ),
               ),
             ),
+            ],
           ],
         ),
         actions: [
@@ -167,7 +188,8 @@ class _FeedBackState extends State<FeedBack> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cashback / Reward Program info banner
+              // Cashback / Reward Program info banner (only while the customer's one-time reward is unused)
+              if (_rewardAvailable == true) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -203,7 +225,7 @@ class _FeedBackState extends State<FeedBack> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Share your honest feedback on this delivery. All reviews are evaluated by our team for wallet cashback rewards. Honest negative feedback is fully welcomed and equally eligible!',
+                            'Share your honest feedback on this delivery. All reviews are evaluated by our team for wallet cashback rewards. Honest negative feedback is fully welcomed and equally eligible! One-time reward per customer.',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF166534),
@@ -217,6 +239,7 @@ class _FeedBackState extends State<FeedBack> {
                 ),
               ),
               const SizedBox(height: 20),
+              ],
 
               // Rating Card
               Container(

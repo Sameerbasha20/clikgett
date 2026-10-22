@@ -340,10 +340,14 @@
   },
   "scripts": {
     "start": "nodemon server/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node server/tests/test_security_regressions.js && node server/tests/test_order_flow.js && node server/tests/test_checkout.js && node server/tests/test_account.js && node server/tests/test_admin.js && node server/tests/test_features.js && node server/tests/test_cashback_review.js",
     "test:security": "node server/tests/test_security_regressions.js",
     "test:order-flow": "node server/tests/test_order_flow.js",
-    "test:checkout": "node server/tests/test_checkout.js"
+    "test:checkout": "node server/tests/test_checkout.js",
+    "test:account": "node server/tests/test_account.js",
+    "test:admin": "node server/tests/test_admin.js",
+    "test:cashback": "node server/tests/test_cashback_review.js",
+    "test:features": "node server/tests/test_features.js"
   },
   "author": "",
   "license": "ISC",

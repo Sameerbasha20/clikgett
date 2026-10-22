@@ -1,11 +1,29 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import LoginClasses from "./login.module.css";
 import LoginLogo from "../../Assets/login/login-office.jpeg";
 import { useForm } from "react-hook-form";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Services } from "../../Services";
 import { toast } from "react-toastify";
-import { FaShieldAlt, FaKey, FaArrowLeft, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
+import { QRCodeSVG } from "qrcode.react";
+import { FaShieldAlt, FaKey, FaArrowLeft, FaCheckCircle, FaExclamationTriangle, FaMobileAlt, FaSms } from "react-icons/fa";
+
+const methodTabStyle = (active) => ({
+    flex: 1,
+    padding: "0.5rem",
+    border: "none",
+    borderRadius: "6px",
+    backgroundColor: active ? "#ffffff" : "transparent",
+    color: active ? "#0e9f6e" : "#6b7280",
+    boxShadow: active ? "0 1px 3px rgba(0,0,0,0.12)" : "none",
+    cursor: "pointer",
+    fontSize: "0.85rem",
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.4rem",
+});
 
 function Login() {
     const Navigate = useNavigate();
@@ -28,6 +46,20 @@ function Login() {
     const [verifying, setVerifying] = useState(false);
     const [copiedSecret, setCopiedSecret] = useState(false);
     const [copiedCodes, setCopiedCodes] = useState(false);
+    const [qrUri, setQrUri] = useState("");
+    // SMS option: masked numbers that can receive a code, and the state of the last send
+    const [smsNumbers, setSmsNumbers] = useState([]);
+    const [useSms, setUseSms] = useState(false);
+    const [smsSentTo, setSmsSentTo] = useState([]);
+    const [smsCode, setSmsCode] = useState("");
+    const [sendingSms, setSendingSms] = useState(false);
+    const [resendIn, setResendIn] = useState(0);
+
+    useEffect(() => {
+        if (resendIn <= 0) return undefined;
+        const timer = setTimeout(() => setResendIn(resendIn - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [resendIn]);
 
     const onSubmit = (data) => {
         const body = JSON.stringify(data);
@@ -42,6 +74,8 @@ function Login() {
                         setIsSetupMode(Boolean(response.isSetup));
                         setSetupSecret(response.secret || "");
                         setRecoveryCodes(response.recoveryCodes || []);
+                        setQrUri(response.qrUri || "");
+                        setSmsNumbers(response.smsNumbers || []);
                         setIs2FAStep(true);
                         toast.info("Please complete Two-Factor Authentication (2FA)", {
                             position: "top-center",
@@ -51,7 +85,7 @@ function Login() {
                         // Fallback if 2FA was already completed
                         sessionStorage.setItem("admindata", JSON.stringify(response?.userDetails));
                         sessionStorage.setItem("token", response?.token);
-                        Navigate("/orders");
+                        Navigate("/dashboard");
                     }
                 } else if (response.Status === 0) {
                     toast.error(response.Message || "Login failed", {
@@ -67,9 +101,32 @@ function Login() {
             });
     };
 
+    const handleSendSms = () => {
+        setSendingSms(true);
+        Services.send2FASms("POST", { twoFactorToken })
+            .then((res) => {
+                setSendingSms(false);
+                if (res.Status === 1) {
+                    // The server extends the 2FA session to match the SMS code's lifetime
+                    setTwoFactorToken(res.twoFactorToken);
+                    setSmsSentTo(res.sentTo || []);
+                    setResendIn(res.resendAfterSeconds || 30);
+                    toast.success(res.Message, { position: "top-center", autoClose: 2500 });
+                } else {
+                    toast.error(res.Message || "Could not send the SMS code");
+                }
+            })
+            .catch((err) => {
+                setSendingSms(false);
+                console.error("2FA SMS error:", err);
+                toast.error("Error sending SMS code. Please try again.");
+            });
+    };
+
     const handleVerify2FA = (e) => {
         e.preventDefault();
-        if (!useRecovery && (!verificationCode || verificationCode.trim().length !== 6)) {
+        const activeCode = useSms ? smsCode : verificationCode;
+        if (!useRecovery && (!activeCode || activeCode.trim().length !== 6)) {
             toast.error("Please enter a valid 6-digit verification code");
             return;
         }
@@ -81,7 +138,8 @@ function Login() {
         setVerifying(true);
         const payload = {
             twoFactorToken,
-            code: useRecovery ? undefined : verificationCode.trim(),
+            code: !useRecovery && !useSms ? verificationCode.trim() : undefined,
+            smsCode: !useRecovery && useSms ? smsCode.trim() : undefined,
             recoveryCode: useRecovery ? recoveryCodeInput.trim() : undefined,
         };
 
@@ -95,7 +153,7 @@ function Login() {
                         position: "top-center",
                         autoClose: 1500,
                     });
-                    Navigate("/orders");
+                    Navigate("/dashboard");
                 } else {
                     toast.error(res.Message || "Verification failed. Please try again.");
                 }
@@ -132,6 +190,12 @@ function Login() {
         setVerificationCode("");
         setRecoveryCodeInput("");
         setUseRecovery(false);
+        setQrUri("");
+        setSmsNumbers([]);
+        setUseSms(false);
+        setSmsSentTo([]);
+        setSmsCode("");
+        setResendIn(0);
     };
 
     return (
@@ -180,11 +244,6 @@ function Login() {
                                 <span className={LoginClasses.border}></span>
                             </form>
 
-                            <div className={LoginClasses["login-links"]}>
-                                <NavLink to="/forgotpassword">
-                                    Forgot your Password?
-                                </NavLink>
-                            </div>
                         </>
                     ) : (
                         <div style={{ padding: "0 2.5rem" }}>
@@ -193,7 +252,18 @@ function Login() {
                                 <h3 style={{ margin: 0, padding: 0, fontSize: "1.5rem" }}>Two-Factor Verification</h3>
                             </div>
 
-                            {demoOtp && (
+                            {smsNumbers.length > 0 && !useRecovery && (
+                                <div role="tablist" style={{ display: "flex", gap: "0.3rem", backgroundColor: "#f3f4f6", padding: "0.25rem", borderRadius: "8px", marginBottom: "1rem" }}>
+                                    <button type="button" role="tab" aria-selected={!useSms} onClick={() => setUseSms(false)} style={methodTabStyle(!useSms)}>
+                                        <FaMobileAlt size={13} /> Authenticator app
+                                    </button>
+                                    <button type="button" role="tab" aria-selected={useSms} onClick={() => setUseSms(true)} style={methodTabStyle(useSms)}>
+                                        <FaSms size={14} /> SMS code
+                                    </button>
+                                </div>
+                            )}
+
+                            {demoOtp && !useSms && (
                                 <div style={{
                                     backgroundColor: "#fffbeb",
                                     border: "1px solid #fde68a",
@@ -245,7 +315,7 @@ function Login() {
                                 </div>
                             )}
 
-                            {isSetupMode && (
+                            {isSetupMode && !useSms && (
                                 <div style={{
                                     backgroundColor: "#f0fdf4",
                                     border: "1px solid #bbf7d0",
@@ -258,8 +328,15 @@ function Login() {
                                         🔐 Mandatory 2FA Setup
                                     </div>
                                     <p style={{ margin: "0 0 0.5rem 0", color: "#374151" }}>
-                                        Add this account in your Authenticator App (Google Authenticator, Microsoft Authenticator, or Authy).
+                                        Scan this QR code with your Authenticator App (Google Authenticator, Microsoft Authenticator, or Authy), or type in the key below.
                                     </p>
+                                    {qrUri && (
+                                        <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.6rem" }}>
+                                            <div style={{ backgroundColor: "#ffffff", padding: "0.5rem", borderRadius: "6px", border: "1px solid #d1d5db", lineHeight: 0 }}>
+                                                <QRCodeSVG value={qrUri} size={148} aria-label="Authenticator setup QR code" />
+                                            </div>
+                                        </div>
+                                    )}
                                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
                                         <code style={{
                                             backgroundColor: "#ffffff",
@@ -313,7 +390,63 @@ function Login() {
                             )}
 
                             <form onSubmit={handleVerify2FA} style={{ padding: 0, width: "100%", gap: "1rem" }}>
-                                {!useRecovery ? (
+                                {!useRecovery && useSms ? (
+                                    <div className={LoginClasses["form-control"]} style={{ width: "100%" }}>
+                                        <span style={{ fontSize: "0.85rem", color: "#374151", marginBottom: "0.5rem" }}>
+                                            {smsSentTo.length > 0
+                                                ? `Code sent to ${smsSentTo.join(" and ")}. It is valid for 10 minutes.`
+                                                : `We'll text a 6-digit code to ${smsNumbers.join(" and ")}.`}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={handleSendSms}
+                                            disabled={sendingSms || resendIn > 0}
+                                            style={{
+                                                width: "100%",
+                                                height: "2.4rem",
+                                                marginBottom: "0.8rem",
+                                                backgroundColor: "#ffffff",
+                                                color: "#0e9f6e",
+                                                border: "1px solid #0e9f6e",
+                                                borderRadius: "10px",
+                                                fontSize: "0.9rem",
+                                                fontWeight: 600,
+                                                cursor: sendingSms || resendIn > 0 ? "not-allowed" : "pointer",
+                                                opacity: sendingSms || resendIn > 0 ? 0.6 : 1
+                                            }}
+                                        >
+                                            {sendingSms
+                                                ? "Sending..."
+                                                : resendIn > 0
+                                                ? `Resend code in ${resendIn}s`
+                                                : smsSentTo.length > 0 ? "Resend code" : "Send code by SMS"}
+                                        </button>
+                                        {smsSentTo.length > 0 && (
+                                            <>
+                                                <label htmlFor="sms-code" style={{ fontSize: "0.9rem", fontWeight: 600 }}>
+                                                    6-Digit SMS Code
+                                                </label>
+                                                <input
+                                                    id="sms-code"
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    autoComplete="one-time-code"
+                                                    maxLength={6}
+                                                    autoFocus
+                                                    placeholder="123456"
+                                                    value={smsCode}
+                                                    onChange={(e) => setSmsCode(e.target.value.replace(/\D/g, ""))}
+                                                    style={{
+                                                        letterSpacing: "6px",
+                                                        fontSize: "1.3rem",
+                                                        textAlign: "center",
+                                                        fontWeight: 700
+                                                    }}
+                                                />
+                                            </>
+                                        )}
+                                    </div>
+                                ) : !useRecovery ? (
                                     <div className={LoginClasses["form-control"]} style={{ width: "100%" }}>
                                         <label htmlFor="totp-code" style={{ fontSize: "0.9rem", fontWeight: 600 }}>
                                             6-Digit Authenticator Code
@@ -361,6 +494,7 @@ function Login() {
                                     </div>
                                 )}
 
+                                {!(useSms && !useRecovery && smsSentTo.length === 0) && (
                                 <button
                                     type="submit"
                                     disabled={verifying}
@@ -384,6 +518,7 @@ function Login() {
                                     <FaKey size={14} />
                                     {verifying ? "Verifying..." : "Verify & Enter Admin Portal"}
                                 </button>
+                                )}
                             </form>
 
                             <div style={{ marginTop: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.85rem" }}>
@@ -399,7 +534,9 @@ function Login() {
                                         padding: 0
                                     }}
                                 >
-                                    {useRecovery ? "Use Authenticator App Code" : "Lost phone? Use Backup Code"}
+                                    {useRecovery
+                                        ? (smsNumbers.length > 0 ? "Use Authenticator or SMS Code" : "Use Authenticator App Code")
+                                        : "Lost phone? Use Backup Code"}
                                 </button>
 
                                 <button

@@ -1,0 +1,272 @@
+/* Below the fixed top bar (about 69px). */
+.page {
+    padding: calc(69px + 1.75rem) 2rem 2.5rem;
+    max-width: 1200px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+}
+
+.header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.25rem;
+}
+
+.header p {
+    color: #6b7280;
+    margin: 0;
+}
+
+.notice {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.93rem;
+}
+
+.notice a {
+    color: #b45309;
+    font-weight: 600;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+}
+
+.stat {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    display: grid;
+    gap: 0.2rem;
+}
+
+.stat span {
+    color: #6b7280;
+    font-size: 0.82rem;
+}
+
+.stat strong {
+    font-size: 1.35rem;
+    color: #111827;
+    font-variant-numeric: tabular-nums;
+}
+
+.tabs {
+    display: flex;
+    gap: 0.3rem;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 1rem;
+}
+
+.tabs button {
+    border: none;
+    background: none;
+    padding: 0.6rem 0.9rem;
+    color: #6b7280;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.tabs button.tabActive {
+    color: #047857;
+    border-bottom-color: #059669;
+}
+
+.badge {
+    background: #059669;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    padding: 0 0.45rem;
+    line-height: 1.4rem;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow-x: auto;
+}
+
+.empty {
+    padding: 2.2rem 1rem;
+    text-align: center;
+    color: #6b7280;
+    margin: 0;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+    color: #111827;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.num {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.amount {
+    font-weight: 700;
+    color: #047857 !important;
+}
+
+.muted {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.warn {
+    color: #b91c1c;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.actionsCol {
+    text-align: right !important;
+    white-space: nowrap;
+}
+
+.actions {
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+.approve,
+.reject,
+.rejectConfirm,
+.cancel {
+    border-radius: 8px;
+    padding: 0.38rem 0.8rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+}
+
+.approve {
+    background: #059669;
+    color: #fff;
+    border: 1px solid #059669;
+}
+
+.reject {
+    background: #fff;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.approve:disabled,
+.reject:disabled,
+.rejectConfirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.rejectRow td {
+    background: #fef2f2;
+}
+
+.rejectBox {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.rejectBox label {
+    font-weight: 600;
+    margin: 0;
+    color: #7f1d1d;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.chips button {
+    border: 1px solid #fecaca;
+    background: #fff;
+    color: #7f1d1d;
+    border-radius: 999px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.82rem;
+}
+
+.rejectInput {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.rejectInput input {
+    flex: 1;
+    min-width: 220px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+}
+
+.rejectConfirm {
+    background: #b91c1c;
+    color: #fff;
+    border: 1px solid #b91c1c;
+}
+
+.cancel {
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+@media (max-width: 800px) {
+    .page {
+        padding: calc(69px + 1rem) 1rem 1.5rem;
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

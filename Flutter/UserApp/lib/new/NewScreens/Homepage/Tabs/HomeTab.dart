@@ -9,6 +9,7 @@ import 'package:fav_app/new/Controllers/profile_controller.dart';
 import 'package:fav_app/new/Controllers/wallet.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/category_grid.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/home_header.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Storefront/quick_actions_row.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/section_product_rail.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/flash_sale_section.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_hero_banner_carousel.dart';
@@ -94,6 +95,7 @@ class _HomeTabState extends State<Home> {
               SliverToBoxAdapter(child: StorefrontHeader(isLoggedIn: _isLoggedIn)),
               SliverPersistentHeader(pinned: true, delegate: StickySearchBarDelegate(hints: _searchHints)),
               SliverToBoxAdapter(child: _StoreClosedCard(timingController: timingController)),
+              const SliverToBoxAdapter(child: QuickActionsRow()),
               SliverList(delegate: SliverChildListDelegate(_sections())),
               const SliverToBoxAdapter(child: SizedBox(height: 120)), // room for the floating cart bar
             ],
@@ -182,7 +184,10 @@ class _StoreClosedCard extends StatelessWidget {
                 children: [
                   Text(closed ? 'We are closed right now' : "We'll be back shortly",
                       style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: tColor)),
-                  Text('You can still add items and place the order when we open.',
+                  Text(
+                      res.opensAt != null && res.opensAt!.isNotEmpty
+                          ? '${res.opensAt}. You can add items now and order when we open.'
+                          : 'You can still add items and place the order when we open.',
                       style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
                 ],
               ),

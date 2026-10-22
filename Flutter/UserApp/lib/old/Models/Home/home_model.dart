@@ -4,6 +4,9 @@
 
 import 'dart:convert';
 
+/// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
+double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
+
 HomeModel homeModelFromJson(String str) => HomeModel.fromJson(json.decode(str));
 
 String homeModelToJson(HomeModel data) => json.encode(data.toJson());
@@ -137,6 +140,12 @@ class BestItem {
   List<ProductVariant>? productVariants;
   List<String> productImages;
 
+  /// Running flash sale (null when none). Prices are on each variant's salePrice.
+  ProductDeal? deal;
+
+  /// Bulk prices: "Buy 2 for ₹356" bundles or "Buy 5+ @ ₹X each" slabs.
+  List<BulkTier> bulkTiers;
+
   BestItem({
     this.productId,
     this.categoryId,
@@ -150,6 +159,8 @@ class BestItem {
     this.updatedAt,
     this.productVariants,
     required this.productImages,
+    this.deal,
+    this.bulkTiers = const [],
   });
 
   factory BestItem.fromJson(Map<String, dynamic> json) => BestItem(
@@ -174,6 +185,10 @@ class BestItem {
             ? []
             : List<ProductVariant>.from(json["ProductVariants"]!
                 .map((x) => ProductVariant.fromJson(x))),
+        deal: json["Deal"] is Map ? ProductDeal.fromJson(Map<String, dynamic>.from(json["Deal"])) : null,
+        bulkTiers: json["BulkTiers"] is List
+            ? (json["BulkTiers"] as List).whereType<Map>().map((t) => BulkTier.fromJson(Map<String, dynamic>.from(t))).toList()
+            : const [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -210,6 +225,9 @@ class ProductVariant {
   double? offerPrice;
   /// Per-unit price when buying 2 or more (null when there is no buy-more deal).
   double? buy2Price;
+
+  /// Flash-sale unit price, only when a sale is running and it's lower than offerPrice.
+  double? salePrice;
   int? status;
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -224,6 +242,7 @@ class ProductVariant {
     this.price,
     this.offerPrice,
     this.buy2Price,
+    this.salePrice,
     this.status,
     this.createdAt,
     this.updatedAt,
@@ -240,9 +259,10 @@ class ProductVariant {
                 : (double.tryParse(json["metricvalue"].toString()) ?? 0.0)),
         availableQty: json["AvailableQty"],
         maxQty: json["maxQty"],
-        price: json["Price"]?.toDouble() ?? 0.0,
-        offerPrice: json["OfferPrice"]?.toDouble() ?? 0.0,
+        price: _toDouble(json["Price"]) ?? 0.0,
+        offerPrice: _toDouble(json["OfferPrice"]) ?? 0.0,
         buy2Price: json["Buy2Price"] is num ? (json["Buy2Price"] as num).toDouble() : double.tryParse('${json["Buy2Price"] ?? ''}'),
+        salePrice: _toDouble(json["SalePrice"]),
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null
@@ -372,4 +392,38 @@ class EnumValues<T> {
     reverseMap = map.map((k, v) => MapEntry(v, k));
     return reverseMap;
   }
+}
+
+
+class ProductDeal {
+  final String name;
+  final DateTime? endsAt;
+
+  ProductDeal({required this.name, this.endsAt});
+
+  factory ProductDeal.fromJson(Map<String, dynamic> j) => ProductDeal(
+        name: '${j["SaleName"] ?? ''}',
+        // Store wall-clock time; ignore the "Z" the DB driver adds.
+        endsAt: DateTime.tryParse('${j["EndDate"] ?? ''}'.replaceAll('Z', '')),
+      );
+}
+
+class BulkTier {
+  final int? variantId;
+  final int minQuantity;
+  final int? maxQuantity;
+  final double price;
+
+  BulkTier({this.variantId, required this.minQuantity, this.maxQuantity, required this.price});
+
+  /// Bundle (exact quantity, price is the total) vs slab (price per item).
+  bool get isBundle => maxQuantity != null && maxQuantity == minQuantity;
+  double get unitPrice => isBundle && minQuantity > 0 ? price / minQuantity : price;
+
+  factory BulkTier.fromJson(Map<String, dynamic> j) => BulkTier(
+        variantId: j["VariantID"] is num && (j["VariantID"] as num) > 0 ? (j["VariantID"] as num).toInt() : null,
+        minQuantity: j["MinQuantity"] is num ? (j["MinQuantity"] as num).toInt() : int.tryParse('${j["MinQuantity"]}') ?? 0,
+        maxQuantity: j["MaxQuantity"] is num ? (j["MaxQuantity"] as num).toInt() : int.tryParse('${j["MaxQuantity"] ?? ''}'),
+        price: _toDouble(j["Price"]) ?? 0,
+      );
 }

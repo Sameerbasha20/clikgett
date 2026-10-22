@@ -48,7 +48,50 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     selectedVariant = variants.firstWhereOrNull((v) => (v.availableQty ?? 0) > 0) ?? (variants.isEmpty ? null : variants.first);
   }
 
-  double get _sellingPrice => selectedVariant?.offerPrice ?? selectedVariant?.price ?? 0.0;
+  double get _regularPrice => selectedVariant?.offerPrice ?? selectedVariant?.price ?? 0.0;
+
+  /// Flash-sale price while a sale runs (same price the cart charges).
+  double? get _dealPrice {
+    final sale = selectedVariant?.salePrice;
+    return widget.product.deal != null && sale != null && sale < _regularPrice ? sale : null;
+  }
+
+  double get _sellingPrice => _dealPrice ?? _regularPrice;
+
+  /// Best bulk offer for the selected pack, e.g. "Buy 2 for ₹356" or "Buy 5+ @ ₹40 each".
+  String? get _bulkHint {
+    final v = selectedVariant;
+    if (v == null) return null;
+    homeModel.BulkTier? best;
+    for (final t in widget.product.bulkTiers) {
+      if (t.variantId != null && t.variantId != v.variantId) continue;
+      if (t.minQuantity < 2 || t.unitPrice >= _sellingPrice) continue;
+      if (best == null || t.unitPrice < best.unitPrice) best = t;
+    }
+    if (best != null) {
+      return best.isBundle
+          ? 'Buy ${best.minQuantity} for ₹${best.price.toStringAsFixed(0)}'
+          : 'Buy ${best.minQuantity}+ @ ₹${best.price.toStringAsFixed(0)} each';
+    }
+    final buy2 = v.buy2Price;
+    if (buy2 != null && buy2 > 0 && buy2 < _sellingPrice) return 'Buy 2 @ ₹${buy2.toStringAsFixed(0)} each';
+    return null;
+  }
+
+  /// "till 12 AM" today/tonight, otherwise "till 20 Oct".
+  String get _dealEnds {
+    final end = widget.product.deal?.endsAt;
+    if (end == null) return 'limited time';
+    final now = DateTime.now();
+    final endsTonight = end.difference(DateTime(now.year, now.month, now.day)).inHours <= 24;
+    if (endsTonight) {
+      final h = end.hour % 12 == 0 ? 12 : end.hour % 12;
+      final m = end.minute == 0 ? '' : ':${end.minute.toString().padLeft(2, '0')}';
+      return 'till $h$m ${end.hour < 12 ? 'AM' : 'PM'}';
+    }
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return 'till ${end.day} ${months[end.month - 1]}';
+  }
   double get _mrp => selectedVariant?.price ?? _sellingPrice;
 
   int get _discountPercent {
@@ -139,7 +182,8 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
               ...variants.map((v) {
                 final selected = v.variantId == selectedVariant?.variantId;
                 final out = (v.availableQty ?? 0) <= 0;
-                final sell = v.offerPrice ?? v.price ?? 0;
+                final regular = v.offerPrice ?? v.price ?? 0;
+                final sell = widget.product.deal != null && v.salePrice != null && v.salePrice! < regular ? v.salePrice! : regular;
                 final mrp = v.price ?? sell;
                 return InkWell(
                   onTap: out
@@ -192,8 +236,8 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     final images = product.productImages;
     final imageUrl = (images.isNotEmpty ? images.first : product.imageUrl) ?? '';
     final hasVariants = (product.productVariants?.length ?? 0) > 1;
-    final buy2 = selectedVariant?.buy2Price;
-    final showBuy2 = buy2 != null && buy2 > 0 && buy2 < _sellingPrice && !_isOutOfStock;
+    final dealPrice = _isOutOfStock ? null : _dealPrice;
+    final bulkHint = _isOutOfStock || dealPrice != null ? null : _bulkHint;
 
     return Container(
       width: widget.width,
@@ -297,12 +341,14 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                     ),
                     SizedBox(
                       height: 16,
-                      child: showBuy2
-                          ? Text("Buy 2 @ ₹${buy2.toStringAsFixed(0)} each",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: primaryDark))
-                          : null,
+                      child: dealPrice != null
+                          ? _DealChip(price: dealPrice, ends: _dealEnds)
+                          : bulkHint != null
+                              ? Text(bulkHint,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: primaryDark))
+                              : null,
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -419,6 +465,40 @@ class _CartButton extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// Blinkit-style flash deal tag: "⚡ ₹19 · till 12 AM".
+class _DealChip extends StatelessWidget {
+  final double price;
+  final String ends;
+
+  const _DealChip({required this.price, required this.ends});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFF1D4ED8), Color(0xFF0EA5E9)]),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.bolt_rounded, size: 11, color: Colors.white),
+          Flexible(
+            child: Text(
+              '₹${price.toStringAsFixed(0)} · $ends',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(fontSize: 9.5, height: 1.6, fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+          ),
+        ]),
       ),
     );
   }

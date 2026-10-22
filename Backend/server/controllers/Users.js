@@ -47,9 +47,22 @@ const POPULARITY_ORDER = `order by (select coalesce(max(pv.AvailableQty), 0) > 0
               where oi.ProductID = p.ProductID and o.OrderStatus not in (3,4) and o.CreatedAt > NOW() - INTERVAL 120 DAY), 0) desc,
     p.ProductID desc`;
 
-const sectionCategories = (sectionId) => CommonController.commonget(
-    "select c.CategoryID, c.CategoryName, c.CategoryImage, c.ImageUrl from HomeSectionCategories hsc inner join Categories c on c.CategoryID=hsc.CategoryID where c.Status=1 and hsc.HomeSectionID = ? order by hsc.DisplayOrder asc",
-    [sectionId]);
+// Category images are stored as file names; the app needs full URLs.
+const categoryImageUrl = (file) => {
+    const f = file && String(file).trim();
+    if (!f || f === 'NA' || f === 'null') return '';
+    return f.startsWith('http') ? f : category_s3 + f;
+};
+
+const sectionCategories = async (sectionId) => {
+    const rows = await CommonController.commonget(
+        "select c.CategoryID, c.CategoryName, c.CategoryImage, c.ImageUrl from HomeSectionCategories hsc inner join Categories c on c.CategoryID=hsc.CategoryID where c.Status=1 and hsc.HomeSectionID = ? order by hsc.DisplayOrder asc",
+        [sectionId]);
+    return rows.map((c) => {
+        const url = categoryImageUrl(c.ImageUrl) || categoryImageUrl(c.CategoryImage);
+        return { ...c, ImageUrl: url, CategoryImage: url };
+    });
+};
 
 const sectionSubcategories = (sectionId) => CommonController.commonget(
     "select s.SubCategoryID, s.SubCategoryName, s.CategoryID from HomeSectionSubcategories hss inner join SubCategories s on s.SubCategoryID=hss.SubCategoryID where s.Status=1 and hss.HomeSectionID = ? order by hss.DisplayOrder asc",
@@ -132,7 +145,11 @@ async function fetchDynamicHomeSections(userId) {
             if (section.SectionType === 'shop_by_category') {
                 categories = await sectionCategories(section.HomeSectionID);
                 if (!categories || categories.length === 0) {
-                    categories = await CommonController.commonget("select CategoryID, CategoryName, CategoryImage, ImageUrl from Categories where Status=1 order by Priority asc, CategoryName asc limit 0,12");
+                    categories = (await CommonController.commonget("select CategoryID, CategoryName, CategoryImage, ImageUrl from Categories where Status=1 order by Priority asc, CategoryName asc limit 0,12"))
+                        .map((c) => {
+                            const url = categoryImageUrl(c.ImageUrl) || categoryImageUrl(c.CategoryImage);
+                            return { ...c, ImageUrl: url, CategoryImage: url };
+                        });
                 }
             } else if (section.SectionType === 'category_shelf') {
                 categories = await sectionCategories(section.HomeSectionID);
@@ -154,6 +171,16 @@ async function fetchDynamicHomeSections(userId) {
     }
     return finalSections;
 }
+
+// Feedback cashback is a one-time reward per customer. A reward counts as used once
+// credited, or while one is still awaiting admin review.
+const hasUsedFeedbackCashback = (userId) => new Promise((resolve, reject) => {
+    pool.query(
+        "SELECT FeedbackID FROM Feedback WHERE UserID = ? AND (RewardStatus = 'credited' OR (RewardStatus = 'pending' AND RewardAmount > 0)) LIMIT 1",
+        [userId],
+        (err, rows) => (err ? reject(err) : resolve(rows.length > 0))
+    );
+});
 
 const usercontroller = {
 
@@ -829,8 +856,10 @@ const usercontroller = {
                 console.error("Error reading feedback reward settings:", err);
             }
 
-            const initialRewardStatus = (rewardEnabled && rewardAmount > 0) ? 'pending' : 'not_eligible';
-            const initialRewardAmount = (rewardEnabled && rewardAmount > 0) ? rewardAmount : 0.00;
+            const alreadyRewarded = await hasUsedFeedbackCashback(userId);
+            const rewardEligible = rewardEnabled && rewardAmount > 0 && !alreadyRewarded;
+            const initialRewardStatus = rewardEligible ? 'pending' : 'not_eligible';
+            const initialRewardAmount = rewardEligible ? rewardAmount : 0.00;
 
             const insertData = {
                 UserID: userId,
@@ -869,7 +898,8 @@ const usercontroller = {
                 "FeedbackID": insertResult.insertId,
                 "RewardStatus": initialRewardStatus,
                 "RewardAmount": initialRewardAmount,
-                "RewardEligible": rewardEnabled && rewardAmount > 0
+                "RewardEligible": rewardEligible,
+                "AlreadyRewarded": alreadyRewarded
             });
         }
         catch (err) {
@@ -939,6 +969,8 @@ const usercontroller = {
                 console.error("Error reading feedback reward settings:", err);
             }
 
+            const alreadyRewarded = await hasUsedFeedbackCashback(userId);
+
             return resp.json({
                 "Status": 1,
                 "OrderID": orderId,
@@ -946,9 +978,12 @@ const usercontroller = {
                 "alreadySubmitted": existing.length > 0,
                 "feedback": existing.length > 0 ? existing[0] : null,
                 "rewardProgram": {
-                    "enabled": rewardEnabled,
+                    "enabled": rewardEnabled && rewardAmount > 0 && !alreadyRewarded,
+                    "alreadyRewarded": alreadyRewarded,
                     "amount": rewardAmount,
-                    "terms": `Submit honest feedback on your delivered order for a chance to receive ₹${rewardAmount.toFixed(2)} cashback in your ClikGett wallet upon admin review.`
+                    "terms": alreadyRewarded
+                        ? "Feedback cashback is a one-time reward, and you've already used yours. We'd still love to hear from you!"
+                        : `Submit honest feedback on your delivered order for a chance to receive ₹${rewardAmount.toFixed(2)} cashback in your ClikGett wallet upon admin review. One-time reward per customer.`
                 }
             });
         } catch (err) {
@@ -1033,11 +1068,15 @@ const usercontroller = {
 
     deleteAccount: async (req, resp, next) => {
         try {
-            query = `update Users set Status=1 where UserID=${req.UserID}`
-            console.log(query, 'delete query')
-            let results = await CommonController.commonget(query);
+            // Status 2 = deleted. Personal details are removed and the mobile number is
+            // freed so the customer can sign up again; orders stay for the store's records.
+            await CommonController.commonget(
+                `UPDATE Users SET Status = 2, FirstName = 'Deleted', LastName = 'user', EmailID = '',
+                        MobileNumber = CONCAT('DEL', UserID), FCMToken = 'NA', OTP = NULL, profilePic = NULL
+                  WHERE UserID = ?`, [req.UserID]);
+            await CommonController.commonget('DELETE FROM Address WHERE UserID = ?', [req.UserID]).catch(() => {});
 
-            resp.json({ "Status": 1, "Settings": "User Deleted Successfully" })
+            resp.json({ "Status": 1, "Message": "Your account has been deleted" })
         }
         catch (e) {
             logger.info(e)
@@ -1291,7 +1330,10 @@ function getactivebanners() {
 
         return new Promise(function (resolve, reject) {
             var query = ""
-            query = "select * from Banners where Status=1"
+            // ParentCategoryID lets a subcategory banner open the right category page.
+            query = `select B.*, SC.CategoryID AS ParentCategoryID from Banners B
+                       left join SubCategories SC on B.DestinationType = 'subcategory' and SC.SubCategoryID = B.DestinationID
+                      where B.Status=1 order by B.CreatedAt desc`
 
             pool.query(query, function (err, results, fields) {
                 if (err) {

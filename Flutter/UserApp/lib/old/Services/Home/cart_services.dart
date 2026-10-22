@@ -6,12 +6,23 @@ import 'package:fav_app/old/Models/Home/cart_model.dart';
 import 'package:fav_app/old/Models/response_model.dart';
 import 'package:fav_app/old/Services/common/intercepter.dart';
 import 'package:fav_app/old/constants.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
 
 Client client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+
+/// Retries once when the connection drops before a response (an idle
+/// connection closed by the server). Cart calls set absolute values, so a
+/// repeat is safe.
+Future<Response> _withRetry(Future<Response> Function() send) async {
+  try {
+    return await send();
+  } on ClientException {
+    return send();
+  }
+}
 
 class CartServices {
   static Future getCart() {
@@ -38,9 +49,7 @@ class CartServices {
   }
 
   static Future addCart({required body}) {
-    return client
-        .post(Uri.parse('${Constants.baseUrl}/carts/addcart'),
-            body: json.encode(body))
+    return _withRetry(() => client.post(Uri.parse('${Constants.baseUrl}/carts/addcart'), body: json.encode(body)))
         .then((response) {
       // return jsonDecode(response.body);
       return ResponseModel.fromJson(jsonDecode(response.body));
@@ -49,11 +58,9 @@ class CartServices {
 
   static Future deleteItemFromCart(
       {required productId, required variantId, required type}) {
-    return client
-        .delete(
-      Uri.parse(
-          '${Constants.baseUrl}/carts/deletecartitem/$productId/$variantId/$type'),
-    )
+    return _withRetry(() => client.delete(
+              Uri.parse('${Constants.baseUrl}/carts/deletecartitem/$productId/$variantId/$type'),
+            ))
         .then((response) {
       // print(response.statusCode);
       return ResponseModel.fromJson(jsonDecode(response.body));

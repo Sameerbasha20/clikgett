@@ -28,7 +28,7 @@ function AddCategory(props) {
                     } else if (res.status === 0) {
                         toast.error(`${res.Message}`, {
                             position: "top-center",
-                            autoClose: 1000,
+                            autoClose: 4000,
                             hideProgressBar: true,
                             closeOnClick: true,
                             pauseOnHover: true,
@@ -82,7 +82,7 @@ function AddCategory(props) {
                     } else if (res.Status === 0) {
                         toast.error(`${res.Message}`, {
                             position: "top-center",
-                            autoClose: 1000,
+                            autoClose: 4000,
                             hideProgressBar: true,
                             closeOnClick: true,
                             pauseOnHover: true,
@@ -119,7 +119,7 @@ function AddCategory(props) {
                     } else if (res.status === 0) {
                         toast.error(`${res.Message}`, {
                             position: "top-center",
-                            autoClose: 1000,
+                            autoClose: 4000,
                             hideProgressBar: true,
                             closeOnClick: true,
                             pauseOnHover: true,
@@ -182,7 +182,9 @@ function AddCategory(props) {
                     <div className={dashboardclasses["item-image-upload"]}>
                         <label htmlFor="SettingValue">Setting Value</label>
                         <div className={dashboardclasses["select"]}>
-                            <input
+                            <textarea
+                                rows={6}
+                                style={{ width: "100%", fontFamily: "monospace", fontSize: "0.85rem" }}
                                 {...register("SettingValue", {
                                     required: "Value is required",
                                 })}

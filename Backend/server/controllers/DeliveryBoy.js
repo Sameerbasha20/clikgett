@@ -209,11 +209,40 @@ const deliveryboycontroller = {
         }
     },
 
+    // GET /deliveryboy/summary: deliveries, cash collected and tips for today / this week / all time.
+    riderSummary: async (req, resp) => {
+        try {
+            const sql = `SELECT
+                    COUNT(*) AS Delivered,
+                    COALESCE(SUM(CASE WHEN PaymentMethod = 'COD' THEN GrandTotal ELSE 0 END), 0) AS CashCollected,
+                    COALESCE(SUM(TipAmount), 0) AS Tips,
+                    COALESCE(SUM(DeliveryPoints), 0) AS Points
+                 FROM Orders WHERE DeliveryBoyID = ? AND OrderStatus = 1 AND Delivered_Cancelled_datetime >= ?`;
+            const run = (since) => new Promise((res, rej) => pool.query(sql, [req.AdminID, since], (e, r) => (e ? rej(e) : res(r[0]))));
+            const ist = moment().utcOffset(330); // delivery times are stored in IST
+            const today = ist.clone().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+            const week = ist.clone().startOf('isoWeek').format('YYYY-MM-DD HH:mm:ss');
+            const [t, w, all] = await Promise.all([run(today), run(week), run('1970-01-01')]);
+            const shape = (r) => ({
+                Delivered: Number(r.Delivered) || 0,
+                CashCollected: Math.round((parseFloat(r.CashCollected) || 0) * 100) / 100,
+                Tips: Math.round((parseFloat(r.Tips) || 0) * 100) / 100,
+                Points: Number(r.Points) || 0,
+            });
+            return resp.json({ Status: 1, Today: shape(t), Week: shape(w), AllTime: shape(all) });
+        } catch (err) {
+            console.log('rider summary failed', err);
+            return resp.status(500).json({ Status: 0, Message: 'Could not load your summary' });
+        }
+    },
+
     // POST /deliveryboy/fcmtoken { FCMToken }
     updateFcmToken: async (req, resp) => {
         try {
             const token = req.body && req.body.FCMToken ? String(req.body.FCMToken).trim() : '';
             if (!token) return resp.status(400).json({ "Status": 0, "Message": "FCMToken required" });
+            // A device belongs to one rider at a time (another rider may have logged in on it before).
+            await new Promise((res, rej) => pool.query("UPDATE AdminUsers SET FCMToken = NULL WHERE FCMToken = ? AND AdminID <> ?", [token, req.AdminID], (e) => (e ? rej(e) : res())));
             await new Promise((res, rej) => pool.query("UPDATE AdminUsers SET FCMToken = ? WHERE AdminID = ? AND Role = 2", [token, req.AdminID], (e) => (e ? rej(e) : res())));
             return resp.json({ "Status": 1, "Message": "Token saved" });
         } catch (err) {
@@ -254,11 +283,13 @@ const deliveryboycontroller = {
             results = await getroutes(req.AdminID, req.query.Type)
             if (req.query.Type == "pending") {
                 var GetOrders = `select o.*,u.FirstName as UserName,LPAD(OrderID, 4, '0') AS OrderSequence from Orders o inner join Users u on 
-                 u.UserID=o.UserID where o.OrderStatus not in (1,4,3,6) and o.DeliveryBoyID=${req.AdminID}`
+                 u.UserID=o.UserID where o.OrderStatus not in (1,4,3,6) and o.DeliveryBoyID=${parseInt(req.AdminID, 10)}
+                 order by o.OrderID asc`
             }
             else {
                 var GetOrders = `select o.*,u.FirstName as UserName,LPAD(OrderID, 4, '0') AS OrderSequence from Orders o inner join Users u on 
-                 u.UserID=o.UserID where o.OrderStatus in (1,3,4,6) and o.DeliveryBoyID=${req.AdminID}`
+                 u.UserID=o.UserID where o.OrderStatus in (1,3,4,6) and o.DeliveryBoyID=${parseInt(req.AdminID, 10)}
+                 order by o.OrderID desc limit 100`
             }
             console.log(GetOrders, " : GetOrders")
             let OrdersResult = await CommonController.commonget(GetOrders)
@@ -271,6 +302,7 @@ const deliveryboycontroller = {
             //         }
             //     }
             for (let iterator of OrdersResult) {
+                delete iterator.OTP; // the rider must get the OTP from the customer
                 iterator.SubTotal = formatToSingleDecimal(parseFloat(iterator.SubTotal));
                 iterator.GrandTotal = formatToSingleDecimal(parseFloat(iterator.GrandTotal));
                 iterator.PromoAmount = formatToSingleDecimal(parseFloat(iterator.PromoAmount));
@@ -345,6 +377,7 @@ const deliveryboycontroller = {
                     myorder.Longitude = null;
                 }
 
+                delete myorder.OTP; // the rider must get the OTP from the customer
                 myorder.CreatedAt = moment(myorder.CreatedAt).add(5, 'hours').add(30, 'minutes').format('DD-MM-YYYY hh:mm:ss A');
                 myorder.Delivered_Cancelled_datetime = moment(myorder.Delivered_Cancelled_datetime).format('DD-MM-YYYY hh:mm:ss A');
                 myorder.deliveredDateTime = moment(myorder.deliveredDateTime).format('DD-MM-YYYY hh:mm:ss A');

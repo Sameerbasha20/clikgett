@@ -30,6 +30,59 @@ const MembershipController = {
     },
 
     /**
+     * Create or update a plan. Only benefits the store actually applies are editable:
+     * price, duration, free delivery and extra cashback.
+     */
+    savePlan: async (req, res) => {
+        try {
+            const b = req.body || {};
+            const name = String(b.PlanName || '').trim();
+            const price = parseFloat(b.Price);
+            const days = parseInt(b.DurationDays, 10);
+            const cashback = parseFloat(b.ExtraCashbackPercentage || 0);
+            if (!name || !(price > 0) || !(days > 0) || cashback < 0 || cashback > 50) {
+                return res.status(400).json({ Status: 0, Message: 'Name, a price above 0, days above 0 and cashback between 0 and 50% are required' });
+            }
+            const row = {
+                PlanName: name,
+                Price: price,
+                DurationDays: days,
+                FreeDelivery: b.FreeDelivery ? 1 : 0,
+                ExtraCashbackPercentage: cashback,
+                Status: b.Status === 0 || b.Status === '0' || b.Status === false ? 0 : 1,
+            };
+            if (b.PlanID) {
+                await queryAsync('UPDATE MembershipPlans SET ? WHERE PlanID = ?', [row, b.PlanID]);
+                return res.json({ Status: 1, Message: 'Plan updated' });
+            }
+            const result = await queryAsync('INSERT INTO MembershipPlans SET ?', [row]);
+            return res.json({ Status: 1, Message: 'Plan created', PlanID: result.insertId });
+        } catch (err) {
+            console.error('Error saving membership plan:', err);
+            return res.status(500).json({ Status: 0, Message: 'Error saving membership plan' });
+        }
+    },
+
+    /** Members with an active plan (most recent first). */
+    getMembers: async (req, res) => {
+        try {
+            const rows = await queryAsync(
+                `SELECT um.UserMembershipID, um.UserID, um.PlanID, mp.PlanName, um.Price, um.StartDate, um.EndDate,
+                        TRIM(CONCAT(IFNULL(u.FirstName,''), ' ', IFNULL(u.LastName,''))) AS CustomerName, u.MobileNumber
+                   FROM UserMemberships um
+                   JOIN MembershipPlans mp ON mp.PlanID = um.PlanID
+                   LEFT JOIN Users u ON u.UserID = um.UserID
+                  WHERE um.EndDate >= NOW()
+                  ORDER BY um.EndDate DESC LIMIT 500`
+            );
+            return res.json({ Status: 1, Members: rows });
+        } catch (err) {
+            console.error('Error fetching members:', err);
+            return res.status(500).json({ Status: 0, Message: 'Error fetching members' });
+        }
+    },
+
+    /**
      * Get membership pricing configured for a specific product
      */
     getProductPricing: async (req, res) => {

@@ -432,6 +432,7 @@ const PricingEngine = {
                 SELECT PromoCode, MinOrderValue, OfferValue, MaxDiscount, Type, Description
                 FROM PromoCodes
                 WHERE Status = 1
+                  AND IFNULL(Is_Secret, 0) = 0
                   AND (StartDate IS NULL OR StartDate <= DATE(CONVERT_TZ(NOW(),'+00:00','+05:30')))
                   AND (EndDate IS NULL OR EndDate >= DATE(CONVERT_TZ(NOW(),'+00:00','+05:30')))
                 ORDER BY MinOrderValue ASC
@@ -580,6 +581,7 @@ const PricingEngine = {
         }
 
         deliveryCharges = Math.ceil(baseDelivery + (distanceKm * pricePerKm)) + longDistanceFee;
+        const deliveryBeforeWaiver = deliveryCharges;
 
         if (subTotal >= freeDeliveryThreshold || offerFreeShipping || (userMembership && userMembership.FreeDelivery == 1)) {
             deliveryCharges = longDistanceFee; // Long distance fee remains even if base delivery is free
@@ -746,6 +748,7 @@ const PricingEngine = {
             } : null,
             CartOfferDiscount: parseFloat(cartOfferDiscount.toFixed(2)),
             DeliveryCharges: parseFloat(deliveryCharges.toFixed(2)),
+            DeliveryChargesBeforeWaiver: parseFloat(deliveryBeforeWaiver.toFixed(2)),
             LongDistanceFee: longDistanceFee,
             IsLongDistance: isLongDistance,
             BaseDeliveryMinutes: baseDeliveryMinutes,

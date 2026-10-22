@@ -131,7 +131,7 @@ async function generateReceiptPdf(orderId, res) {
                     doc.fillColor('#111827').fontSize(10).font('Helvetica-Bold').text('Delivery & Payment Info', 315, cardY + 10);
 
                     const deliveryType = order.ScheduleStatus === 'Scheduled' && order.ScheduledDateTime
-                        ? `Scheduled (${moment(order.ScheduledDateTime).format('DD MMM, hh:mm A')})`
+                        ? `Scheduled (${moment(order.ScheduledDateTime).format('DD MMM YYYY')})`
                         : 'Express Delivery (15-30 Mins)';
 
                     const paymentMode = order.PaymentMethod || 'Cash on Delivery';

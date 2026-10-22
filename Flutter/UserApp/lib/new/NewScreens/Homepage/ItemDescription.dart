@@ -23,7 +23,6 @@ import 'package:intl/intl.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:fav_app/new/Constants/stock_helper.dart';
 import 'package:fav_app/new/NewScreens/Widgets/purchase_options_sheet.dart';
-import '../../Controllers/kits_controller.dart';
 import 'package:fav_app/new/NewScreens/Homepage/widgets/similar_products_widget.dart';
 
 class ItemDescription extends StatefulWidget {
@@ -550,10 +549,6 @@ class _ItemDescriptionState extends State<ItemDescription> {
       return;
     }
 
-    final kitsController = Get.isRegistered<KitsController>()
-        ? Get.find<KitsController>()
-        : null;
-
     showPurchaseOptionsSheet(
       context: context,
       selectedVariant: variant,
@@ -569,7 +564,6 @@ class _ItemDescriptionState extends State<ItemDescription> {
           categoryController.updateVariant(result['variant'] as ProductVariant);
           filterQuantityAfterBottomsheet(result['variant'] as ProductVariant);
         }
-        kitsController?.updateComboList();
         setState(() {});
       }
     });
@@ -953,7 +947,6 @@ bottomQuantityViewer({
 
 Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
     int initialSelectedIndex) {
-  final KitsController kitsController = Get.find();
   selectedvarients ??= products.productVariants?.first;
   if (selectedvarients != null) {
     initialSelectedIndex = -1;
@@ -961,7 +954,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
 
   return showModalBottomSheet<void>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext context) => StatefulBuilder(builder: (context, setSheetState) {
         return Stack(
           alignment: Alignment.bottomCenter,
           children: [
@@ -1024,16 +1017,14 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                           behavior: HitTestBehavior.opaque,
                           onTap: () {
                             selectedvarients = varients;
-                            kitsController.updateUI();
+                            setSheetState(() {});
                             initialSelectedIndex = index;
                           },
                           child: Padding(
                             padding: EdgeInsets.symmetric(vertical: 1.2.h),
                             child: Row(
                               children: [
-                                GetBuilder<KitsController>(
-                                  id: 'radioButton',
-                                  builder: (_) {
+                                Builder(builder: (_) {
                                     return Container(
                                       margin: EdgeInsets.only(right: 3.w),
                                       padding: EdgeInsets.all(3),
@@ -1118,9 +1109,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                 ],
                 color: white,
               ),
-              child: GetBuilder<KitsController>(
-                id: 'radioButton',
-                builder: (_) {
+              child: Builder(builder: (_) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1196,5 +1185,5 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
             ),
           ],
         );
-      });
+      }));
 }

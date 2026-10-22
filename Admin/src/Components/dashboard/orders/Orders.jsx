@@ -19,6 +19,7 @@ import TimePicker from "rc-time-picker";
 import "rc-time-picker/assets/index.css";
 import { FaDownload, FaBan } from "react-icons/fa";
 import AssignDeliveryBoyModal from "./AssignDeliveryBoyModal";
+import { statusOptions, isFinal } from "../../../orderStatus";
 import CancelOrderModal from "./CancelOrderModal";
 
 function Products() {
@@ -385,17 +386,13 @@ function Products() {
         return (
             <div className={dashboardclasses["order_status"]}>
                 <select
+                    key={`${cellContent.OrderID}-${cell}`}
                     defaultValue={cell}
-                    disabled={cell == 1 || cell == 4}
+                    disabled={isFinal(cell)}
                     onChange={(e) => statusHandler(e, cellContent)}>
-                    {" "}
-                    <option value={8} disabled>RECEIVED</option>
-                    <option value={9}>PACKING</option>
-                    <option value={2} disabled>RIDER ASSIGNED</option>
-                    <option value={5}>PICKED UP</option>
-                    <option value={7}>ARRIVED</option>
-                    <option value={1}>DELIVERED </option>
-                    <option value={3}>CANCEL ORDER</option>
+                    {statusOptions(cell).map((o) => (
+                        <option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>
+                    ))}
                 </select>
             </div>
         );

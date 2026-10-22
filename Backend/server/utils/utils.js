@@ -48,7 +48,7 @@ const userAuth = (allowQueryToken) => async (req, resp, next) => {
     }
     try {
         const results = await query(
-            "select UserID, MobileNumber, WalletAmount from Users where UserID = ?",
+            "select UserID, MobileNumber, WalletAmount from Users where UserID = ? and IFNULL(Status, 1) <> 2",
             [decoded.UserID]
         );
         if (!results.length) {

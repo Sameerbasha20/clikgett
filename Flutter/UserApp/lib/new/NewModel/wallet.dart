@@ -4,6 +4,9 @@
 
 import 'dart:convert';
 
+/// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
+double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
+
 WalletModel walletModelFromJson(String str) =>
     WalletModel.fromJson(json.decode(str));
 
@@ -26,7 +29,7 @@ class WalletModel {
             ? []
             : List<Wallet>.from(
                 json["Wallets"]!.map((x) => Wallet.fromJson(x))),
-        walletAmount: json["WalletAmount"]?.toDouble(),
+        walletAmount: _toDouble(json["WalletAmount"]),
       );
 
   Map<String, dynamic> toJson() => {
@@ -65,7 +68,7 @@ class Wallet {
         walletId: json["WalletID"],
         userId: json["UserID"],
         contentType: json["ContentType"],
-        amount: json["Amount"]?.toDouble(),
+        amount: _toDouble(json["Amount"]),
         creditedDebited: json["Credited_Debited"],
         description: json["Description"],
         // creditDebitType: json["Credit_Debit_Type"],

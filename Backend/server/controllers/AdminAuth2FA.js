@@ -3,6 +3,7 @@ const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const totp = require('../utils/totp');
+const passwords = require('../utils/password');
 require('dotenv').config();
 
 const pool = require('../utils/db');
@@ -51,6 +52,42 @@ const sendAdmin2FAEmail = async (email, otpCode) => {
     }
 };
 
+const SMS_CODE_TTL_SECONDS = 600; // the approved SMS template says "valid for 10 minutes"
+const SMS_RESEND_SECONDS = 30;
+
+// SMS codes go to TwoFactorMobileNumbers (comma-separated, so the store owner and a
+// developer can both receive them), falling back to the admin's own MobileNumber.
+const getSmsNumbers = (user) => {
+    const raw = user.TwoFactorMobileNumbers || user.MobileNumber || '';
+    const numbers = String(raw).split(',').map((n) => n.trim()).filter((n) => /^[6-9][0-9]{9}$/.test(n));
+    return [...new Set(numbers)];
+};
+
+const maskNumber = (number) => `******${number.slice(-4)}`;
+
+// Keyed with the server secret so a leaked hash can't be brute-forced over all 10^6 codes.
+const hashSmsCode = (adminId, code) => crypto
+    .createHmac('sha256', process.env.SECRET_KEY)
+    .update(`${adminId}:${code}`)
+    .digest('hex');
+
+// TwoFactorLastUsedTimestamp holds the last TOTP time-step (30s). Older demo-OTP logins
+// stored Unix seconds there, which made every authenticator code look like a replay.
+const toTimeStep = (value) => {
+    const n = Number(value) || 0;
+    return n > 1e9 ? Math.floor(n / 30) : n;
+};
+
+const verifyPreAuthToken = (twoFactorToken) => {
+    if (!twoFactorToken) return null;
+    try {
+        const decoded = jwt.verify(twoFactorToken, process.env.SECRET_KEY);
+        return decoded.is2FAPending && decoded.AdminID ? decoded : null;
+    } catch (e) {
+        return null;
+    }
+};
+
 const auditLog = async (adminId, email, action, status, details, req) => {
     try {
         const ip = (req && req.headers ? req.headers['x-forwarded-for'] : '') || (req && req.socket ? req.socket.remoteAddress : '') || '127.0.0.1';
@@ -91,10 +128,12 @@ const AdminAuth2FA = {
 
             const user = users[0];
 
-            // Verify password (supports direct string comparison or MD5 hash matching)
-            const md5Hash = crypto.createHash('md5').update(String(Password)).digest('hex');
-            const passwordMatches = (user.Password === Password) || (user.Password === md5Hash);
-            if (!passwordMatches) {
+            // Hashed passwords (scrypt); older plain/MD5 rows are upgraded on a successful login.
+            const check = passwords.verify(Password, user.Password);
+            if (check.ok && check.needsUpgrade) {
+                await queryAsync("UPDATE AdminUsers SET Password = ? WHERE AdminID = ?", [passwords.hash(Password), user.AdminID]);
+            }
+            if (!check.ok) {
                 await auditLog(user.AdminID, cleanEmail, 'LOGIN_FAILED', 'FAILURE', 'Incorrect password', req);
                 return resp.status(400).json({ Status: 0, Message: "Invalid email or password" });
             }
@@ -133,6 +172,9 @@ const AdminAuth2FA = {
 
             await auditLog(user.AdminID, cleanEmail, 'PASSWORD_VERIFIED', 'SUCCESS', 'Primary credentials valid; 2FA initiated', req);
 
+            // Masked numbers the admin can choose to receive an SMS code on instead of the app.
+            const smsNumbers = getSmsNumbers(user).map(maskNumber);
+
             // Check if user has already configured TOTP
             if (user.TwoFactorEnabled && user.TwoFactorSecret) {
                 const responseData = {
@@ -140,6 +182,7 @@ const AdminAuth2FA = {
                     require2FA: true,
                     isSetup: false,
                     twoFactorToken,
+                    smsNumbers,
                     Message: isDemoOtpEnabled()
                         ? `Temporary Demo OTP mode active. Enter ${demoOtpCode} or code from authenticator app.`
                         : "Please enter the 6-digit code from your authenticator app"
@@ -168,6 +211,7 @@ const AdminAuth2FA = {
                     require2FA: true,
                     isSetup: true,
                     twoFactorToken: setupToken,
+                    smsNumbers,
                     secret: newSecret,
                     qrUri: keyUri,
                     recoveryCodes: rawCodes,
@@ -187,10 +231,83 @@ const AdminAuth2FA = {
         }
     },
 
-    // Step 2: Verify the 6-digit TOTP code or backup recovery code
+    // Step 2 (SMS option): text a 6-digit code to the admin's registered mobile number(s)
+    sendSmsCode: async (req, resp) => {
+        try {
+            const decoded = verifyPreAuthToken((req.body || {}).twoFactorToken);
+            if (!decoded) {
+                return resp.status(401).json({ Status: 0, Message: "Two-factor session expired. Please log in again." });
+            }
+
+            const [user] = await queryAsync("SELECT * FROM AdminUsers WHERE AdminID = ? AND Role = 1", [decoded.AdminID]);
+            if (!user) {
+                return resp.status(404).json({ Status: 0, Message: "Admin user not found" });
+            }
+            if (user.TwoFactorLockedUntil && new Date(user.TwoFactorLockedUntil) > new Date()) {
+                const remainingMins = Math.ceil((new Date(user.TwoFactorLockedUntil) - new Date()) / 60000);
+                return resp.status(403).json({
+                    Status: 0,
+                    Message: `Account locked due to failed attempts. Please try again in ${remainingMins} minute(s).`
+                });
+            }
+
+            const numbers = getSmsNumbers(user);
+            if (numbers.length === 0) {
+                return resp.status(400).json({ Status: 0, Message: "No mobile number is registered for SMS codes. Please use your authenticator app." });
+            }
+
+            const sinceLastSend = user.TwoFactorSmsSentAt ? Date.now() - new Date(user.TwoFactorSmsSentAt).getTime() : Infinity;
+            if (sinceLastSend < SMS_RESEND_SECONDS * 1000) {
+                const waitSecs = Math.ceil((SMS_RESEND_SECONDS * 1000 - sinceLastSend) / 1000);
+                return resp.status(429).json({ Status: 0, Message: `Please wait ${waitSecs} seconds before requesting another code.` });
+            }
+
+            // Store the code before sending so a quick reply can't arrive before it exists.
+            const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+            await queryAsync(
+                "UPDATE AdminUsers SET TwoFactorSmsCodeHash = ?, TwoFactorSmsExpiresAt = ?, TwoFactorSmsSentAt = ? WHERE AdminID = ?",
+                [hashSmsCode(user.AdminID, code), new Date(Date.now() + SMS_CODE_TTL_SECONDS * 1000), new Date(), user.AdminID]
+            );
+
+            // The same code goes to every registered number; whoever receives it can enter it.
+            const CommonController = require('./CommonController');
+            const results = await Promise.all(numbers.map((number) =>
+                CommonController.sendSms(number, code).catch((e) => {
+                    console.error(`[AdminAuth2FA] SMS to ${maskNumber(number)} failed:`, e.message);
+                    return false;
+                })
+            ));
+            const sentTo = numbers.filter((number, i) => results[i]).map(maskNumber);
+
+            if (sentTo.length === 0) {
+                await queryAsync("UPDATE AdminUsers SET TwoFactorSmsSentAt = NULL WHERE AdminID = ?", [user.AdminID]);
+                await auditLog(user.AdminID, user.EmailID, 'SMS_CODE_FAILED', 'FAILURE', `SMS provider rejected all ${numbers.length} number(s)`, req);
+                return resp.status(502).json({ Status: 0, Message: "Could not send the SMS code. Please try again or use your authenticator app." });
+            }
+
+            await auditLog(user.AdminID, user.EmailID, 'SMS_CODE_SENT', 'SUCCESS', `Sent to ${sentTo.join(', ')}`, req);
+
+            // Re-issue the pre-auth token so it lives as long as the SMS code does.
+            const { iat, exp, ...claims } = decoded;
+            const refreshedToken = jwt.sign(claims, process.env.SECRET_KEY, { expiresIn: SMS_CODE_TTL_SECONDS });
+
+            return resp.status(200).json({
+                Status: 1,
+                Message: `Code sent to ${sentTo.join(' and ')}`,
+                twoFactorToken: refreshedToken,
+                sentTo,
+                resendAfterSeconds: SMS_RESEND_SECONDS
+            });
+        } catch (err) {
+            console.error("Exception in sendSmsCode:", err);
+            return resp.status(500).json({ Status: 0, Message: "Internal server error sending SMS code" });
+        }
+    },
+
+    // Step 2: Verify the 6-digit TOTP code, SMS code or backup recovery code
     verify2FA: async (req, resp) => {
         try {
-            const { twoFactorToken, code, recoveryCode } = req.body || {};
+            const { twoFactorToken, code, smsCode, recoveryCode } = req.body || {};
             if (!twoFactorToken) {
                 return resp.status(400).json({ Status: 0, Message: "Session expired or missing two-factor token. Please log in again." });
             }
@@ -242,7 +359,9 @@ const AdminAuth2FA = {
                         let isVerified = false;
                         let usedRecovery = false;
                         let usedDemoOtp = false;
+                        let usedSms = false;
                         let counterTime = 0;
+                        const lastUsedStep = toTimeStep(user.TwoFactorLastUsedTimestamp);
 
                         // Handle backup recovery code
                         if (recoveryCode && String(recoveryCode).trim()) {
@@ -270,6 +389,19 @@ const AdminAuth2FA = {
                                 );
                                 await auditLog(user.AdminID, user.EmailID, 'RECOVERY_CODE_USED', 'SUCCESS', 'Backup recovery code utilized', req);
                             }
+                        } else if (smsCode && String(smsCode).trim()) {
+                            const smsExpired = !user.TwoFactorSmsExpiresAt || new Date(user.TwoFactorSmsExpiresAt) <= new Date();
+                            if (!user.TwoFactorSmsCodeHash || smsExpired) {
+                                await exec("ROLLBACK");
+                                conn.release();
+                                return resolve(resp.status(400).json({ Status: 0, Message: "This SMS code has expired or was already used. Please request a new code." }));
+                            }
+                            const expected = Buffer.from(user.TwoFactorSmsCodeHash, 'hex');
+                            const actual = Buffer.from(hashSmsCode(user.AdminID, String(smsCode).trim()), 'hex');
+                            if (expected.length === actual.length && crypto.timingSafeEqual(expected, actual)) {
+                                isVerified = true;
+                                usedSms = true;
+                            }
                         } else if (code) {
                             const candidateCode = String(code).trim();
 
@@ -278,7 +410,7 @@ const AdminAuth2FA = {
                                 const candidateHash = crypto.createHash('sha256').update(candidateCode).digest('hex');
                                 if (candidateHash === decoded.demoOtpHash) {
                                     // Anti-replay: Demo OTP cannot be reused
-                                    if (user.TwoFactorLastUsedTimestamp && Number(user.TwoFactorLastUsedTimestamp) >= Number(decoded.demoOtpIssuedAt)) {
+                                    if (lastUsedStep >= Math.floor(Number(decoded.demoOtpIssuedAt) / 30)) {
                                         await exec("ROLLBACK");
                                         conn.release();
                                         await auditLog(user.AdminID, user.EmailID, 'REPLAY_ATTACK_PREVENTED', 'FAILURE', `Reused Demo OTP issued at ${decoded.demoOtpIssuedAt}`, req);
@@ -286,7 +418,7 @@ const AdminAuth2FA = {
                                     }
                                     isVerified = true;
                                     usedDemoOtp = true;
-                                    counterTime = Math.floor(Date.now() / 1000);
+                                    counterTime = Math.floor(Date.now() / 30000);
                                 }
                             }
 
@@ -297,7 +429,7 @@ const AdminAuth2FA = {
                                     const verifyRes = totp.verifyTOTP(candidateCode, activeSecret, { window: 1 });
                                     if (verifyRes.valid) {
                                         // Anti-replay: counter must be strictly newer than last recorded counter
-                                        if (user.TwoFactorLastUsedTimestamp && verifyRes.counter <= Number(user.TwoFactorLastUsedTimestamp)) {
+                                        if (verifyRes.counter <= lastUsedStep) {
                                             await exec("ROLLBACK");
                                             conn.release();
                                             await auditLog(user.AdminID, user.EmailID, 'REPLAY_ATTACK_PREVENTED', 'FAILURE', `Reused TOTP counter ${verifyRes.counter}`, req);
@@ -351,8 +483,12 @@ const AdminAuth2FA = {
                         }
 
                         // Verification succeeded!
-                        // If setup was pending, finalize 2FA configuration in DB
-                        if (!user.TwoFactorEnabled || !user.TwoFactorSecret) {
+                        // SMS and recovery codes say nothing about the authenticator, so they keep the last TOTP step.
+                        counterTime = counterTime || lastUsedStep;
+
+                        // If setup was pending, finalize 2FA configuration in DB. Only an authenticator
+                        // (or recovery) code proves the pending secret was saved; SMS and demo codes don't.
+                        if (!usedSms && !usedDemoOtp && (!user.TwoFactorEnabled || !user.TwoFactorSecret)) {
                             const secretToSave = decoded.pendingSecret || totp.generateSecret();
                             const recoveryHashesToSave = JSON.stringify(decoded.pendingRecoveryHashes || []);
                             await exec(
@@ -362,7 +498,9 @@ const AdminAuth2FA = {
                                     TwoFactorRecoveryCodes = ?, 
                                     TwoFactorFailedAttempts = 0, 
                                     TwoFactorLockedUntil = NULL, 
-                                    TwoFactorLastUsedTimestamp = ?
+                                    TwoFactorLastUsedTimestamp = ?,
+                                    TwoFactorSmsCodeHash = NULL,
+                                    TwoFactorSmsExpiresAt = NULL
                                  WHERE AdminID = ?`,
                                 [secretToSave, recoveryHashesToSave, counterTime, user.AdminID]
                             );
@@ -371,7 +509,9 @@ const AdminAuth2FA = {
                                 `UPDATE AdminUsers SET 
                                     TwoFactorFailedAttempts = 0, 
                                     TwoFactorLockedUntil = NULL, 
-                                    TwoFactorLastUsedTimestamp = ?
+                                    TwoFactorLastUsedTimestamp = ?,
+                                    TwoFactorSmsCodeHash = NULL,
+                                    TwoFactorSmsExpiresAt = NULL
                                  WHERE AdminID = ?`,
                                 [counterTime, user.AdminID]
                             );
@@ -384,6 +524,8 @@ const AdminAuth2FA = {
                             ? 'Logged in via recovery code'
                             : usedDemoOtp
                             ? 'Logged in via Demo OTP (Development Mode)'
+                            : usedSms
+                            ? 'SMS code verified'
                             : 'TOTP verified';
                         await auditLog(user.AdminID, user.EmailID, '2FA_SUCCESS', 'SUCCESS', auditDetail, req);
 

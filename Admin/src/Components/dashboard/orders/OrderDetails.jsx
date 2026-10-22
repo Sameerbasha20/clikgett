@@ -13,6 +13,7 @@ import Moment from "react-moment";
 import { useNavigate, useParams } from "react-router-dom";
 import empty from "../../../Assets/empty.jpg";
 import Carousel from "./carousel";
+import { statusOptions, isFinal } from "../../../orderStatus";
 import { FaDownload } from "react-icons/fa";
 // import Addshipment from "./CreateShipment";
 function Products() {
@@ -569,30 +570,11 @@ function Products() {
                                                     onChange={
                                                         statuschangehandler
                                                     }
-                                                    disabled={[1, 3, 4, 6].includes(Number(orders.OrderStatus))}
+                                                    disabled={isFinal(orders.OrderStatus)}
                                                     value={status}>
-                                                    {" "}
-                                                    <option value={8} disabled>
-                                                        RECEIVED
-                                                    </option>
-                                                    <option value={9}>
-                                                        PACKING
-                                                    </option>
-                                                    <option value={2} disabled>
-                                                        RIDER ASSIGNED
-                                                    </option>
-                                                    <option value={5}>
-                                                        PICKED UP
-                                                    </option>
-                                                    <option value={7}>
-                                                        ARRIVED
-                                                    </option>
-                                                    <option value={1}>
-                                                        DELIVERED{" "}
-                                                    </option>
-                                                    <option value={3}>
-                                                        CANCEL ORDER{" "}
-                                                    </option>
+                                                    {statusOptions(orders.OrderStatus).map((o) => (
+                                                        <option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>
+                                                    ))}
                                                 </select>
                                                 <button onClick={statusHandler}>
                                                     Update
@@ -631,7 +613,7 @@ function Products() {
                                                     }}>
                                                     {(!orders.DeliveryBoyID || orders.DeliveryBoyID == 0 || orders.OrderStatus == 8) ? (
     <div className="d-flex align-items-center gap-2">
-        <span className="badge bg-secondary px-2 py-1">UNASSIGNED</span>
+        <span className="badge px-2 py-1" style={{ background: "#e2e8f0", color: "#334155", fontWeight: 700, letterSpacing: "0.03em" }}>No rider yet</span>
         <button
             type="button"
             className="btn btn-sm btn-primary fw-bold px-3 shadow-sm"

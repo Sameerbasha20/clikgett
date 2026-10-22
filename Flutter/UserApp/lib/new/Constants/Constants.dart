@@ -13,8 +13,8 @@ class Constants {
       : razorPayLiveKey;
   // static String razorPayKey = razorPayTestKey;
 
-  static String baseUrlDev = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.8:5001/api");
-  static String baseUrlProd = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.8:5001/api");
+  static String baseUrlDev = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.9:5001/api");
+  static String baseUrlProd = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.9:5001/api");
 
   static String customerSupport = "9133 446 636";
 

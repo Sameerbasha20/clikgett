@@ -169,6 +169,9 @@
 
 import 'dart:convert';
 
+/// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
+double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
+
 CartModel cartModelFromJson(String str) => CartModel.fromJson(json.decode(str));
 
 String cartModelToJson(CartModel data) => json.encode(data.toJson());
@@ -227,8 +230,8 @@ class Cart {
         cartId: json["CartID"],
         Distance: json["Distance"],
         userId: json["UserID"],
-        DeliveryCharges: json["DeliveryCharges"]?.toDouble(),
-        longDistanceFee: json["LongDistanceFee"] != null ? (json["LongDistanceFee"] as num).toDouble() : 0.0,
+        DeliveryCharges: _toDouble(json["DeliveryCharges"]),
+        longDistanceFee: _toDouble(json["LongDistanceFee"]) ?? 0.0,
         isLongDistance: json["IsLongDistance"] == true || json["IsLongDistance"] == 1,
         largeCartNotice: json["LargeCartNotice"],
         additionalDeliveryMinutes: json["AdditionalDeliveryMinutes"] != null ? int.tryParse(json["AdditionalDeliveryMinutes"].toString()) : 0,
@@ -312,10 +315,10 @@ class CartItem {
         imageUrl: json["ImageUrl"],
         variantId: json["VariantID"],
         quantity: json["Quantity"],
-        metricvalue: json["metricvalue"].toDouble() ?? 0.0,
+        metricvalue: _toDouble(json["metricvalue"]) ?? 0.0,
         metrictype: json["metrictype"],
-        price: json["Price"]?.toDouble() ?? 0.0,
-        offerPrice: json["OfferPrice"]?.toDouble() ?? 0.0,
+        price: _toDouble(json["Price"]) ?? 0.0,
+        offerPrice: _toDouble(json["OfferPrice"]) ?? 0.0,
         kitId: json["KitID"],
         availableQty: json["AvailableQty"],
         productImages: List<String>.from(json['ProductImages']),
@@ -395,7 +398,7 @@ class KitItem {
             : DateTime.parse(json["UpdatedAt"]),
         productName: json["ProductName"],
         metrictype: json["metrictype"],
-        metricvalue: json["metricvalue"].toDouble(),
+        metricvalue: _toDouble(json["metricvalue"]),
         imageUrl: json["ImageUrl"],
         price: json["Price"],
         offerPrice: json["OfferPrice"],
@@ -453,17 +456,17 @@ class ProductUnlockItem {
   factory ProductUnlockItem.fromJson(Map<String, dynamic> json) {
     return ProductUnlockItem(
       unlockId: json["UnlockID"],
-      thresholdAmount: json["ThresholdAmount"] != null ? (json["ThresholdAmount"] as num).toDouble() : null,
+      thresholdAmount: _toDouble(json["ThresholdAmount"]) ?? null,
       productId: json["ProductID"],
       variantId: json["VariantID"],
       productName: json["ProductName"] ?? '',
       productImages: json["ProductImages"],
-      price: json["Price"] != null ? (json["Price"] as num).toDouble() : 0.0,
-      offerPrice: json["OfferPrice"] != null ? (json["OfferPrice"] as num).toDouble() : 0.0,
-      unlockPrice: json["UnlockPrice"] != null ? (json["UnlockPrice"] as num).toDouble() : 0.0,
+      price: _toDouble(json["Price"]) ?? 0.0,
+      offerPrice: _toDouble(json["OfferPrice"]) ?? 0.0,
+      unlockPrice: _toDouble(json["UnlockPrice"]) ?? 0.0,
       unit: json["Unit"] ?? '',
       isUnlocked: json["IsUnlocked"] == true || json["IsUnlocked"] == 1,
-      amountNeeded: json["AmountNeeded"] != null ? (json["AmountNeeded"] as num).toDouble() : 0.0,
+      amountNeeded: _toDouble(json["AmountNeeded"]) ?? 0.0,
       message: json["Message"] ?? '',
     );
   }

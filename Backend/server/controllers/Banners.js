@@ -22,6 +22,15 @@ const subcategories_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/SubCategories/"
 
 
 
+// Where a banner tap leads in the customer app. product/category/subcategory need DestinationID.
+const BANNER_DESTINATIONS = ['none', 'product', 'category', 'subcategory', 'offers', 'bulk_deals'];
+const destinationOf = (body) => {
+    const type = BANNER_DESTINATIONS.includes(body.DestinationType) ? body.DestinationType : 'none';
+    const id = parseInt(body.DestinationID, 10);
+    if (['product', 'category', 'subcategory'].includes(type) && !(id > 0)) return { error: `Choose the ${type} this banner should open` };
+    return { type, id: ['product', 'category', 'subcategory'].includes(type) ? id : null };
+};
+
 const bannercontroller = {
 
     //send otp and insert into verifymob
@@ -96,14 +105,16 @@ const bannercontroller = {
 
 
 
-            let Insertbanner = { 
-        BannerName: body.BannerName, 
-        ImageUrl: body.ImageUrl, 
-        Description: body.Description, 
-        DestinationType: body.DestinationType || 'none',
-        DestinationID: body.DestinationID ? parseInt(body.DestinationID) : null,
-        Status: 1 
-    }
+            const dest = destinationOf(body);
+            if (dest.error) return resp.json({ status: 0, Status: 0, Message: dest.error });
+            let Insertbanner = {
+                BannerName: body.BannerName,
+                ImageUrl: body.ImageUrl,
+                Description: body.Description,
+                DestinationType: dest.type,
+                DestinationID: dest.id,
+                Status: 1
+            }
 
             let sql = "INSERT INTO Banners set ?";
 
@@ -211,8 +222,14 @@ const bannercontroller = {
 
 
 
-            let destType = Body.DestinationType != null ? "DestinationType=" + pool.escape(Body.DestinationType) + "," : "";
-            let destId = Body.DestinationID !== undefined ? "DestinationID=" + (Body.DestinationID ? parseInt(Body.DestinationID) : "NULL") + "," : "";
+            let destType = "";
+            let destId = "";
+            if (Body.DestinationType != null) {
+                const dest = destinationOf(Body);
+                if (dest.error) return resp.json({ status: 0, Status: 0, Message: dest.error });
+                destType = "DestinationType=" + pool.escape(dest.type) + ",";
+                destId = "DestinationID=" + (dest.id || "NULL") + ",";
+            }
             queryString = "UPDATE Banners SET " + BannerName + Description + destType + destId + Status + " WHERE BannerID=" + pool.escape(req.params.BannerID) + ";";
             console.log(queryString)
             return new Promise(function (resolve, reject) {

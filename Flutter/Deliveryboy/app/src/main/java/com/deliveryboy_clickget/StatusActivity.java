@@ -1,117 +1,113 @@
 package com.deliveryboy_clickget;
 
-import android.app.ProgressDialog;
-import android.content.SharedPreferences;
-import android.os.Build;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.deliveryboy_clickget.Utils.Api;
 
-import com.deliveryboy_clickget.Model.OrderStatusModel;
-import com.deliveryboy_clickget.Model.OrdersStatus;
-import com.deliveryboy_clickget.Utils.APIService;
-import com.deliveryboy_clickget.Utils.RetrofitClient;
+import org.json.JSONObject;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import java.util.Locale;
 
+/** Deliveries, cash collected, tips and points for today, this week and all time. */
 public class StatusActivity extends AppCompatActivity {
-    ImageView back_img;
-    TextView total_orders_txt, earningamount_txt;
-    String token;
+
+    private LinearLayout container;
+    private TextView cashNote;
+    private SwipeRefreshLayout swipe;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().hide();
-        }
         setContentView(R.layout.activity_status);
-
-        Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(ContextCompat.getColor(this, R.color.clikgett_card_surface));
-
-        WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(window, window.getDecorView());
-        if (insetsController != null) {
-            boolean isNight = (getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES;
-            insetsController.setAppearanceLightStatusBars(!isNight);
-        }
-
-        View mainLayt = findViewById(R.id.main_layt);
-        if (mainLayt != null) {
-            ViewCompat.setOnApplyWindowInsetsListener(mainLayt, (v, windowInsets) -> {
-                Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
-                return windowInsets;
-            });
-        }
-        SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
-        SharedPreferences.Editor editor = pref.edit();
-        token = pref.getString("token", null); // getting String
-        back_img = findViewById(R.id.back_img);
-        total_orders_txt = findViewById(R.id.total_orders_txt);
-        earningamount_txt = findViewById(R.id.earningamount_txt);
-        back_img.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-            }
-        });
-        getStatusDeatails();
+        container = findViewById(R.id.periods_container);
+        cashNote = findViewById(R.id.cash_note_txt);
+        swipe = findViewById(R.id.swipe_refresh);
+        swipe.setColorSchemeResources(R.color.clikgett_green_primary);
+        swipe.setOnRefreshListener(this::load);
+        findViewById(R.id.back_img).setOnClickListener(v -> finish());
+        load();
     }
 
-    private void getStatusDeatails() {
-        ProgressDialog progressDialog = new ProgressDialog(StatusActivity.this);
-        progressDialog.setMessage("Loading ...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-        APIService apiService = RetrofitClient.getClient().create(APIService.class);
-        Call<OrderStatusModel> call = apiService.getstatus("Bearer " + token);
-        call.enqueue(new Callback<OrderStatusModel>() {
-            @RequiresApi(api = Build.VERSION_CODES.GINGERBREAD)
-            @Override
-            public void onResponse(Call<OrderStatusModel> call, Response<OrderStatusModel> response) {
-                OrderStatusModel orderStatusModel = response.body();
-                if (response.code() == 200) {
-                    if (orderStatusModel.getStatus() == 1) {
-
-                        OrdersStatus ordersStatus = orderStatusModel.getOrdersStatus();
-                        String DeliveredCount = String.valueOf(ordersStatus.getDeliveredCount());
-                        String Earnings = String.valueOf(ordersStatus.getEarnings());
-                        total_orders_txt.setText(DeliveredCount);
-                        earningamount_txt.setText(Earnings);
-                        progressDialog.dismiss();
-                    }
-                } else if (response.code() == 400) {
-                    progressDialog.dismiss();
-
-                } else if (response.code() == 401) {
-                    progressDialog.dismiss();
-                }
+    private void load() {
+        swipe.setRefreshing(true);
+        Api.get(this, "deliveryboy/summary", response -> {
+            swipe.setRefreshing(false);
+            if (response.optInt("Status") != 1) {
+                Toast.makeText(this, response.optString("Message", "Could not load your summary"), Toast.LENGTH_LONG).show();
+                return;
             }
-
-            @Override
-            public void onFailure(Call<OrderStatusModel> call, Throwable t) {
-                progressDialog.dismiss();
-                Toast.makeText(StatusActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
-            }
+            // Keep the cash note (first child), rebuild the period cards.
+            while (container.getChildCount() > 1) container.removeViewAt(1);
+            JSONObject today = response.optJSONObject("Today");
+            double cashToday = today != null ? today.optDouble("CashCollected", 0) : 0;
+            cashNote.setVisibility(cashToday > 0 ? View.VISIBLE : View.GONE);
+            cashNote.setText("Cash collected today: " + rupees(cashToday) + ". Hand it over at the store.");
+            addPeriod("Today", today);
+            addPeriod("This week", response.optJSONObject("Week"));
+            addPeriod("All time", response.optJSONObject("AllTime"));
         });
+    }
+
+    private void addPeriod(String title, JSONObject data) {
+        if (data == null) return;
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundResource(R.drawable.bg_card_surface);
+        card.setPadding(dp(14), dp(14), dp(14), dp(14));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = dp(12);
+        card.setLayoutParams(lp);
+
+        TextView heading = new TextView(this);
+        heading.setText(title);
+        heading.setTextSize(15);
+        heading.setTypeface(Typeface.DEFAULT_BOLD);
+        heading.setTextColor(ContextCompat.getColor(this, R.color.clikgett_text_primary));
+        card.addView(heading);
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, dp(10), 0, 0);
+        row.addView(stat(String.valueOf(data.optInt("Delivered")), "Delivered"));
+        row.addView(stat(rupees(data.optDouble("CashCollected", 0)), "Cash collected"));
+        row.addView(stat(rupees(data.optDouble("Tips", 0)), "Tips"));
+        row.addView(stat(String.valueOf(data.optInt("Points")), "Points"));
+        card.addView(row);
+        container.addView(card);
+    }
+
+    private View stat(String value, String label) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        TextView v = new TextView(this);
+        v.setText(value);
+        v.setTextSize(17);
+        v.setTypeface(Typeface.DEFAULT_BOLD);
+        v.setTextColor(ContextCompat.getColor(this, R.color.clikgett_green_dark));
+        TextView l = new TextView(this);
+        l.setText(label);
+        l.setTextSize(11);
+        l.setTextColor(ContextCompat.getColor(this, R.color.clikgett_text_secondary));
+        box.addView(v);
+        box.addView(l);
+        return box;
+    }
+
+    private static String rupees(double v) {
+        return v == Math.rint(v) ? "₹" + (long) v : String.format(Locale.ROOT, "₹%.2f", v);
+    }
+
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
     }
 }

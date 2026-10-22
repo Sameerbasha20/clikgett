@@ -127,37 +127,28 @@ const httpcall = (url, method, body, token) => {
         method: method,
         body: requestBody,
         headers: headers,
-    }).then((response) => response.json());
+    })
+        .then((response) => response.json().then((data) => ({ response, data })))
+        .then(({ response, data }) => {
+            // Admin tokens last 2 hours. Once the backend rejects the session, send the
+            // admin back to login instead of leaving every page silently empty.
+            if (response.status === 401 && SESSION_ENDED_MESSAGES.includes(data && data.Message) && authHeader.Authorization) {
+                sessionStorage.clear();
+                if (window.location.pathname !== "/") {
+                    window.location.replace("/");
+                }
+            }
+            return data;
+        });
 };
 
-const signup = (method, body) => {
-    return httpcall("adminusers/signup", method, body);
-};
+const SESSION_ENDED_MESSAGES = ["Token expired", "Invalid Token", "unauthorized admin user"];
+
 
 const login = (method, body) => {
     return httpcall("adminuser/login", method, body);
 };
 
-const getRoutes = (method, body, token, status) => {
-    return httpcall(
-        `routes/admin/bystatus?Status=${status}`,
-        method,
-        body,
-        token
-    );
-};
-const AddRoutes = (method, body, token) => {
-    return httpcall(`routes/admin/add`, method, body, token);
-};
-const getRoutebyId = (method, body, token, id) => {
-    return httpcall(`routes/admin/detail/${id}`, method, body, token);
-};
-const RouteUpdate = (method, body, token, id) => {
-    return httpcall(`routes/admin/update/${id}`, method, body, token);
-};
-const DeleteRoutes = (method, body, token, id) => {
-    return httpcall(`routes/admin/delete/${id}`, method, body, token);
-};
 const getCategories = (method, body, token) => {
     return httpcall("categories/allcategoriesadmin", method, body, token);
 };
@@ -249,8 +240,7 @@ const deleteProductWithVarient = (method, body, token, id) => {
 };
 const addVarient = (method, body, token) => {
     return httpcall(
-        `adminproducts/addvariant
-    `,
+        `adminproducts/addvariant`,
         method,
         body,
         token
@@ -264,8 +254,7 @@ const getDeliveryBoy = (method, body, token) => {
 };
 const AddDeliveryBoy = (method, body, token) => {
     return httpcall(
-        `adminuser/addeliveryboy
-    `,
+        `adminuser/addeliveryboy`,
         method,
         body,
         token
@@ -286,22 +275,7 @@ const updateDeliveryboy = (method, body, token, id) => {
 const deleteDeliveryBoy = (method, body, token, id) => {
     return httpcall(`adminuser/deletedeliveryboy/${id}`, method, body, token);
 };
-const getwarehouses = (method, body, token) => {
-    return httpcall("warehouses/all", method, body, token);
-};
 
-const getWarehousebyId = (method, body, token, id) => {
-    return httpcall(`warehouses/detail/${id}`, method, body, token);
-};
-const AddWarehouse = (method, body, token) => {
-    return httpcall("warehouses/add", method, body, token);
-};
-const updateWarehouse = (method, body, token, id) => {
-    return httpcall(`warehouses/update/${id}`, method, body, token);
-};
-const DeleteWarehouse = (method, body, token, id) => {
-    return httpcall(`warehouses/delete/${id}`, method, body, token);
-};
 
 const getUsers = (method, body, token) => {
     return httpcall("adminuser/userslist", method, body, token);
@@ -355,9 +329,6 @@ const addAdminUser = (method, body, token) => {
 const AdminUserById = (method, body, token, id) => {
     return httpcall(`adminusers/detail/${id}`, method, body, token);
 };
-const getOrderByStatus = (method, body, token, id) => {
-    return httpcall(`adminorders?orderStatus=${id}`, method, body, token);
-};
 const updateAdmindata = (method, body, token, id) => {
     return httpcall(`adminusers/updateadminuser/${id}`, method, body, token);
 };
@@ -367,51 +338,8 @@ const deleteAdmindata = (method, body, token, id) => {
 const updateprofile = (method, body, token, id) => {
     return httpcall(`adminusers/update/${id}`, method, body, token);
 };
-const getFranchiseForm = (method, body, token) => {
-    return httpcall(`forms/franchiseEnquiryforms`, method, body, token);
-};
-const getCallbackForm = (method, body, token) => {
-    return httpcall(`forms/callbackforms`, method, body, token);
-};
-const getAvailabilityform = (method, body, token) => {
-    return httpcall(`forms/availabilityforms`, method, body, token);
-};
-const orderByUserId = (method, body, token, id) => {
-    return httpcall(`adminorders?userId=${id}`, method, body, token);
-};
 const UpdateOrderDetails = (method, body, token, id) => {
     return httpcall(`adminorders/updatestatus/${id}`, method, body, token);
-};
-const getNotifyProducts = (method, body, token) => {
-    return httpcall(`adminusers/notifyproducts`, method, body, token);
-};
-const updateNotifyProducts = (method, body, token, id) => {
-    return httpcall(
-        `adminusers/notifyproductupdate/${id}`,
-        method,
-        body,
-        token
-    );
-};
-const AddShipmentData = (method, body, token) => {
-    return httpcall(`shiprocket/createorder`, method, body, token);
-};
-const getCallBackById = (method, body, token, id) => {
-    return httpcall(`forms/callback/${id}`, method, body, token);
-};
-const getFranchiseById = (method, body, token, id) => {
-    return httpcall(`forms/franchiseEnquiry/${id}`, method, body, token);
-};
-const getAvailabilityById = (method, body, token, id) => {
-    return httpcall(`forms/availability/${id}`, method, body, token);
-};
-const getNotifyById = (method, body, token, id) => {
-    return httpcall(
-        `adminusers/notifyproductdetail/${id}`,
-        method,
-        body,
-        token
-    );
 };
 
 const updateBulkPrices = (method, body, token, filename) => {
@@ -421,7 +349,7 @@ const sendNotification = (method, body, token) => {
     return httpcall(`adminuser/sendnotifications`, method, body, token);
 };
 const getsettings = (method, body, token) => {
-    return httpcall(`adminuser/Settingslist`, method, body, token);
+    return httpcall(`adminuser/settingslist`, method, body, token);
 };
 const getsettingsbyid = (method, body, token, id) => {
     return httpcall(`adminuser/settingdetail/${id}`, method, body, token);
@@ -435,49 +363,11 @@ const updatesettings = (method, body, token, id) => {
 const deletesettings = (method, body, token, id) => {
     return httpcall(`adminuser/deletesettings/${id}`, method, body, token);
 };
-const getKits = (method, body, token) => {
-    return httpcall(`adminproducts/allkits`, method, body, token);
-};
-const addKit = (method, body, token) => {
-    return httpcall(`adminproducts/addkit`, method, body, token);
-};
-const KitsDetails = (method, body, token, id) => {
-    return httpcall(`adminproducts/kitdetail/${id}`, method, body, token);
-};
-const updateKit = (method, body, token, id) => {
-    return httpcall(`adminproducts/updatekit/${id}`, method, body, token);
-};
-const updateKititem = (method, body, token, id) => {
-    return httpcall(`adminproducts/updatekititem/${id}`, method, body, token);
-};
-const DeleteKit = (method, body, token, id) => {
-    return httpcall(`adminproducts/deletekit/${id}`, method, body, token);
-};
-const DeleteKititem = (method, body, token, id) => {
-    return httpcall(`adminproducts/deletekititem/${id}`, method, body, token);
-};
 const SearchProduct = (method, body, token, search) => {
     return httpcall(`adminproducts/search/${search}`, method, body, token);
 };
-const AddKitvarient = (method, body, token) => {
-    return httpcall(`adminproducts/addkititem`, method, body, token);
-};
 const downloadcsv = (method, body, token, filename) => {
     return httpcall(`csv/${filename}`, method, body, token);
-};
-const getRecommendedProducts = (method, body, token) => {
-    return httpcall(`adminproducts/recommendedproducts`, method, body, token);
-};
-const AddRecommendedProducts = (method, body, token) => {
-    return httpcall(`adminproducts/addrecommendedproduct`, method, body, token);
-};
-const deleteRecommendedProducts = (method, body, token, id) => {
-    return httpcall(
-        `adminproducts/deleterecommendedproducts/${id}`,
-        method,
-        body,
-        token
-    );
 };
 const GetTimings = (method, body, token) => {
     return httpcall(
@@ -518,6 +408,9 @@ const UpdateToggleStore = (method, body, token, id) => {
         body,
         token
     );
+};
+const setStoreMode = (method, body, token) => {
+    return httpcall(`admintiming/store-mode`, method, body, token);
 };
 const getShopStatus = (method, body, token) => {
     return httpcall(
@@ -581,10 +474,9 @@ export const Services = {
     uploadFile,
     creditdebitwallet,
     walletTransactions,
-    signup,
-    getKits,
     updateStoreData,
     getShopStatus,
+    setStoreMode,
     DeleteTimings,
     AddTimings,
     login,
@@ -596,11 +488,6 @@ export const Services = {
     updatecategories,
     UpdateTimings,
     Deletecategories,
-    getwarehouses,
-    getWarehousebyId,
-    AddWarehouse,
-    updateWarehouse,
-    DeleteWarehouse,
     getBanners,
     AddBanners,
     getBannerbyId,
@@ -627,22 +514,10 @@ export const Services = {
     getAdminusers,
     addAdminUser,
     AdminUserById,
-    getOrderByStatus,
     updateAdmindata,
     deleteAdmindata,
     updateprofile,
-    getFranchiseForm,
-    getCallbackForm,
-    getAvailabilityform,
-    orderByUserId,
     UpdateOrderDetails,
-    getNotifyProducts,
-    updateNotifyProducts,
-    AddShipmentData,
-    getCallBackById,
-    getFranchiseById,
-    getAvailabilityById,
-    getNotifyById,
     GetSubCategory,
     AddSubCategory,
     getSubCategoryById,
@@ -660,11 +535,6 @@ export const Services = {
     deleteDeliveryBoy,
     getAllPastOrders,
     GetSubCategoryAll,
-    getRoutes,
-    DeleteRoutes,
-    getRoutebyId,
-    AddRoutes,
-    RouteUpdate,
     updateBulkPrices,
     sendNotification,
     getsettings,
@@ -672,18 +542,8 @@ export const Services = {
     updatesettings,
     addsettings,
     deletesettings,
-    KitsDetails,
-    addKit,
-    updateKit,
-    DeleteKit,
     SearchProduct,
-    AddKitvarient,
-    updateKititem,
-    DeleteKititem,
     downloadcsv,
-    getRecommendedProducts,
-    AddRecommendedProducts,
-    deleteRecommendedProducts,
     // Flash Sales Services
     getSales: (method = "GET", body = null, token) => httpcall("sales/all", method, body, token),
     getSaleDetails: (method = "GET", body = null, token, id) => httpcall(`sales/details/${id}`, method, body, token),
@@ -699,6 +559,7 @@ export const Services = {
     getAbandonedCarts: (method = "GET", body = null, token) => httpcall("carts/abandoned/list", method, body, token),
     updateAbandonedCartStatus: (method = "POST", body, token) => httpcall("carts/abandoned/status", method, body, token),
     getAbandonedCartDetails: (method = "POST", body, token) => httpcall("carts/abandoned/details", method, body, token),
+    sendAbandonedCartReminders: (token) => httpcall("carts/abandoned/trigger-notifications", "POST", {}, token),
     // Milestones / Rewards Services
     getMilestones: (method = "GET", body = null, token) => httpcall("milestones/config", method, body, token),
     getAllRewards: (method = "GET", body = null, token) => httpcall("rewards/all", method, body, token),
@@ -731,7 +592,6 @@ export const Services = {
     creditDebitWallet: (method = "POST", body, token) => httpcall("adminusers/creditdebitwallet", method, body, token),
     expireCashback: (method = "POST", body = {}, token) => httpcall("adminusers/expirecashback", method, body, token),
     // Notify Products & Trigger Alert
-    triggerProductNotification: (method = "POST", body = {}, token, id) => httpcall(`adminusers/triggernotifyproduct/${id}`, method, body, token),
     // Product Membership Pricing Services
     getMembershipPlans: (method = "GET", body = null, token) => httpcall("membership/plans", method, body, token),
     getProductMembershipPricing: (method = "GET", body = null, token, productId) => httpcall(`membership/product/${productId}`, method, body, token),
@@ -769,11 +629,10 @@ export const Services = {
     // Subcategory Reorder
     reorderSubcategories: (method = "POST", body, token) => httpcall("subcategories/reorder", method, body, token),
     // Cashback Review
-    getPendingCashback: (method = "GET", body = null, token) => httpcall("cashback/pending", method, body, token),
+    getPendingCashback: (method = "GET", body = null, token, status = "pending") => httpcall(`cashback/pending?status=${status}`, method, body, token),
     approveCashback: (method = "POST", body, token) => httpcall("cashback/approve", method, body, token),
     rejectCashback: (method = "POST", body, token) => httpcall("cashback/reject", method, body, token),
     // AWS Billing / Cost Overview
-    getAwsBilling: (method = "GET", body = null, token) => httpcall("cost-overview/cost-overview", method, body, token),
     // Order ETA Adjustments
     editDeliveryTime: (method = "PUT", body, token, orderId) => httpcall(`adminorders/editedeliverytime/${orderId}`, method, body, token),
     // Order Timeline
@@ -806,6 +665,7 @@ export const Services = {
     updateProductRequestStatus: (method = "PUT", body, token, id) => httpcall(`admin/product-requests/${id}/status`, method, body, token),
     notifyProductRequest: (method = "POST", body = {}, token, id) => httpcall(`admin/product-requests/${id}/notify`, method, body, token),
     // Two-Factor Authentication (2FA)
+    send2FASms: (method = "POST", body) => httpcall("adminuser/send-2fa-sms", method, body),
     verify2FA: (method = "POST", body) => httpcall("adminuser/verify-2fa", method, body),
     reset2FA: (method = "POST", body = {}, token, adminId) => httpcall(`adminuser/reset-2fa/${adminId}`, method, body, token),
     get2FAStatus: (method = "GET", body = null, token) => httpcall("adminuser/2fa-status", method, body, token),
@@ -820,4 +680,13 @@ export const Services = {
     getETARules: (method = "GET", body = null, token) => httpcall("adminuser/delivery-eta/rules", method, body, token),
     updateETARules: (method = "PUT", body, token) => httpcall("adminuser/delivery-eta/rules", method, body, token),
     getOrderEffectiveETA: (method = "GET", body = null, token, orderId) => httpcall(`adminuser/delivery-eta/order/${orderId}`, method, body, token),
+    // Dashboard and new-order alert
+    getDashboard: (token) => httpcall("adminorders/dashboard", "GET", null, token),
+    getNewOrders: (after, token) => httpcall(after == null ? "adminorders/new-since" : `adminorders/new-since?after=${after}`, "GET", null, token),
+    // Membership plans
+    saveMembershipPlan: (body, token) => httpcall("membership/plans/save", "POST", body, token),
+    getMembers: (token) => httpcall("membership/members", "GET", null, token),
+    // Out of stock
+    getOutOfStock: (token) => httpcall("adminproducts/out-of-stock", "GET", null, token),
+    restockVariant: (id, qty, token) => httpcall(`adminproducts/restock/${id}`, "PUT", { AvailableQty: qty }, token),
 };

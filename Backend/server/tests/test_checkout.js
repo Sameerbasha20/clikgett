@@ -46,6 +46,7 @@ const FAR = { Latitude: 15.93, Longitude: 78.11 };
            JOIN Products P ON P.ProductID = V.ProductID
           WHERE V.Status = 1 AND P.Status = 1 AND V.AvailableQty >= 30 AND V.OfferPrice BETWEEN 40 AND 120
             AND V.ProductID NOT IN (SELECT ProductID FROM product_unlocks WHERE Status = 1)
+            AND P.SubCategoryID NOT IN (SELECT SubCategoryID FROM SubCategories WHERE SubCategoryName LIKE '%fruit%')
           ORDER BY V.VariantID LIMIT 1`
     );
     if (!user || !variant) {
@@ -72,7 +73,16 @@ const FAR = { Latitude: 15.93, Longitude: 78.11 };
         return r;
     };
 
+    // Orders are refused while the store is closed, so open it for the run.
+    const [storeMode] = await q('SELECT StoreMode, StoreModeUntil FROM AdminShopToggleSettings LIMIT 1');
+
     try {
+        await setCart(1);
+        await q("UPDATE AdminShopToggleSettings SET StoreMode = 'CLOSED', StoreModeUntil = NULL");
+        let closed = await placeOrder({ PaymentMethod: 'COD' });
+        check('order is refused while the store is closed', closed.json && closed.json.Status === 0 && closed.json.StoreClosed === true, closed.json && closed.json.Message);
+        await q("UPDATE AdminShopToggleSettings SET StoreMode = 'OPEN', StoreModeUntil = NULL");
+
         await q('UPDATE Users SET WalletAmount = 500 WHERE UserID = ?', [user.UserID]);
         const bigQty = Math.ceil(450 / parseFloat(variant.OfferPrice));
         await setCart(bigQty);
@@ -114,6 +124,8 @@ const FAR = { Latitude: 15.93, Longitude: 78.11 };
             const items = await q('SELECT Quantity, OfferPrice FROM OrderItems WHERE OrderID = ?', [r.json.OrderID]);
             check('order items use server prices and cart quantities',
                 items.length === 1 && items[0].Quantity === bigQty && near(items[0].OfferPrice, expected.Items[0].UnitPrice));
+            check('order delivery time matches checkout', o.BaseETAMinutes + o.OrderSizeBufferMinutes === expected.EtaMinutes,
+                `order=${o.BaseETAMinutes}+${o.OrderSizeBufferMinutes} checkout=${expected.EtaMinutes}`);
             const [c] = await q('SELECT isOrderLinked FROM Carts WHERE CartID = ?', [cartId]);
             check('cart is closed after the order', c.isOrderLinked === 0);
         }
@@ -146,9 +158,58 @@ const FAR = { Latitude: 15.93, Longitude: 78.11 };
         check('invalid coupon is refused', r.json && r.json.Status === 0, r.json && r.json.Message);
         r = await placeOrder({ PaymentMethod: 'ONLINE', RazorpayOrderID: 'order_fake', razorpay_payment_id: 'pay_fake', razorpay_signature: 'bad' });
         check('online order with a forged signature is refused', r.json && r.json.Status === 0, r.json && r.json.Message);
+
+        // ---- Delivery time: <=5 km 20 min, >5 km 30 min, +10 per 10 items above 10, +10 for fresh fruit
+        const etaFor = async (qty, loc = NEAR) => { await setCart(qty); return (await bill({ ...loc })).EtaMinutes; };
+        check('delivery time: near, 5 items = 20 min', (await etaFor(5)) === 20);
+        check('delivery time: far (>5 km) = 30 min', (await etaFor(5, FAR)) === 30);
+        check('delivery time: 11 items = 30 min', (await etaFor(11)) === 30);
+        check('delivery time: 21 items = 40 min', (await etaFor(21)) === 40);
+        check('delivery time: 31 items = 50 min', (await etaFor(31)) === 50);
+        const [fruit] = await q(
+            `SELECT V.ProductID, V.VariantID, V.OfferPrice FROM ProductVariants V JOIN Products P ON P.ProductID = V.ProductID
+               JOIN SubCategories S ON S.SubCategoryID = P.SubCategoryID
+              WHERE V.Status = 1 AND P.Status = 1 AND V.AvailableQty > 0 AND S.SubCategoryName LIKE '%fruit%'
+                AND S.SubCategoryName NOT LIKE '%dr%' AND S.SubCategoryName NOT LIKE '%juice%' LIMIT 1`
+        );
+        if (fruit) {
+            await setCart(5);
+            await q('INSERT INTO CartItems (CartID, ProductID, VariantID, Quantity, Price, Type, CreatedAt) VALUES (?, ?, ?, 1, ?, 1, NOW())',
+                [cartId, fruit.ProductID, fruit.VariantID, fruit.OfferPrice]);
+            const fb = await bill({});
+            check('delivery time: fresh fruit adds 10 min (near, 6 items = 30 min)', fb.EtaMinutes === 30, `eta=${fb.EtaMinutes}`);
+        }
+        r = await call('POST', '/address/check-serviceability', null, NEAR);
+        check('home header time for a near address = 20 min', r.json && r.json.EtaMinutes === 20, r.json && `eta=${r.json.EtaMinutes}`);
+
+        // ---- Out of stock: the line stays visible, is not charged, and blocks the order
+        await setCart(3);
+        await q('UPDATE ProductVariants SET AvailableQty = 0 WHERE VariantID = ?', [variant.VariantID]);
+        let ob = await bill({});
+        let line = ob.Items.find((i) => i.VariantID === variant.VariantID);
+        check('out-of-stock item still shows in checkout', line && Number(line.AvailableQty) === 0 && line.OutOfStock === true);
+        check('out-of-stock item is not charged', line && Number(line.LineTotal) === 0 && Number(ob.ItemsTotal) === 0);
+        check('out-of-stock item is reported as a stock issue', ob.StockIssues.length === 1 && ob.StockIssues[0].VariantID === variant.VariantID);
+        r = await placeOrder({ PaymentMethod: 'COD' });
+        check('order with an out-of-stock item is refused and names it', r.json && r.json.Status === 0 && /out of stock/.test(r.json.Message), r.json && r.json.Message);
+        await q('UPDATE ProductVariants SET AvailableQty = 2 WHERE VariantID = ?', [variant.VariantID]);
+        ob = await bill({});
+        line = ob.Items.find((i) => i.VariantID === variant.VariantID);
+        check('short stock (3 wanted, 2 left) is reported', line && Number(line.AvailableQty) === 2 && ob.StockIssues.length === 1);
+        await q('UPDATE ProductVariants SET AvailableQty = ? WHERE VariantID = ?', [variant.AvailableQty, variant.VariantID]);
+
+        // ---- Re-order only works on your own orders
+        const [other] = await q('SELECT OrderID FROM Orders WHERE UserID <> ? ORDER BY OrderID DESC LIMIT 1', [user.UserID]);
+        if (other) {
+            await setCart(1);
+            r = await call('POST', '/orders/reorder', CUSTOMER, { OrderID: other.OrderID });
+            const items = await q('SELECT COUNT(*) AS n FROM CartItems WHERE CartID = ?', [cartId]);
+            check("cannot re-order another customer's order", r.json && r.json.Status === 0 && items[0].n === 1, r.json && r.json.Message);
+        }
     } catch (err) {
         check('test run completed without errors', false, err.sqlMessage || err.message);
     } finally {
+        await q('UPDATE AdminShopToggleSettings SET StoreMode = ?, StoreModeUntil = ?', [storeMode.StoreMode, storeMode.StoreModeUntil]);
         if (created.length) {
             await q('DELETE FROM OrderStatusTimeline WHERE OrderID IN (?)', [created]).catch(() => {});
             await q('DELETE FROM OrderItems WHERE OrderID IN (?)', [created]);

@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Services/order_tracking_services.dart';
 import 'dart:async';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/orders_controller.dart';
@@ -50,7 +51,6 @@ class _DeliveryStatusState extends State<DeliveryStatus> {
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              print(order.orderStatus);
               ordersController.getcurrentorder(context: context);
               Navigator.push(
                   context,
@@ -163,26 +163,5 @@ class _DeliveryStatusState extends State<DeliveryStatus> {
         });
   }
 
-  String _getOrderStatusText(int status) {
-    switch (status) {
-      case 1:
-        return "🎉 Order delivered. Thank you for choosing ClikGett";
-      case 2:
-        return "📦 Your items are being packed.";
-      case 3:
-        return "Shipment Created.";
-      case 4:
-        return "Order Cancelled.";
-      case 5:
-        return "🛵 Your order is en route.";
-      case 6:
-        return "Order Returned.";
-      case 7:
-        return "📍Arrived at your location and will\nhand over your order at your doorstep.";
-      case 8:
-        return "🕒 Order received — we’ll confirm\nand start packing soon.";
-      default:
-        return "Status Unknown.";
-    }
-  }
+  String _getOrderStatusText(int status) => OrderStatus.message(status);
 }

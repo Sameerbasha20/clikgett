@@ -298,10 +298,8 @@ class _CategoriesState extends State<Categories> {
         return GridView.builder(
           physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics()),
-          padding: EdgeInsets.symmetric(
-            horizontal: 3.w,
-            vertical: 1.2.h,
-          ),
+          // Bottom room for the floating "View cart" pill.
+          padding: EdgeInsets.fromLTRB(3.w, 1.2.h, 3.w, 90),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             mainAxisSpacing: 1.2.h,

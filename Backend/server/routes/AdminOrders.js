@@ -1,11 +1,14 @@
 const adminordercontroller = require("../controllers/AdminOrders");
 const deliveryOperations = require("../controllers/DeliveryOperations");
+const adminDashboard = require("../controllers/AdminDashboard");
 const express = require('express'); 
 const router = express.Router();
 const util = require("../utils/utils");
 const validate = require('../utils/validations');
 
 router
+    .get('/dashboard', util.authenticate.adminAuthenticate, adminDashboard.summary)
+    .get('/new-since', util.authenticate.adminAuthenticate, adminDashboard.newSince)
     .get('/currentorders', util.authenticate.adminAuthenticate, adminordercontroller.currentorders)
     .get('/pastorders', util.authenticate.adminAuthenticate, adminordercontroller.pastorders)
     .get('/orderdetail', util.authenticate.adminAuthenticate, adminordercontroller.myorder)

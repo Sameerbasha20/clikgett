@@ -47,7 +47,8 @@ function Settings() {
                     <TopNav />
                     <div
                         className={`${dashboardclasses.CategoryWrapper} ${dashboardclasses.operations}`}>
-                        <h3>Operations</h3>
+                        <h3>Data exports</h3>
+                        <p style={{ color: "#64748b" }}>Download spreadsheets of products and orders.</p>
                         <div>
                             <button
                                 btnid={"productdetails"}
@@ -58,11 +59,6 @@ function Settings() {
                                 btnid={"orderdetails"}
                                 onClick={downloadHandler}>
                                 Download Orders{" "}
-                            </button>
-                            <button
-                                btnid={"warehouse"}
-                                onClick={downloadHandler}>
-                                Download warehouse{" "}
                             </button>
                             <button
                                 btnid={"pendingproductscsv"}

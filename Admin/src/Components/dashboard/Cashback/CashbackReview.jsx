@@ -1,148 +1,108 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import TopNav from "../../Navbar/topNav";
 import SideNav from "../../Navbar/sideNav";
 import dashboardclasses from "../dashboard.module.css";
-import "bootstrap/dist/css/bootstrap.min.css";
-import BootstrapTable from "react-bootstrap-table-next";
-import paginationFactory from "react-bootstrap-table2-paginator";
+import classes from "./CashbackReview.module.css";
 import { Services } from "../../../Services";
 import { toast } from "react-toastify";
-import ScaleLoader from "react-spinners/ScaleLoader";
-import { css } from "@emotion/react";
-import { FaCheck, FaTimes, FaCoins } from "react-icons/fa";
+import { FaCheck, FaTimes } from "react-icons/fa";
 
+const TABS = [
+    { key: "pending", label: "Waiting for review" },
+    { key: "approved", label: "Approved" },
+    { key: "rejected", label: "Rejected" },
+];
+
+const QUICK_REASONS = ["Order was returned", "Customer complaint / refund given", "Suspected misuse", "Test order"];
+
+const toastOpts = { position: "top-center", autoClose: 1800, hideProgressBar: true };
+
+const rupees = (v) => `₹${Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const when = (iso) =>
+    iso
+        ? new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })
+        : "—";
+
+const ORDER_STATUS = { 1: "Delivered", 3: "Cancelled", 4: "Cancelled", 6: "Returned" };
+
+// Cashback that waits for an admin when Cashback Mode is "Manual" in Settings.
 function CashbackReview() {
-    const [pendingItems, setPendingItems] = useState([]);
+    const [tab, setTab] = useState("pending");
+    const [items, setItems] = useState([]);
+    const [counts, setCounts] = useState({ Pending: 0, Approved: 0, Rejected: 0, PendingAmount: 0 });
+    const [mode, setMode] = useState("");
     const [loading, setLoading] = useState(true);
+    const [busyId, setBusyId] = useState(null);
+    const [rejecting, setRejecting] = useState(null); // PendingID with the reason box open
+    const [reason, setReason] = useState("");
     const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
 
-    const override = css`
-        display: block;
-        margin: 0 auto;
-    `;
-
-    const fetchPendingCashback = () => {
+    const load = (which = tab) => {
         setLoading(true);
-        Services.getPendingCashback("GET", null, token)
+        Services.getPendingCashback("GET", null, token, which)
             .then((res) => {
-                setLoading(false);
-                if (res && (res.status === 1 || res.Status === 1)) {
-                    setPendingItems(res.data || res.Pending || []);
+                if (res && res.Status === 1) {
+                    setItems(res.data || []);
+                    setCounts(res.Counts || counts);
+                    setMode(res.CashbackMode || "");
                 } else {
-                    toast.error((res && (res.message || res.Message)) || "Failed to load pending cashbacks");
+                    toast.error((res && res.Message) || "Could not load cashbacks", toastOpts);
                 }
             })
-            .catch((err) => {
-                setLoading(false);
-                console.error(err);
-                toast.error("Error loading pending cashbacks");
-            });
+            .catch(() => toast.error("Could not load cashbacks", toastOpts))
+            .finally(() => setLoading(false));
     };
 
     useEffect(() => {
-        fetchPendingCashback();
-    }, []);
+        load(tab);
+        setRejecting(null);
+        // eslint-disable-next-line
+    }, [tab]);
 
-    const handleApprove = (item) => {
-        if (window.confirm(`Approve cashback of ₹${item.Amount} for Customer ${item.UserName} (Order #${item.OrderID})? This will credit their wallet with ledger tracking.`)) {
-            Services.approveCashback("POST", JSON.stringify({ PendingID: item.PendingID }), token)
-                .then((res) => {
-                    if (res && (res.status === 1 || res.Status === 1)) {
-                        toast.success((res && (res.message || res.Message)) || "Cashback approved and credited to wallet");
-                        fetchPendingCashback();
-                    } else {
-                        toast.error((res && (res.message || res.Message)) || "Approval failed");
-                    }
-                })
-                .catch((err) => {
-                    console.error(err);
-                    toast.error("Error approving cashback");
-                });
-        }
+    const approve = (item) => {
+        setBusyId(item.PendingID);
+        Services.approveCashback("POST", JSON.stringify({ PendingID: item.PendingID }), token)
+            .then((res) => {
+                if (res && res.Status === 1) {
+                    toast.success(res.Message, toastOpts);
+                    load();
+                } else {
+                    toast.error((res && res.Message) || "Could not approve", toastOpts);
+                    load();
+                }
+            })
+            .catch(() => toast.error("Could not approve", toastOpts))
+            .finally(() => setBusyId(null));
     };
 
-    const handleReject = (item) => {
-        const reason = prompt("Enter reason for rejecting this cashback:", "Order modified / terms not met");
-        if (reason !== null) {
-            Services.rejectCashback("POST", JSON.stringify({ PendingID: item.PendingID, Reason: reason }), token)
-                .then((res) => {
-                    if (res && (res.status === 1 || res.Status === 1)) {
-                        toast.info("Cashback rejected");
-                        fetchPendingCashback();
-                    } else {
-                        toast.error((res && (res.message || res.Message)) || "Rejection failed");
-                    }
-                })
-                .catch((err) => {
-                    console.error(err);
-                    toast.error("Error rejecting cashback");
-                });
+    const reject = (item) => {
+        if (reason.trim().length < 3) {
+            toast.error("Please write a short reason", toastOpts);
+            return;
         }
+        setBusyId(item.PendingID);
+        Services.rejectCashback("POST", JSON.stringify({ PendingID: item.PendingID, Reason: reason.trim() }), token)
+            .then((res) => {
+                if (res && res.Status === 1) {
+                    toast.info(res.Message, toastOpts);
+                    setRejecting(null);
+                    setReason("");
+                    load();
+                } else {
+                    toast.error((res && res.Message) || "Could not reject", toastOpts);
+                }
+            })
+            .catch(() => toast.error("Could not reject", toastOpts))
+            .finally(() => setBusyId(null));
     };
 
-    const columns = [
-        {
-            dataField: "PendingID",
-            text: "ID",
-            sort: true,
-            headerStyle: { width: "60px" },
-        },
-        {
-            dataField: "UserName",
-            text: "Customer",
-            formatter: (cell, row) => (
-                <div>
-                    <strong>{cell || "Customer"}</strong>
-                    <div style={{ fontSize: "0.8rem", color: "#666" }}>{row.Mobile}</div>
-                </div>
-            ),
-        },
-        {
-            dataField: "OrderID",
-            text: "Order ID",
-            formatter: (cell) => <span className="badge badge-info">#{cell}</span>,
-        },
-        {
-            dataField: "Amount",
-            text: "Cashback Amount",
-            sort: true,
-            formatter: (cell) => (
-                <div style={{ fontWeight: "bold", color: "#16a34a", display: "flex", alignItems: "center", gap: "5px" }}>
-                    <FaCoins color="#f59e0b" /> ₹{cell}
-                </div>
-            ),
-        },
-        {
-            dataField: "Reason",
-            text: "Trigger Reason",
-            formatter: (cell) => cell || "Order completion promotional cashback",
-        },
-        {
-            dataField: "CreatedAt",
-            text: "Requested Date",
-            sort: true,
-            formatter: (cell) => (cell ? new Date(cell).toLocaleString() : "-"),
-        },
-        {
-            dataField: "Status",
-            text: "Status",
-            formatter: (cell) => <span className="badge badge-warning" style={{ textTransform: "capitalize" }}>{cell}</span>,
-        },
-        {
-            dataField: "actions",
-            text: "Actions",
-            formatter: (_, row) => (
-                <div style={{ display: "flex", gap: "8px" }}>
-                    <button className="btn btn-sm btn-success" onClick={() => handleApprove(row)} title="Approve & Credit Wallet">
-                        <FaCheck /> Approve
-                    </button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleReject(row)} title="Reject">
-                        <FaTimes /> Reject
-                    </button>
-                </div>
-            ),
-        },
-    ];
+    const emptyText = {
+        pending: mode === "manual" ? "Nothing to review. New cashbacks appear here when orders are delivered." : "Nothing to review.",
+        approved: "No approved cashbacks yet.",
+        rejected: "No rejected cashbacks.",
+    }[tab];
 
     return (
         <div className={dashboardclasses["dashboard-wrapper"]}>
@@ -151,35 +111,163 @@ function CashbackReview() {
             </div>
             <div className={dashboardclasses["dashboard-rightside"]}>
                 <TopNav />
-                <div className={dashboardclasses.CategoryWrapper} style={{ padding: "20px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <div className={classes.page}>
+                    <div className={classes.header}>
                         <div>
-                            <h3>Manual Cashback Review Queue</h3>
-                            <p style={{ color: "#666", margin: 0 }}>Review eligible cashbacks when Cashback Mode is set to Manual in Settings</p>
+                            <h1>Cashback review</h1>
+                            <p>Approve or reject order cashback before it reaches the customer's wallet.</p>
                         </div>
                     </div>
 
-                    {loading ? (
-                        <div className={dashboardclasses["loader"]}>
-                            <ScaleLoader color={"black"} loading={true} css={override} size={150} />
-                        </div>
-                    ) : pendingItems.length === 0 ? (
-                        <div className="alert alert-info text-center p-4">
-                            <h5>No Pending Cashbacks for Review</h5>
-                            <p className="mb-0">All cashbacks have been processed, or Cashback Mode is configured as Automatic.</p>
-                        </div>
-                    ) : (
-                        <div className="category-table">
-                            <BootstrapTable
-                                bootstrap4
-                                keyField="PendingID"
-                                data={pendingItems}
-                                columns={columns}
-                                pagination={paginationFactory({ sizePerPage: 10, hideSizePerPage: true })}
-                                wrapperClasses="table-responsive"
-                            />
+                    {mode && mode !== "manual" && (
+                        <div className={classes.notice}>
+                            Cashback Mode is <strong>{mode}</strong>, so cashback {mode === "disabled" ? "is not given" : "is credited automatically"} and nothing
+                            new will wait here. To review each cashback first, set Cashback Mode to <strong>Manual</strong> in{" "}
+                            <Link to="/settings">Settings</Link>.
                         </div>
                     )}
+
+                    <div className={classes.stats}>
+                        <div className={classes.stat}>
+                            <span>Waiting</span>
+                            <strong>{counts.Pending}</strong>
+                        </div>
+                        <div className={classes.stat}>
+                            <span>Waiting amount</span>
+                            <strong>{rupees(counts.PendingAmount)}</strong>
+                        </div>
+                        <div className={classes.stat}>
+                            <span>Approved</span>
+                            <strong>{counts.Approved}</strong>
+                        </div>
+                        <div className={classes.stat}>
+                            <span>Rejected</span>
+                            <strong>{counts.Rejected}</strong>
+                        </div>
+                    </div>
+
+                    <div className={classes.tabs} role="tablist">
+                        {TABS.map((t) => (
+                            <button
+                                key={t.key}
+                                type="button"
+                                role="tab"
+                                aria-selected={tab === t.key}
+                                className={tab === t.key ? classes.tabActive : ""}
+                                onClick={() => setTab(t.key)}>
+                                {t.label}
+                                {t.key === "pending" && counts.Pending > 0 && <span className={classes.badge}>{counts.Pending}</span>}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className={classes.card}>
+                        {loading ? (
+                            <p className={classes.empty}>Loading…</p>
+                        ) : items.length === 0 ? (
+                            <p className={classes.empty}>{emptyText}</p>
+                        ) : (
+                            <table className={classes.table}>
+                                <thead>
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th>Order</th>
+                                        <th className={classes.num}>Order total</th>
+                                        <th className={classes.num}>Cashback</th>
+                                        <th>{tab === "pending" ? "Delivered" : "Reviewed"}</th>
+                                        <th className={classes.actionsCol}>{tab === "pending" ? "" : tab === "rejected" ? "Reason" : "By"}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {items.map((item) => {
+                                        const orderGone = Number(item.OrderStatus) !== 1;
+                                        return (
+                                            <React.Fragment key={item.PendingID}>
+                                                <tr>
+                                                    <td>
+                                                        <strong>{item.UserName || "Customer"}</strong>
+                                                        <div className={classes.muted}>{item.Mobile}</div>
+                                                    </td>
+                                                    <td>
+                                                        <Link to={`/orders/${item.OrderID}`}>#{item.OrderID}</Link>
+                                                        {orderGone && (
+                                                            <div className={classes.warn}>{ORDER_STATUS[item.OrderStatus] || "Not delivered"}</div>
+                                                        )}
+                                                    </td>
+                                                    <td className={classes.num}>{rupees(item.OrderTotal)}</td>
+                                                    <td className={`${classes.num} ${classes.amount}`}>{rupees(item.Amount)}</td>
+                                                    <td>{when(tab === "pending" ? item.DeliveredAt || item.CreatedAt : item.ReviewedAt)}</td>
+                                                    <td className={classes.actionsCol}>
+                                                        {tab === "pending" ? (
+                                                            <div className={classes.actions}>
+                                                                <button
+                                                                    type="button"
+                                                                    className={classes.approve}
+                                                                    disabled={busyId === item.PendingID || orderGone}
+                                                                    title={orderGone ? "The order is no longer delivered" : "Credit the customer's wallet"}
+                                                                    onClick={() => approve(item)}>
+                                                                    <FaCheck /> Approve
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className={classes.reject}
+                                                                    disabled={busyId === item.PendingID}
+                                                                    onClick={() => {
+                                                                        setRejecting(rejecting === item.PendingID ? null : item.PendingID);
+                                                                        setReason(orderGone ? "Order was returned" : "");
+                                                                    }}>
+                                                                    <FaTimes /> Reject
+                                                                </button>
+                                                            </div>
+                                                        ) : tab === "rejected" ? (
+                                                            <span className={classes.muted}>{item.Reason || "—"}</span>
+                                                        ) : (
+                                                            <span className={classes.muted}>{item.ReviewedBy || "Admin"}</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                                {rejecting === item.PendingID && (
+                                                    <tr className={classes.rejectRow}>
+                                                        <td colSpan={6}>
+                                                            <div className={classes.rejectBox}>
+                                                                <label htmlFor={`reason-${item.PendingID}`}>Why are you rejecting {rupees(item.Amount)} for order #{item.OrderID}?</label>
+                                                                <div className={classes.chips}>
+                                                                    {QUICK_REASONS.map((r) => (
+                                                                        <button type="button" key={r} onClick={() => setReason(r)}>
+                                                                            {r}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                <div className={classes.rejectInput}>
+                                                                    <input
+                                                                        id={`reason-${item.PendingID}`}
+                                                                        value={reason}
+                                                                        maxLength={255}
+                                                                        placeholder="Reason (kept for your records)"
+                                                                        onChange={(e) => setReason(e.target.value)}
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        className={classes.rejectConfirm}
+                                                                        disabled={busyId === item.PendingID}
+                                                                        onClick={() => reject(item)}>
+                                                                        Reject cashback
+                                                                    </button>
+                                                                    <button type="button" className={classes.cancel} onClick={() => setRejecting(null)}>
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

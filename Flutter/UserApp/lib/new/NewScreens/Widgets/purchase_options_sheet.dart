@@ -5,7 +5,6 @@ import 'package:fav_app/new/Constants/network_image.dart';
 import 'package:fav_app/new/Constants/stock_helper.dart';
 import 'package:fav_app/new/Constants/textStyles.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
-import 'package:fav_app/new/Controllers/kits_controller.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -138,7 +137,6 @@ class _PurchaseOptionsSheet extends StatefulWidget {
 
 class _PurchaseOptionsSheetState extends State<_PurchaseOptionsSheet> {
   final CartController cartController = Get.find();
-  final KitsController kitsController = Get.find();
 
   late List<PurchaseVariantData> _variantList;
   late int _selectedIndex;
@@ -236,7 +234,6 @@ class _PurchaseOptionsSheetState extends State<_PurchaseOptionsSheet> {
 
     if (mounted) {
       if (success) {
-        kitsController.updateComboList();
         Navigator.of(context).pop({
           'added': true,
           'quantity': qty,

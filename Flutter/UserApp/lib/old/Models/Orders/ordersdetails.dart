@@ -4,6 +4,9 @@
 
 import 'dart:convert';
 
+/// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
+double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
+
 Ordersdetailsmodel ordersdetailsmodelFromJson(String str) =>
     Ordersdetailsmodel.fromJson(json.decode(str));
 
@@ -147,14 +150,14 @@ class Orders {
         promoCode: json["PromoCode"],
         OrderSequence: json["OrderSequence"],
         Distance: json["Distance"],
-        tipAmount: json["TipAmount"]?.toDouble(),
-        subTotal: json["SubTotal"]?.toDouble(),
-        discount: json["Discount"]?.toDouble(),
-        taxAmount: json["TaxAmount"]?.toDouble(),
-        promoAmount: json["PromoAmount"]?.toDouble(),
-        deliverCharges: json["DeliverCharges"]?.toDouble(),
-        grandTotal: json["GrandTotal"]?.toDouble(),
-        walletAmount: json["WalletAmount"]?.toDouble(),
+        tipAmount: _toDouble(json["TipAmount"]),
+        subTotal: _toDouble(json["SubTotal"]),
+        discount: _toDouble(json["Discount"]),
+        taxAmount: _toDouble(json["TaxAmount"]),
+        promoAmount: _toDouble(json["PromoAmount"]),
+        deliverCharges: _toDouble(json["DeliverCharges"]),
+        grandTotal: _toDouble(json["GrandTotal"]),
+        walletAmount: _toDouble(json["WalletAmount"]),
         paymentMethod: json["PaymentMethod"],
         oTP: json["OTP"],
         address: json["Address"],
@@ -163,8 +166,8 @@ class Orders {
         orderType: json["OrderType"],
         orderInvoice: json["InvoiceFile"],
         landMark: json["LandMark"],
-        latitude: json["Latitude"]?.toDouble(),
-        longitude: json["Longitude"]?.toDouble(),
+        latitude: _toDouble(json["Latitude"]),
+        longitude: _toDouble(json["Longitude"]),
         paymentStatus: json["PaymentStatus"],
         paymentTransactionId: json["PaymentTransactionID"],
         orderStatus: json["OrderStatus"],
@@ -317,11 +320,11 @@ class Orderitem {
         productId: json["ProductID"],
         variantId: json["VariantID"],
         metrictype: json["metrictype"],
-        metricvalue: json["metricvalue"]?.toDouble() ?? 0.0,
+        metricvalue: _toDouble(json["metricvalue"]) ?? 0.0,
         quantity: json["Quantity"],
-        price: json["Price"]?.toDouble() ?? 0.0,
+        price: _toDouble(json["Price"]) ?? 0.0,
         productImages: List<String>.from(json['ProductImages']),
-        offerPrice: json["OfferPrice"]?.toDouble() ?? 0.0,
+        offerPrice: _toDouble(json["OfferPrice"]) ?? 0.0,
         imageUrl: json["ImageUrl"],
         type: json["Type"],
         kitItems: json["KitItems"] == null

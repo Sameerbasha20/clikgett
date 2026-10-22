@@ -179,7 +179,7 @@ const DeliveryETA = {
             // 1. Below Band1MaxKm (e.g. < 3 km) -> Band 1 (20 mins)
             // 2. Exactly Band2MinKm to Band2MaxKm inclusive (e.g. 3.00 km to 5.00 km) -> Band 2 (25 mins)
             // 3. Above Band3MinKm (e.g. > 5 km) -> Band 3 (30 mins)
-            if (dist < rules.Band1MaxKm) {
+            if (dist <= rules.Band1MaxKm) {
                 return {
                     baseMinutes: rules.Band1BaseMinutes,
                     band: `below_${rules.Band1MaxKm}km`,

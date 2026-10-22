@@ -1,19 +1,23 @@
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
-import 'package:fav_app/new/Controllers/category_controller.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
 import 'package:fav_app/new/NewScreens/Homepage/ItemDescription.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/Categories/SubCategoryList.dart';
+import 'package:fav_app/new/NewScreens/CouponAndOffers/Offers.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Storefront/quick_actions_row.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Tabs/Categories/SingleCategory.dart';
 import 'package:fav_app/old/Models/Home/home_model.dart' as homeModel;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Section A — Promotional Hero Banner Carousel
 /// Features:
 /// - Swipeable carousel with auto-play for multiple banners
 /// - High-resolution rounded banner cards (radius 14) with subtle drop shadows
 /// - Polished pill page indicator dots
-/// - Supports navigation to subcategory or category destinations
+/// - A tap opens what the admin chose for the banner (product, category,
+///   subcategory, offers, bulk deals), or the banner itself in full
 class HomeHeroBannerCarousel extends StatefulWidget {
   final HomeController homeController;
 
@@ -30,39 +34,26 @@ class _HomeHeroBannerCarouselState extends State<HomeHeroBannerCarousel> {
   int _currentIndex = 0;
 
   void _onBannerTap(BuildContext context, homeModel.Banner banner) {
-    if (banner.destinationType == 'subcategory' && banner.destinationId != null) {
-      final categoryController = Get.find<CategoryController>();
-      final catId = banner.parentCategoryId ?? banner.destinationId!;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => SubCategoryList(
-            categoryId: catId,
-            categoryController: categoryController,
-            scrollController: ScrollController(),
-          ),
-        ),
+    final id = banner.destinationId;
+    final type = banner.destinationType ?? 'none';
+    Widget screen;
+    if (type == 'product' && id != null) {
+      screen = ItemDescription(id: id, title: banner.bannerName ?? '', percent: 0);
+    } else if (type == 'category' && id != null) {
+      screen = SingleCategory(categories: homeModel.SpecialCategory(categoryId: id, categoryName: banner.bannerName ?? ''));
+    } else if (type == 'subcategory' && id != null && banner.parentCategoryId != null) {
+      screen = SingleCategory(
+        categories: homeModel.SpecialCategory(categoryId: banner.parentCategoryId, categoryName: banner.bannerName ?? ''),
+        initialSubCategoryId: id,
       );
-    } else if (banner.destinationType == 'product' && banner.destinationId != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ItemDescription(id: banner.destinationId!, title: banner.bannerName ?? '', percent: 0),
-        ),
-      );
-    } else if (banner.destinationType == 'category' && banner.destinationId != null) {
-      final categoryController = Get.find<CategoryController>();
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => SubCategoryList(
-            categoryId: banner.destinationId!,
-            categoryController: categoryController,
-            scrollController: ScrollController(),
-          ),
-        ),
-      );
+    } else if (type == 'offers') {
+      screen = const Offers();
+    } else if (type == 'bulk_deals') {
+      screen = const BulkDealsScreen();
+    } else {
+      screen = BannerDetailScreen(banner: banner);
     }
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 
   @override
@@ -153,5 +144,60 @@ class _HomeHeroBannerCarouselState extends State<HomeHeroBannerCarousel> {
         ),
       );
     });
+  }
+}
+
+/// A banner with no link: the full image and its description.
+class BannerDetailScreen extends StatelessWidget {
+  final homeModel.Banner banner;
+
+  const BannerDetailScreen({super.key, required this.banner});
+
+  @override
+  Widget build(BuildContext context) {
+    final description = (banner.description ?? '').trim();
+    final hasDescription = description.isNotEmpty && description != 'NA';
+    return Scaffold(
+      backgroundColor: white,
+      appBar: AppBar(
+        backgroundColor: white,
+        foregroundColor: tColor,
+        elevation: 0.5,
+        title: Text((banner.bannerName ?? 'Offer').trim(), style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700)),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AspectRatio(
+              aspectRatio: 2.4,
+              child: CustomNetworkImage(url: banner.imageUrl ?? '', width: double.infinity, fit: BoxFit.cover),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text((banner.bannerName ?? '').trim(), style: GoogleFonts.poppins(fontSize: 19, fontWeight: FontWeight.w700, color: tColor)),
+          if (hasDescription) ...[
+            const SizedBox(height: 6),
+            Text(description, style: GoogleFonts.poppins(fontSize: 14, height: 1.5, color: tColor3)),
+          ],
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: SizedBox(
+          height: 52,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primary,
+              foregroundColor: white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Start shopping', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700)),
+          ),
+        ),
+      ),
+    );
   }
 }

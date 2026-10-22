@@ -52,6 +52,12 @@ class OrderServices {
     });
   }
 
+  static Future<Map<String, dynamic>?> feedbackEligibility(int orderId) {
+    return client
+        .get(Uri.parse('${Constants.baseUrl}/users/feedback/eligibility/$orderId'))
+        .then((response) => jsonDecode(response.body) as Map<String, dynamic>?);
+  }
+
   static Future ordersfeedback(body) {
     return client
         .post(Uri.parse(Constants.baseUrl + '/users/addfeedback'),

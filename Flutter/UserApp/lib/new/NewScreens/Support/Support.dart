@@ -1,242 +1,106 @@
 import 'package:fav_app/new/Constants/colors.dart';
-import 'package:fav_app/new/Constants/imageslist.dart';
+import 'package:fav_app/new/NewScreens/Account/account_widgets.dart';
+import 'package:fav_app/new/NewScreens/Account/my_requests_screen.dart';
 import 'package:fav_app/new/NewScreens/Support/EnquiryScreen.dart';
+import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
+import 'package:fav_app/new/Services/account_services.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class Support extends StatelessWidget {
+/// Help & support: contacts and FAQs come from admin Settings.
+class Support extends StatefulWidget {
   const Support({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bg1,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: white,
-        surfaceTintColor: Colors.transparent,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: cardBorder,
-            height: 1,
-          ),
-        ),
-        title: Text(
-          "Customer Support",
-          style: GoogleFonts.poppins(
-            fontSize: 18.5.sp,
-            fontWeight: FontWeight.w600,
-            color: tColor,
-          ),
-        ),
-        leading: IconButton(
-          padding: EdgeInsets.zero,
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 20,
-            color: tColor,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Need help? We're here to assist you.",
-              style: GoogleFonts.poppins(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w500,
-                color: tColor2,
-              ),
-            ),
-            SizedBox(height: 2.5.h),
-            Center(
-              child: Image.asset(
-                customerSupportBanner,
-                height: 24.h,
-                fit: BoxFit.contain,
-              ),
-            ),
-            SizedBox(height: 3.h),
-            Text(
-              "Direct Channels",
-              style: GoogleFonts.poppins(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-                color: tColor,
-              ),
-            ),
-            SizedBox(height: 1.5.h),
-            Row(
-              children: [
-                contactCard(
-                  icon: Icons.phone_rounded,
-                  label: "Call Us",
-                  subLabel: "+91 94296 90261",
-                  onTap: () async {
-                    final Uri uri = Uri(scheme: 'tel', path: '9429690261');
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri);
-                    }
-                  },
-                ),
-                SizedBox(width: 3.w),
-                contactCard(
-                  icon: Icons.email_outlined,
-                  label: "Email Us",
-                  subLabel: "support@clikgett.com",
-                  onTap: () async {
-                    final Uri uri = Uri(
-                      scheme: 'mailto',
-                      path: 'support@clikgett.com',
-                      query: Uri(queryParameters: {'subject': 'Support Inquiry'}).query,
-                    );
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri);
-                    }
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: 2.5.h),
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const EnquiryScreen()),
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
-                  decoration: BoxDecoration(
-                    color: white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: cardBorder, width: 1),
-                    boxShadow: softCardShadow,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: primaryLight,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: const Icon(Icons.help_outline_rounded,
-                            color: primary, size: 22),
-                      ),
-                      SizedBox(width: 3.5.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Submit an Enquiry",
-                              style: GoogleFonts.poppins(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600,
-                                color: tColor,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "Have an issue with an order? Send details here",
-                              style: GoogleFonts.poppins(
-                                fontSize: 12.5.sp,
-                                color: tColor3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(Icons.chevron_right_rounded,
-                          color: tColor3, size: 24),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  State<Support> createState() => _SupportState();
+}
+
+class _SupportState extends State<Support> {
+  AppConfig? _config;
+
+  @override
+  void initState() {
+    super.initState();
+    AccountServices.config(refresh: true).then((c) {
+      if (mounted) setState(() => _config = c);
+    });
   }
 
-  Widget contactCard({
-    required IconData icon,
-    required String label,
-    required String subLabel,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Container(
-            height: 120,
-            padding: EdgeInsets.all(3.w),
-            decoration: BoxDecoration(
-              color: white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: cardBorder, width: 1),
-              boxShadow: softCardShadow,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+  Future<void> _open(Uri uri) async {
+    if (!await launchUrl(uri)) customToast(message: 'Could not open this on your phone');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _config;
+    return AccountScaffold(
+      title: 'Help & support',
+      body: c == null
+          ? const Center(child: CircularProgressIndicator(color: primary))
+          : ListView(
+              padding: const EdgeInsets.all(12),
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: primaryLight,
-                    shape: BoxShape.circle,
+                MenuGroup([
+                  if (c.supportPhone.isNotEmpty)
+                    MenuTile(
+                      icon: Icons.call_outlined,
+                      title: 'Call us',
+                      subtitle: c.supportPhone,
+                      onTap: () => _open(Uri(scheme: 'tel', path: c.supportPhone.replaceAll(' ', ''))),
+                    ),
+                  if (c.supportEmail.isNotEmpty)
+                    MenuTile(
+                      icon: Icons.mail_outline_rounded,
+                      title: 'Email us',
+                      subtitle: c.supportEmail,
+                      onTap: () => _open(Uri(scheme: 'mailto', path: c.supportEmail, query: 'subject=ClikGett%20support')),
+                    ),
+                  MenuTile(
+                    icon: Icons.edit_note_rounded,
+                    title: 'Send us a message',
+                    subtitle: 'Missing items, refunds, anything else',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EnquiryScreen())),
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(icon, size: 20, color: primary),
-                ),
-                SizedBox(height: 1.h),
-                Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: tColor,
+                  MenuTile(
+                    icon: Icons.forum_outlined,
+                    title: 'My requests',
+                    subtitle: 'Replies to your messages and product requests',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyRequestsScreen())),
                   ),
-                ),
-                SizedBox(height: 0.2.h),
-                Text(
-                  subLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.5.sp,
-                    color: tColor3,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
+                ]),
+                if (c.faqs.isNotEmpty) ...[
+                  const SectionTitle('Frequently asked questions'),
+                  for (final group in c.faqs)
+                    SectionCard(
+                      padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                          child: Text(group.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: tColor)),
+                        ),
+                        for (final e in group.entries)
+                          Theme(
+                            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                            child: ExpansionTile(
+                              tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+                              childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                              iconColor: primaryDark,
+                              collapsedIconColor: grey70,
+                              title: Text(e.question, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: tColor4)),
+                              children: [
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(e.answer, style: GoogleFonts.poppins(fontSize: 12.5, color: tColor3, height: 1.45)),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ]),
+                    ),
+                ],
               ],
             ),
-          ),
-        ),
-      ),
     );
   }
 }

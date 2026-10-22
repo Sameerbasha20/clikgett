@@ -45,13 +45,38 @@ const notifyCustomer = async (order, title, message) => {
     }
 };
 
+// The delivery app lives in its own Firebase project (clikgett-delivery), so rider
+// pushes need that project's service account: RIDER_FIREBASE_CREDENTIALS = path to its JSON,
+// or the file Backend/server/utils/clikgett-delivery-firebase.json (git-ignored).
+let riderMessaging = null;
+const getRiderMessaging = () => {
+    if (riderMessaging) return riderMessaging;
+    const fs = require('fs');
+    const path = require('path');
+    const defaultPath = path.join(__dirname, '..', 'utils', 'clikgett-delivery-firebase.json');
+    const credPath = process.env.RIDER_FIREBASE_CREDENTIALS || (fs.existsSync(defaultPath) ? defaultPath : null);
+    try {
+        if (credPath) {
+            const existing = admin.apps.find((a) => a && a.name === 'rider');
+            const app = existing || admin.initializeApp({ credential: admin.credential.cert(require(require('path').resolve(credPath))) }, 'rider');
+            riderMessaging = app.messaging();
+        } else if (admin.apps.length) {
+            riderMessaging = admin.messaging();
+        }
+    } catch (err) {
+        console.error('rider firebase init failed', err.message);
+    }
+    return riderMessaging;
+};
+
 const notifyRider = async (riderId, title, message, data = {}) => {
     if (!riderId) return;
     try {
         const rows = await query("SELECT FCMToken FROM AdminUsers WHERE AdminID = ? AND Role = 2", [riderId]);
         const token = rows[0] && rows[0].FCMToken;
-        if (!token || !admin.apps.length) return;
-        await admin.messaging().send({
+        const messaging = getRiderMessaging();
+        if (!token || !messaging) return;
+        await messaging.send({
             token,
             notification: { title, body: message },
             data: Object.fromEntries(Object.entries({ title, body: message, ...data }).map(([k, v]) => [k, String(v)])),

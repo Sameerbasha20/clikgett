@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/imageslist.dart';
-import 'package:fav_app/new/NewScreens/Support/widgets/faq_section_widget.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:fav_app/new/Services/customer_requests_service.dart';
 import 'package:flutter/material.dart';
@@ -348,45 +347,8 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
               ),
               SizedBox(height: 0.4.h),
               Text(
-                "Choose a category below to find answers to frequently asked questions, or write to our support team directly.",
-                style: GoogleFonts.poppins(
-                  fontSize: 12.5.sp,
-                  color: Colors.grey[600],
-                  height: 1.4,
-                ),
-              ),
-              SizedBox(height: 2.h),
-
-              // FAQs section containing 6 categories
-              FaqSectionWidget(
-                onCategorySelected: (cat) {
-                  setState(() {
-                    if (_categories.contains(cat)) {
-                      _selectedCategory = cat;
-                    }
-                  });
-                },
-              ),
-
-              SizedBox(height: 3.h),
-              Row(
-                children: [
-                  Expanded(
-                      child: Divider(color: Colors.grey[300], thickness: 1)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 3.w),
-                    child: Text(
-                      "or submit an enquiry",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.sp,
-                        color: Colors.grey[500],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                      child: Divider(color: Colors.grey[300], thickness: 1)),
-                ],
+                "Tell us what went wrong or what you need. You can follow our reply under Profile > My requests.",
+                style: GoogleFonts.poppins(fontSize: 12.5.sp, color: Colors.grey[600], height: 1.4),
               ),
               SizedBox(height: 2.5.h),
             ],

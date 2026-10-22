@@ -48,6 +48,11 @@ const runMigration = async () => {
         await addColumnIfNotExists('AdminUsers', 'TwoFactorFailedAttempts', 'INT DEFAULT 0');
         await addColumnIfNotExists('AdminUsers', 'TwoFactorLockedUntil', 'DATETIME NULL');
         await addColumnIfNotExists('AdminUsers', 'TwoFactorLastUsedTimestamp', 'BIGINT DEFAULT 0');
+        // SMS codes: comma-separated numbers that receive them, and the pending code (HMAC, never the raw code)
+        await addColumnIfNotExists('AdminUsers', 'TwoFactorMobileNumbers', 'VARCHAR(255) NULL');
+        await addColumnIfNotExists('AdminUsers', 'TwoFactorSmsCodeHash', 'CHAR(64) NULL');
+        await addColumnIfNotExists('AdminUsers', 'TwoFactorSmsExpiresAt', 'DATETIME NULL');
+        await addColumnIfNotExists('AdminUsers', 'TwoFactorSmsSentAt', 'DATETIME NULL');
 
         // 2. AdminAuthAuditLogs table
         await queryAsync(`CREATE TABLE IF NOT EXISTS AdminAuthAuditLogs (

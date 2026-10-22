@@ -19,6 +19,25 @@ function AbandonedCarts() {
 
     const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
 
+    const [sending, setSending] = useState(false);
+    // Push reminders now to customers whose carts have been idle 8+ hours
+    // (the server also does this automatically every hour).
+    const sendReminders = async () => {
+        setSending(true);
+        try {
+            const res = await Services.sendAbandonedCartReminders(token);
+            if (res && res.Status === 1) {
+                toast.success(`Checked ${res.ScannedCarts || 0} carts, sent ${res.NotificationsSent || 0} reminders`, { position: "top-center" });
+                loadAbandonedCarts();
+            } else {
+                toast.error((res && res.Message) || "Could not send reminders", { position: "top-center" });
+            }
+        } catch (e) {
+            toast.error("Could not reach the server", { position: "top-center" });
+        }
+        setSending(false);
+    };
+
     const loadAbandonedCarts = () => {
         setLoading(true);
         Services.getAbandonedCarts("GET", null, token)
@@ -124,6 +143,15 @@ function AbandonedCarts() {
                             </p>
                         </div>
                         <div className="d-flex align-items-center gap-2">
+                            <button
+                                className="btn btn-success btn-sm px-3"
+                                disabled={sending}
+                                onClick={sendReminders}
+                                title="Reminders also go out automatically every hour"
+                                style={{ fontWeight: 600, height: "36px" }}
+                            >
+                                {sending ? "Sending…" : "Send reminders now"}
+                            </button>
                             <button 
                                 className="btn btn-outline-primary btn-sm px-3 d-inline-flex align-items-center gap-2"
                                 onClick={loadAbandonedCarts}

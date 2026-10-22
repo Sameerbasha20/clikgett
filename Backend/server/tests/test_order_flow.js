@@ -104,6 +104,11 @@ const status = async (id) => (await q("SELECT OrderStatus FROM Orders WHERE Orde
         check('customer sees OTP, rider and timeline', o && String(o.OTP) === String(OTP) && o.Rider && o.Rider.Name && Array.isArray(o.Timeline) && o.Timeline.length >= 4,
             o ? `rider=${o.Rider && o.Rider.Name} timeline=${o.Timeline && o.Timeline.length}` : '');
 
+        r = await call('GET', `/deliveryboy/orderdetail?OrderID=${A}`, RIDER);
+        check('rider cannot read the delivery OTP', r.json && r.json.Status === 1 && r.json.Orders && !('OTP' in r.json.Orders));
+        r = await call('GET', '/deliveryboy/getroutes?Type=pending', RIDER);
+        check('rider order list hides the OTP', r.json && Array.isArray(r.json.Orders) && r.json.Orders.every((x) => !('OTP' in x)));
+
         r = await call('POST', `/deliveryboy/deliver/${A}`, RIDER, { OTP: '0000' === String(OTP) ? '1111' : '0000' });
         check('wrong OTP is rejected', r.json && r.json.Status === 0 && (await status(A)) === 7);
 
@@ -116,6 +121,10 @@ const status = async (id) => (await q("SELECT OrderStatus FROM Orders WHERE Orde
 
         r = await call('PUT', `/adminorders/updatestatus/${A}`, ADMIN, { OrderStatus: 4 });
         check('delivered order cannot be cancelled', r.json && r.json.Status === 0 && (await status(A)) === 1);
+
+        r = await call('GET', '/deliveryboy/summary', RIDER);
+        check('rider summary counts the delivery', r.json && r.json.Status === 1 && r.json.Today && r.json.Today.Delivered >= 1
+            && typeof r.json.Today.CashCollected === 'number', r.json && JSON.stringify(r.json.Today));
 
         const [{ n }] = await q("SELECT COUNT(*) AS n FROM OrderStatusTimeline WHERE OrderID = ?", [A]);
         check('timeline row for every step', n >= 5, `${n} rows`);

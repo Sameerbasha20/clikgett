@@ -19,6 +19,7 @@ process.on('uncaughtException', (err) => {
 });
 
 const userRouter = require('./routes/Users');
+const customerAccountRouter = require('./routes/CustomerAccount');
 const categoryRouter = require('./routes/Categories');
 const productRouter = require('./routes/Products');
 const cartRouter = require('./routes/Carts');
@@ -31,18 +32,14 @@ const Addressrouter = require('./routes/Address');
 const Ordersrouter = require('./routes/Orders');
 const AdminOrdersrouter = require('./routes/AdminOrders');
 const deliveryboyrouter = require('./routes/DeliveryBoy');
-const routesrouter = require('./routes/Routes');
 const Productcsvrouter = require('./routes/Productcsv');
 const AdminTimingRouter = require('./routes/AdminTiming');
-const warehousesRouter = require('./routes/Warehouses');
-const formsRouter = require('./routes/Forms');
 const salesRouter = require('./routes/Sales');
 const rewardsRouter = require('./routes/Rewards');
 const buyMoreRouter = require('./routes/BuyMore');
 const restrictionsRouter = require('./routes/ProductRestrictions');
 const cartOffersRouter = require('./routes/CartOffers');
 const membershipRouter = require('./routes/Membership');
-const costOverviewRouter = require('./routes/AdminCostOverview');
 const productUnlocksRouter = require('./routes/ProductUnlocks');
 const homeSectionsRouter = require('./routes/AdminHomeSections');
 const searchAnalyticsRouter = require('./routes/SearchAnalytics');
@@ -65,6 +62,7 @@ try {
     app.use(parser.json());
     
     app.use('/api/users', userRouter);
+    app.use('/api/account', customerAccountRouter);
     app.use('/api/categories', categoryRouter);
     app.use('/api/products', productRouter);
     app.use('/api/carts', cartRouter);
@@ -78,12 +76,9 @@ try {
     app.use('/api/orders', Ordersrouter);
     app.use('/api/adminorders', AdminOrdersrouter);
     app.use('/api/deliveryboy', deliveryboyrouter);
-    app.use('/api/routes', routesrouter);
     app.use('/api/productcsv', Productcsvrouter);
     app.use('/api/csv', Productcsvrouter);
     app.use('/api/admintiming', AdminTimingRouter);
-    app.use('/api/warehouses', warehousesRouter);
-    app.use('/api/forms', formsRouter);
     app.use('/api/sales', salesRouter);
     app.use('/api/rewards', rewardsRouter);
     app.use('/api/milestones', rewardsRouter);
@@ -92,7 +87,6 @@ try {
     app.use('/api/cartoffers', cartOffersRouter);
     app.use('/api/membership', membershipRouter);
     app.use('/api/membershipplans', membershipRouter);
-    app.use('/api/cost-overview', costOverviewRouter);
     app.use('/api/product-unlocks', productUnlocksRouter);
     app.use('/api/home-sections', homeSectionsRouter);
     app.use('/api/admin-home-sections', homeSectionsRouter);
@@ -111,7 +105,7 @@ try {
     app.use('/health', healthRouter);
     app.use('/api/health', healthRouter);
 
-    app.listen(PORT, () => {
+    const httpServer = app.listen(PORT, () => {
         console.log('==================================================');
         console.log('ClikGett Backend Started');
         console.log(`Port:       ${PORT}`);
@@ -120,6 +114,10 @@ try {
         console.log(`DB Health:  http://localhost:${PORT}/api/health/db`);
         console.log('==================================================');
     });
+    // Phones reuse idle connections; Node's default 5 s idle timeout closes them
+    // just as the app sends the next request ("Connection closed before full header").
+    httpServer.keepAliveTimeout = 65000;
+    httpServer.headersTimeout = 66000;
 }
 catch (e) {
     console.log(e, 'error');

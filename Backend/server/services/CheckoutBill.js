@@ -3,8 +3,10 @@
 // so the app can never charge something different from what the server stores.
 const pool = require('../utils/db');
 const PricingEngine = require('./PricingEngine');
+const DeliveryTime = require('./DeliveryTime');
 
 const MAX_TIP = 1000;
+const PRODUCTS_S3 = 'https://d3c9kvg5gaqz48.cloudfront.net/Products/';
 const DEFAULT_TIP_PRESETS = [10, 20, 30, 50];
 
 const queryAsync = (sql, params = []) => new Promise((resolve, reject) => {
@@ -36,15 +38,30 @@ async function loadCart(userId) {
     if (!carts.length) return { cartId: null, items: [] };
     const cartId = carts[0].CartID;
     const items = await queryAsync(
-        `SELECT CI.ProductID, CI.Type, P.ProductName, P.ImageUrl, V.AvailableQty, CI.VariantID, CI.Quantity,
+        // Every cart line, so the customer sees what ran out instead of it vanishing;
+        // a switched-off product or pack counts as out of stock.
+        `SELECT CI.ProductID, CI.Type, P.ProductName, P.ImageUrl, P.ProductImages,
+                CASE WHEN P.Status = 1 AND V.Status = 1 THEN GREATEST(V.AvailableQty, 0) ELSE 0 END AS AvailableQty,
+                CI.VariantID, CI.Quantity,
                 V.metricvalue, V.metrictype, V.Price, V.OfferPrice, V.Buy2Price, 0 AS KitID,
                 P.CategoryID, P.SubCategoryID, V.maxQty
            FROM CartItems CI
            JOIN Products P ON P.ProductID = CI.ProductID
            JOIN ProductVariants V ON V.VariantID = CI.VariantID
-          WHERE P.Status = 1 AND V.AvailableQty > 0 AND CI.CartID = ?`,
+          WHERE CI.CartID = ?`,
         [cartId]
     );
+    items.forEach((i) => {
+        let image = i.ImageUrl && i.ImageUrl !== 'NA' ? i.ImageUrl : null;
+        if (!image) {
+            try {
+                const list = JSON.parse(i.ProductImages || '[]');
+                if (Array.isArray(list) && list.length) image = list[0];
+            } catch (_) { /* no images */ }
+        }
+        i.ImageUrl = image ? (String(image).startsWith('http') ? image : PRODUCTS_S3 + image) : 'NA';
+        delete i.ProductImages;
+    });
     return { cartId, items };
 }
 
@@ -79,7 +96,13 @@ async function computeBill(opts) {
     const lng = parseFloat(opts.longitude);
     if (lat && lng) { location.latitude = lat; location.longitude = lng; }
 
-    const calc = await PricingEngine.calculateCart(cart.items, promoCode, userId, location);
+    // Out-of-stock lines are listed but not priced; the order is blocked until they are removed.
+    const inStock = cart.items.filter((i) => parseInt(i.AvailableQty, 10) > 0);
+    const outOfStock = cart.items
+        .filter((i) => !(parseInt(i.AvailableQty, 10) > 0))
+        .map((i) => ({ ...i, AvailableQty: 0, UnitPrice: parseFloat(i.OfferPrice) || 0, LineTotal: 0, OriginalTotal: 0, OutOfStock: true }));
+    const calc = await PricingEngine.calculateCart(inStock, promoCode, userId, location);
+    const allItems = [...(calc.Items || []), ...outOfStock];
 
     const itemsTotal = money(calc.SubTotal);
     const couponDiscount = money(calc.CouponDiscount);
@@ -91,13 +114,20 @@ async function computeBill(opts) {
     const walletApplied = opts.useWallet ? usable : 0;
     const toPay = money(payableBeforeWallet - walletApplied);
 
-    const stockIssues = (calc.Items || [])
+    const distanceKm = await DeliveryTime.distanceFromStore(lat, lng);
+    const eta = await DeliveryTime.estimate({ distanceKm, items: calc.Items || [] });
+
+    const freeDeliverySavings = calc.FreeDeliveryApplied
+        ? money(Math.max(0, (parseFloat(calc.DeliveryChargesBeforeWaiver) || 0) - deliveryFee))
+        : 0;
+
+    const stockIssues = allItems
         .filter((i) => parseInt(i.Quantity, 10) > parseInt(i.AvailableQty, 10))
         .map((i) => ({ ProductID: i.ProductID, VariantID: i.VariantID, ProductName: i.ProductName, AvailableQty: i.AvailableQty }));
 
     return {
         CartID: cart.cartId,
-        Items: calc.Items || [],
+        Items: allItems,
         ItemCount: (calc.Items || []).reduce((n, i) => n + (parseInt(i.Quantity, 10) || 0), 0),
         MRPTotal: money(calc.OriginalSubTotal),
         ItemsTotal: itemsTotal,
@@ -117,7 +147,8 @@ async function computeBill(opts) {
         WalletUsable: usable,
         WalletApplied: walletApplied,
         ToPay: toPay,
-        TotalSavings: money(calc.OriginalSubTotal - itemsTotal + couponDiscount + offerDiscount),
+        FreeDeliverySavings: freeDeliverySavings,
+        TotalSavings: money(calc.OriginalSubTotal - itemsTotal + couponDiscount + offerDiscount + freeDeliverySavings),
         MinOrderValue: cfg.minOrderValue,
         MinOrderMet: itemsAfterDiscounts >= cfg.minOrderValue,
         AmountForMinOrder: money(Math.max(0, cfg.minOrderValue - itemsAfterDiscounts)),
@@ -129,7 +160,8 @@ async function computeBill(opts) {
         ApplicableCoupons: calc.ApplicableCoupons || [],
         SuggestedCoupons: calc.SuggestedCoupons || [],
         ProductUnlocks: calc.ProductUnlocks || [],
-        LargeCartNotice: calc.LargeCartNotice || null,
+        EtaMinutes: eta.totalMinutes,
+        LargeCartNotice: eta.notes.length ? eta.notes.join(' · ') : null,
         StockIssues: stockIssues,
     };
 }

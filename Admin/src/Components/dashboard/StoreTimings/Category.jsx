@@ -14,6 +14,7 @@ import "../../../App.css";
 import { Services } from "../../../Services";
 import { toast } from "react-toastify";
 import AddCategory from "./AddCategory";
+import StoreStatusCard from "./StoreStatusCard";
 import { css } from "@emotion/react";
 import { useForm } from "react-hook-form";
 
@@ -27,7 +28,7 @@ function Warehouse() {
     const [editable, setEditable] = useState(false);
     const [categoryItems, setCategoryItems] = useState([]);
     const [StoreDetails, setStoreDetails] = useState({});
-    const [checked, setChecked] = useState(0);
+    const [refreshKey, setRefreshKey] = useState(0);
     const [showForm, setShowForm] = useState(false);
     const [categorysearchItems, setCategorySearchItems] = useState([]);
     let [loading, setLoading] = useState(true);
@@ -58,6 +59,7 @@ function Warehouse() {
                 if (res.status === 1) {
                     setCategoryItems(res.data);
                     setCategorySearchItems(res.data);
+                    setRefreshKey((k) => k + 1);
                 } else if (res.status === 0) {
                     toast.error(`${res.Message}`, {
                         position: "top-center",
@@ -84,7 +86,6 @@ function Warehouse() {
             .then((res) => {
                 setLoading(false);
                 if (res.status == 1) {
-                    setChecked(res.Shop?.ShopStatus == 0 ? false : true);
                     setStoreDetails(res?.Shop);
                 }
             })
@@ -271,44 +272,6 @@ function Warehouse() {
         // console.log(search);
         setCategorySearchItems(search);
     };
-    const changeHandler = (e) => {
-        let toggle = e.target.checked ? 1 : 0;
-        Services.UpdateToggleStore("PUT", null, token, toggle)
-            .then((res) => {
-                setLoading(false);
-                if (res.Status === 1) {
-                    console.log(e.target.checked);
-                    setChecked(!e.target.checked);
-                    toast.success(`${res.Message}`, {
-                        position: "top-center",
-                        autoClose: 1000,
-                        hideProgressBar: true,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    });
-                } else if (res.Status === 0) {
-                    toast.error(`${res.Message}`, {
-                        position: "top-center",
-                        autoClose: 1000,
-                        hideProgressBar: true,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    });
-                    if (res.Message === "Token expired") {
-                        Navigate("/");
-                    }
-                }
-            })
-            .catch((err) => {
-                // alert(err);
-                alert("something went wrong please try again");
-                console.log(err);
-            });
-    };
     const onSubmit = (data) => {
         let method = JSON.stringify({
             ...data,
@@ -368,6 +331,8 @@ function Warehouse() {
                     <TopNav />
 
                     <div className={dashboardclasses.CategoryWrapper}>
+                        <h3>Store Status</h3>
+                        <StoreStatusCard refreshKey={refreshKey} />
                         <div className={dashboardclasses["store_details"]}>
                             <h3>
                                 Store Details{" "}
@@ -390,22 +355,6 @@ function Warehouse() {
                             </h3>
                             {!showForm ? (
                                 <div className={dashboardclasses["storeData"]}>
-                                    <div>
-                                        <label htmlFor="">Store Status</label>
-                                        <span>:</span>
-                                        <p
-                                            className={
-                                                checked
-                                                    ? dashboardclasses[
-                                                          "store_open"
-                                                      ]
-                                                    : dashboardclasses[
-                                                          "store_closed"
-                                                      ]
-                                            }>
-                                            {checked ? "open" : "Closed"}
-                                        </p>
-                                    </div>
                                     <div>
                                         <label htmlFor="">Latitude</label>
                                         <span>:</span>
@@ -554,19 +503,7 @@ function Warehouse() {
                                 </form>
                             )}
                         </div>
-                        <h3 style={{ display: "flex", alignItems: "center" }}>
-                            Store Timings{" "}
-                            <div className="checkbox-apple">
-                                <input
-                                    className="yep"
-                                    id="check-apple"
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={(e) => changeHandler(e)}
-                                />
-                                <label htmlFor="check-apple"></label>
-                            </div>
-                        </h3>
+                        <h3>Store Timings</h3>
 
                         {loading ? (
                             <div className={dashboardclasses["loader"]}>

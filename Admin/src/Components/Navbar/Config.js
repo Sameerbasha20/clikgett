@@ -1,207 +1,82 @@
-import { AiOutlineUnorderedList, AiOutlineGift } from "react-icons/ai";
+import { AiOutlineUnorderedList, AiOutlineGift, AiOutlineDashboard } from "react-icons/ai";
 import { GiNewspaper } from "react-icons/gi";
-import {
-  MdOutlineCategory,
-  MdOutlineDeliveryDining,
-} from "react-icons/md";
+import { MdOutlineCategory, MdOutlineDeliveryDining, MdOutlinePriceChange, MdOutlineRemoveShoppingCart } from "react-icons/md";
 import { CgShoppingCart } from "react-icons/cg";
-import { IoPricetagsOutline, IoStorefrontOutline } from "react-icons/io5";
-import { FiSettings } from "react-icons/fi";
-import { FaUserFriends, FaBan, FaPercent, FaSearch, FaCommentDots, FaStore, FaUnlockAlt, FaCoins, FaAws, FaCamera, FaQuestionCircle, FaClipboardList } from "react-icons/fa";
+import { IoPricetagsOutline } from "react-icons/io5";
+import { FiSettings, FiDownload } from "react-icons/fi";
+import {
+    FaUserFriends, FaPercent, FaSearch, FaCommentDots, FaStore, FaUnlockAlt, FaCoins,
+    FaCamera, FaQuestionCircle, FaClipboardList, FaCrown, FaUserShield, FaBell, FaClock,
+} from "react-icons/fa";
 
-export const menuItems = [
-  {
-    id: 8,
-    multiple: false,
-    name: "Orders",
-    menuLink: "/orders",
-    active: "orders",
-    icon: CgShoppingCart,
-  },
-  {
-    id: 50,
-    multiple: false,
-    name: "Photo Orders",
-    menuLink: "/photo-orders",
-    active: "photoOrders",
-    icon: FaCamera,
-  },
-  {
-    id: 51,
-    multiple: false,
-    name: "Customer Enquiries",
-    menuLink: "/customer-enquiries",
-    active: "customerEnquiries",
-    icon: FaQuestionCircle,
-  },
-  {
-    id: 52,
-    multiple: false,
-    name: "Product Requests",
-    menuLink: "/product-requests",
-    active: "productRequests",
-    icon: FaClipboardList,
-  },
-  {
-    id: 35,
-    multiple: false,
-    name: "Live Operations",
-    menuLink: "/live-operations",
-    active: "LiveOperations",
-    icon: MdOutlineDeliveryDining,
-  },
-  {
-    id: 21,
-    multiple: false,
-    name: "Customers",
-    menuLink: "/customers",
-    active: "customers",
-    icon: FaUserFriends,
-  },
-  {
-    id: 4,
-    multiple: false,
-    name: "Products",
-    menuLink: "/products",
-    active: "products",
-    icon: MdOutlineCategory,
-  },
-  {
-    id: 1,
-    multiple: false,
-    name: "Categories",
-    menuLink: "/categories",
-    active: "categories",
-    icon: AiOutlineUnorderedList,
-  },
-  {
-    id: 3,
-    multiple: false,
-    name: "Sub categories",
-    menuLink: "/subcategories",
-    active: "subcategories",
-    icon: MdOutlineCategory,
-  },
-  {
-    id: 2,
-    multiple: false,
-    name: "Banners",
-    menuLink: "/banners",
-    active: "banners",
-    icon: GiNewspaper,
-  },
-  {
-    id: 7,
-    multiple: false,
-    name: "Coupon Codes",
-    menuLink: "/promocodes",
-    active: "promocode",
-    icon: AiOutlineGift,
-  },
-  {
-    id: 13,
-    multiple: false,
-    name: "Flash Sales",
-    menuLink: "/sales",
-    active: "sales",
-    icon: IoPricetagsOutline,
-  },
-  {
-    id: 18,
-    multiple: false,
-    name: "Cart Offers",
-    menuLink: "/cart-offers",
-    active: "cartoffers",
-    icon: FaPercent,
-  },
-  {
-    id: 14,
-    multiple: false,
-    name: "Abandoned Carts",
-    menuLink: "/abandoned-carts",
-    active: "abandoned-carts",
-    icon: CgShoppingCart,
-  },
-  {
-    id: 15,
-    multiple: false,
-    name: "Milestones",
-    menuLink: "/milestones",
-    active: "milestones",
-    icon: AiOutlineGift,
-  },
-  {
-    id: 25,
-    multiple: false,
-    name: "Home Sections",
-    menuLink: "/home-sections",
-    active: "home-sections",
-    icon: FaStore,
-  },
-  {
-    id: 26,
-    multiple: false,
-    name: "Product Unlocks",
-    menuLink: "/product-unlocks",
-    active: "product-unlocks",
-    icon: FaUnlockAlt,
-  },
-  {
-    id: 27,
-    multiple: false,
-    name: "Customer Feedback & Rewards",
-    menuLink: "/feedback",
-    active: "feedback",
-    icon: FaCommentDots,
-  },
-  {
-    id: 28,
-    multiple: false,
-    name: "Search Analytics",
-    menuLink: "/search-analytics",
-    active: "search-analytics",
-    icon: FaSearch,
-  },
-  {
-    id: 29,
-    multiple: false,
-    name: "Cashback Review",
-    menuLink: "/cashback-review",
-    active: "cashback-review",
-    icon: FaCoins,
-  },
-  {
-    id: 6,
-    multiple: false,
-    name: "Delivery Boys",
-    menuLink: "/DeliveryBoy",
-    active: "Deliveryboy",
-    icon: MdOutlineDeliveryDining,
-  },
-
-
-  {
-    id: 10,
-    multiple: false,
-    name: "Store Details",
-    menuLink: "/store-timings",
-    active: "Store Timings",
-    icon: IoStorefrontOutline,
-  },
-  {
-    id: 30,
-    multiple: false,
-    name: "AWS Billing",
-    menuLink: "/aws-billing",
-    active: "aws-billing",
-    icon: FaAws,
-  },
-  {
-    id: 11,
-    multiple: false,
-    name: "Settings",
-    menuLink: "/settings",
-    active: "settings",
-    icon: FiSettings,
-  },
+// Sidebar, grouped by job. `active` must match the page's <SideNav isactive="..."> value.
+export const menuSections = [
+    {
+        title: null,
+        items: [{ name: "Dashboard", menuLink: "/dashboard", active: "dashboard", icon: AiOutlineDashboard }],
+    },
+    {
+        title: "Orders",
+        items: [
+            { name: "Orders", menuLink: "/orders", active: "orders", icon: CgShoppingCart },
+            { name: "Live Operations", menuLink: "/live-operations", active: "LiveOperations", icon: MdOutlineDeliveryDining },
+            { name: "Photo Orders", menuLink: "/photo-orders", active: "photoOrders", icon: FaCamera },
+            { name: "Product Requests", menuLink: "/product-requests", active: "productRequests", icon: FaClipboardList },
+            { name: "Customer Enquiries", menuLink: "/customer-enquiries", active: "customerEnquiries", icon: FaQuestionCircle },
+        ],
+    },
+    {
+        title: "Catalog",
+        items: [
+            { name: "Products", menuLink: "/products", active: "products", icon: MdOutlineCategory },
+            { name: "Out of stock", menuLink: "/out-of-stock", active: "out-of-stock", icon: MdOutlineRemoveShoppingCart },
+            { name: "Categories", menuLink: "/categories", active: "categories", icon: AiOutlineUnorderedList },
+            { name: "Sub categories", menuLink: "/subcategories", active: "subcategories", icon: MdOutlineCategory },
+            { name: "Bulk price update", menuLink: "/update-price", active: "priceUpdate", icon: MdOutlinePriceChange },
+        ],
+    },
+    {
+        title: "Storefront",
+        items: [
+            { name: "Home Sections", menuLink: "/home-sections", active: "home-sections", icon: FaStore },
+            { name: "Banners", menuLink: "/banners", active: "banners", icon: GiNewspaper },
+        ],
+    },
+    {
+        title: "Marketing",
+        items: [
+            { name: "Coupon Codes", menuLink: "/promocodes", active: "promocode", icon: AiOutlineGift },
+            { name: "Flash Sales", menuLink: "/sales", active: "sales", icon: IoPricetagsOutline },
+            { name: "Cart Offers", menuLink: "/cart-offers", active: "cartoffers", icon: FaPercent },
+            { name: "Abandoned Carts", menuLink: "/abandoned-carts", active: "abandoned-carts", icon: CgShoppingCart },
+            { name: "Send Notification", menuLink: "/notification", active: "notification", icon: FaBell },
+        ],
+    },
+    {
+        title: "Rewards",
+        items: [
+            { name: "Cashback Review", menuLink: "/cashback-review", active: "cashback-review", icon: FaCoins },
+            { name: "Milestones", menuLink: "/milestones", active: "milestones", icon: AiOutlineGift },
+            { name: "Product Unlocks", menuLink: "/product-unlocks", active: "product-unlocks", icon: FaUnlockAlt },
+            { name: "Feedback & Rewards", menuLink: "/feedback", active: "feedback", icon: FaCommentDots },
+            { name: "Membership", menuLink: "/membership", active: "membership", icon: FaCrown },
+        ],
+    },
+    {
+        title: "People",
+        items: [
+            { name: "Customers", menuLink: "/customers", active: "customers", icon: FaUserFriends },
+            { name: "Riders", menuLink: "/DeliveryBoy", active: "Deliveryboy", icon: MdOutlineDeliveryDining },
+            { name: "Admin Users", menuLink: "/admin-users", active: "user", icon: FaUserShield },
+        ],
+    },
+    {
+        title: "Settings",
+        items: [
+            { name: "Settings", menuLink: "/settings", active: "settings", icon: FiSettings },
+            { name: "Store Details & Timings", menuLink: "/store-timings", active: "Store Timings", icon: FaClock },
+            { name: "Search Analytics", menuLink: "/search-analytics", active: "search-analytics", icon: FaSearch },
+            { name: "Data Exports", menuLink: "/exports", active: "operations", icon: FiDownload },
+        ],
+    },
 ];

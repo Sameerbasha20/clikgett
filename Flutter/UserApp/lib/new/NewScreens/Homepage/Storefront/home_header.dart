@@ -120,10 +120,17 @@ class StorefrontHeader extends StatelessWidget {
   Future<void> _openAddressPicker(BuildContext context) async {
     if (!await _requireLogin(context, 'choose a delivery address')) return;
     if (!context.mounted) return;
+    await showDeliveryAddressPicker(context);
+  }
+}
+
+/// Bottom sheet listing saved addresses. Picking one updates the header,
+/// the cart and checkout together.
+Future<void> showDeliveryAddressPicker(BuildContext context) async {
     final addressController = Get.find<AdressController>();
     final home = Get.find<HomeController>();
     final cart = Get.find<CartController>();
-    showModalBottomSheet<void>(
+    await showModalBottomSheet<void>(
       context: context,
       backgroundColor: white,
       isScrollControlled: true,
@@ -198,7 +205,6 @@ class StorefrontHeader extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _HeaderChip extends StatelessWidget {

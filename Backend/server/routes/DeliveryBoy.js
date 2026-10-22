@@ -24,6 +24,7 @@ router
     .post('/verifyotp_order', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.Orders_VerifyOTP)
     .post('/deliver/:OrderID', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.deliverOrder)
     .post('/fcmtoken', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.updateFcmToken)
+    .get('/summary', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.riderSummary)
 
     // --- Modern Quick-Commerce Delivery Operations Extensions ---
     // Phase 1: Duty & Shift Management (ONLINE / OFFLINE / ON_BREAK)

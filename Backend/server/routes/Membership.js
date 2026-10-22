@@ -5,6 +5,8 @@ const util = require('../utils/utils');
 
 router
     .get('/plans', util.authenticate.adminAuthenticate, MembershipController.getPlans)
+    .post('/plans/save', util.authenticate.adminAuthenticate, MembershipController.savePlan)
+    .get('/members', util.authenticate.adminAuthenticate, MembershipController.getMembers)
     .get('/product/:productId', util.authenticate.adminAuthenticate, MembershipController.getProductPricing)
     .post('/product/save', util.authenticate.adminAuthenticate, MembershipController.saveProductPricing)
     .post('/save-product-pricing', util.authenticate.adminAuthenticate, MembershipController.saveProductPricing)

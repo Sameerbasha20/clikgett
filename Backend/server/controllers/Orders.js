@@ -14,8 +14,10 @@ const s3 = require('../utils/s3');
 const pool = require('../utils/db');
 const OrderLifecycle = require('../services/OrderLifecycle');
 const CheckoutBill = require('../services/CheckoutBill');
+const DeliveryTime = require('../services/DeliveryTime');
+const StoreHours = require('../services/StoreHours');
 const PRODUCTS_S3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/";
-const { ORDER_STATUS, STATUS_LABELS } = require('../utils/orderStatus');
+const { ORDER_STATUS, STATUS_LABELS, FINAL_STATUSES } = require('../utils/orderStatus');
 
 
 
@@ -241,6 +243,12 @@ const ordercontroller = {
                 return resp.status(status).json({ Status: 0, Message: message, ...extra });
             };
 
+            const store = await StoreHours.getState();
+            if (!store.isOpen) {
+                const opens = StoreHours.opensAtText(store);
+                return fail(400, `The store is closed right now.${opens ? ` ${opens}.` : ''}`, { StoreClosed: true });
+            }
+
             // Authoritative backend serviceability verification: reject orders outside 20 km radius
             if (body.Latitude !== undefined && body.Longitude !== undefined && body.Latitude !== null && body.Longitude !== null) {
                 const deliveryDistance = await Calculate_customer_shop_distance(body.Latitude, body.Longitude);
@@ -263,12 +271,15 @@ const ordercontroller = {
                 return fail(400, "Your cart is empty.");
             if (body.PromoCode && body.PromoCode !== 'NA' && !bill.PromoCode)
                 return fail(400, bill.CouponMessage || "This coupon cannot be applied to your cart.");
-            if (!bill.MinOrderMet)
-                return fail(400, `Minimum order value is Rs.${bill.MinOrderValue}. Add Rs.${bill.AmountForMinOrder} more to place the order.`);
             if (bill.StockIssues.length) {
                 const item = bill.StockIssues[0];
-                return fail(400, `${item.ProductName}: only ${item.AvailableQty} left in stock.`);
+                const name = String(item.ProductName || '').trim();
+                return fail(400, Number(item.AvailableQty) > 0
+                    ? `${name}: only ${item.AvailableQty} left in stock.`
+                    : `${name} is out of stock. Remove it from your cart to place the order.`);
             }
+            if (!bill.MinOrderMet)
+                return fail(400, `Minimum order value is Rs.${bill.MinOrderValue}. Add Rs.${bill.AmountForMinOrder} more to place the order.`);
 
             let paymentMethod = String(body.PaymentMethod || 'COD').toUpperCase();
             if (bill.ToPay === 0 && bill.WalletApplied > 0) paymentMethod = 'WALLET';
@@ -340,41 +351,19 @@ const ordercontroller = {
 
             body.current_date = await CommonController.currentdate();
 
-            // Calculate total items (sum of quantities across all order items)
-            let totalItemQty = 0;
-            if (Array.isArray(body.OrderItems)) {
-                totalItemQty = body.OrderItems.reduce((sum, item) => sum + (parseInt(item.Quantity) || 1), 0);
-            }
-
-            // Dynamic Delivery ETA calculation based on AdminShopToggleSettings
-            let shopToggleRows = await CommonController.commonget("SELECT * FROM AdminShopToggleSettings LIMIT 1");
-            let shopToggle = (shopToggleRows && shopToggleRows[0]) ? shopToggleRows[0] : {};
-            let t1Items = parseInt(shopToggle.LargeCartThreshold1Items || 10);
-            let t1Mins = parseInt(shopToggle.LargeCartThreshold1Minutes || 10);
-            let t2Items = parseInt(shopToggle.LargeCartThreshold2Items || 20);
-            let t2Mins = parseInt(shopToggle.LargeCartThreshold2Minutes || 10);
-
-            let orderSizeBuffer = 0;
-            if (totalItemQty <= t1Items) {
-                orderSizeBuffer = 0;
-            } else if (totalItemQty <= t2Items) {
-                orderSizeBuffer = t1Mins;
-            } else {
-                const step = (t2Items - t1Items) > 0 ? (t2Items - t1Items) : 10;
-                const extraSteps = Math.ceil((totalItemQty - t2Items) / step);
-                orderSizeBuffer = t1Mins + (extraSteps * t2Mins);
-            }
-
-            const baseDeliveryMinutes = 30;
-            const totalDeliveryMinutes = baseDeliveryMinutes + orderSizeBuffer;
-
+            // Delivery time: distance + order size + fresh fruit (services/DeliveryTime.js)
+            const exactDistance = await DeliveryTime.distanceFromStore(body.Latitude, body.Longitude);
+            const eta = await DeliveryTime.estimate({ distanceKm: exactDistance, items: bill.Items });
             const isScheduledOrder = body.ScheduleStatus === 'Scheduled' && body.ScheduledDateTime;
-            expecteddate = isScheduledOrder 
+            expecteddate = isScheduledOrder
                 ? moment(body.ScheduledDateTime).format('YYYY-MM-DD HH:mm:ss')
-                : moment().add(totalDeliveryMinutes, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+                : moment().add(eta.totalMinutes, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 
-            body.OrderSizeBufferMinutes = orderSizeBuffer;
-            body.TotalItemQuantity = totalItemQty;
+            body.BaseETAMinutes = eta.distanceMinutes;
+            body.OrderSizeBufferMinutes = eta.itemMinutes + eta.fruitMinutes;
+            body.TotalItemQuantity = eta.itemQuantity;
+            body.DistanceETABand = eta.band;
+            body.ETACalculationDetails = JSON.stringify(eta);
 
             createorder = await CreateOrders(body, OrderID, RazorpayOrderID, expecteddate)
             body.orderid = createorder.insertId
@@ -496,7 +485,10 @@ const ordercontroller = {
     reorder: async (req, resp, next) => {
         try {
 
-            Body = req.body
+            Body = req.body || {}
+            // Only the customer's own orders can be re-ordered.
+            const owned = await CommonController.commonget("SELECT OrderID FROM Orders WHERE OrderID = ? AND UserID = ?", [Body.OrderID, req.UserID]);
+            if (!owned.length) return resp.status(404).json({ "Status": 0, "Message": "Order not found" });
 
             let orderresult = await getorderitems(Body.OrderID)
             console.log(orderresult, 'orderresult')
@@ -580,6 +572,13 @@ const ordercontroller = {
 async function addTrackingDetails(order) {
     order.StatusLabel = STATUS_LABELS[order.OrderStatus] || '';
     if (Number(order.OrderStatus) !== ORDER_STATUS.ARRIVED) order.OTP = null;
+    // Computed here so the app does not depend on the phone's clock.
+    const status = Number(order.OrderStatus);
+    const secondsSincePlaced = moment().diff(moment(order.CreatedAt), 'seconds');
+    order.CancelSecondsLeft = [ORDER_STATUS.RECEIVED, ORDER_STATUS.PACKING].includes(status)
+        ? Math.max(0, 120 - secondsSincePlaced) : 0;
+    order.EtaMinutesLeft = (!FINAL_STATUSES.includes(status) && order.EstimateDateTime && moment(order.EstimateDateTime).isValid())
+        ? Math.max(0, Math.ceil(moment(order.EstimateDateTime).diff(moment(), 'seconds') / 60)) : null;
     try {
         order.Timeline = await CommonController.commonget(
             "SELECT OrderStatus, Notes, CreatedAt FROM OrderStatusTimeline WHERE OrderID = ? ORDER BY CreatedAt ASC, TimelineID ASC", [order.OrderID]);
@@ -701,15 +700,18 @@ function CreateOrders(body, OrderID, RazorpayOrderID, expecteddate) {
                 body.Distance = await Calculate_customer_shop_distance(body.Latitude, body.Longitude);  
             }
 
-            const DeliveryETA = require('./DeliveryETA');
-            const etaCalculation = await DeliveryETA.calculateBaseETA(body.Distance);
-            body.BaseETAMinutes = etaCalculation.baseMinutes;
-            body.DistanceETABand = etaCalculation.band;
-            body.ETACalculationDetails = JSON.stringify(etaCalculation);
+            if (body.BaseETAMinutes == null) {
+                // Callers other than addorder (e.g. photo orders) get the distance-only estimate.
+                const eta = await DeliveryTime.estimate({ distanceKm: body.Distance, items: body.OrderItems || [] });
+                body.BaseETAMinutes = eta.distanceMinutes;
+                body.OrderSizeBufferMinutes = eta.itemMinutes + eta.fruitMinutes;
+                body.DistanceETABand = eta.band;
+                body.ETACalculationDetails = JSON.stringify(eta);
+            }
 
             const isScheduled = body.ScheduleStatus === 'Scheduled' && body.ScheduledDateTime;
             if (!isScheduled) {
-                const totalBaseMinutes = (body.BaseETAMinutes || 25) + (parseInt(body.OrderSizeBufferMinutes, 10) || 0);
+                const totalBaseMinutes = (body.BaseETAMinutes || 20) + (parseInt(body.OrderSizeBufferMinutes, 10) || 0);
                 expecteddate = moment().add(totalBaseMinutes, 'minutes').format('YYYY-MM-DD HH:mm:ss');
             }
 

@@ -36,6 +36,10 @@ Then run the backend migrations against RDS (each is idempotent), including:
 
 ```sh
 node server/migrations/order_lifecycle_migration.js   # AdminUsers.FCMToken, Orders.RefundStatus/RefundID, OrderPayments.PaymentID/ConsumedAt/Purpose
+node server/migrations/app_settings_migration.js       # SupportPhone/Email, TipPresets, WalletTopupAmounts, FAQs (only if missing)
+node server/migrations/delivery_time_rules_migration.js # <=5 km 20 min, >5 km 30 min, +10 min per 10 items above 10
+node server/migrations/store_mode_migration.js       # admin Open now / Close now / Follow timings (StoreMode, StoreModeUntil)
+node server/migrations/cashback_review_migration.js   # CashbackPending.RejectReason + index on OrderID (manual cashback review)
 ```
 
 ## 3. Switch
@@ -65,3 +69,24 @@ Mobile release builds need the HTTPS API URL:
 `flutter build apk --release --dart-define=API_BASE_URL=https://<api-host>/api`
 and `./gradlew assembleRelease -PapiBaseUrl=https://<api-host>/api/` for the
 delivery app, plus a real signing key in `key.properties`.
+
+## Rider push notifications
+
+The delivery app is in the Firebase project `clikgett-delivery`. Put that project's
+service-account key at `Backend/server/utils/clikgett-delivery-firebase.json`
+(git-ignored) or set `RIDER_FIREBASE_CREDENTIALS` to its path. Without it riders
+still get new orders through the app's 20-second refresh.
+
+## Admin passwords
+
+Admin passwords are stored hashed (scrypt). Existing plain-text rows are upgraded
+automatically the first time each admin logs in; nothing to run.
+
+## Test data left in production
+
+Earlier automated tests created live catalog items in production. Hide them (done locally):
+
+```sql
+UPDATE Products SET Status = 0 WHERE ProductName LIKE 'E2E Unified Test Product%';
+UPDATE Sales SET Status = 0 WHERE SaleName IN ('E2E Automated Mega Flash Sale', 'Negative Sale');
+```

@@ -13,6 +13,7 @@ router
 
   // ── Two-Factor Authentication (2FA) ──────────────────────
   .post('/login', AdminAuth2FA.login)
+  .post('/send-2fa-sms', AdminAuth2FA.sendSmsCode)
   .post('/verify-2fa', AdminAuth2FA.verify2FA)
   .post('/reset-2fa/:AdminID', util.authenticate.adminAuthenticate, AdminAuth2FA.reset2FA)
   .get('/2fa-status', util.authenticate.adminAuthenticate, AdminAuth2FA.get2FAStatus)
@@ -79,14 +80,9 @@ router
  .put('/user/update/:UserID', util.authenticate.adminAuthenticate, admincontroller.updateuser)
  .delete('/user/delete/:UserID', util.authenticate.adminAuthenticate, admincontroller.deleteUser)
 
- .get('/notifyproducts', util.authenticate.adminAuthenticate, admincontroller.notifyproducts)
- .put('/notifyproductupdate/:id', util.authenticate.adminAuthenticate, admincontroller.notifyproductupdate)
- .get('/notifyproductdetail/:id', util.authenticate.adminAuthenticate, admincontroller.notifyproductdetail)
  .get('/wallettransactions/:UserID', util.authenticate.adminAuthenticate, admincontroller.walletTransactions)
  .post('/creditdebitwallet', util.authenticate.adminAuthenticate, admincontroller.creditDebitWallet)
  .post('/expirecashback', util.authenticate.adminAuthenticate, admincontroller.expireCashback)
- .post('/triggernotifyproduct/:id', util.authenticate.adminAuthenticate, admincontroller.triggernotifyproduct)
- .put('/triggernotifyproduct/:id', util.authenticate.adminAuthenticate, admincontroller.triggernotifyproduct)
 
 module.exports = router
 

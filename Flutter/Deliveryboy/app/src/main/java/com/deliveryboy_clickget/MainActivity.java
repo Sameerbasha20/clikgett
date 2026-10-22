@@ -34,6 +34,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.deliveryboy_clickget.Utils.CommonUtilities;
 import com.deliveryboy_clickget.Utils.DepthPageTransformer;
+import com.deliveryboy_clickget.Utils.Session;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -188,6 +189,12 @@ public class MainActivity extends AppCompatActivity {
 
             // Fetch current duty status and permissions on start
             fetchDutyStatusFromServer();
+            // Order pushes: register this device and ask for notification permission (Android 13+).
+            RiderMessagingService.syncToken(getApplicationContext());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                    && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, PERMISSION_REQUEST_CODE + 1);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error in onCreate: " + e.getMessage(), e);
             Toast.makeText(this, "Welcome to ClikGett Operations", Toast.LENGTH_SHORT).show();
@@ -254,6 +261,7 @@ public class MainActivity extends AppCompatActivity {
                 conn.setReadTimeout(4000);
 
                 int code = conn.getResponseCode();
+                if (code == 401) Session.expire(MainActivity.this);
                 if (code == 200) {
                     BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                     StringBuilder sb = new StringBuilder();

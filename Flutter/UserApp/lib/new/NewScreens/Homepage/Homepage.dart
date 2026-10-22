@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fav_app/Models/Home/TimingProvider.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/imageslist.dart';
@@ -33,6 +35,7 @@ class _HomepageState extends State<Homepage> {
   final TimingController timingController = Get.put(TimingController());
 
   String token = '';
+  Timer? _ordersRefresh;
 
   final List<Widget> screens = [
     const Home(),
@@ -54,10 +57,20 @@ class _HomepageState extends State<Homepage> {
     if (token.isEmpty || !mounted) return;
     profileController.getuserDetails(context: context);
     ordersController.getcurrentorder(context: context);
+    // Keep the active-order strip live while an order is in progress.
+    _ordersRefresh = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted && ordersController.orders.isNotEmpty) ordersController.getcurrentorder(context: context);
+    });
     final fcmToken = await FirebaseMessaging.instance.getToken();
     if (fcmToken != null && mounted) {
       Get.put(ProfileController()).updateUser(context: context, body: {"FCMToken": fcmToken}, isFCMUpdate: true);
     }
+  }
+
+  @override
+  void dispose() {
+    _ordersRefresh?.cancel();
+    super.dispose();
   }
 
   void _onTab(int index) {
@@ -75,17 +88,19 @@ class _HomepageState extends State<Homepage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Obx(() => controller.tabIndex.value < 0 ? const SizedBox.shrink() : screens[controller.tabIndex.value]),
+      body: Obx(() {
+        final tab = controller.tabIndex.value;
+        if (tab < 0) return const SizedBox.shrink();
+        return Stack(children: [
+          Positioned.fill(child: screens[tab]),
+          // Blinkit-style "View cart" pill floating over the browse tabs.
+          if (tab == 0 || tab == 1) const Positioned(left: 0, right: 0, bottom: 12, child: FloatingCartBar()),
+        ]);
+      }),
       bottomNavigationBar: Obx(() {
         final tab = controller.tabIndex.value;
         if (tab < 0) return const SizedBox.shrink();
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (tab == 0 || tab == 1) const FloatingCartBar(),
-            _bottomBar(tab),
-          ],
-        );
+        return _bottomBar(tab);
       }),
     );
   }

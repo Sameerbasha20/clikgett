@@ -1,12 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import navbarClasses from "./navbar.module.css";
 import { useNavigate, NavLink } from "react-router-dom";
-import { menuItems } from "./Config";
+import { menuSections } from "./Config";
 import { HiOutlineLogout } from "react-icons/hi";
 import useStore from "../../Store";
 import Logo from "../../Assets/logo.jpeg";
 function SideNav(props) {
-    const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
     const isactive = props.isactive;
     // eslint-disable-next-line
     const [adminuser, setadminuser] = useState(false);
@@ -14,7 +13,6 @@ function SideNav(props) {
         (state) => state
     );
     const Navigate = useNavigate();
-    const element = useRef();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     useEffect(() => {
@@ -76,43 +74,31 @@ function SideNav(props) {
                     </div>
 
                     <div className={navbarClasses["navlinks"]}>
-                        {menuItems.map((menuData) => {
-                            if (!menuData.multiple) {
-                                return (
+                        {menuSections.map((section) => (
+                            <div key={section.title || "main"}>
+                                {section.title && show && (
+                                    <div className={navbarClasses["section-title"]}>{section.title}</div>
+                                )}
+                                {section.items.map((menuData) => (
                                     <NavLink
-                                        key={menuData.id}
-                                        id={menuData.id}
+                                        key={menuData.menuLink}
                                         to={menuData.menuLink}
-                                        data-tooltip-id={menuData.id}
-                                        data-tooltip-content={menuData.name}
-                                        data-tooltip-position-strategy={
-                                            "fixed"
-                                        }
+                                        title={menuData.name}
                                         className={
                                             isactive === menuData.active
                                                 ? navbarClasses["navActive"]
-                                                : navbarClasses[
-                                                      "navInactive"
-                                                  ]
+                                                : navbarClasses["navInactive"]
                                         }>
-                                        <menuData.icon
-                                            className={
-                                                navbarClasses["nav-icon"]
-                                            }
-                                        />
-                                        {show && (
-                                            <span>{menuData.name}</span>
-                                        )}
+                                        <menuData.icon className={navbarClasses["nav-icon"]} />
+                                        {show && <span>{menuData.name}</span>}
                                     </NavLink>
-                                );
-                            }
-                            return null;
-                        })}
+                                ))}
+                            </div>
+                        ))}
                         <div className={navbarClasses["logout"]}>
-                            <button>
-                                {" "}
+                            <button type="button" onClick={logouthandler}>
                                 <HiOutlineLogout size={22} />
-                                <span onClick={logouthandler}>Logout</span>
+                                {show && <span>Logout</span>}
                             </button>
                         </div>
                     </div>

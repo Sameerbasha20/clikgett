@@ -174,7 +174,7 @@ class PostDeliveryFeedbackDialog extends StatelessWidget {
                 SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    'In-app reviews are eligible for ClikGett wallet cashback!',
+                    'Your first in-app review is eligible for ClikGett wallet cashback!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
