@@ -3,20 +3,18 @@ const mysql = require('mysql');
 require('dotenv').config()
 var moment = require('moment');
 var fs = require('fs')
-const AWS = require('aws-sdk');
 
 const pool = require('../utils/db');
 const s3 = require('../utils/s3');
-// categories_s3="https://dm95er30b2f9h.cloudfront.net/Categories/"
-// Products_s3="https://d3g1psimbpucs1.cloudfront.net/"
-// subcategories_s3 = "https://dm95er30b2f9h.cloudfront.net/SubCategories/"
+// categories_s3="http://clikgett-media.local/Categories/"
+// subcategories_s3 = "http://clikgett-media.local/SubCategories/"
 
 
-const categories_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Categories/"
+const categories_s3 = "http://clikgett-media.local/Categories/"
 
-const Products_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/"
+const Products_s3 = "http://clikgett-media.local/Products/"
 
-const subcategories_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/SubCategories/"
+const subcategories_s3 = "http://clikgett-media.local/SubCategories/"
 
 
 

@@ -97,8 +97,8 @@ async function generateReceiptPdf(orderId, res) {
                         .text('TRANSACTION RECEIPT', 320, 50, { align: 'right', width: 220 });
 
                     const orderDateStr = order.CreatedAt
-                        ? moment(order.CreatedAt).format('DD MMM YYYY, hh:mm A')
-                        : moment().format('DD MMM YYYY, hh:mm A');
+                        ? moment(order.CreatedAt).utcOffset(330).format('DD MMM YYYY, hh:mm A')
+                        : moment().utcOffset(330).format('DD MMM YYYY, hh:mm A');
 
                     doc.fontSize(9)
                         .font('Helvetica')
@@ -131,7 +131,7 @@ async function generateReceiptPdf(orderId, res) {
                     doc.fillColor('#111827').fontSize(10).font('Helvetica-Bold').text('Delivery & Payment Info', 315, cardY + 10);
 
                     const deliveryType = order.ScheduleStatus === 'Scheduled' && order.ScheduledDateTime
-                        ? `Scheduled (${moment(order.ScheduledDateTime).format('DD MMM YYYY')})`
+                        ? `Scheduled (${moment(order.ScheduledDateTime).utcOffset(330).format('DD MMM YYYY')})`
                         : 'Express Delivery (15-30 Mins)';
 
                     const paymentMode = order.PaymentMethod || 'Cash on Delivery';

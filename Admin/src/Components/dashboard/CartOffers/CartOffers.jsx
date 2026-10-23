@@ -7,6 +7,7 @@ import { Services } from "../../../Services";
 import { toast } from "react-toastify";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff } from "react-icons/fa";
+import { dayStartToUtc, dayEndToUtc, toDateInput } from "../../../dateInputs";
 
 function CartOffers() {
     const [offers, setOffers] = useState([]);
@@ -68,8 +69,8 @@ function CartOffers() {
             ThresholdAmount: offer.ThresholdAmount,
             OfferType: offer.OfferType,
             OfferValue: offer.OfferValue,
-            StartDate: offer.StartDate ? offer.StartDate.substring(0, 10) : "",
-            EndDate: offer.EndDate ? offer.EndDate.substring(0, 10) : "",
+            StartDate: toDateInput(offer.StartDate),
+            EndDate: toDateInput(offer.EndDate),
             Status: offer.Status
         });
         setModal(true);
@@ -95,6 +96,8 @@ function CartOffers() {
 
         const payload = JSON.stringify({
             ...formData,
+            StartDate: dayStartToUtc(formData.StartDate),
+            EndDate: dayEndToUtc(formData.EndDate),
             ThresholdAmount: threshold,
             OfferValue: val
         });

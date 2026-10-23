@@ -1,12 +1,21 @@
 package com.deliveryboy_clickget;
 
+import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.deliveryboy_clickget.Utils.BackendDiscovery;
 
 public class ClikGettApp extends Application {
     private static final String TAG = "ClikGettApp";
@@ -17,7 +26,10 @@ public class ClikGettApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        // Last backend address found on the Wi-Fi, also used by services started without the splash screen.
+        BackendDiscovery.loadSaved(this);
         createOrdersChannel();
+        keepScreensClearOfSystemBars();
 
         // Record the last crash for support, then let Android handle it as usual
         // (swallowing it would leave the app frozen in a broken state).
@@ -32,6 +44,36 @@ public class ClikGettApp extends Application {
             } catch (Exception ignored) {
             }
             if (previous != null) previous.uncaughtException(thread, throwable);
+        });
+    }
+
+    /**
+     * Android 16 ignores windowOptOutEdgeToEdgeEnforcement for apps targeting API 36, so
+     * every screen would draw under the status/navigation bars and keyboard. Padding each
+     * screen's content by those insets keeps the existing layouts as they were.
+     */
+    private void keepScreensClearOfSystemBars() {
+        if (Build.VERSION.SDK_INT < 35) return;
+        registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityStarted(Activity activity) {
+                View content = activity.findViewById(android.R.id.content);
+                if (content == null) return;
+                ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
+                    Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                    Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+                    v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+                    return WindowInsetsCompat.CONSUMED;
+                });
+                ViewCompat.requestApplyInsets(content);
+            }
+
+            @Override public void onActivityCreated(Activity activity, Bundle savedInstanceState) { }
+            @Override public void onActivityResumed(Activity activity) { }
+            @Override public void onActivityPaused(Activity activity) { }
+            @Override public void onActivityStopped(Activity activity) { }
+            @Override public void onActivitySaveInstanceState(Activity activity, Bundle outState) { }
+            @Override public void onActivityDestroyed(Activity activity) { }
         });
     }
 

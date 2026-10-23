@@ -480,7 +480,10 @@ const PricingEngine = {
             if (promoRows && promoRows.length > 0) {
                 const promo = promoRows[0];
                 const minOrder = parseFloat(promo.MinOrderValue || 0);
-                if (couponEligibleSubTotal >= minOrder) {
+                if (couponEligibleSubTotal <= 0) {
+                    // Every item is excluded from coupons (no_coupon restriction).
+                    couponMessage = `Promo code ${cleanCode} can't be used on the items in your cart`;
+                } else if (couponEligibleSubTotal >= minOrder) {
                     if (promo.Type == 2) {
                         couponDiscount = parseFloat(promo.OfferValue || promo.MaxDiscount || 0);
                     } else {
@@ -490,6 +493,8 @@ const PricingEngine = {
                     if (maxDisc > 0 && couponDiscount > maxDisc) {
                         couponDiscount = maxDisc;
                     }
+                    // A flat coupon can't take off more than the items it applies to.
+                    couponDiscount = Math.min(couponDiscount, couponEligibleSubTotal);
                     couponMessage = `Promo code ${cleanCode} applied successfully`;
                 } else {
                     couponMessage = `Eligible item total (₹${couponEligibleSubTotal.toFixed(2)}) is below min requirement of ₹${minOrder}`;

@@ -3,7 +3,6 @@ const mysql=require('mysql');
 require('dotenv').config()
 var moment = require('moment'); 
 var fs = require('fs')
-const AWS = require('aws-sdk');
 const csv = require('csvtojson');
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
 const CommonController = require("../controllers/CommonController");
@@ -11,7 +10,7 @@ const CommonController = require("../controllers/CommonController");
 const pool = require('../utils/db');
 
 const s3 = require('../utils/s3');
-const Products_s3="https://d3c9kvg5gaqz48.cloudfront.net/Products/"
+const Products_s3="http://clikgett-media.local/Products/"
 
 const adminproductcontroller={
 

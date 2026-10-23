@@ -448,7 +448,7 @@ class CategoryController extends GetxController {
     _selectedExpire(productVariant.ExpiryDate);
 
     _ammount(productVariant.price);
-    _offerammount(productVariant.offerPrice);
+    _offerammount(productVariant.sellingPrice);
     _varientID(productVariant.variantId);
     _availableQty(productVariant.availableQty);
     _maxavailableQty(productVariant.maxQty);

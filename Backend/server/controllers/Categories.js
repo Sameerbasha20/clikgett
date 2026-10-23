@@ -3,13 +3,12 @@ const mysql = require('mysql');
 require('dotenv').config()
 var moment = require('moment');
 var fs = require('fs')
-const AWS = require('aws-sdk');
 const CommonController = require("../controllers/CommonController");
 
 const pool = require('../utils/db');
 
-const category_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Categories/"
-const Products_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/"
+const category_s3 = "http://clikgett-media.local/Categories/"
+const Products_s3 = "http://clikgett-media.local/Products/"
 
 const s3 = require('../utils/s3');
 const categoriescontroller = {
@@ -367,7 +366,7 @@ function subcategoriesbycategories(CategoryID) {
                 }
                 for (const sub of results) {
                     if (sub.SubCategoryImage && sub.SubCategoryImage !== 'NA' && !String(sub.SubCategoryImage).startsWith('http')) {
-                        sub.SubCategoryImage = "https://d3c9kvg5gaqz48.cloudfront.net/SubCategories/" + sub.SubCategoryImage;
+                        sub.SubCategoryImage = "http://clikgett-media.local/SubCategories/" + sub.SubCategoryImage;
                     }
                 }
                 resolve(results);

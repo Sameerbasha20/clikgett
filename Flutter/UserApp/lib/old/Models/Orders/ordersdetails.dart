@@ -3,6 +3,7 @@
 //     final ordersdetailsmodel = ordersdetailsmodelFromJson(jsonString);
 
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 /// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
 double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
@@ -175,18 +176,18 @@ class Orders {
         cancellationReason: json["CancellationReason"],
         deliveredDatetime: json["Delivered_datetime"] == null
             ? null
-            : DateTime.parse(json["Delivered_datetime"]),
+            : serverDate(json["Delivered_datetime"])!,
         estimateDateTime: json["EstimateDateTime"] == null
             ? null
-            : DateTime.parse(json["EstimateDateTime"]),
+            : serverDate(json["EstimateDateTime"])!,
         deliveryBoyId: json["DeliveryBoyID"],
         isAssigned: json["IsAssigned"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
         deliveryInstructions: json["DeliveryInstructions"] == null
             ? []
             : List<dynamic>.from(json["DeliveryInstructions"]!.map((x) => x)),
@@ -197,11 +198,11 @@ class Orders {
         userName: json["UserName"],
         deliveredCancelleddatetime: json["Delivered_Cancelled_datetime"] == null
             ? null
-            : DateTime.parse(json["Delivered_Cancelled_datetime"]),
+            : serverDate(json["Delivered_Cancelled_datetime"])!,
         scheduleStatus: json["ScheduleStatus"],
         scheduledDateTime: json["ScheduledDateTime"] == null
             ? null
-            : DateTime.tryParse(json["ScheduledDateTime"].toString()),
+            : serverDate(json["ScheduledDateTime"]),
         totalItemQuantity: json["TotalItemQuantity"] != null ? int.tryParse(json["TotalItemQuantity"].toString()) : null,
         orderSizeBufferMinutes: json["OrderSizeBufferMinutes"] != null ? int.tryParse(json["OrderSizeBufferMinutes"].toString()) : null,
         totalDelayMinutes: json["TotalDelayMinutes"] != null ? int.tryParse(json["TotalDelayMinutes"].toString()) : 0,
@@ -211,7 +212,7 @@ class Orders {
         latestDelayReasonText: (json["LatestDelayReasonText"] ?? json["latestDelayReasonText"])?.toString(),
         delayUpdatedAt: (json["DelayUpdatedAt"] ?? json["delayUpdatedAt"]) == null
             ? null
-            : DateTime.tryParse((json["DelayUpdatedAt"] ?? json["delayUpdatedAt"]).toString()),
+            : serverDate(json["DelayUpdatedAt"] ?? json["delayUpdatedAt"]),
         removedItems: (json["RemovedItems"] ?? json["removedItems"]) == null
             ? []
             : List<RemovedOrderItem>.from(
@@ -332,10 +333,10 @@ class Orderitem {
             : List<dynamic>.from(json["KitItems"]!.map((x) => x)),
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
       );
 
   Map<String, dynamic> toJson() => {
@@ -386,7 +387,7 @@ class RemovedOrderItem {
         reason: json["Reason"]?.toString(),
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.tryParse(json["CreatedAt"].toString()),
+            : serverDate(json["CreatedAt"]),
       );
 
   Map<String, dynamic> toJson() => {

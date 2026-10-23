@@ -37,6 +37,7 @@ import 'dart:convert';
 //     final notificationsModel = notificationsModelFromJson(jsonString);
 
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 NotificationsModel notificationsModelFromJson(String str) =>
     NotificationsModel.fromJson(json.decode(str));
@@ -109,10 +110,10 @@ class Notification {
         isRead: json["IsRead"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
         imageUrl: json["ImageUrl"],
       );
 
@@ -158,8 +159,8 @@ class Notification {
 //         type: json["Type"],
 //         message: json["Message"],
 //         status: json["Status"],
-//         createdAt: DateTime.parse(json["CreatedAt"]),
-//         updatedAt: DateTime.parse(json["UpdatedAt"]),
+//         createdAt: serverDate(json["CreatedAt"])!,
+//         updatedAt: serverDate(json["UpdatedAt"])!,
 //       );
 
 //   Map<String, dynamic> toJson() => {

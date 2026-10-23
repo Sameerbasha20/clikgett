@@ -205,8 +205,8 @@ const SalesController = {
             Description || '',
             DiscountType,
             parseFloat(DiscountValue),
-            moment(StartDate).format('YYYY-MM-DD HH:mm:ss'),
-            moment(EndDate).format('YYYY-MM-DD HH:mm:ss'),
+            moment.utc(StartDate).format('YYYY-MM-DD HH:mm:ss'),
+            moment.utc(EndDate).format('YYYY-MM-DD HH:mm:ss'),
             Status !== undefined ? Status : 1
         ];
 
@@ -256,8 +256,8 @@ const SalesController = {
             Description !== undefined ? Description : null,
             DiscountType || null,
             DiscountValue !== undefined ? parseFloat(DiscountValue) : null,
-            StartDate ? moment(StartDate).format('YYYY-MM-DD HH:mm:ss') : null,
-            EndDate ? moment(EndDate).format('YYYY-MM-DD HH:mm:ss') : null,
+            StartDate ? moment.utc(StartDate).format('YYYY-MM-DD HH:mm:ss') : null,
+            EndDate ? moment.utc(EndDate).format('YYYY-MM-DD HH:mm:ss') : null,
             Status !== undefined ? Status : null,
             SaleID
         ];

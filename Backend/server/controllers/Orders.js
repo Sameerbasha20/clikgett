@@ -9,14 +9,13 @@ const CommonController = require("../controllers/CommonController");
 const PDFDocument = require('pdfkit');
 var fs = require('fs')
 
-const AWS = require('aws-sdk');
 const s3 = require('../utils/s3');
 const pool = require('../utils/db');
 const OrderLifecycle = require('../services/OrderLifecycle');
 const CheckoutBill = require('../services/CheckoutBill');
 const DeliveryTime = require('../services/DeliveryTime');
 const StoreHours = require('../services/StoreHours');
-const PRODUCTS_S3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/";
+const PRODUCTS_S3 = "http://clikgett-media.local/Products/";
 const { ORDER_STATUS, STATUS_LABELS, FINAL_STATUSES } = require('../utils/orderStatus');
 
 
@@ -1329,7 +1328,7 @@ async function createinvoice(orderresult, orderitems) {
                 //     orderid: orderresult['orderid']                                
                 // }
                 // fndupdchanges = {
-                //     $set: {invoicefile: 'https://heyman-new.s3.amazonaws.com/orderinvoice/'+filename}
+                //     $set: {invoicefile: 'http://clikgett-media.local/orderinvoice/'+filename}
                 // };
                 // console.log(queryx,fndupdchanges)
                 // orderupdate = await orders.updateOne(queryx, fndupdchanges)

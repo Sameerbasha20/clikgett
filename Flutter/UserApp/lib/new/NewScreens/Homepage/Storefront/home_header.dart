@@ -4,12 +4,10 @@ import 'package:fav_app/new/Controllers/adress_controller.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
 import 'package:fav_app/new/Controllers/wallet.dart';
-import 'package:fav_app/new/NewScreens/Account/Profile.dart';
 import 'package:fav_app/new/NewScreens/Address/ManageAddress.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/CouponAndOffers/wallet.dart';
 import 'package:fav_app/new/NewScreens/Homepage/SearchScreen.dart';
-import 'package:fav_app/new/NewScreens/PhotoOrders/PhotoOrderUploadScreen.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -100,16 +98,7 @@ class StorefrontHeader extends StatelessWidget {
                       )),
                 ),
               ],
-              const SizedBox(width: 8),
-              _HeaderChip(
-                circular: true,
-                onTap: () async {
-                  if (await _requireLogin(context, 'view your profile')) {
-                    if (context.mounted) Navigator.of(context).push(MaterialPageRoute(builder: (_) => Profile()));
-                  }
-                },
-                child: const Icon(Icons.person_outline_rounded, size: 20, color: white),
-              ),
+              // Profile is in the bottom navigation bar.
             ],
           ),
         ),
@@ -296,16 +285,7 @@ class StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                   ),
                 ),
               ),
-              Container(width: 1, height: 26, color: cardBorder),
-              IconButton(
-                tooltip: 'Order with a photo of your list',
-                onPressed: () async {
-                  if (await _requireLogin(context, 'order with a photo')) {
-                    Get.to(() => const PhotoOrderUploadScreen());
-                  }
-                },
-                icon: const Icon(Icons.photo_camera_outlined, color: primaryDark, size: 22),
-              ),
+              // Photo orders: "Order with a photo" card below the search bar.
             ],
           ),
         ),

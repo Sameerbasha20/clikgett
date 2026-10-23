@@ -516,6 +516,19 @@ function Products() {
 
                                         {dateformatter(orders.CreatedAt)}
                                     </div>
+                                    {orders.ScheduleStatus === "Scheduled" && orders.ScheduledDateTime && (
+                                        <div
+                                            className={
+                                                dashboardclasses[
+                                                    "order-header-item"
+                                                ]
+                                            }>
+                                            <h5>SCHEDULED FOR</h5>
+                                            <p style={{ color: "#5b21b6", fontWeight: 700 }}>
+                                                📅 {new Date(orders.ScheduledDateTime).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", year: "numeric" })}
+                                            </p>
+                                        </div>
+                                    )}
                                 </header>
                                 {(orders.OrderStatus == 4 || orders.OrderStatus == 3) && (
                                     <div className="alert alert-danger mx-3 my-2 p-3 shadow-sm" style={{ borderRadius: "8px", borderLeft: "5px solid #dc2626" }}>

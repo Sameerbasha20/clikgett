@@ -5,6 +5,7 @@
 import 'dart:convert';
 
 import 'product_details_model.dart';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 YouMayLikeModel youMayLikeModelFromJson(String str) =>
     YouMayLikeModel.fromJson(json.decode(str));
@@ -76,10 +77,10 @@ class Product {
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
         productVariants: json["ProductVariants"] == null
             ? []
             : List<ProductVariant>.from(json["ProductVariants"]!

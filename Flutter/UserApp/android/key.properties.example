@@ -1,5 +1,5 @@
-# Copy to android/key.properties (git-ignored) and fill in. Keep the keystore
-# itself outside the repository, e.g. storeFile=C:/secure/clikgett-upload.jks
+# Copy to UserApp/android/key.properties (git-ignored) and fill in. The existing keystore is
+# UserApp/productionKeys/clikgett-keystore.jks; it must be the upload key registered in Play Console.
 storePassword=
 keyPassword=
 keyAlias=

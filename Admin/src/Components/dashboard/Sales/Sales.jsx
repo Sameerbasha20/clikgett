@@ -95,8 +95,9 @@ function Sales() {
             Description: description,
             DiscountType: discountType,
             DiscountValue: parseFloat(discountValue),
-            StartDate: startDate,
-            EndDate: endDate,
+            // The picker shows IST; send the exact instant (UTC) so the server stores it correctly.
+            StartDate: startDate ? new Date(startDate).toISOString() : startDate,
+            EndDate: endDate ? new Date(endDate).toISOString() : endDate,
             ProductIDs: selectedProductIds,
             Status: 1
         };

@@ -1,11 +1,11 @@
 const express = require('express');
 const mysql = require('mysql');
-const AWS = require('aws-sdk');
 require('dotenv').config()
 var fs = require('fs')
 var moment = require('moment');
 // const accesstoken=require("../controllers/utils")
 const CommonController = require("../controllers/CommonController");
+const LoginOtp = require('../services/LoginOtp');
 
 
 const pool = require('../utils/db');
@@ -22,7 +22,7 @@ const riderOrder = (orderId, riderId) => new Promise((resolve, reject) => {
 const verifiedDeliveries = new Map();
 const s3 = require('../utils/s3');
 
-deliveryboy_s3 = "https://clikgett.s3.ap-south-1.amazonaws.com/deliveryboys/"
+deliveryboy_s3 = "http://clikgett-media.local/deliveryboys/"
 
 const deliveryboycontroller = {
 
@@ -68,9 +68,6 @@ const deliveryboycontroller = {
         try {
             // const keys = Object.keys(req.body);
             var userData = await getuserbymobilenum(req.body.MobileNumber)
-            console.log(JSON.stringify(userData), 'deliverboy data send otp')
-            var OTP = Math.floor((Math.random() * 8999) + 1000)
-            // OTP = 1234
             if (userData.length === 1) {
                 if (userData[0]['Status'] == 0) {
                     return resp.status(200).json({ "Status": 0, "Message": "Your account has been deleted. Please reach out to the administrator" });
@@ -78,13 +75,7 @@ const deliveryboycontroller = {
                 if (userData[0]['Status'] == 2) {
                     return resp.status(200).json({ "Status": 0, "Message": "Your account has been deactivated. Please reach out to the administrator" });
                 }
-                if (req.body.MobileNumber != '9999999999') {
-                    await CommonController.sendSms(req.body.MobileNumber, OTP)
-                    pool.query("update AdminUsers set OTP=? where MobileNumber=?", [OTP, req.body.MobileNumber], function (err, results) {
-                        if (err) { return resp.status(400).json({ "Status": 0, "Message": "error in updating otp" }) }
-                    })
-                }
-                return resp.status(200).json({ "Status": 1, "Message": "OTP sent successfully" });
+                return resp.status(200).json(await LoginOtp.send('rider', req.body.MobileNumber));
             }
 
             else {
@@ -106,8 +97,11 @@ const deliveryboycontroller = {
             if (emaildata == 0) {
                 return resp.status(200).json({ "Status": 0, "Message": "Email doesnot exists" });
             }
+            const check = await LoginOtp.verify('rider', req.body.MobileNumber, req.body.OTP);
+            if (!check.ok) {
+                return resp.status(200).json({ "Status": 0, "Message": check.message });
+            }
             var userData = await Verifylogin(req.body)
-            console.log(`userData : ${JSON.stringify(userData)}`)
             if (typeof (userData) === 'object') {
                 if (userData['Status'] == 0) {
                     return resp.status(200).json({ "Status": 0, "Message": "Your account has been deleted. Please reach out to the administrator" });
@@ -219,9 +213,10 @@ const deliveryboycontroller = {
                     COALESCE(SUM(DeliveryPoints), 0) AS Points
                  FROM Orders WHERE DeliveryBoyID = ? AND OrderStatus = 1 AND Delivered_Cancelled_datetime >= ?`;
             const run = (since) => new Promise((res, rej) => pool.query(sql, [req.AdminID, since], (e, r) => (e ? rej(e) : res(r[0]))));
-            const ist = moment().utcOffset(330); // delivery times are stored in IST
-            const today = ist.clone().startOf('day').format('YYYY-MM-DD HH:mm:ss');
-            const week = ist.clone().startOf('isoWeek').format('YYYY-MM-DD HH:mm:ss');
+            // Today/this week by the IST calendar; delivery times are stored in UTC.
+            const ist = moment().utcOffset(330);
+            const today = ist.clone().startOf('day').utc().format('YYYY-MM-DD HH:mm:ss');
+            const week = ist.clone().startOf('isoWeek').utc().format('YYYY-MM-DD HH:mm:ss');
             const [t, w, all] = await Promise.all([run(today), run(week), run('1970-01-01')]);
             const shape = (r) => ({
                 Delivered: Number(r.Delivered) || 0,
@@ -378,10 +373,12 @@ const deliveryboycontroller = {
                 }
 
                 delete myorder.OTP; // the rider must get the OTP from the customer
-                myorder.CreatedAt = moment(myorder.CreatedAt).add(5, 'hours').add(30, 'minutes').format('DD-MM-YYYY hh:mm:ss A');
-                myorder.Delivered_Cancelled_datetime = moment(myorder.Delivered_Cancelled_datetime).format('DD-MM-YYYY hh:mm:ss A');
-                myorder.deliveredDateTime = moment(myorder.deliveredDateTime).format('DD-MM-YYYY hh:mm:ss A');
-                myorder.OrderArrivedDateTime = moment(myorder.OrderArrivedDateTime).format('DD-MM-YYYY hh:mm:ss A');
+                // Shown as-is by the rider app, so formatted in IST.
+                const ist = (v) => (v ? moment(v).utcOffset(330).format('DD-MM-YYYY hh:mm:ss A') : null);
+                myorder.CreatedAt = ist(myorder.CreatedAt);
+                myorder.Delivered_Cancelled_datetime = ist(myorder.Delivered_Cancelled_datetime);
+                myorder.deliveredDateTime = ist(myorder.deliveredDateTime);
+                myorder.OrderArrivedDateTime = ist(myorder.OrderArrivedDateTime);
                 console.log('here')
                 resp.json({ "Status": 1, "Orders": myorder })
             }
@@ -545,13 +542,14 @@ function Verifyemail(inputs) {
     });
 }
 
+// Loads the rider once LoginOtp.verify has accepted their code.
 function Verifylogin(inputs) {
     return new Promise(function (resolve, reject) {
-        if (!inputs || !inputs.MobileNumber || inputs.OTP === undefined || inputs.OTP === null || inputs.OTP === '') {
+        if (!inputs || !inputs.MobileNumber) {
             return resolve(2);
         }
-        var myQuery = "select * from AdminUsers where Status=1 and Role=2 and MobileNumber = ? and OTP = ?";
-        pool.query(myQuery, [String(inputs.MobileNumber), String(inputs.OTP)], function (err, results) {
+        var myQuery = "select * from AdminUsers where Status=1 and Role=2 and MobileNumber = ?";
+        pool.query(myQuery, [String(inputs.MobileNumber).trim()], function (err, results) {
             if (err) {
                 console.log("error checking verify MobileNumber table: ", err);
                 return reject(0)
@@ -559,7 +557,7 @@ function Verifylogin(inputs) {
 
             if (results.length > 0) {
                 var data = {
-                    "Status": results[0]['Status'], "AdminID": results[0]['AdminID'], "FirstName": results[0]['FirstName'], "LastName": results[0]['LastName'], "ProfilePic": "https://d3c9kvg5gaqz48.cloudfront.net/deliveryboys/" + results[0]['ProfilePic'], "Role": results[0]['Role']
+                    "Status": results[0]['Status'], "AdminID": results[0]['AdminID'], "FirstName": results[0]['FirstName'], "LastName": results[0]['LastName'], "ProfilePic": "http://clikgett-media.local/deliveryboys/" + results[0]['ProfilePic'], "Role": results[0]['Role']
                 }
                 resolve(data)
             }
@@ -662,7 +660,7 @@ function getorderbyorderid(OrderID) {
 
 
 function getorderitems(OrderID) {
-    Products_s3 = "https://clikgett.s3.amazonaws.com/Products/"
+    Products_s3 = "http://clikgett-media.local/Products/"
     var queryString = `
         SELECT oi.*, p.ProductImages
         FROM OrderItems oi

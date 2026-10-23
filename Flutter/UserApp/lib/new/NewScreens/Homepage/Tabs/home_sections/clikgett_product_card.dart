@@ -56,7 +56,20 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     return widget.product.deal != null && sale != null && sale < _regularPrice ? sale : null;
   }
 
-  double get _sellingPrice => _dealPrice ?? _regularPrice;
+  double get _sellingPrice => homeModel.sellingPriceOf(widget.product, selectedVariant);
+
+  /// The signed-in member's price when it is what the cart charges.
+  double? get _memberPrice {
+    final m = selectedVariant?.memberPrice;
+    return m != null && m > 0 && m < _regularPrice && m <= _sellingPrice ? m : null;
+  }
+
+  /// "₹80 with Gold Membership" for customers who aren't members (or on another plan).
+  String? get _memberHint {
+    final offer = widget.product.memberOffer;
+    if (offer == null || _memberPrice != null || offer.price <= 0 || offer.price >= _sellingPrice) return null;
+    return '₹${offer.price.toStringAsFixed(0)} with ${offer.planName}';
+  }
 
   /// Best bulk offer for the selected pack, e.g. "Buy 2 for ₹356" or "Buy 5+ @ ₹40 each".
   String? get _bulkHint {
@@ -182,8 +195,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
               ...variants.map((v) {
                 final selected = v.variantId == selectedVariant?.variantId;
                 final out = (v.availableQty ?? 0) <= 0;
-                final regular = v.offerPrice ?? v.price ?? 0;
-                final sell = widget.product.deal != null && v.salePrice != null && v.salePrice! < regular ? v.salePrice! : regular;
+                final sell = homeModel.sellingPriceOf(widget.product, v);
                 final mrp = v.price ?? sell;
                 return InkWell(
                   onTap: out
@@ -236,8 +248,9 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     final images = product.productImages;
     final imageUrl = (images.isNotEmpty ? images.first : product.imageUrl) ?? '';
     final hasVariants = (product.productVariants?.length ?? 0) > 1;
-    final dealPrice = _isOutOfStock ? null : _dealPrice;
-    final bulkHint = _isOutOfStock || dealPrice != null ? null : _bulkHint;
+    final memberPrice = _isOutOfStock ? null : _memberPrice;
+    final dealPrice = _isOutOfStock || memberPrice != null ? null : _dealPrice;
+    final bulkHint = _isOutOfStock || dealPrice != null || memberPrice != null ? null : (_bulkHint ?? _memberHint);
 
     return Container(
       width: widget.width,
@@ -341,7 +354,9 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                     ),
                     SizedBox(
                       height: 16,
-                      child: dealPrice != null
+                      child: memberPrice != null
+                          ? const _MemberChip()
+                          : dealPrice != null
                           ? _DealChip(price: dealPrice, ends: _dealEnds)
                           : bulkHint != null
                               ? Text(bulkHint,
@@ -472,6 +487,31 @@ class _CartButton extends StatelessWidget {
 
 
 /// Blinkit-style flash deal tag: "⚡ ₹19 · till 12 AM".
+/// Shown when the member's own price is what the cart charges.
+class _MemberChip extends StatelessWidget {
+  const _MemberChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFFB45309), Color(0xFFF59E0B)]),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.workspace_premium_rounded, size: 11, color: Colors.white),
+          const SizedBox(width: 2),
+          Text('Member price',
+              style: GoogleFonts.poppins(fontSize: 9.5, height: 1.6, fontWeight: FontWeight.w700, color: Colors.white)),
+        ]),
+      ),
+    );
+  }
+}
+
 class _DealChip extends StatelessWidget {
   final double price;
   final String ends;

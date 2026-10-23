@@ -3,6 +3,7 @@
 //     final subCategoriesModel = subCategoriesModelFromJson(jsonString);
 
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 SubCategoriesModel subCategoriesModelFromJson(String str) =>
     SubCategoriesModel.fromJson(json.decode(str));
@@ -60,10 +61,10 @@ class SubCategory {
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
       );
 
   Map<String, dynamic> toJson() => {

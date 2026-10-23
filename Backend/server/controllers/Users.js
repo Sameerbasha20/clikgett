@@ -2,9 +2,9 @@
 const mysql = require('mysql');
 require('dotenv').config()
 var fs = require('fs')
-const AWS = require('aws-sdk');
 const crypto = require('crypto');
 const CommonController = require("../controllers/CommonController");
+const LoginOtp = require('../services/LoginOtp');
 const logger = require('../utils/logger');
 Razorpay = require('razorpay')
 
@@ -24,15 +24,15 @@ const s3 = require('../utils/s3');
 
 
 
-const banner_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Banners/"
+const banner_s3 = "http://clikgett-media.local/Banners/"
 
-const users_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Users/"
+const users_s3 = "http://clikgett-media.local/Users/"
 
-const category_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Categories/"
+const category_s3 = "http://clikgett-media.local/Categories/"
 
-const Products_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/"
+const Products_s3 = "http://clikgett-media.local/Products/"
 
-const subcategories_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/SubCategories/"
+const subcategories_s3 = "http://clikgett-media.local/SubCategories/"
 
 
 
@@ -321,28 +321,17 @@ const usercontroller = {
             // const keys = Object.keys(req.body);
             var userData = await getuserbymobilenum(req.body.MobileNumber)
 
-            console.log(req.body, 'signup userData____________________')
-            var OTP = Math.floor((Math.random() * 8999) + 1000)
-            //OTP = 1234
             if (userData.length === 1) {
 
                 if (userData[0]['SignupCompleted'] == 1) {
                     return resp.status(200).json({ "Status": 0, "Message": "User already exists please login" });
                 }
-                if (req.body.MobileNumber != '9999999999') {
-
-                    await CommonController.sendSms(req.body.MobileNumber, OTP)
-                    pool.query("update Users set OTP=? where MobileNumber=?", [OTP, req.body.MobileNumber], function (err, results) {
-                        if (err) { return resp.status(400).json({ "Status": 0, "Message": "error in updating otp" }) }
-                    })
-                }
-                return resp.status(200).json({ "Status": 1, "Message": "OTP sent successfully" });
+                return resp.status(200).json(await LoginOtp.send('customer', req.body.MobileNumber));
             }
 
             else if (userData.length == 0) {
 
-                req.body.OTP = OTP
-                await CommonController.sendSms(req.body.MobileNumber, OTP)
+                req.body.OTP = null
                 while (true) {
                     UserID = Math.floor((Math.random() * 1999999) + 1000000);
                     result = await checkUserID(UserID)
@@ -361,7 +350,7 @@ const usercontroller = {
 
                 logger.info(userDetails)
                 if (typeof (userDetails) == 'object') {
-                    return resp.status(200).json({ "Status": 1, "Message": "OTP sent successfully" });
+                    return resp.status(200).json(await LoginOtp.send('customer', req.body.MobileNumber));
                 }
                 else {
                     return resp.status(400).json({ "Status": 0, "Message": "Login failed" });
@@ -479,6 +468,10 @@ const usercontroller = {
         try {
             let Body = req.body || {};
 
+            const check = await LoginOtp.verify('customer', Body.MobileNumber, Body.OTP);
+            if (!check.ok) {
+                return resp.status(400).json({ "Status": 0, "Message": check.message });
+            }
             var userData = await VerifyloginOTP(Body);
 
             if (typeof (userData) === 'object') {
@@ -512,19 +505,8 @@ const usercontroller = {
             // const keys = Object.keys(req.body);
             var userData = await getuserbymobilenum(req.body.MobileNumber)
 
-            console.log(req.body, 'signup userData____________________')
-            var OTP = Math.floor((Math.random() * 8999) + 1000)
-            //OTP = 1234
             if (userData.length === 1) {
-
-                if (req.body.MobileNumber != '9999999999') {
-
-                    await CommonController.sendSms(req.body.MobileNumber, OTP)
-                    pool.query("update Users set OTP=? where MobileNumber=?", [OTP, req.body.MobileNumber], function (err, results) {
-                        if (err) { return resp.status(400).json({ "Status": 0, "Message": "error in updating otp" }) }
-                    })
-                }
-                return resp.status(200).json({ "Status": 1, "Message": "OTP sent successfully" });
+                return resp.status(200).json(await LoginOtp.send('customer', req.body.MobileNumber));
             }
             else {
                 return resp.status(200).json({ "Status": 0, "Message": "User doesnot exists please register" });
@@ -994,7 +976,7 @@ const usercontroller = {
 
     notifications: async (req, resp, next) => {
         try {
-            query = "SELECT NotificationID,UserID,Title,Status,Type,Message,CONVERT_TZ(CreatedAt, '+00:00', '+05:30') AS CreatedAt,\
+            query = "SELECT NotificationID,UserID,Title,Status,Type,Message,CreatedAt,\
             UpdatedAt,IsRead FROM UserNotifications where UserID="+ req.UserID + " order by CreatedAt desc"
             let results = await CommonController.commonget(query);
 
@@ -1125,13 +1107,14 @@ function getproductvariants(ProductID) {
     }
 }
 
+// Loads the customer once LoginOtp.verify has accepted their code.
 function VerifyloginOTP(inputs) {
     return new Promise(function (resolve, reject) {
-        if (!inputs || inputs.OTP === undefined || inputs.OTP === null || !inputs.MobileNumber) {
+        if (!inputs || !inputs.MobileNumber) {
             return resolve(2);
         }
-        var myQuery = "select * from Users where Status=1 and OTP = ? and MobileNumber = ?";
-        pool.query(myQuery, [String(inputs.OTP), String(inputs.MobileNumber)], function (err, results) {
+        var myQuery = "select * from Users where Status=1 and MobileNumber = ?";
+        pool.query(myQuery, [String(inputs.MobileNumber).trim()], function (err, results) {
             if (err) {
                 logger.info("error checking verify MobileNumber table: ", err);
                 return reject(0)
@@ -1709,7 +1692,7 @@ function createinvoice(orderresult, orderitems, shopaddress) {
                     orderid: orderresult['orderid']
                 }
                 fndupdchanges = {
-                    $set: { invoicefile: 'https://heyman-new.s3.amazonaws.com/orderinvoice/' + filename }
+                    $set: { invoicefile: 'http://clikgett-media.local/orderinvoice/' + filename }
                 };
                 console.log(queryx, fndupdchanges)
                 orderupdate = await orders.updateOne(queryx, fndupdchanges)

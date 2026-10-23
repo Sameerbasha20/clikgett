@@ -3,6 +3,7 @@
 //     final productDetailsModel = productDetailsModelFromJson(jsonString);
 
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 /// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
 double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
@@ -76,10 +77,10 @@ class Products {
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
         productImages: List<String>.from(json['ProductImages']),
         productVariants: json["ProductVariants"] == null
             ? []
@@ -115,9 +116,22 @@ class ProductVariant {
   int? maxQty;
   double? price;
   double? offerPrice;
+  /// Flash-sale price (only sent while a sale runs and it's lower than offerPrice).
+  double? salePrice;
+  /// The signed-in member's price (only sent when it's lower than offerPrice).
+  double? memberPrice;
   int? status;
   DateTime? createdAt;
   DateTime? updatedAt;
+
+  /// Unit price the cart charges: the lowest of offer, sale and member price.
+  double get sellingPrice {
+    double best = offerPrice ?? price ?? 0;
+    for (final p in [salePrice, memberPrice]) {
+      if (p != null && p > 0 && p < best) best = p;
+    }
+    return best;
+  }
 
   ProductVariant({
     this.variantId,
@@ -129,6 +143,8 @@ class ProductVariant {
     this.maxQty,
     this.price,
     this.offerPrice,
+    this.salePrice,
+    this.memberPrice,
     this.status,
     this.createdAt,
     this.updatedAt,
@@ -145,13 +161,15 @@ class ProductVariant {
         price: _toDouble(json["Price"]) ?? 0.0, // Ensure price is never null
         offerPrice:
             _toDouble(json["OfferPrice"]) ?? 0.0, // Handle null offerPrice
+        salePrice: _toDouble(json["SalePrice"]),
+        memberPrice: _toDouble(json["MemberPrice"]),
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
       );
 
   Map<String, dynamic> toJson() => {

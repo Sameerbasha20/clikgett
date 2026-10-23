@@ -10,14 +10,13 @@ const RetentionEngine = require('../services/RetentionEngine');
 const CheckoutBill = require('../services/CheckoutBill');
 
 const pool = require('../utils/db');
-// products_s3="https://d3g1psimbpucs1.cloudfront.net/"
 
 
-const categories_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Categories/"
+const categories_s3 = "http://clikgett-media.local/Categories/"
 
-const Products_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/"
+const Products_s3 = "http://clikgett-media.local/Products/"
 
-const subcategories_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/SubCategories/"
+const subcategories_s3 = "http://clikgett-media.local/SubCategories/"
 
 
 

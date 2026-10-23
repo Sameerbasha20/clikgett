@@ -13,6 +13,7 @@ import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.deliveryboy_clickget.Utils.BackendDiscovery;
 import com.deliveryboy_clickget.Utils.CommonUtilities;
 
 public class SplashActivity extends AppCompatActivity {
@@ -40,20 +41,23 @@ public class SplashActivity extends AppCompatActivity {
         // Start the logo animation
         middle_icon.startAnimation(logoAnim);
 
-        // Delayed action after the animation (5 seconds in this case)
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (!sharedPreferences.getBoolean(CommonUtilities.USER_LOGIN_STATUS, false)) {
-                    Intent loginIntent = new Intent(getApplicationContext(), SentotpActivity.class);
-                    startActivity(loginIntent);
-                    finish();
-                } else {
-                    Intent loginIntent = new Intent(getApplicationContext(), MainActivity.class);
-                    startActivity(loginIntent);
-                    finish();
-                }
-            }
-        }, 5000);  // 5 seconds delay (animation duration included)
+        // Leave after the animation (5 seconds) and once the backend has been found on the Wi-Fi.
+        BackendDiscovery.ensureBackend(this, this::onSplashStepDone);
+        new Handler().postDelayed(this::onSplashStepDone, 5000);
+    }
+
+    private int splashStepsDone = 0;
+
+    private void onSplashStepDone() {
+        if (++splashStepsDone < 2 || isFinishing()) return;
+        if (!sharedPreferences.getBoolean(CommonUtilities.USER_LOGIN_STATUS, false)) {
+            Intent loginIntent = new Intent(getApplicationContext(), SentotpActivity.class);
+            startActivity(loginIntent);
+            finish();
+        } else {
+            Intent loginIntent = new Intent(getApplicationContext(), MainActivity.class);
+            startActivity(loginIntent);
+            finish();
+        }
     }
 }

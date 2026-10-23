@@ -4,25 +4,26 @@ const axios = require('axios')
 const fs = require('fs')
 const path = require("path")
 require('dotenv').config()
-const AWS = require('aws-sdk');
 require('dotenv').config()
 const createCsvWriter = require("csv-writer")
 var moment = require('moment');
 
 const pool = require('../utils/db');
 
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getMessaging } = require('firebase-admin/messaging');
 // 1 const serviceAccount = require('../utils/clikgett-2ac7e-firebase-adminsdk-umi8s-47e854ca8a.json');
 const serviceAccount = require('../utils/clikgett.json');
 const { resume } = require('pdfkit');
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+initializeApp({
+    credential: cert(serviceAccount),
 
 });
 
 const s3 = require('../utils/s3');
-const category_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Categories/"
-const Products_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/"
+const media = require('../utils/media');
+const category_s3 = "http://clikgett-media.local/Categories/"
+const Products_s3 = "http://clikgett-media.local/Products/"
 
 CommonController.settings = () => {
     try {
@@ -141,8 +142,8 @@ CommonController.send_push_notifications = (Body, UserID) => {
             };
             console.log(message, 'notification_message body');
 
-            if (typeof admin !== 'undefined' && admin && admin.messaging) {
-                admin.messaging().send(message)
+            {
+                getMessaging().send(message)
                     .then((response) => {
                         console.log('Successfully sent message:❤️❤️❤️', response);
                         resolve(1);
@@ -158,9 +159,6 @@ CommonController.send_push_notifications = (Body, UserID) => {
                         }
                         resolve(0);
                     });
-            } else {
-                console.log('Firebase admin not initialized or available');
-                resolve(0);
             }
         } catch (err) {
             console.log("exception in getting FCMToken", err);
@@ -260,7 +258,7 @@ CommonController.Get_Order_Complete_Detail = (query) => {
                     OrderResults[j].UserName = "NA"
                 }
                 console.log(OrderResults[j].deliveredDateTime, 'deliveredDateTime')
-                OrderResults[j].InvoiceFile = "https://d3c9kvg5gaqz48.cloudfront.net/orderinvoice/" + OrderResults[j].InvoiceFile
+                OrderResults[j].InvoiceFile = media.urlFor("orderinvoice/" + OrderResults[j].InvoiceFile)
 
                 // Created_At=new Date(OrderResults[j].deliveredDateTime)                    
                 // Created_At.setHours( Created_At.getHours() + 5 )
@@ -956,7 +954,7 @@ CommonController.generateCsv = async (results) => {
     };
     // Uploading files to the bucket
 
-    let fileUrl = `https://d3c9kvg5gaqz48.cloudfront.net/csv/${fileName}`;
+    let fileUrl = media.urlFor("csv/" + fileName);
     try {
         const uploadpdf = await s3.upload(params).promise();
         fileUrl = uploadpdf.Location || fileUrl;

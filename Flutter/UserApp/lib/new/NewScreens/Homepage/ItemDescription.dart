@@ -44,6 +44,9 @@ class ItemDescription extends StatefulWidget {
 }
 
 class _ItemDescriptionState extends State<ItemDescription> {
+  /// The description shows one line until "Read more" is tapped.
+  bool _descriptionExpanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -396,20 +399,40 @@ class _ItemDescriptionState extends State<ItemDescription> {
         SizedBox(
           height: 0.5.h,
         ),
-        InkWell(
-            onTap: () {
-              print(description);
-            },
-            child: customTextWidget(description))
-        // customText(
-        //   text: "$description",
-        //   fontSize: 14,
-        //   color: ordersPrimaryColor.withOpacity(.65),
-        //   fontWeight: FontWeight.w500,
-        // ),
+        _descriptionExpanded
+            ? customTextWidget(description)
+            : _collapsedDescription('$description'),
+        if (_descriptionIsLong('$description'))
+          GestureDetector(
+            onTap: () => setState(() => _descriptionExpanded = !_descriptionExpanded),
+            child: Padding(
+              padding: EdgeInsets.only(top: 0.5.h),
+              child: Text(
+                _descriptionExpanded ? 'Read less' : 'Read more',
+                style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: primary),
+              ),
+            ),
+          ),
       ],
     );
   }
+
+  /// Description as plain text (HTML tags removed) for the one-line preview.
+  String _plainDescription(String description) => description
+      .replaceAll(RegExp(r'<[^>]+>'), ' ')
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&amp;', '&')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+
+  bool _descriptionIsLong(String description) => _plainDescription(description).length > 45;
+
+  Widget _collapsedDescription(String description) => Text(
+        _plainDescription(description),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 14, color: ordersPrimaryColor.withOpacity(0.65), fontWeight: FontWeight.w500),
+      );
 
   Widget customTextWidget(String description) {
     final bool isHtml = RegExp(r"<[^>]+>").hasMatch(description);
@@ -1058,7 +1081,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                                       Padding(
                                         padding: EdgeInsets.only(right: 2.w),
                                         child: Text(
-                                          '₹${varients?.offerPrice}',
+                                          '₹${varients?.sellingPrice}',
                                           style: customTextstyle(
                                               fontSize: 16.sp,
                                               color: black,
@@ -1155,7 +1178,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                                 ),
                               ),
                               Text(
-                                '₹${selectedvarients?.offerPrice}',
+                                '₹${selectedvarients?.sellingPrice}',
                                 style: customTextstyle(
                                     fontSize: 16.sp,
                                     color: primary,

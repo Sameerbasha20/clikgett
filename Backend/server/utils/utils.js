@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const pool = require('./db');
+const requestContext = require('./requestContext');
 require('dotenv').config();
 
 const user_jwtExpirySeconds = 31536000;        // mobile apps have no refresh flow
@@ -55,6 +56,7 @@ const userAuth = (allowQueryToken) => async (req, resp, next) => {
             return resp.status(401).json({ "Status": 0, "Message": "unauthorized user" });
         }
         req.UserID = results[0].UserID;
+        requestContext.setUserId(req.UserID);
         req.MobileNumber = results[0].MobileNumber;
         req.WalletAmount = results[0].WalletAmount;
         next();
@@ -105,6 +107,7 @@ const authenticate = {
         try {
             const decoded = await verifyToken(Token);
             req.UserID = decoded.UserID || null;
+            requestContext.setUserId(req.UserID);
             req.MobileNumber = decoded.MobileNumber;
         } catch (e) {
             req.UserID = null;

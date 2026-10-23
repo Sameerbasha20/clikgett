@@ -4,6 +4,7 @@ import 'package:fav_app/new/Controllers/auth_controller.dart';
 import 'package:fav_app/new/NewScreens/Widgets/buttonWidget.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:fav_app/new/Services/common/toast_guard.dart';
+import 'package:fav_app/old/Services/Auth/login_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -136,7 +137,7 @@ class _OtpVerifyState extends State<OtpVerify> {
                 onTap: () async {
                   if (validateAndSave()) {
                     if (otpController.text.isNotEmpty) {
-                      if (otpController.text.length == 4) {
+                      if (otpController.text.length == LoginServices.otpLength) {
                         Map<String, dynamic> body = <String, dynamic>{};
                         if (widget.body != null) {
                           body.addAll(widget.body!);
@@ -175,7 +176,7 @@ class _OtpVerifyState extends State<OtpVerify> {
     return Padding(
       padding: EdgeInsets.fromLTRB(14.w, 1.h, 14.w, 1.h),
       child: Pinput(
-        length: 4,
+        length: LoginServices.otpLength,
         controller: otpController,
         autofillHints: const [AutofillHints.oneTimeCode],
         mainAxisAlignment: MainAxisAlignment.spaceAround,

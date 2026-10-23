@@ -89,7 +89,7 @@ const AdminGlobalSearch = {
                 queryAsync(
                     `SELECT EnquiryID, UserID, Name, MobileNumber, Subject, Status, CreatedAt
                      FROM CustomerEnquiries
-                     WHERE (${isNumeric ? 'EnquiryID = ? OR UserID = ? OR ' : ''}
+                     WHERE IFNULL(Category, '') <> 'Product Request' AND (${isNumeric ? 'EnquiryID = ? OR UserID = ? OR ' : ''}
                             Name LIKE ? OR MobileNumber LIKE ? OR Subject LIKE ? OR Description LIKE ?)
                      ORDER BY CreatedAt DESC
                      LIMIT 6`,

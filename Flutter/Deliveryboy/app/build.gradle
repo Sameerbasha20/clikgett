@@ -13,14 +13,14 @@ def apiBaseUrl = project.findProperty('apiBaseUrl') ?: 'http://192.168.1.9:5001/
 
 android {
     namespace 'com.deliveryboy_clickget'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.deliveryboy_clickget"
         minSdk 21
-        targetSdk 35
-        versionCode 6
-        versionName "1.5"
+        targetSdk 36
+        versionCode 7
+        versionName "1.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
         buildConfigField "String", "API_BASE_URL", "\"${apiBaseUrl}\""
@@ -103,13 +103,6 @@ dependencies {
     // Permissions
     implementation 'com.karumi:dexter:5.0.0'
 
-    // AWS SDKs
-    implementation('com.amazonaws:aws-android-sdk-mobile-client:2.17.1@aar') {
-        transitive = true
-    }
-    implementation 'com.amazonaws:aws-android-sdk-s3:2.18.0'
-    implementation 'com.amazonaws:aws-android-sdk-cognito:2.20.1'
-    implementation 'com.amazonaws:aws-android-sdk-cognitoidentityprovider:2.18.0'
 
     // Firebase
     implementation 'com.google.firebase:firebase-core:17.5.0'

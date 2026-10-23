@@ -5,12 +5,13 @@ import 'package:fav_app/new/Services/common/intercepter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
 
 double _d(dynamic v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}') ?? 0;
 int _i(dynamic v) => v is num ? v.toInt() : int.tryParse('${v ?? ''}') ?? 0;
-DateTime? _date(dynamic v) => v == null ? null : DateTime.tryParse('$v'.replaceAll('Z', '').replaceFirst('T', ' '));
+DateTime? _date(dynamic v) => serverDate(v);
 
 class FaqEntry {
   final String question;

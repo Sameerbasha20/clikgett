@@ -184,12 +184,20 @@ services:
       GOOGLE_APIKEY: ${GOOGLE_APIKEY:-}
       SMS_APIKEY: ${SMS_APIKEY:-}
       CRON_SECRET: ${CRON_SECRET:-}
-      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://127.0.0.1:9100}
-      S3_REGION: ${S3_REGION:-us-east-1}
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
       ADMIN_2FA_DEMO_OTP: ${ADMIN_2FA_DEMO_OTP:-123456}
       ADMIN_2FA_FIXED_DEMO_OTP: ${ADMIN_2FA_FIXED_DEMO_OTP:-123456}
+      # Login codes (services/LoginOtp.js), payments webhook, proxy/CORS (server.js)
+      LOGIN_OTP_DIGITS: ${LOGIN_OTP_DIGITS:-4}
+      RIDER_OTP_DIGITS: ${RIDER_OTP_DIGITS:-4}
+      REVIEW_LOGIN_MOBILE: ${REVIEW_LOGIN_MOBILE:-}
+      REVIEW_LOGIN_OTP: ${REVIEW_LOGIN_OTP:-}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      # Phones reach this backend directly on :5001, so client IP headers are not trusted.
+      TRUST_PROXY: ${TRUST_PROXY:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      PUBLIC_MEDIA_BASE_URL: ${PUBLIC_MEDIA_BASE_URL:-}
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:5000/health || exit 1"]
       interval: 15s

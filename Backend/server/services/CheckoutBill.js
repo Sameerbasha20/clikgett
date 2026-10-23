@@ -6,7 +6,7 @@ const PricingEngine = require('./PricingEngine');
 const DeliveryTime = require('./DeliveryTime');
 
 const MAX_TIP = 1000;
-const PRODUCTS_S3 = 'https://d3c9kvg5gaqz48.cloudfront.net/Products/';
+const PRODUCTS_S3 = 'http://clikgett-media.local/Products/';
 const DEFAULT_TIP_PRESETS = [10, 20, 30, 50];
 
 const queryAsync = (sql, params = []) => new Promise((resolve, reject) => {

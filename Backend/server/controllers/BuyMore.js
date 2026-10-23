@@ -1,4 +1,5 @@
 const pool = require('../utils/db');
+const { toDbTime } = require('../utils/dbTime');
 
 const BuyMoreController = {
     // Get all tiers for a product or variant
@@ -143,8 +144,8 @@ const BuyMoreController = {
                     item.Quantity,
                     item.Price,
                     Status !== undefined ? Status : 1,
-                    StartDate || null,
-                    EndDate || null,
+                    toDbTime(StartDate),
+                    toDbTime(EndDate),
                     AdminID,
                     new Date(),
                     new Date()
@@ -239,8 +240,8 @@ const BuyMoreController = {
                         maxQ,
                         tierPrice,
                         Status !== undefined ? Status : 1,
-                        StartDate || null,
-                        EndDate || null,
+                        toDbTime(StartDate),
+                        toDbTime(EndDate),
                         AdminID
                     ],
                     (insErr, insRes) => {
@@ -319,8 +320,8 @@ const BuyMoreController = {
                         maxQ,
                         tierPrice,
                         Status !== undefined ? Status : 1,
-                        StartDate || null,
-                        EndDate || null,
+                        toDbTime(StartDate),
+                        toDbTime(EndDate),
                         ID
                     ],
                     (upErr, upRes) => {

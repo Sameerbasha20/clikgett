@@ -268,8 +268,12 @@ function Products() {
             </div>
         );
     };
-    const StatusFormatter = (cell) => {
+    const StatusFormatter = (cell, row) => {
+        const scheduledFor = row?.ScheduleStatus === "Scheduled" && row?.ScheduledDateTime
+            ? new Date(row.ScheduledDateTime).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })
+            : null;
         return (
+            <>
             <p
                 className={dashboardclasses["order_status"]}
                 style={{
@@ -284,6 +288,25 @@ function Products() {
                 {" "}
                 {getStatusDetails(cell).statusName}
             </p>
+            {scheduledFor && (
+                <span
+                    title="Customer chose Schedule Later: deliver on this day"
+                    style={{
+                        display: "inline-block",
+                        marginTop: "6px",
+                        padding: "3px 10px",
+                        borderRadius: "12px",
+                        backgroundColor: "#ede9fe",
+                        color: "#5b21b6",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                    }}
+                >
+                    📅 Scheduled · {scheduledFor}
+                </span>
+            )}
+            </>
         );
     };
     const statusHandler = (e, cellContent) => {

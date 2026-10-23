@@ -4,7 +4,6 @@ const mysql = require('mysql');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const AWS = require('aws-sdk');
 const CommonController = require('./CommonController');
 const PricingEngine = require('../services/PricingEngine');
 

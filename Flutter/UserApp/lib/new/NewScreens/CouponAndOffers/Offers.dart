@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
 import 'package:intl/intl.dart';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 class _Offer {
   final String code;
@@ -27,7 +28,7 @@ class _Offer {
         value = double.tryParse('${j['OfferValue'] ?? 0}') ?? 0,
         maxDiscount = double.tryParse('${j['MaxDiscount'] ?? 0}') ?? 0,
         flat = '${j['Type']}' == '2',
-        endDate = DateTime.tryParse('${j['EndDate'] ?? ''}'.replaceAll('Z', ''));
+        endDate = serverDate(j['EndDate']);
 
   String get headline {
     if (flat) return '${rupees(value)} off';

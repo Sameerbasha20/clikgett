@@ -3,6 +3,7 @@
 //     final homeModel = homeModelFromJson(jsonString);
 
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 /// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
 double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
@@ -107,10 +108,10 @@ class Banner {
             : null,
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
       );
 
   Map<String, dynamic> toJson() => {
@@ -146,6 +147,10 @@ class BestItem {
   /// Bulk prices: "Buy 2 for ₹356" bundles or "Buy 5+ @ ₹X each" slabs.
   List<BulkTier> bulkTiers;
 
+  /// Cheapest membership price for this product (shown to everyone as "₹X with Gold").
+  /// The signed-in member's own price is on each variant's memberPrice.
+  MemberOffer? memberOffer;
+
   BestItem({
     this.productId,
     this.categoryId,
@@ -161,6 +166,7 @@ class BestItem {
     required this.productImages,
     this.deal,
     this.bulkTiers = const [],
+    this.memberOffer,
   });
 
   factory BestItem.fromJson(Map<String, dynamic> json) => BestItem(
@@ -174,10 +180,10 @@ class BestItem {
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
         productImages: json['ProductImages'] == null
             ? []
             : List<String>.from(json['ProductImages']),
@@ -189,6 +195,7 @@ class BestItem {
         bulkTiers: json["BulkTiers"] is List
             ? (json["BulkTiers"] as List).whereType<Map>().map((t) => BulkTier.fromJson(Map<String, dynamic>.from(t))).toList()
             : const [],
+        memberOffer: json["MemberOffer"] is Map ? MemberOffer.fromJson(Map<String, dynamic>.from(json["MemberOffer"])) : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -228,6 +235,9 @@ class ProductVariant {
 
   /// Flash-sale unit price, only when a sale is running and it's lower than offerPrice.
   double? salePrice;
+
+  /// The signed-in member's price for this pack (null for non-members or no member price).
+  double? memberPrice;
   int? status;
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -243,6 +253,7 @@ class ProductVariant {
     this.offerPrice,
     this.buy2Price,
     this.salePrice,
+    this.memberPrice,
     this.status,
     this.createdAt,
     this.updatedAt,
@@ -263,13 +274,14 @@ class ProductVariant {
         offerPrice: _toDouble(json["OfferPrice"]) ?? 0.0,
         buy2Price: json["Buy2Price"] is num ? (json["Buy2Price"] as num).toDouble() : double.tryParse('${json["Buy2Price"] ?? ''}'),
         salePrice: _toDouble(json["SalePrice"]),
+        memberPrice: _toDouble(json["MemberPrice"]),
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         updatedAt: json["UpdatedAt"] == null
             ? null
-            : DateTime.parse(json["UpdatedAt"]),
+            : serverDate(json["UpdatedAt"])!,
       );
 
   Map<String, dynamic> toJson() => {
@@ -395,6 +407,30 @@ class EnumValues<T> {
 }
 
 
+class MemberOffer {
+  final String planName;
+  final double price;
+
+  MemberOffer({required this.planName, required this.price});
+
+  factory MemberOffer.fromJson(Map<String, dynamic> j) => MemberOffer(
+        planName: '${j["PlanName"] ?? 'Members'}',
+        price: _toDouble(j["Price"]) ?? 0,
+      );
+}
+
+/// Unit price the cart charges (server PricingEngine): the lower of the running flash-sale
+/// price and the member's price when they apply, otherwise the offer price.
+double sellingPriceOf(BestItem product, ProductVariant? v) {
+  if (v == null) return 0;
+  double price = v.offerPrice ?? v.price ?? 0;
+  final sale = v.salePrice;
+  if (product.deal != null && sale != null && sale < price) price = sale;
+  final member = v.memberPrice;
+  if (member != null && member > 0 && member < price) price = member;
+  return price;
+}
+
 class ProductDeal {
   final String name;
   final DateTime? endsAt;
@@ -403,8 +439,7 @@ class ProductDeal {
 
   factory ProductDeal.fromJson(Map<String, dynamic> j) => ProductDeal(
         name: '${j["SaleName"] ?? ''}',
-        // Store wall-clock time; ignore the "Z" the DB driver adds.
-        endsAt: DateTime.tryParse('${j["EndDate"] ?? ''}'.replaceAll('Z', '')),
+        endsAt: serverDate(j["EndDate"]),
       );
 }
 

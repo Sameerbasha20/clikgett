@@ -157,13 +157,32 @@ class _CartState extends State<Cart> {
       if (_useWallet && bill.walletUsable <= 0) _useWallet = false;
       _bill = bill;
     });
+    _loadSuggestions();
   }
 
+  String _suggestionsKey = '';
+
+  /// Products similar to what's in the cart (same subcategory/category), falling back
+  /// to general recommendations. Reloaded only when the set of cart products changes.
   Future<void> _loadSuggestions() async {
-    final products = await StorefrontServices.recommendedProducts();
-    if (!mounted) return;
-    final inCart = cartController.cartItems.map((e) => e.productId).toSet();
-    setState(() => _suggestions = products.where((p) => !inCart.contains(p.productId)).take(12).toList());
+    final inCart = cartController.cartItems.map((e) => e.productId).whereType<int>().toSet();
+    final key = (inCart.toList()..sort()).join(',');
+    if (key == _suggestionsKey) return;
+    _suggestionsKey = key;
+    final lists = await Future.wait(inCart.take(3).map(StorefrontServices.similarProducts));
+    var products = <BestItem>[];
+    final seen = <int?>{};
+    // Interleave so each cart item contributes its closest matches first.
+    for (var i = 0; i < 12; i++) {
+      for (final list in lists) {
+        if (i < list.length && !inCart.contains(list[i].productId) && seen.add(list[i].productId)) products.add(list[i]);
+      }
+    }
+    if (products.isEmpty) {
+      products = (await StorefrontServices.recommendedProducts()).where((p) => !inCart.contains(p.productId)).toList();
+    }
+    if (!mounted || key != _suggestionsKey) return;
+    setState(() => _suggestions = products.take(12).toList());
   }
 
   Future<void> _setQuantity(BillItem item, int qty) async {
@@ -258,7 +277,6 @@ class _CartState extends State<Cart> {
                             padding: EdgeInsets.zero,
                           ),
                           _billCard(bill),
-                          if (bill.totalSavings > 0) _savingsCard(bill),
                           _policyNote(),
                         ],
                       ),
@@ -583,7 +601,7 @@ class _CartState extends State<Cart> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-            child: Text('You might also like', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: tColor)),
+            child: Text('Similar to your items', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: tColor)),
           ),
           SizedBox(
             height: 262,
@@ -876,10 +894,27 @@ class _CartState extends State<Cart> {
         ),
       );
 
+  bool _instructionsOpen = false;
+
+  /// One row until tapped, so the checkout stays short.
   Widget _instructionsCard() => _card(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _title('Delivery instructions', icon: Icons.assignment_outlined),
-          SizedBox(
+          InkWell(
+            onTap: () => setState(() => _instructionsOpen = !_instructionsOpen),
+            child: Row(children: [
+              const Icon(Icons.assignment_outlined, size: 19, color: primaryDark),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _instructions.isEmpty ? 'Add delivery instructions' : 'Delivery instructions · ${_instructions.length} selected',
+                  style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: tColor),
+                ),
+              ),
+              Icon(_instructionsOpen ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, color: grey70),
+            ]),
+          ),
+          if (_instructionsOpen) const SizedBox(height: 10),
+          if (_instructionsOpen) SizedBox(
             height: 92,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
@@ -946,63 +981,6 @@ class _CartState extends State<Cart> {
       );
 
   /// "Savings on this order" breakdown (Blinkit style).
-  Widget _savingsCard(CheckoutBill bill) {
-    final rows = <List<dynamic>>[
-      if (bill.productSavings > 0) [Icons.percent_rounded, 'Discount on MRP', bill.productSavings],
-      if (bill.couponDiscount > 0) [Icons.local_offer_rounded, 'Coupon ${bill.promoCode ?? ''}'.trim(), bill.couponDiscount],
-      if (bill.cartOfferDiscount > 0)
-        [Icons.redeem_rounded, (bill.cartOfferName ?? '').isNotEmpty ? bill.cartOfferName! : 'Cart offer', bill.cartOfferDiscount],
-      if (bill.freeDeliverySavings > 0) [Icons.local_shipping_rounded, 'FREE delivery savings', bill.freeDeliverySavings],
-    ];
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE6F6EC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: primary.withOpacity(0.25)),
-      ),
-      child: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 12, 10),
-          child: Row(children: [
-            Expanded(
-              child: Text('Savings on this order', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: tColor)),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(8)),
-              child: Text(_rs(bill.totalSavings), style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, color: white)),
-            ),
-          ]),
-        ),
-        Container(
-          margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(color: white, borderRadius: BorderRadius.circular(10)),
-          child: Column(children: [
-            for (var i = 0; i < rows.length; i++) ...[
-              if (i > 0) const Divider(height: 1, color: cardBorder),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Row(children: [
-                  Container(
-                    width: 26,
-                    height: 26,
-                    decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(7)),
-                    child: Icon(rows[i][0] as IconData, size: 16, color: white),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(rows[i][1] as String, style: GoogleFonts.poppins(fontSize: 13.5, color: tColor))),
-                  Text(_rs(rows[i][2] as double), style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: tColor)),
-                ]),
-              ),
-            ],
-          ]),
-        ),
-      ]),
-    );
-  }
-
   Widget _billRow(String label, String value, {String? strike, bool green = false, bool bold = false}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 3),
         child: Row(children: [

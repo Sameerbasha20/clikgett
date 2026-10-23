@@ -1,52 +1,105 @@
-import 'package:fav_app/new/Services/order_tracking_services.dart';
 import 'dart:async';
+
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/orders_controller.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/OrderDetails.dart';
-import 'package:fav_app/new/NewScreens/Homepage/widgets/analogedTimer.dart';
+import 'package:fav_app/new/Services/order_tracking_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:lottie/lottie.dart';
-import 'package:slide_countdown/slide_countdown.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
+/// Live order card above the bottom navigation on the home screen.
 class DeliveryStatus extends StatefulWidget {
-  int indexss;
-  DeliveryStatus({super.key, required this.indexss});
+  final int indexss;
+  const DeliveryStatus({super.key, required this.indexss});
 
   @override
   State<DeliveryStatus> createState() => _DeliveryStatusState();
 }
 
-class _DeliveryStatusState extends State<DeliveryStatus> {
+class _DeliveryStatusState extends State<DeliveryStatus> with SingleTickerProviderStateMixin {
   final OrdersController ordersController = Get.find();
-  Timer? _dashboardRefreshTimer;
+  Timer? _refreshTimer;
+  late final AnimationController _ride =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 700))..repeat(reverse: true);
 
   @override
   void initState() {
     super.initState();
-    _dashboardRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
-      if (mounted) {
-        ordersController.getcurrentorder(context: context);
-      }
+    // Status from the server every 20 s; the minutes left are recomputed on each rebuild.
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted) ordersController.getcurrentorder(context: context);
     });
   }
 
   @override
   void dispose() {
-    _dashboardRefreshTimer?.cancel();
+    _refreshTimer?.cancel();
+    _ride.dispose();
     super.dispose();
+  }
+
+  static const _steps = [
+    OrderStatus.received,
+    OrderStatus.packing,
+    OrderStatus.assigned,
+    OrderStatus.outForDelivery,
+    OrderStatus.arrived,
+  ];
+
+  IconData _icon(int status, bool scheduled) {
+    if (scheduled) return Icons.event_available_rounded;
+    switch (status) {
+      case OrderStatus.packing:
+        return Icons.inventory_2_rounded;
+      case OrderStatus.assigned:
+        return Icons.person_pin_circle_rounded;
+      case OrderStatus.outForDelivery:
+        return Icons.delivery_dining_rounded;
+      case OrderStatus.arrived:
+        return Icons.home_rounded;
+      default:
+        return Icons.receipt_long_rounded;
+    }
+  }
+
+  String _duration(Duration d) {
+    final mins = d.inMinutes;
+    if (mins < 60) return '$mins min';
+    final h = mins ~/ 60, m = mins % 60;
+    return m == 0 ? '$h hr' : '$h hr $m min';
   }
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<OrdersController>(
         id: 'orders',
-        builder: (controller) {
+        builder: (_) {
+          if (widget.indexss >= ordersController.orders.length) return const SizedBox.shrink();
           final order = ordersController.orders[widget.indexss];
-          final createdAt = DateTime.tryParse(order.createdAt?.toString() ?? '') ?? DateTime.now();
-          final endTime = order.estimateDateTime ?? createdAt.add(const Duration(minutes: 30));
-          final remainingDuration = endTime.difference(DateTime.now());
-          final isDelayed = DateTime.now().isAfter(endTime);
+          final status = order.orderStatus ?? OrderStatus.received;
+          final scheduledAt = order.scheduleStatus == 'Scheduled' ? order.scheduledDateTime : null;
+          final scheduled = scheduledAt != null && status == OrderStatus.received;
+          final createdAt = order.createdAt ?? DateTime.now();
+          final eta = order.estimateDateTime ?? createdAt.add(const Duration(minutes: 30));
+          final left = eta.difference(DateTime.now());
+          final late = !scheduled && left.isNegative;
+
+          final String headline;
+          if (scheduled) {
+            headline = 'Scheduled for ${DateFormat('EEE, d MMM').format(scheduledAt)}';
+          } else if (status == OrderStatus.arrived) {
+            headline = 'Your delivery partner is here';
+          } else if (late) {
+            headline = 'Taking a little longer';
+          } else {
+            headline = 'Arriving in ${_duration(left + const Duration(seconds: 59))}';
+          }
+
+          final accent = late ? const Color(0xFFF59E0B) : primary;
+          final stepIndex = _steps.indexOf(status);
+          final progress = stepIndex < 0 ? 0.1 : (stepIndex + 1) / (_steps.length + 1);
 
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -55,113 +108,61 @@ class _DeliveryStatusState extends State<DeliveryStatus> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => OrderDetailsScreen(
-                            isPastOrders: false,
-                            orderNo: order.orderId ?? 0,
-                          )));
+                      builder: (_) => OrderDetailsScreen(isPastOrders: false, orderNo: order.orderId ?? 0)));
             },
             child: Container(
-              height: 80,
-              width: double.infinity,
-              padding: EdgeInsets.all(12),
+              margin: const EdgeInsets.fromLTRB(10, 4, 10, 4),
+              padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
               decoration: BoxDecoration(
-                gradient: !isDelayed
-                    ? LinearGradient(
-                        colors: [
-                          Color(0xFFa8e063), // Light green
-                          Color(0xFF56ab2f), // Darker green
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : LinearGradient(
-                        colors: [
-                          Color(0xFFFADA7A), // Amber/Yellow
-                          Color(0xFFFFA725), // Orange
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                color: white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: accent.withOpacity(0.35)),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 2))],
               ),
-              child: Stack(
-                children: [
-                  Row(
+              child: Row(children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(color: accent.withOpacity(0.12), shape: BoxShape.circle),
+                  child: status == OrderStatus.outForDelivery && !scheduled
+                      ? AnimatedBuilder(
+                          animation: _ride,
+                          builder: (_, child) => Transform.translate(offset: Offset(-2 + 4 * _ride.value, 0), child: child),
+                          child: Icon(_icon(status, scheduled), color: accent, size: 24),
+                        )
+                      : Icon(_icon(status, scheduled), color: accent, size: 22),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (!isDelayed) ...[
-                        Container(
-                          height: 40,
-                          width: 40,
-                          child: LiveAnalogCountdownClock(
-                            duration: remainingDuration > Duration.zero
-                                ? remainingDuration
-                                : Duration.zero,
-                            color: bg,
-                            onDone: () {},
-                          ),
+                      Text(headline,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: tColor)),
+                      Text('#${order.OrderSequence ?? order.orderId} · ${OrderStatus.title(status)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(fontSize: 11.5, color: grey70)),
+                      const SizedBox(height: 5),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 4,
+                          color: accent,
+                          backgroundColor: accent.withOpacity(0.15),
                         ),
-                        SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            "${'#${order.OrderSequence}'}\n${_getOrderStatusText(order.orderStatus!)}",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        Container(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              '${DateTime.now().difference(endTime).inMinutes}\nMin',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.redAccent,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            "${'#${order.OrderSequence}'}\n${_getOrderStatusText(order.orderStatus!)}",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Transform.scale(
-                      scale: 1.5,
-                      child: ClipRRect(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(30),
-                            bottomLeft: Radius.circular(30),
-                            // topRight: Radius.circular(16),
-                          ),
-                          child: Lottie.asset(
-                              'Assets/Images/Homepage/newBike.json')),
-                      // 'Assets/Images/Homepage/animation.json'),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: grey70),
+              ]),
             ),
           );
         });
   }
-
-  String _getOrderStatusText(int status) => OrderStatus.message(status);
 }

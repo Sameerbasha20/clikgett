@@ -3,7 +3,8 @@
 // notifications happen the same way no matter who triggers the change
 // (customer, admin or rider).
 const moment = require('moment');
-const admin = require('firebase-admin');
+const { initializeApp, cert, getApps } = require('firebase-admin/app');
+const { getMessaging } = require('firebase-admin/messaging');
 const pool = require('../utils/db');
 const CommonController = require('../controllers/CommonController');
 const { ORDER_STATUS: S, STATUS_LABELS, RIDER_ACTIVE_STATUSES, canTransition, isFinal } = require('../utils/orderStatus');
@@ -12,8 +13,8 @@ const query = (sql, params = []) => new Promise((resolve, reject) => {
     pool.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
 });
 
-// Timestamps in this codebase are stored as IST wall-clock values.
-const istNow = () => moment().utcOffset(330).format('YYYY-MM-DD HH:mm:ss');
+// Timestamps are stored in UTC, like NOW() and CreatedAt; apps show them in IST.
+const utcNow = () => moment.utc().format('YYYY-MM-DD HH:mm:ss');
 
 const orderLabel = (order) => `#${String(order.OrderID).padStart(4, '0')}`;
 
@@ -57,11 +58,11 @@ const getRiderMessaging = () => {
     const credPath = process.env.RIDER_FIREBASE_CREDENTIALS || (fs.existsSync(defaultPath) ? defaultPath : null);
     try {
         if (credPath) {
-            const existing = admin.apps.find((a) => a && a.name === 'rider');
-            const app = existing || admin.initializeApp({ credential: admin.credential.cert(require(require('path').resolve(credPath))) }, 'rider');
-            riderMessaging = app.messaging();
-        } else if (admin.apps.length) {
-            riderMessaging = admin.messaging();
+            const existing = getApps().find((a) => a && a.name === 'rider');
+            const app = existing || initializeApp({ credential: cert(require(require('path').resolve(credPath))) }, 'rider');
+            riderMessaging = getMessaging(app);
+        } else if (getApps().length) {
+            riderMessaging = getMessaging();
         }
     } catch (err) {
         console.error('rider firebase init failed', err.message);
@@ -188,7 +189,7 @@ const transition = async (orderId, to, actor, options = {}) => {
         throw new LifecycleError(`Cannot change order from "${STATUS_LABELS[from]}" to "${STATUS_LABELS[to] || to}"`);
     }
 
-    const now = istNow();
+    const now = utcNow();
     const sets = ['OrderStatus = ?', 'UpdatedAt = NOW()'];
     const params = [to];
     let otp = null;
@@ -293,4 +294,4 @@ const assignRider = async (orderId, riderId, actor, options = {}) => {
     return { isReassignment, previousRider };
 };
 
-module.exports = { transition, assignRider, addTimeline, notifyCustomer, notifyRider, LifecycleError, istNow };
+module.exports = { transition, assignRider, addTimeline, notifyCustomer, notifyRider, LifecycleError, utcNow };

@@ -3,7 +3,6 @@ const mysql=require('mysql');
 require('dotenv').config()
 var moment = require('moment'); 
 var fs = require('fs')
-const AWS = require('aws-sdk');
 const CommonController = require("../controllers/CommonController");
 
 const pool = require('../utils/db');

@@ -5,6 +5,7 @@ import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/Auth/LoginIntro.dart';
 import 'package:fav_app/new/NewScreens/Auth/OnBoarding1.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Homepage.dart';
+import 'package:fav_app/new/Services/common/backend_discovery.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:fav_app/old/Constants/colors.dart';
 import 'package:fav_app/old/Constants/text.dart';
@@ -30,6 +31,8 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   NotificationApi.init();
   notificationHandler();
+  // Local builds: find the backend on this Wi-Fi if the PC's IP changed (splash stays up meanwhile).
+  await BackendDiscovery.ensureBackend();
   runApp(
     const MyApp(),
   );

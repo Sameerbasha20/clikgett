@@ -122,6 +122,32 @@ const CustomerRequestsController = {
                 }
             }
 
+            // Product requests live only in ProductRequests (admin: Customer Requests > Product requests);
+            // saving them as enquiries too showed every request twice.
+            if (cleanCategory === 'Product Request' && cleanProductName) {
+                const request = await queryAsync(`
+                    INSERT INTO ProductRequests (
+                        UserID, CustomerName, MobileNumber, ProductName,
+                        Brand, SizeOrQty, Description, ImagePath, Status, CreatedAt
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())
+                `, [
+                    userId,
+                    customerName,
+                    contactMobile,
+                    cleanProductName,
+                    brand ? brand.trim() : null,
+                    sizeOrQty ? sizeOrQty.trim() : null,
+                    cleanDescription,
+                    imagePath
+                ]);
+                return resp.status(200).json({
+                    Status: 1,
+                    Message: `Request for "${cleanProductName}" submitted! Our team will review it and check availability.`,
+                    RequestID: request.insertId,
+                    ImagePath: imagePath
+                });
+            }
+
             const insertSql = `
                 INSERT INTO CustomerEnquiries (
                     UserID, Name, MobileNumber, Subject, Description, Category, ProductName, ImagePath, Status, CreatedAt
@@ -138,37 +164,9 @@ const CustomerRequestsController = {
                 imagePath
             ]);
 
-            // If this is a Product Request, also persist into ProductRequests table for unified Admin review
-            if (cleanCategory === 'Product Request' && cleanProductName) {
-                try {
-                    await queryAsync(`
-                        INSERT INTO ProductRequests (
-                            UserID, CustomerName, MobileNumber, ProductName,
-                            Brand, SizeOrQty, Description, ImagePath, Status, CreatedAt
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())
-                    `, [
-                        userId,
-                        customerName,
-                        contactMobile,
-                        cleanProductName,
-                        brand ? brand.trim() : null,
-                        sizeOrQty ? sizeOrQty.trim() : null,
-                        cleanDescription,
-                        imagePath
-                    ]);
-                } catch (e) {
-                    // Non-fatal if ProductRequests table has duplicate or schema nuance
-                    console.log('Notice: Auto-sync to ProductRequests:', e.message);
-                }
-            }
-
-            const successMessage = cleanCategory === 'Product Request'
-                ? `Request for "${cleanProductName || 'product'}" submitted! Our team will review it and check availability.`
-                : 'Your enquiry has been submitted successfully. Our team will get back to you shortly!';
-
             return resp.status(200).json({
                 Status: 1,
-                Message: successMessage,
+                Message: 'Your enquiry has been submitted successfully. Our team will get back to you shortly!',
                 EnquiryID: result.insertId,
                 ImagePath: imagePath
             });
@@ -187,7 +185,7 @@ const CustomerRequestsController = {
         try {
             const userId = req.UserID;
             const rows = await queryAsync(
-                'SELECT * FROM CustomerEnquiries WHERE UserID = ? ORDER BY CreatedAt DESC',
+                "SELECT * FROM CustomerEnquiries WHERE UserID = ? AND IFNULL(Category, '') <> 'Product Request' ORDER BY CreatedAt DESC",
                 [userId]
             );
             return resp.status(200).json({ Status: 1, Enquiries: rows });
@@ -208,7 +206,7 @@ const CustomerRequestsController = {
                 SELECT ce.*, u.FirstName, u.LastName, u.MobileNumber as UserAccountMobile
                 FROM CustomerEnquiries ce
                 LEFT JOIN Users u ON ce.UserID = u.UserID
-                WHERE 1=1
+                WHERE IFNULL(ce.Category, '') <> 'Product Request'
             `;
             const params = [];
 

@@ -3,6 +3,7 @@
 //     final adressesModel = adressesModelFromJson(jsonString);
 
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 /// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
 double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
@@ -70,8 +71,8 @@ class Address {
         flatNo: json["FlatNo"],
         landmark: json["Landmark"],
         type: json["Type"],
-        createdAt: DateTime.parse(json["CreatedAt"]),
-        updatedAt: DateTime.parse(json["UpdatedAt"]),
+        createdAt: serverDate(json["CreatedAt"])!,
+        updatedAt: serverDate(json["UpdatedAt"])!,
       );
 
   Map<String, dynamic> toJson() => {

@@ -1144,7 +1144,7 @@ function HomeSections() {
                                                     <input
                                                         type="text"
                                                         className="form-control"
-                                                        placeholder="https://d3c9kvg5gaqz48.cloudfront.net/Sections/..."
+                                                        placeholder="Image URL, e.g. /media/Sections/banner.png"
                                                         value={formImageUrl}
                                                         onChange={(e) => setFormImageUrl(e.target.value)}
                                                     />

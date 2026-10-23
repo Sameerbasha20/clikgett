@@ -5,6 +5,7 @@ import 'package:fav_app/new/Services/common/intercepter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
 
@@ -80,13 +81,8 @@ class OrderStatus {
 double _d(dynamic v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}') ?? 0;
 int _i(dynamic v) => v is num ? v.toInt() : int.tryParse('${v ?? ''}') ?? 0;
 
-/// Server times are store wall-clock times; ignore the "Z" the DB driver adds.
-DateTime? _date(dynamic v) {
-  if (v == null) return null;
-  final s = '$v'.trim();
-  if (s.isEmpty || s == 'NA') return null;
-  return DateTime.tryParse(s.replaceAll('Z', '').replaceFirst('T', ' '));
-}
+/// Server times are UTC; shown in the phone's local time (IST).
+DateTime? _date(dynamic v) => serverDate(v);
 
 String? _text(dynamic v) {
   final s = '${v ?? ''}'.trim();

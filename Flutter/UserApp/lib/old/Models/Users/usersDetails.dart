@@ -3,6 +3,7 @@
 //     final userDetailsModel = userDetailsModelFromJson(jsonString);
 
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 UserDetailsModel userDetailsModelFromJson(String str) =>
     UserDetailsModel.fromJson(json.decode(str));
@@ -71,8 +72,8 @@ class Users {
         otp: json["OTP"],
         userStatus: json["UserStatus"],
         profilePic: json["ProfilePic"],
-        createdAt: DateTime.parse(json["CreatedAt"]),
-        updatedAt: DateTime.parse(json["UpdatedAt"]),
+        createdAt: serverDate(json["CreatedAt"])!,
+        updatedAt: serverDate(json["UpdatedAt"])!,
       );
 
   Map<String, dynamic> toJson() => {

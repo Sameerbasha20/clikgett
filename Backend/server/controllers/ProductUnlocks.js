@@ -1,4 +1,5 @@
 const pool = require('../utils/db');
+const { toDbTime } = require('../utils/dbTime');
 
 function queryAsync(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -60,8 +61,8 @@ const ProductUnlocksController = {
                 VariantID || null,
                 unlockPriceVal,
                 Message || null,
-                StartDate || null,
-                EndDate || null,
+                toDbTime(StartDate),
+                toDbTime(EndDate),
                 Status !== undefined ? Status : 1
             ]);
 
@@ -97,8 +98,8 @@ const ProductUnlocksController = {
                 VariantID || null,
                 unlockPriceVal,
                 Message || null,
-                StartDate || null,
-                EndDate || null,
+                toDbTime(StartDate),
+                toDbTime(EndDate),
                 Status !== undefined ? Status : 1,
                 UnlockID
             ]);

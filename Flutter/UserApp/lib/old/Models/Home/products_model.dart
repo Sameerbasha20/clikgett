@@ -72,8 +72,8 @@ class ProductsModel {
 //         type: json["Type"],
 //         imageUrl: json["ImageUrl"],
 //         status: json["Status"],
-//         createdAt: DateTime.parse(json["CreatedAt"]),
-//         updatedAt: DateTime.parse(json["UpdatedAt"]),
+//         createdAt: serverDate(json["CreatedAt"])!,
+//         updatedAt: serverDate(json["UpdatedAt"])!,
 //         productVariants: List<ProductVariant>.from(
 //             json["ProductVariants"].map((x) => ProductVariant.fromJson(x))),
 //       );
@@ -128,8 +128,8 @@ class ProductsModel {
 //         price: json["Price"].toDouble(),
 //         offerPrice: json["OfferPrice"].toDouble(),
 //         status: json["Status"],
-//         createdAt: DateTime.parse(json["CreatedAt"]),
-//         updatedAt: DateTime.parse(json["UpdatedAt"]),
+//         createdAt: serverDate(json["CreatedAt"])!,
+//         updatedAt: serverDate(json["UpdatedAt"])!,
 //       );
 
 //   Map<String, dynamic> toJson() => {

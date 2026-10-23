@@ -2,7 +2,6 @@ const express = require('express');
 const mysql = require('mysql');
 require('dotenv').config()
 var moment = require('moment');
-const AWS = require('aws-sdk');
 const CommonController = require("../controllers/CommonController");
 const PricingEngine = require('../services/PricingEngine');
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
@@ -10,7 +9,7 @@ const s3 = require('../utils/s3');
 const pool = require('../utils/db');
 const OrderLifecycle = require('../services/OrderLifecycle');
 const { ORDER_STATUS } = require('../utils/orderStatus');
-Products_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/"
+Products_s3 = "http://clikgett-media.local/Products/"
 
 const ordercontroller = {
 

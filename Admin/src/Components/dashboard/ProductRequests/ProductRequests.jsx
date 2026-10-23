@@ -8,6 +8,7 @@ import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.m
 import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from "react-bootstrap-table2-paginator";
 import { Services } from "../../../Services";
+import RequestTabs from "./RequestTabs";
 import { toast } from "react-toastify";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { css } from "@emotion/react";
@@ -368,6 +369,7 @@ function ProductRequests() {
                         boxSizing: "border-box",
                     }}
                 >
+                    <RequestTabs />
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "10px" }}>
                         <div>
                             <h3 style={{ margin: 0, fontWeight: 700, color: "#2c3e50" }}>Unavailable Product Requests</h3>

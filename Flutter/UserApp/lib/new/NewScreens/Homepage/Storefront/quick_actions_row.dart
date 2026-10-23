@@ -9,8 +9,7 @@ import 'package:fav_app/old/Models/Home/home_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Two shortcut cards under the search bar: order with a photo of your list,
-/// and products that get cheaper when you buy more.
+/// Shortcut card under the search bar: order with a photo of your list.
 class QuickActionsRow extends StatefulWidget {
   const QuickActionsRow({super.key});
 
@@ -19,16 +18,6 @@ class QuickActionsRow extends StatefulWidget {
 }
 
 class _QuickActionsRowState extends State<QuickActionsRow> {
-  List<BestItem> _bulk = [];
-
-  @override
-  void initState() {
-    super.initState();
-    StorefrontServices.bulkDeals().then((items) {
-      if (mounted) setState(() => _bulk = items);
-    });
-  }
-
   Future<void> _photoOrder() async {
     final token = await CommonServices.getToken();
     if (!mounted) return;
@@ -55,19 +44,6 @@ class _QuickActionsRowState extends State<QuickActionsRow> {
             onTap: _photoOrder,
           ),
         ),
-        if (_bulk.isNotEmpty) ...[
-          const SizedBox(width: 10),
-          Expanded(
-            child: _ActionCard(
-              icon: Icons.local_offer_rounded,
-              iconBg: primaryGhost,
-              iconColor: primaryDark,
-              title: 'Buy more, save more',
-              subtitle: '${_bulk.length} item${_bulk.length == 1 ? '' : 's'} cheaper in bulk',
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => BulkDealsScreen(initial: _bulk))),
-            ),
-          ),
-        ],
       ]),
     );
   }

@@ -71,19 +71,19 @@ class PromoCodeListModel {
 //         description: json["Description"],
 //         startDate: json["StartDate"] == null
 //             ? null
-//             : DateTime.parse(json["StartDate"]),
+//             : serverDate(json["StartDate"])!,
 //         endDate:
-//             json["EndDate"] == null ? null : DateTime.parse(json["EndDate"]),
+//             json["EndDate"] == null ? null : serverDate(json["EndDate"])!,
 //         type: json["Type"],
 //         offerValue: json["OfferValue"],
 //         maxDiscount: json["MaxDiscount"],
 //         status: json["Status"],
 //         createdAt: json["CreatedAt"] == null
 //             ? null
-//             : DateTime.parse(json["CreatedAt"]),
+//             : serverDate(json["CreatedAt"])!,
 //         updatedAt: json["UpdatedAt"] == null
 //             ? null
-//             : DateTime.parse(json["UpdatedAt"]),
+//             : serverDate(json["UpdatedAt"])!,
 //       );
 
 //   Map<String, dynamic> toJson() => {

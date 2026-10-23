@@ -7,7 +7,7 @@ const CommonController = require("../controllers/CommonController");
 const pool = require('../utils/db');
 
 
-const Products_s3="https://d3c9kvg5gaqz48.cloudfront.net/Products/"
+const Products_s3="http://clikgett-media.local/Products/"
 
 const productcontroller={
     // GET /products/bulk-deals: products that get cheaper when you buy more.

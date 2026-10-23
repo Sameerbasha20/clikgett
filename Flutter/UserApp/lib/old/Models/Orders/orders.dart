@@ -3,6 +3,7 @@
 //     final currentOrderModel = currentOrderModelFromJson(jsonString);
 
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 /// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
 double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
@@ -84,13 +85,13 @@ class Order {
         imageUrl: json["ImageUrl"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         deliveredCancelleddatetime: json["Delivered_Cancelled_datetime"] == null
             ? null
-            : DateTime.parse(json["Delivered_Cancelled_datetime"]),
+            : serverDate(json["Delivered_Cancelled_datetime"])!,
         estimateDateTime: json["EstimateDateTime"] == null
             ? null
-            : DateTime.tryParse(json["EstimateDateTime"].toString()),
+            : serverDate(json["EstimateDateTime"]),
         totalDelayMinutes: json["TotalDelayMinutes"] != null
             ? int.tryParse(json["TotalDelayMinutes"].toString())
             : 0,
@@ -100,7 +101,7 @@ class Order {
         scheduleStatus: json["ScheduleStatus"],
         scheduledDateTime: json["ScheduledDateTime"] == null
             ? null
-            : DateTime.tryParse(json["ScheduledDateTime"].toString()),
+            : serverDate(json["ScheduledDateTime"]),
       );
 
   Map<String, dynamic> toJson() => {

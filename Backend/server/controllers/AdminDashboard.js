@@ -27,7 +27,7 @@ const AdminDashboard = {
                             SUM(OrderStatus IN (3,4)) AS Cancelled,
                             COALESCE(SUM(CASE WHEN OrderStatus NOT IN (3,4,6) THEN GrandTotal + WalletAmount ELSE 0 END), 0) AS Revenue,
                             COALESCE(AVG(CASE WHEN OrderStatus = 1 AND deliveredDateTime IS NOT NULL
-                                THEN TIMESTAMPDIFF(MINUTE, CreatedAt, CONVERT_TZ(deliveredDateTime, '+05:30', '+00:00')) END), 0) AS AvgDeliveryMinutes
+                                THEN TIMESTAMPDIFF(MINUTE, CreatedAt, deliveredDateTime) END), 0) AS AvgDeliveryMinutes
                        FROM Orders WHERE CreatedAt >= ?`,
                     [today]
                 ),
@@ -46,7 +46,7 @@ const AdminDashboard = {
                 ),
                 queryAsync("SELECT COUNT(*) AS n FROM PhotoOrderRequests WHERE RequestStatus IN ('PENDING','UNDER_REVIEW','PROPOSAL_DRAFT')"),
                 queryAsync("SELECT COUNT(*) AS n FROM ProductRequests WHERE LOWER(Status) = 'pending'"),
-                queryAsync("SELECT COUNT(*) AS n FROM CustomerEnquiries WHERE LOWER(Status) NOT IN ('resolved','closed')"),
+                queryAsync("SELECT COUNT(*) AS n FROM CustomerEnquiries WHERE LOWER(Status) NOT IN ('resolved','closed') AND IFNULL(Category, '') <> 'Product Request'"),
                 queryAsync("SELECT COUNT(*) AS n FROM Orders WHERE RefundStatus = 'FAILED'"),
                 queryAsync(
                     `SELECT DATE(CONVERT_TZ(CreatedAt, '+00:00', '+05:30')) AS Day,

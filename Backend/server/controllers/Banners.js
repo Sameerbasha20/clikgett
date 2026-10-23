@@ -4,21 +4,20 @@ require('dotenv').config()
 var moment = require('moment');
 const jwt = require('jsonwebtoken');
 var fs = require('fs')
-const AWS = require('aws-sdk');
 const CommonController = require("../controllers/CommonController");
 
 const pool = require('../utils/db');
 const s3 = require('../utils/s3');
 
-// Banners_s3="https://dm95er30b2f9h.cloudfront.net/Banners/"
-const Banners_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Banners/"
+// Banners_s3="http://clikgett-media.local/Banners/"
+const Banners_s3 = "http://clikgett-media.local/Banners/"
 
 
-const categories_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Categories/"
+const categories_s3 = "http://clikgett-media.local/Categories/"
 
-const Products_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/Products/"
+const Products_s3 = "http://clikgett-media.local/Products/"
 
-const subcategories_s3 = "https://d3c9kvg5gaqz48.cloudfront.net/SubCategories/"
+const subcategories_s3 = "http://clikgett-media.local/SubCategories/"
 
 
 

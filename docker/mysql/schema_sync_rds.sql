@@ -371,6 +371,9 @@ SET @s = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `membership_product_prices` ADD C
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 SET @s = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `membership_product_prices` ADD COLUMN `CreatedAt` datetime DEFAULT CURRENT_TIMESTAMP', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'membership_product_prices' AND column_name = 'CreatedAt');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
+-- Membership prices are keyed by PlanID; the legacy MembershipID must not block inserts.
+SET @s = (SELECT IF(COUNT(*) = 1, 'ALTER TABLE `membership_product_prices` MODIFY `MembershipID` bigint NULL', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'membership_product_prices' AND column_name = 'MembershipID');
+PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 SET @s = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `order_adjustments` ADD COLUMN `PreviousAmount` decimal(10,2) NULL', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'order_adjustments' AND column_name = 'PreviousAmount');
 PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st;
 SET @s = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `order_adjustments` ADD COLUMN `NewAmount` decimal(10,2) NULL', 'SELECT 1') FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'order_adjustments' AND column_name = 'NewAmount');

@@ -1,4 +1,5 @@
 const pool = require('../utils/db');
+const { toDbTime } = require('../utils/dbTime');
 
 const CartOffersController = {
     // List all offers
@@ -68,8 +69,8 @@ const CartOffersController = {
                     threshold,
                     OfferType || 'flat_discount',
                     val,
-                    StartDate || null,
-                    EndDate || null,
+                    toDbTime(StartDate),
+                    toDbTime(EndDate),
                     ApplicableProducts ? JSON.stringify(ApplicableProducts) : null,
                     ExcludedProducts ? JSON.stringify(ExcludedProducts) : null,
                     Status !== undefined ? Status : 1,
@@ -128,8 +129,8 @@ const CartOffersController = {
                     isNaN(threshold) ? null : threshold,
                     OfferType || null,
                     isNaN(val) ? null : val,
-                    StartDate || null,
-                    EndDate || null,
+                    toDbTime(StartDate),
+                    toDbTime(EndDate),
                     ApplicableProducts ? JSON.stringify(ApplicableProducts) : null,
                     ExcludedProducts ? JSON.stringify(ExcludedProducts) : null,
                     Status !== undefined ? Status : null,

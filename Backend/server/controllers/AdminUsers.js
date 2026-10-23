@@ -1,7 +1,6 @@
 const express = require('express');
 const passwords = require('../utils/password');
 const mysql = require('mysql');
-const AWS = require('aws-sdk');
 require('dotenv').config()
 var fs = require('fs')
 var moment = require('moment');
@@ -10,9 +9,9 @@ const CommonController = require("../controllers/CommonController");
 const pool = require('../utils/db');
 const s3 = require('../utils/s3');
 
-deliveryboy_s3 = "https://dm95er30b2f9h.cloudfront.net/deliveryboys/"
+deliveryboy_s3 = "http://clikgett-media.local/deliveryboys/"
 
-const users_s3 = "https://dm95er30b2f9h.cloudfront.net/Users/"
+const users_s3 = "http://clikgett-media.local/Users/"
 
 const usercontroller = {
 

@@ -1,0 +1,105 @@
+# Builds the customer app (Flutter/UserApp) for iOS on a GitHub macOS runner and
+# uploads it to TestFlight. Run it from the Actions tab ("Run workflow").
+#
+# Repository secrets (Settings > Secrets and variables > Actions), from an App Store
+# Connect API key with the Admin role (Users and Access > Integrations > Keys):
+#   ASC_KEY_ID          Key ID
+#   ASC_ISSUER_ID       Issuer ID
+#   ASC_KEY_P8_BASE64   the downloaded AuthKey_<id>.p8, base64-encoded
+name: iOS TestFlight (customer app)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: API the build talks to (PC on the Wi-Fi for testing, or the https production URL)
+        required: true
+        default: http://192.168.29.89:5001/api
+      build_name:
+        description: Version shown to testers (leave empty to use pubspec.yaml; must be newer than the App Store version)
+        required: false
+        default: ""
+
+jobs:
+  testflight:
+    runs-on: macos-15
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: Flutter/UserApp
+    env:
+      TEAM_ID: R54A3KD2SK
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.4
+          channel: stable
+          cache: true
+
+      - name: App Store Connect API key
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_KEY_P8_BASE64" ]; then
+            echo "::error::Add the ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8_BASE64 repository secrets first."
+            exit 1
+          fi
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
+
+      - run: flutter pub get
+
+      # Compiles the Flutter part and writes the build number and API URL into
+      # ios/Flutter/Generated.xcconfig, which the signed archive below reuses.
+      - name: Build Flutter (unsigned)
+        run: |
+          BUILD_NUMBER=$(date -u +%y%m%d%H%M)
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          flutter build ios --release --no-codesign \
+            --build-number="$BUILD_NUMBER" \
+            ${{ inputs.build_name && format('--build-name={0}', inputs.build_name) || '' }} \
+            --dart-define=API_BASE_URL="${{ inputs.api_base_url }}"
+
+      - name: Archive (automatic signing)
+        run: |
+          xcodebuild archive \
+            -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic
+
+      - name: Upload to TestFlight
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          echo "Uploaded build $BUILD_NUMBER. It appears in App Store Connect > TestFlight after Apple's processing (usually 5-30 minutes)."
+
+      - name: Remove API key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8"

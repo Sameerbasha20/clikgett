@@ -110,6 +110,19 @@ class StorefrontServices {
     }
   }
 
+  /// Products from the same subcategory/category as [productId].
+  static Future<List<home_model.BestItem>> similarProducts(int productId) async {
+    try {
+      final response = await _client.get(Uri.parse('${Constants.baseUrl}/products/similar/$productId'));
+      final data = jsonDecode(response.body);
+      final list = (data is Map ? data['Products'] : null) as List? ?? [];
+      return list.map((e) => home_model.BestItem.fromJson(Map<String, dynamic>.from(e))).toList();
+    } catch (e) {
+      debugPrint('similarProducts failed: $e');
+      return [];
+    }
+  }
+
   /// Products that get cheaper when you buy more (bundles, slabs, "buy 2" prices).
   static Future<List<home_model.BestItem>> bulkDeals() async {
     try {

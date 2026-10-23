@@ -19,6 +19,7 @@ import ScaleLoader from "react-spinners/ScaleLoader";
 import { useNavigate, useParams } from "react-router-dom";
 import { AiOutlineEye, AiOutlineClose } from "react-icons/ai";
 import { useSearchParams } from "react-router-dom";
+import { dayStartToUtc, dayEndToUtc, toDateInput } from "../../../dateInputs";
 function Warehouse() {
     const [params, setParams] = useSearchParams();
     const [category, setCategory] = useState(false);
@@ -229,12 +230,12 @@ function Warehouse() {
                         }))
                     );
                     if (sorted[0].StartDate) {
-                        setStartDate(sorted[0].StartDate.split("T")[0]);
+                        setStartDate(toDateInput(sorted[0].StartDate));
                     } else {
                         setStartDate("");
                     }
                     if (sorted[0].EndDate) {
-                        setEndDate(sorted[0].EndDate.split("T")[0]);
+                        setEndDate(toDateInput(sorted[0].EndDate));
                     } else {
                         setEndDate("");
                     }
@@ -291,8 +292,8 @@ function Warehouse() {
             const payload = {
                 ProductID: selectedBuyMoreProduct.ProductID,
                 items: [],
-                StartDate: startDate || null,
-                EndDate: endDate || null,
+                StartDate: dayStartToUtc(startDate),
+                EndDate: dayEndToUtc(endDate),
                 Status: status
             };
 
@@ -349,8 +350,8 @@ function Warehouse() {
         const payload = {
             ProductID: selectedBuyMoreProduct.ProductID,
             items,
-            StartDate: startDate || null,
-            EndDate: endDate || null,
+            StartDate: dayStartToUtc(startDate),
+            EndDate: dayEndToUtc(endDate),
             Status: status
         };
 

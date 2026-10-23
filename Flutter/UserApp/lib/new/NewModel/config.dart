@@ -3,6 +3,7 @@
 //     final configModel = configModelFromJson(jsonString);
 
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 ConfigModel configModelFromJson(String str) =>
     ConfigModel.fromJson(json.decode(str));
@@ -55,7 +56,7 @@ class Setting {
         settingValue: json["SettingValue"],
         createdAt: json["CreatedAt"] == null
             ? null
-            : DateTime.parse(json["CreatedAt"]),
+            : serverDate(json["CreatedAt"])!,
         imageUrl: json["ImageUrl"],
       );
 

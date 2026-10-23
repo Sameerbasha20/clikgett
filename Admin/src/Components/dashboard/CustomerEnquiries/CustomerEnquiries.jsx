@@ -8,6 +8,7 @@ import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.m
 import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from "react-bootstrap-table2-paginator";
 import { Services } from "../../../Services";
+import RequestTabs from "../ProductRequests/RequestTabs";
 import { toast } from "react-toastify";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { css } from "@emotion/react";
@@ -403,7 +404,7 @@ function CustomerEnquiries() {
     return (
         <div className={dashboardclasses["dashboard-wrapper"]}>
             <div className={dashboardclasses["dashboard-leftside"]}>
-                <SideNav isactive="customerEnquiries" />
+                <SideNav isactive="productRequests" />
             </div>
 
             <div className={dashboardclasses["dashboard-rightside"]}>
@@ -418,6 +419,7 @@ function CustomerEnquiries() {
                         boxSizing: "border-box",
                     }}
                 >
+                    <RequestTabs />
                     {/* Header: Title, Description & Refresh Action */}
                     <div
                         style={{

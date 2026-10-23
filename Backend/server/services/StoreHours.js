@@ -18,8 +18,9 @@ const query = (sql, params = []) => new Promise((resolve, reject) => {
     pool.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
 });
 
+// Accepts "HH:MM:SS" and "HH:MM" (the admin timings page saves the latter).
 const toMinutes = (time) => {
-    const [h, m, s] = String(time).split(':').map((x) => parseInt(x, 10) || 0);
+    const [h = 0, m = 0, s = 0] = String(time).split(':').map((x) => parseInt(x, 10) || 0);
     return h * 60 + m + s / 60;
 };
 

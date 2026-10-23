@@ -6,7 +6,7 @@ import { IoPricetagsOutline } from "react-icons/io5";
 import { FiSettings, FiDownload } from "react-icons/fi";
 import {
     FaUserFriends, FaPercent, FaSearch, FaCommentDots, FaStore, FaUnlockAlt, FaCoins,
-    FaCamera, FaQuestionCircle, FaClipboardList, FaCrown, FaUserShield, FaBell, FaClock,
+    FaCamera, FaClipboardList, FaCrown, FaUserShield, FaBell, FaClock,
 } from "react-icons/fa";
 
 // Sidebar, grouped by job. `active` must match the page's <SideNav isactive="..."> value.
@@ -21,8 +21,7 @@ export const menuSections = [
             { name: "Orders", menuLink: "/orders", active: "orders", icon: CgShoppingCart },
             { name: "Live Operations", menuLink: "/live-operations", active: "LiveOperations", icon: MdOutlineDeliveryDining },
             { name: "Photo Orders", menuLink: "/photo-orders", active: "photoOrders", icon: FaCamera },
-            { name: "Product Requests", menuLink: "/product-requests", active: "productRequests", icon: FaClipboardList },
-            { name: "Customer Enquiries", menuLink: "/customer-enquiries", active: "customerEnquiries", icon: FaQuestionCircle },
+            { name: "Customer Requests", menuLink: "/product-requests", active: "productRequests", icon: FaClipboardList },
         ],
     },
     {

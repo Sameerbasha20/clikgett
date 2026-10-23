@@ -176,7 +176,8 @@ const CustomerAccount = {
     membershipConfirm: async (req, resp) => {
         try {
             const body = req.body || {};
-            const expected = crypto.createHmac('sha256', process.env.RAZORPAYSECRET || 'local_mock_secret')
+            if (!process.env.RAZORPAYSECRET) return resp.status(503).json({ Status: 0, Message: 'Online payments are not configured' });
+            const expected = crypto.createHmac('sha256', process.env.RAZORPAYSECRET)
                 .update(`${body.RazorpayOrderID}|${body.razorpay_payment_id}`).digest('hex');
             if (expected !== body.razorpay_signature) return resp.status(400).json({ Status: 0, Message: 'Payment could not be verified' });
 

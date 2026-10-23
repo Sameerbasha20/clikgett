@@ -8,7 +8,7 @@ class ScheduledSlotInfo {
   final bool isScheduled;
   final DateTime? scheduledDate;
   final String? slotLabel;
-  final String? formattedScheduledDateTime; // start of the chosen day, e.g. "2026-10-07 00:00:00"
+  final String? formattedScheduledDateTime; // start of the chosen day in UTC, e.g. "2026-10-06 18:30:00"
 
   ScheduledSlotInfo({
     required this.isScheduled,
@@ -113,15 +113,16 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
         formattedScheduledDateTime: null,
       ));
     } else {
-      // Only a day is chosen; the order is released for delivery from the start of that day.
+      // Only a day is chosen; the order is released for delivery from the start of that day
+      // (IST midnight, sent as UTC like every other server time).
       final selectedDate = availableDates[selectedDateIndex];
-      final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
+      final dayStartUtc = DateTime(selectedDate.year, selectedDate.month, selectedDate.day).toUtc();
 
       widget.onSlotChanged(ScheduledSlotInfo(
         isScheduled: true,
         scheduledDate: selectedDate,
         slotLabel: DateFormat('EEE, d MMM').format(selectedDate),
-        formattedScheduledDateTime: "$dateStr 00:00:00",
+        formattedScheduledDateTime: DateFormat('yyyy-MM-dd HH:mm:ss').format(dayStartUtc),
       ));
     }
   }

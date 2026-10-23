@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:fav_app/new/Services/common/server_date.dart';
 
 ActiveSaleResponse activeSaleResponseFromJson(String str) =>
     ActiveSaleResponse.fromJson(json.decode(str));
@@ -69,10 +70,10 @@ class SaleCampaign {
             : null,
         startDate: json["StartDate"] == null
             ? null
-            : DateTime.tryParse(json["StartDate"].toString()),
+            : serverDate(json["StartDate"]),
         endDate: json["EndDate"] == null
             ? null
-            : DateTime.tryParse(json["EndDate"].toString()),
+            : serverDate(json["EndDate"]),
         status: json["Status"],
         products: json["Products"] == null
             ? []

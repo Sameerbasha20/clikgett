@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { css } from "@emotion/react";
 import { FaEdit, FaTrash, FaPlus, FaLock, FaUnlock } from "react-icons/fa";
+import { localDateTimeToUtc, toDateTimeInput } from "../../../dateInputs";
 
 function ProductUnlocks() {
     const [unlocks, setUnlocks] = useState([]);
@@ -84,8 +85,8 @@ function ProductUnlocks() {
         setSelectedProductId(row.ProductID);
         setUnlockPrice(row.UnlockPrice !== null && row.UnlockPrice !== undefined ? row.UnlockPrice : "");
         setUnlockMessage(row.UnlockMessage || "");
-        setStartDate(row.StartDate ? row.StartDate.slice(0, 16) : "");
-        setEndDate(row.EndDate ? row.EndDate.slice(0, 16) : "");
+        setStartDate(toDateTimeInput(row.StartDate));
+        setEndDate(toDateTimeInput(row.EndDate));
         setStatus(row.Status);
         setModal(true);
     };
@@ -123,8 +124,8 @@ function ProductUnlocks() {
             ProductID: parseInt(selectedProductId),
             UnlockPrice: unlockPrice !== "" && !isNaN(unlockPrice) ? parseFloat(unlockPrice) : null,
             UnlockMessage: unlockMessage,
-            StartDate: startDate || null,
-            EndDate: endDate || null,
+            StartDate: localDateTimeToUtc(startDate),
+            EndDate: localDateTimeToUtc(endDate),
             Status: parseInt(status),
         };
 
