@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
     const statusCode = isHealthy ? 200 : 503;
 
     return res.status(statusCode).json({
-        status: isHealthy ? (redis.status === 'connected' ? 'healthy' : 'degraded') : 'unhealthy',
+        status: isHealthy ? (redis.status === 'connected' || redis.enabled === false ? 'healthy' : 'degraded') : 'unhealthy',
         message: isHealthy ? 'ClikGett API is running' : 'ClikGett API is running but database is unavailable',
         service: 'clikgett-backend',
         environment: process.env.NODE_ENV || 'development',
