@@ -50,4 +50,13 @@ const pool = mysql.createPool({
     ...(ssl ? { ssl } : {})
 });
 
+// Hosted MySQL can default to ANSI mode (Aiven: ANSI_QUOTES, PIPES_AS_CONCAT,
+// ONLY_FULL_GROUP_BY), which breaks queries that use "double-quoted" strings or loose
+// GROUP BYs. Every connection gets the same mode as the local MySQL 8 the code is built on.
+const sqlMode = env('DB_SQL_MODE') ||
+    'STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+pool.on('connection', (connection) => {
+    connection.query('SET SESSION sql_mode = ?', [sqlMode]);
+});
+
 module.exports = pool;
