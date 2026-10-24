@@ -1,5 +1,12 @@
 'use strict';
 
+// Hosting dashboards (e.g. Render's "Add from .env") can keep quotes around values;
+// strip one matching pair so TRUST_PROXY='1', DB_SSL="true" etc. mean what they say.
+for (const [key, value] of Object.entries(process.env)) {
+    const quoted = /^(['"])([\s\S]*)\1$/.exec(value);
+    if (quoted) process.env[key] = quoted[2];
+}
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');

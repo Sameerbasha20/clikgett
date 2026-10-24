@@ -1,38 +1,52 @@
 const fs = require('fs');
-const mysql = require('mysql');
+const mysql = require('mysql2');
 require('dotenv').config();
 
 // Single shared MySQL pool for the whole backend. All settings come from the
-// environment, so moving between local Docker MySQL and AWS RDS is only an
-// .env change. Legacy variable names (HOST, PASSWORD, db) are still accepted.
-const host = process.env.DB_HOST || process.env.HOST;
-const isRemoteRds = /\.rds\.amazonaws\.com$/i.test(String(host || '').replace(/"/g, ''));
+// environment, so moving between the local Docker MySQL and a hosted one (Aiven) is
+// only an env change. Legacy variable names (HOST, PASSWORD, db) are still accepted.
+//
+// mysql2 (callback API, same calls as the old `mysql` package) supports MySQL 8.4's
+// default caching_sha2_password login. The options below keep the old package's
+// results: DECIMAL as numbers and JSON columns as strings (callers JSON.parse them).
 
-// Guard against accidentally pointing local development at production.
-if (process.env.NODE_ENV === 'development' && isRemoteRds && process.env.ALLOW_REMOTE_DB !== 'true') {
+// Hosting dashboards sometimes keep quotes around pasted values.
+const env = (name) => {
+    const v = process.env[name];
+    return typeof v === 'string' ? v.trim().replace(/^(['"])(.*)\1$/s, '$2') : v;
+};
+
+const host = env('DB_HOST') || env('HOST');
+const isRemoteRds = /\.rds\.amazonaws\.com$/i.test(String(host || ''));
+
+// Guard against accidentally pointing local development at the old production database.
+if (env('NODE_ENV') === 'development' && isRemoteRds && env('ALLOW_REMOTE_DB') !== 'true') {
     console.error('Refusing to start: NODE_ENV=development but DB host is an AWS RDS endpoint. ' +
         'Point DB_HOST at your local MySQL, or set ALLOW_REMOTE_DB=true if this is intentional.');
     process.exit(1);
 }
 
 let ssl;
-if (process.env.DB_SSL === 'true') {
+if (env('DB_SSL') === 'true') {
     // Managed MySQL (e.g. Aiven): the provider's CA certificate, either as a file path
     // (DB_SSL_CA) or pasted into DB_SSL_CA_PEM on hosts without files (Render).
-    const ca = process.env.DB_SSL_CA_PEM
-        ? process.env.DB_SSL_CA_PEM.replace(/\\n/g, '\n') // allow "\n" when pasted on one line
-        : process.env.DB_SSL_CA ? fs.readFileSync(process.env.DB_SSL_CA) : undefined;
+    const pem = env('DB_SSL_CA_PEM');
+    const ca = pem
+        ? pem.replace(/\\n/g, '\n') // allow "\n" when pasted on one line
+        : env('DB_SSL_CA') ? fs.readFileSync(env('DB_SSL_CA')) : undefined;
     ssl = ca ? { ca, rejectUnauthorized: true } : { rejectUnauthorized: true };
 }
 
 const pool = mysql.createPool({
-    connectionLimit: parseInt(process.env.DB_POOL_SIZE, 10) || 10,
-    password: process.env.DB_PASSWORD || process.env.PASSWORD,
-    user: process.env.DB_USER,
-    database: process.env.DB_NAME || process.env.db,
+    connectionLimit: parseInt(env('DB_POOL_SIZE'), 10) || 10,
+    password: env('DB_PASSWORD') || env('PASSWORD'),
+    user: env('DB_USER'),
+    database: env('DB_NAME') || env('db'),
     host,
-    port: process.env.DB_PORT || 3306,
+    port: Number(env('DB_PORT')) || 3306,
     charset: 'utf8mb4',
+    decimalNumbers: true,
+    typeCast: (field, next) => (field.type === 'JSON' ? field.string('utf8') : next()),
     ...(ssl ? { ssl } : {})
 });
 
