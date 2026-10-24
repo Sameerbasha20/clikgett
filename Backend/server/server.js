@@ -181,6 +181,16 @@ try {
         console.log(`DB Health:  http://localhost:${PORT}/api/health/db`);
         console.log('==================================================');
         PaymentRecovery.start();
+        // Say in the logs why the database is unreachable (hosts hide /health until it passes).
+        require('./utils/db').query('SELECT 1', (err) => {
+            if (err) {
+                console.error(`[DB] Cannot connect to ${process.env.DB_HOST || process.env.HOST}:${process.env.DB_PORT || 3306} ` +
+                    `as ${process.env.DB_USER} (database ${process.env.DB_NAME || process.env.db}, SSL ${process.env.DB_SSL === 'true' ? 'on' : 'off'}, ` +
+                    `CA ${process.env.DB_SSL_CA_PEM ? 'from DB_SSL_CA_PEM' : 'none'}): ${err.code || ''} ${err.message}`);
+            } else {
+                console.log('[DB] Connected');
+            }
+        });
     });
     // Phones reuse idle connections; Node's default 5 s idle timeout closes them
     // just as the app sends the next request ("Connection closed before full header").
