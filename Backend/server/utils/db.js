@@ -17,10 +17,12 @@ if (process.env.NODE_ENV === 'development' && isRemoteRds && process.env.ALLOW_R
 
 let ssl;
 if (process.env.DB_SSL === 'true') {
-    // RDS: download the region CA bundle and set DB_SSL_CA to its path.
-    ssl = process.env.DB_SSL_CA
-        ? { ca: fs.readFileSync(process.env.DB_SSL_CA), rejectUnauthorized: true }
-        : { rejectUnauthorized: true };
+    // Managed MySQL (e.g. Aiven): the provider's CA certificate, either as a file path
+    // (DB_SSL_CA) or pasted into DB_SSL_CA_PEM on hosts without files (Render).
+    const ca = process.env.DB_SSL_CA_PEM
+        ? process.env.DB_SSL_CA_PEM.replace(/\\n/g, '\n') // allow "\n" when pasted on one line
+        : process.env.DB_SSL_CA ? fs.readFileSync(process.env.DB_SSL_CA) : undefined;
+    ssl = ca ? { ca, rejectUnauthorized: true } : { rejectUnauthorized: true };
 }
 
 const pool = mysql.createPool({

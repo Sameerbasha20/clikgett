@@ -1,0 +1,101 @@
+# Render Blueprint: the ClikGett backend (free web service) and a free Redis cache.
+# Deploy: https://render.com/deploy?repo=https://github.com/Sameerbasha20/clikgett
+#
+# The admin site is on Vercel (Admin/vercel.json). MySQL is external (Aiven free
+# MySQL) and files are in Supabase Storage; their settings are asked for on first deploy
+# (sync: false). If Render gives the backend a different URL than
+# https://clikgett-backend.onrender.com, update PUBLIC_MEDIA_BASE_URL here,
+# Admin/vercel.json and the app builds.
+services:
+  - type: web
+    name: clikgett-backend
+    runtime: docker
+    rootDir: Backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render's proxy sits in front of the service.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+
+      # Aiven MySQL (Service settings > Connection information)
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      # Contents of Aiven's "CA certificate" (ca.pem)
+      - key: DB_SSL_CA_PEM
+        sync: false
+
+      - key: REDIS_ENABLED
+        value: "true"
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: clikgett-cache
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: clikgett-cache
+          property: port
+
+      # Supabase Storage (Project settings > API): project URL and service_role key
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: S3_BUCKET
+        value: clikgett-media
+      - key: PUBLIC_MEDIA_BASE_URL
+        value: https://clikgett-backend.onrender.com/media/
+      # The Vercel admin URL, e.g. https://clikgett-admin.vercel.app (admin uploads go to /media)
+      - key: CORS_ORIGINS
+        sync: false
+
+      # Firebase service-account JSON (file contents) for push notifications
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: RAZORPAYID
+        sync: false
+      - key: RAZORPAYSECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: TEXTSPEED_APIKEY
+        sync: false
+      - key: GOOGLE_APIKEY
+        sync: false
+      - key: LOGIN_OTP_DIGITS
+        value: "4"
+      - key: RIDER_OTP_DIGITS
+        value: "4"
+      - key: OrderPlace
+        value: "3"
+      - key: OrderCancel
+        value: "4"
+
+  - type: keyvalue
+    name: clikgett-cache
+    plan: free
+    region: singapore
+    maxmemoryPolicy: allkeys-lru
+    # Reachable only from the backend on Render's private network.
+    ipAllowList: []

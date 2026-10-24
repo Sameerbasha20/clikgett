@@ -12,13 +12,25 @@ const pool = require('../utils/db');
 
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getMessaging } = require('firebase-admin/messaging');
-// 1 const serviceAccount = require('../utils/clikgett-2ac7e-firebase-adminsdk-umi8s-47e854ca8a.json');
-const serviceAccount = require('../utils/clikgett.json');
 const { resume } = require('pdfkit');
-initializeApp({
-    credential: cert(serviceAccount),
 
-});
+// Firebase service account for customer push notifications: the git-ignored file
+// utils/clikgett.json locally, or FIREBASE_SERVICE_ACCOUNT_JSON (the file's contents)
+// on hosts like Render. Without either the backend still runs; pushes are skipped.
+const loadServiceAccount = () => {
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    try {
+        return require('../utils/clikgett.json');
+    } catch (e) {
+        return null;
+    }
+};
+const serviceAccount = loadServiceAccount();
+if (serviceAccount) {
+    initializeApp({ credential: cert(serviceAccount) });
+} else {
+    console.warn('[Firebase] No service account configured; push notifications are disabled.');
+}
 
 const s3 = require('../utils/s3');
 const media = require('../utils/media');

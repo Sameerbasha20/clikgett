@@ -1095,7 +1095,7 @@ function Products() {
                                                         <h5>Invoice / Receipt</h5>
                                                         <h4>:</h4>
                                                         <a
-                                                            href={`${process.env.REACT_APP_BASE_URL || 'http://localhost:5000/api'}/adminorders/invoice/${orders.OrderID}?token=${encodeURIComponent(sessionStorage.getItem("token") || "")}`}
+                                                            href={`${process.env.REACT_APP_BASE_URL || '/api'}/adminorders/invoice/${orders.OrderID}?token=${encodeURIComponent(sessionStorage.getItem("token") || "")}`}
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             style={{

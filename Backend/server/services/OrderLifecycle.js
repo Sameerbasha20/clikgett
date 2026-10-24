@@ -57,9 +57,11 @@ const getRiderMessaging = () => {
     const defaultPath = path.join(__dirname, '..', 'utils', 'clikgett-delivery-firebase.json');
     const credPath = process.env.RIDER_FIREBASE_CREDENTIALS || (fs.existsSync(defaultPath) ? defaultPath : null);
     try {
-        if (credPath) {
+        // RIDER_FIREBASE_SERVICE_ACCOUNT_JSON: the key file's contents, for hosts without files (Render).
+        const inline = process.env.RIDER_FIREBASE_SERVICE_ACCOUNT_JSON ? JSON.parse(process.env.RIDER_FIREBASE_SERVICE_ACCOUNT_JSON) : null;
+        if (inline || credPath) {
             const existing = getApps().find((a) => a && a.name === 'rider');
-            const app = existing || initializeApp({ credential: cert(require(require('path').resolve(credPath))) }, 'rider');
+            const app = existing || initializeApp({ credential: cert(inline || require(require('path').resolve(credPath))) }, 'rider');
             riderMessaging = getMessaging(app);
         } else if (getApps().length) {
             riderMessaging = getMessaging();
