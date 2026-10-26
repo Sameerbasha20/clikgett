@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const CommonController = require("../controllers/CommonController");
 const LoginOtp = require('../services/LoginOtp');
 const logger = require('../utils/logger');
-Razorpay = require('razorpay')
+const Razorpay = require('razorpay')
 
 var instance;
 try {
@@ -291,6 +291,7 @@ const usercontroller = {
     }
     ,
     updateproducts: async (req, resp, next) => {
+        let UPDATE; // per-request (were implicit globals)
         try {
             let getproducts = `SELECT ProductID, ProductImages FROM Products where IsTransfered = 1`
             let products = await CommonController.commonget(getproducts)
@@ -316,6 +317,7 @@ const usercontroller = {
     ,
 
     Sendotp_Signup: async (req, resp, next) => {
+        let UserID, result; // per-request (were implicit globals)
         try {
 
             // const keys = Object.keys(req.body);
@@ -542,6 +544,7 @@ const usercontroller = {
 
 
     homepage: async (req, resp, next) => {
+        let FinalProducts, query; // per-request (were implicit globals)
         try {
             // logger.info('homepage')
             var bannerresult = await getactivebanners()
@@ -619,6 +622,7 @@ const usercontroller = {
     },
 
     Wallets: async (req, resp, next) => {
+        let GetWallets, WalletAmount; // per-request (were implicit globals)
         try {
 
             GetWallets = `select * from Wallets where UserID=${req.UserID} order by CreatedAt desc`
@@ -975,6 +979,7 @@ const usercontroller = {
     },
 
     notifications: async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try {
             query = "SELECT NotificationID,UserID,Title,Status,Type,Message,CreatedAt,\
             UpdatedAt,IsRead FROM UserNotifications where UserID="+ req.UserID + " order by CreatedAt desc"
@@ -1031,6 +1036,7 @@ const usercontroller = {
     },
 
     getSettings: async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try {
             query = "select * from Settings"
             let results = await CommonController.commonget(query);
@@ -1292,13 +1298,13 @@ function checkReferral(MyReferralCode) {
 
                 logger.info(parseInt(results.length), 'id length')
                 if (parseInt(results.length) === 1) {
-                    logger.info("UserID exists : " + UserID);
+                    logger.info("Referral code exists : " + MyReferralCode);
                     resolve(0);
 
                 }
                 else {
 
-                    logger.info("UserID not exists :" + UserID);
+                    logger.info("Referral code is free :" + MyReferralCode);
                     resolve(1);
 
                 }
@@ -1437,6 +1443,7 @@ function CheckUser_Email(EmailID, UserID) {
 }
 
 function ConvertImage(UserID, ProfilePic) {
+    let image; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
 
@@ -1486,7 +1493,7 @@ function updateFCMToken(FCMToken, UserID) {
             const query = "update Users set FCMToken = ? where UserID = ?"
             pool.query(query, [FCMToken, UserID], function (error, results, fields) {
                 if (error) {
-                    logger.info("Error in FCMToken update:" + error);
+                    console.error("Error in FCMToken update:", error);
                 }
                 else {
                     resolve(1)
@@ -1496,221 +1503,11 @@ function updateFCMToken(FCMToken, UserID) {
         });
     }
     catch (err) {
-        logger.info("Error in FCMToken update:" + error);
+        console.error("Error in FCMToken update:", err);
         resolve(0);
     }
 }
 
-function createinvoice(orderresult, orderitems, shopaddress) {
-
-    return new Promise(async function (resolve, reject) {
-        console.log.debug('pdf started')
-        // console.log('pdf started',orderitems)
-
-        const doc = new PDFDocument({
-            size: [79, 210], // Width: 79mm, Height: 210mm (A4 height)
-            margin: 2, // No margin
-        });
-
-
-        invdate = moment(orderresult['created'], 'yyyy-MM-dd').format('DDMM');
-        filename = "INV" + invdate.toString() + "_" + Date.now() + ".pdf"
-        // filename="TESTINV.pdf"
-
-        Order_Date = new Date(orderresult['created'])
-        issuedate = moment(Order_Date, 'yyyy-MM-dd').format('yyyy-MM-DD');
-
-        doc.pipe(fs.createWriteStream("images/" + filename));
-
-        const shoplines = shopaddress.split(' ').reduce((result, element, index) => {
-            if (index % 7 === 0) result.push([]);
-            result[result.length - 1].push(element);
-            return result;
-        }, []).map(line => line.join(' '));
-        console.log(shoplines)
-        var shop_address = shoplines.join('\n');
-        shop_address = shop_address
-        doc.fill('black').fontSize(4).font('Helvetica-Bold').text('Omnimart', 25, 5);
-        doc.fontSize(2).font('Helvetica-Bold').text(shop_address, 15, 10);
-
-        const invoiceno = orderresult['orderid'].replace("HM", "INV");
-
-        doc.fontSize(2).font('Helvetica-Bold').text("GSTIN : 36AADCO9556B1ZD", 15, 18);
-        doc.fontSize(2).font('Helvetica-Bold').text("CustomerInfo", 5, 27);
-
-        doc.fontSize(2).font('Helvetica').text("Name : " + orderresult['username'], 5, 33);
-        doc.fontSize(2).font('Helvetica').text("Order No : " + orderresult['orderid'], 5, 36);
-
-        doc.fontSize(2).font('Helvetica').text("Issue Date : " + issuedate, 45, 36);
-
-        // doc.moveTo(0,40).lineTo(650, 40).fill('gray').stroke();
-        var string = String("-").padStart(110, "-")
-        doc.fontSize(2).font('Helvetica').text(string, 2, 40);
-
-        doc.fill('black').fontSize(2).font('Helvetica-Bold').text('Item', 5, 44);
-        doc.fontSize(2).font('Helvetica-Bold').text('Qty', 50, 44);
-        doc.fontSize(2).font('Helvetica-Bold').text('Price', 60, 44);
-        doc.fontSize(2).font('Helvetica-Bold').text('Amt', 70, 44);
-
-        doc.fontSize(2).font('Helvetica').text(string, 2, 47);
-        // doc.moveTo(0,47).lineTo(650, 47).fill('gray').stroke();
-
-        line1 = 47
-        // lin2=65
-
-        var products_in_page_1 = 22
-        var products_in_newpage = 29
-        var itemsqty = 0
-
-        var TotalGst = 0
-        var gst = 0
-
-
-        if (orderitems.length > products_in_page_1) {
-            //if products length more than 10
-            for (var j = 0; j < products_in_page_1; j++) {
-                //first page of pdf
-                if (j < products_in_page_1) {
-                    itemsqty = itemsqty + orderitems[j]['quantity']
-                    if (orderitems[j]['gst'] == undefined) {
-                        orderitems[j]['gst'] = 0
-                    }
-
-                    gst = (orderitems[j]['dmrp'] * orderitems[j]['quantity']) / (1 + (orderitems[j]['gst'] / 100))
-
-                    gst = (orderitems[j]['dmrp'] * orderitems[j]['quantity']) - gst
-
-                    TotalGst = parseFloat(TotalGst) + parseFloat(gst)
-                    console.log(parseFloat(TotalGst), parseFloat(gst), 'totalgst')
-                    line1 = line1 + 7
-                    // console.log(line2,'line2')
-                    line2 = line1 + 15
-                    await invoiceproducts(doc, orderitems[j], line1)
-                }
-            }
-
-            var itemslength = orderitems.length
-            if (orderitems.length < products_in_newpage) {
-                noofpages = 1
-            }
-            else {
-                noofpages = itemslength / products_in_newpage
-            }
-            console.log.debug(noofpages, 'noofpages')
-
-            var num = products_in_page_1
-
-            for (var i = 0; i < noofpages; i++) {
-                //to add new page added
-                doc.addPage()
-                newline1 = 0
-                for (var k = num; k < num + products_in_newpage; k++) {
-
-                    if (k < itemslength) {
-                        itemsqty = itemsqty + orderitems[k]['quantity']
-                        // orderitems[k]['gst'] =1  
-                        if (orderitems[k]['gst'] == undefined) {
-                            orderitems[k]['gst'] = 0
-                        }
-                        gst = (orderitems[k]['dmrp'] * orderitems[k]['quantity']) / (1 + (orderitems[k]['gst'] / 100))
-
-                        gst = (orderitems[k]['dmrp'] * orderitems[k]['quantity']) - gst
-
-                        TotalGst = parseFloat(TotalGst) + parseFloat(gst)
-                        console.log(parseFloat(TotalGst), parseFloat(gst), 'totalgst')
-
-                        newline2 = newline1 + 15
-                        newline1 = newline1 + 7
-                        await invoiceproducts(doc, orderitems[k], newline1, newline2)
-                    }
-                }
-                num = num + products_in_newpage
-                if (k > itemslength) {
-                    break
-                }
-            }
-            console.log(itemsqty, '*********************************')
-            console.log(TotalGst, '*********************************')
-            if (newline2 <= 174) {
-                console.log('here')
-                await ordersummary(doc, newline2, orderresult, string, itemsqty, TotalGst)
-            }
-            else {
-                doc.addPage()
-                await newpage_ordersummary(doc, orderresult, string, itemsqty, TotalGst)
-            }
-        }
-        else {
-            for (var j = 0; j < orderitems.length; j++) {
-                var line2 = line1 + 15
-                var line1 = line1 + 7
-                console.log(line1, "*******************************************************")
-                console.log(line2, "*******************************************************")
-                itemsqty = itemsqty + orderitems[j]['quantity']
-                if (orderitems[j]['gst'] == undefined) {
-                    orderitems[j]['gst'] = 0
-                }
-                gst = (orderitems[j]['dmrp'] * orderitems[j]['quantity']) / (1 + (orderitems[j]['gst'] / 100))
-                gst = (orderitems[j]['dmrp'] * orderitems[j]['quantity']) - gst
-                TotalGst = parseFloat(TotalGst) + parseFloat(gst)
-                console.log(parseFloat(TotalGst), parseFloat(gst), 'totalgst')
-                await invoiceproducts(doc, orderitems[j], line1, line2)
-            }
-            console.log(line2, 'line2')
-            if (line2 <= 174) {
-                await ordersummary(doc, line2, orderresult, string, itemsqty, TotalGst)
-            }
-            else {
-                doc.addPage()
-                await newpage_ordersummary(doc, orderresult, string, itemsqty, TotalGst)
-            }
-        }
-
-        console.log.debug('file ended')
-        console.log('file endedd')
-        doc.end();
-
-        const params = {
-            Bucket: process.env.bucketname,
-            Key: 'orderinvoice/' + filename, // File name you want to save as in S3
-            Body: doc,
-            ContentType: 'application/pdf',
-            ACL: 'public-read'
-        };
-
-        // Uploading files to the bucket
-        s3.upload(params, async function (err, data) {
-            console.log('upload')
-            if (err) {
-                throw err;
-            }
-            location = data.Location
-            console.log(`File uploaded successfully. ${data.Location}`);
-            try {
-                // 
-                let queryx = {
-                    orderid: orderresult['orderid']
-                }
-                fndupdchanges = {
-                    $set: { invoicefile: 'http://clikgett-media.local/orderinvoice/' + filename }
-                };
-                console.log(queryx, fndupdchanges)
-                orderupdate = await orders.updateOne(queryx, fndupdchanges)
-                console.log(orderupdate)
-            }
-            catch (e) {
-                console.log.debug('file not found')
-            }
-            console.log("PDF upload success");
-
-        });
-
-        resolve(1)
-
-
-
-    });
-}
 
 
 function generateRandomString(length) {

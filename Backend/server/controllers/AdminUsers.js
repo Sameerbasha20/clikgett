@@ -9,7 +9,7 @@ const CommonController = require("../controllers/CommonController");
 const pool = require('../utils/db');
 const s3 = require('../utils/s3');
 
-deliveryboy_s3 = "http://clikgett-media.local/deliveryboys/"
+const deliveryboy_s3 = "http://clikgett-media.local/deliveryboys/"
 
 const users_s3 = "http://clikgett-media.local/Users/"
 
@@ -128,6 +128,7 @@ const usercontroller = {
     },
 
     adminlogin: async (req, resp, next) => {
+        let emaildata; // per-request (were implicit globals)
         try {
             emaildata = await Verifyemail(req.body)
             if (emaildata == 0) {
@@ -155,6 +156,7 @@ const usercontroller = {
     },
 
     addeliveryboy: async (req, resp, next) => {
+        let AdminID, body, column, emaildata; // per-request (were implicit globals)
         try {
 
             body = req.body
@@ -209,6 +211,7 @@ const usercontroller = {
     },
 
     adminupdatedeliveryboy: async (req, resp, next) => {
+        let Body, EmailID, FirstName, LastName, Status, deliveryboycheck, emailexists, queryString; // per-request (were implicit globals)
         try {
             Body = req.body
 
@@ -282,6 +285,7 @@ const usercontroller = {
     },
 
     admindeletedeliveryboy: async (req, resp, next) => {
+        let deliveryboycheck, queryString; // per-request (were implicit globals)
         try {
 
             deliveryboycheck = await getdeliveryboy(req.params.AdminID)
@@ -502,9 +506,10 @@ const usercontroller = {
     },
 
     updateuser: async (req, resp, next) => {
+        let Body, Status, queryString; // per-request (were implicit globals)
         try {
             console.log(req.params.UserID, 'userid')
-            UserID = req.params.UserID
+            const UserID = req.params.UserID
             Body = req.body
 
             console.log(req.body, 'body')
@@ -1064,6 +1069,7 @@ const usercontroller = {
     },
 
     adminnotification: async (req, resp, next) => {
+        let addnoti, results; // per-request (were implicit globals)
         try {
 
 
@@ -1140,6 +1146,7 @@ const usercontroller = {
     },
 
     addsettings: async (req, resp, next) => {
+        let settingsresult; // per-request (were implicit globals)
         try {
 
             settingsresult = await Createsettings(req.body)
@@ -1157,6 +1164,7 @@ const usercontroller = {
     },
 
     updatesettings: async (req, resp, next) => {
+        let Body, SettingKey, SettingValue, queryString; // per-request (were implicit globals)
         try {
             Body = req.body
             // Keys are fixed (the apps read them by name); only values change here.
@@ -1870,6 +1878,7 @@ const usercontroller = {
 }
 
 function getdeliveryboy(AdminID) {
+    let query; // per-request (were implicit globals)
 
     return new Promise(function (resolve, reject) {
         try {
@@ -1974,6 +1983,7 @@ function Verifylogin(inputs) {
 }
 
 function convertimage(AdminID, ProfilePic) {
+    let image; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
 
@@ -2043,6 +2053,7 @@ function checkemailid(EmailID, AdminID) {
 }
 
 function getusers() {
+    let query; // per-request (were implicit globals)
 
     return new Promise(function (resolve, reject) {
         try {
@@ -2091,48 +2102,6 @@ function addnotification(body, UserID) {
     }
 }
 
-function sendnotifications(body, FCMToken) {
-    try {
-        return new Promise(function (resolve, reject) {
-
-            {
-
-
-
-                var serverKey = server_Key; // put your server key here
-                var fcm = new FCM(serverKey);
-
-                var message = {
-                    registration_ids: FCMToken,
-                    collapse_key: 'FavMall',
-
-                    notification: {
-                        title: body.Title,
-                        body: body.Message
-                    },
-
-                };
-
-                fcm.send(message, function (err, response) {
-                    if (err) {
-                        console.log("Something has gone wrong!", err);
-                        resolve(0);
-                    } else {
-                        console.log("Successfully sent with response: ", response);
-                        resolve(1);
-                    }
-                });
-
-            }
-
-        });
-
-    }
-    catch (err) {
-        console.log("Error in creating ContactUs: ", err);
-        return false;
-    }
-}
 
 
 module.exports = usercontroller

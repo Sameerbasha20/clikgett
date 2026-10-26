@@ -1,3 +1,4 @@
+const PricingEngine = require('../services/PricingEngine');
 const RetentionEngine = require('../services/RetentionEngine');
 const mysql = require('mysql');
 require('dotenv').config()
@@ -26,7 +27,7 @@ const PromoCodecontroller = {
     userallPromoCodes: async (req, resp, next) => {
         try {
 
-            UserID = req.UserID
+            const UserID = req.UserID
             pool.query("SELECT * from PromoCodes where StartDate<=date(CONVERT_TZ(Now(),'+00:00','+05:30'))  and \
                     EndDate>=date(CONVERT_TZ(Now(),'+00:00','+05:30')) \
                     and Status=1 and Is_Secret=0 order by createdAt desc;", (err, results) => {
@@ -186,7 +187,7 @@ const PromoCodecontroller = {
     all_PromoCodess: async (req, resp, next) => {
         try {
 
-            UserID = req.UserID
+            const UserID = req.UserID
             pool.query("SELECT * FROM PromoCodes where Status!=0 order by createdAt desc;", (err, results) => {
                 console.log('connecting')
                 if (err) {
@@ -220,7 +221,7 @@ const PromoCodecontroller = {
     get_PromoCodess: async (req, resp, next) => {
         try {
 
-            UserID = req.UserID
+            const UserID = req.UserID
             pool.query("SELECT * FROM PromoCodes where Status!=0 and PromoCodeID=?;", [req.params.PromoCodeID], (err, results) => {
                 console.log('connecting')
                 if (err) {
@@ -251,6 +252,7 @@ const PromoCodecontroller = {
     },
 
     add_promoCodess: async (req, resp, next) => {
+        let check_PromoCodes, createPromoCodes; // per-request (were implicit globals)
         try {
             const keys = Object.keys(req.body);
 
@@ -277,6 +279,7 @@ const PromoCodecontroller = {
     },
 
     update_PromoCodes: async (req, resp, next) => {
+        let Body, Description, EndDate, Is_Secret, MaxDiscount, OfferValue, PromoCode, StartDate, Status, Type, check_PromoCodes, queryString; // per-request (were implicit globals)
         try {
             Body = req.body
 
@@ -373,6 +376,7 @@ const PromoCodecontroller = {
     },
 
     delete_PromoCodess: async (req, resp, next) => {
+        let check_PromoCodes; // per-request (were implicit globals)
         try {
             check_PromoCodes = await getPromoCodesdetail(0, 'PromoCodeID_check', req.params.PromoCodeID)
             if (check_PromoCodes.length == 0) {
@@ -444,6 +448,7 @@ function add_PromoCodes(body) {
 }
 
 function getPromoCodeDetail(PromoCode, string, PromoCodeID) {
+    let query; // per-request (were implicit globals)
     try {
 
         return new Promise(function (resolve, reject) {
@@ -476,6 +481,7 @@ function getPromoCodeDetail(PromoCode, string, PromoCodeID) {
 }
 
 function getPromoCodesdetail(PromoCode, string, PromoCodeID) {
+    let query; // per-request (were implicit globals)
     try {
 
         return new Promise(function (resolve, reject) {

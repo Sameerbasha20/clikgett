@@ -10,6 +10,7 @@ const pool = require('../utils/db');
 const addresscontroller={
 
     gettaddressbyuserid : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{                    
             query="select * from Address where UserID="+req.UserID+" order by CreatedAt desc;"
             let results = await CommonController.commonget(query); 
@@ -394,6 +395,7 @@ function calculateHaversineKm(lat1, lon1, lat2, lon2) {
 }
 
 function getradius(storelatitude,storeLongitude,body) {
+let query; // per-request (were implicit globals)
 
     return new Promise(function (resolve, reject) {
         try{

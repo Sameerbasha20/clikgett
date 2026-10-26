@@ -17,6 +17,7 @@ const adminproductcontroller={
     
 
     updateproduct_csv : async (req, resp, next) => {
+        let Body, OfferPrice, Price, result; // per-request (were implicit globals)
         try {
             Body=req.body
             console.log(Body,'Body')
@@ -55,6 +56,7 @@ const adminproductcontroller={
     },
 
     orderdetails : async (req, resp, next) => {
+        let getrecords, image, location, newlist, records; // per-request (were implicit globals)
         try {
 
             getrecords = await getpendingorders()
@@ -104,6 +106,7 @@ const adminproductcontroller={
     },
 
     productdetails : async (req, resp, next) => {
+        let getrecords, image, location, newlist, records; // per-request (were implicit globals)
         try {
 
             getrecords = await getproductdetails()
@@ -153,6 +156,7 @@ const adminproductcontroller={
     },
 
     warehousedetails : async (req, resp, next) => {
+        let getrecords, image, location, newlist, records; // per-request (were implicit globals)
         try {
 
             getrecords = await getpendingorders()
@@ -202,6 +206,7 @@ const adminproductcontroller={
     },
 
     pendingorders_csv : async (req, resp, next) => {
+        let image, location, newlist, query, records; // per-request (were implicit globals)
         try {
 
             
@@ -258,6 +263,7 @@ const adminproductcontroller={
 
 
 function updateexistingitem(ProductID,VariantID,Price,OfferPrice) {
+    let query; // per-request (were implicit globals)
 
     return new Promise(function (resolve, reject) {
             query="update ProductVariants set "+Price+","+OfferPrice+" where ProductID="+ProductID+" and VariantID="+VariantID+";"
@@ -280,6 +286,7 @@ function updateexistingitem(ProductID,VariantID,Price,OfferPrice) {
 }
 
 function getpendingorders() {
+    let query; // per-request (were implicit globals)
     try{
 
             return new Promise(function (resolve, reject) {
@@ -303,6 +310,7 @@ function getpendingorders() {
 }
 
 function getproductdetails() {
+    let query; // per-request (were implicit globals)
     try{
 
             return new Promise(function (resolve, reject) {

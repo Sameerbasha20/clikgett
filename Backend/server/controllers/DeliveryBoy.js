@@ -22,11 +22,12 @@ const riderOrder = (orderId, riderId) => new Promise((resolve, reject) => {
 const verifiedDeliveries = new Map();
 const s3 = require('../utils/s3');
 
-deliveryboy_s3 = "http://clikgett-media.local/deliveryboys/"
+const deliveryboy_s3 = "http://clikgett-media.local/deliveryboys/"
 
 const deliveryboycontroller = {
 
     getdeliveryboydetail: async (req, resp, next) => {
+        let AdminID; // per-request (were implicit globals)
         try {
 
             AdminID = req.AdminID
@@ -90,6 +91,7 @@ const deliveryboycontroller = {
     },
 
     deliveryboylogin: async (req, resp, next) => {
+        let emaildata; // per-request (were implicit globals)
         try {
             console.log(`deliveryboy login : ${JSON.stringify(req.body)}`)
             emaildata = await Verifyemail(req.body)
@@ -274,6 +276,7 @@ const deliveryboycontroller = {
     // },
 
     get_routes: async (req, resp, next) => {
+        let results; // per-request (were implicit globals)
         try {
             results = await getroutes(req.AdminID, req.query.Type)
             if (req.query.Type == "pending") {
@@ -319,13 +322,14 @@ const deliveryboycontroller = {
     },
 
     ordersbyroute: async (req, resp, next) => {
+        let orderresult, results; // per-request (were implicit globals)
         try {
             results = await getroutes(req.query.RouteID, 'byid')
             console.log(results, req.query.RouteID)
             if (results.length > 0) {
                 results[0].OrderIDs = JSON.parse(results[0].OrderIDs);
                 console.log(results[0].OrderIDs)
-                orders = []
+                const orders = []
                 for (var j = 0; j < results[0].OrderIDs.length; j++) {
                     console.log(results[0].OrderIDs, results[0].OrderIDs[j])
                     orderresult = await getorder(results[0].OrderIDs[j])
@@ -345,6 +349,7 @@ const deliveryboycontroller = {
     },
 
     myorder: async (req, resp, next) => {
+        let cartitems, orderitems; // per-request (were implicit globals)
         try {
             const owned = await riderOrder(parseInt(req.query.OrderID, 10), req.AdminID);
             if (!owned) return resp.status(403).json({ "Status": 0, "Message": "This order is not assigned to you" });
@@ -520,6 +525,7 @@ const deliveryboycontroller = {
     },
 
     orderstatus: async (req, resp, next) => {
+        let results; // per-request (were implicit globals)
         try {
             results = await getdeliveredstatus(req.AdminID)
             resp.json({ "Status": 1, "OrdersStatus": results })
@@ -582,6 +588,7 @@ function Verifylogin(inputs) {
 }
 
 function getcurrentorders(DeliveryBoyID) {
+    let query; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             query = "select * from Orders where  OrderStatus in (2,5) and DeliveryBoyID=? order by CreatedAt desc;"
@@ -605,6 +612,7 @@ function getcurrentorders(DeliveryBoyID) {
 
 
 function getpastorders(DeliveryBoyID) {
+    let query; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             query = "select * from Orders where  OrderStatus in (1,3,4,6) and DeliveryBoyID=? order by CreatedAt desc;"
@@ -628,6 +636,7 @@ function getpastorders(DeliveryBoyID) {
 
 
 function getorderbyorderid(OrderID) {
+let query; // per-request (were implicit globals)
 
     return new Promise(function (resolve, reject) {
         query = "select * from Orders where OrderID=?"
@@ -671,7 +680,7 @@ function getorderbyorderid(OrderID) {
 
 
 function getorderitems(OrderID) {
-    Products_s3 = "http://clikgett-media.local/Products/"
+    const Products_s3 = "http://clikgett-media.local/Products/"
     var queryString = `
         SELECT oi.*, p.ProductImages
         FROM OrderItems oi
@@ -710,6 +719,7 @@ function getorderitems(OrderID) {
 }
 
 function convertimage(AdminID, ProfilePic) {
+    let image; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
 
@@ -755,6 +765,7 @@ function convertimage(AdminID, ProfilePic) {
 }
 
 function getusername(UserID) {
+    let query; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             query = "select *,concat(FirstName,' ',LastName) as Name from Users where UserID=?"

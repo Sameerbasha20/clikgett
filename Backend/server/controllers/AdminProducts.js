@@ -24,6 +24,7 @@ const subcategories_s3="http://clikgett-media.local/SubCategories/"
 const adminproductcontroller={
 
     getproductsbycategoryID : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
                 query="select P.*,C.CategoryName,S.SubCategoryName from Products P inner join Categories C on C.CategoryID=P.CategoryID inner join \
                 SubCategories S on P.SubCategoryID=S.SubCategoryID\
@@ -39,6 +40,7 @@ const adminproductcontroller={
     },
 
     productsbysubcategory_admin : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
                 query = "select * from Products where SubCategoryID="+pool.escape(req.params.SubCategoryID)+" and Status!=0 and Type=1 order by ProductName asc"
                 let results = await CommonController.getproducts(query); 
@@ -53,6 +55,7 @@ const adminproductcontroller={
     },
 
     Kits : async (req, resp, next) => {
+        let results; // per-request (were implicit globals)
         try{
 
                 results=await getkits()  
@@ -83,6 +86,7 @@ const adminproductcontroller={
     },
 
     searchProduct : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
                 console.log('search product')
                 query = "select * from Products WHERE status!=0 and ProductName LIKE " + pool.escape('%' + String(req.params.SearchString) + '%') + " order by ProductName asc"
@@ -96,6 +100,7 @@ const adminproductcontroller={
     },
 
     getproductsbyproductid : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
 
                 query = "select P.*,C.CategoryName,S.SubCategoryName from Products P inner join Categories C on C.CategoryID=P.CategoryID inner join \
@@ -119,6 +124,7 @@ const adminproductcontroller={
     },
     
     addproduct : async (req, resp, next) => {
+        let ProductID, addvariant_product, body, imageupload, product; // per-request (were implicit globals)
         try {
 
             body=req.body 
@@ -150,6 +156,7 @@ const adminproductcontroller={
     },
 
     updateproduct : async (req, resp, next) => {
+        let Body, CategoryID, Description, ProductID, ProductImages, ProductName, Status, SubCategoryID, categorycheck, imageupload, queryString, subcategorycheck; // per-request (were implicit globals)
         try {
             Body=req.body
             console.log(Body,'Body')
@@ -378,6 +385,7 @@ const adminproductcontroller={
     },
 
     deleteproduct : async (req, resp, next) => {
+        let productdelete; // per-request (were implicit globals)
         try {
             console.log('delete products')
             // getproduct=await productsbyproductid(req.params.ProductID)
@@ -401,6 +409,7 @@ const adminproductcontroller={
     },
 
     deletingvariant : async (req, resp, next) => {
+        let getproductvariant, variantdelete; // per-request (were implicit globals)
         try {
             getproductvariant=await variantby_variantid(req.params.VariantID)
             if (getproductvariant== -1){
@@ -499,6 +508,7 @@ const adminproductcontroller={
     
 
     allKits : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
             query = "select * from Kits where Status!=0"
             let results = await CommonController.products(query);  
@@ -515,6 +525,7 @@ const adminproductcontroller={
     },
 
     kitdetail : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
             query = "select * from Kits where KitID="+pool.escape(req.params.KitID)
             let results = await CommonController.kitsanditems(query,'admin');  
@@ -534,6 +545,7 @@ const adminproductcontroller={
     },
 
     addkit : async (req, resp, next) => {
+        let body, imageupload, kit, kitID; // per-request (were implicit globals)
         try {
 
             body=req.body 
@@ -569,6 +581,7 @@ const adminproductcontroller={
     },
 
     updatekit : async (req, resp, next) => {
+        let Body, Description, KitID, KitName, OfferPrice, Price, Status, imageupload, queryString; // per-request (were implicit globals)
         try {
             Body=req.body
             console.log(Body,'Body')
@@ -639,6 +652,7 @@ const adminproductcontroller={
     },
 
     deletekit : async (req, resp, next) => {
+        let Kitdelete; // per-request (were implicit globals)
         try {
             console.log('delete kit')
            
@@ -657,6 +671,7 @@ const adminproductcontroller={
     },
 
     addkititem : async (req, resp, next) => {
+        let body; // per-request (were implicit globals)
         try {
 
             body=req.body             
@@ -684,6 +699,7 @@ const adminproductcontroller={
     },
 
     updatekititems : async (req, resp, next) => {
+        let Body, ProductID, VariantID, queryString; // per-request (were implicit globals)
         try {
             Body=req.body
            
@@ -735,6 +751,7 @@ const adminproductcontroller={
     },
 
     deletekititem : async (req, resp, next) => {
+        let query, results; // per-request (were implicit globals)
         try {
             
             query = "delete from KitItems where KitItemID="+pool.escape(req.params.KitItemID)
@@ -751,6 +768,7 @@ const adminproductcontroller={
 
 
     RecommendedProducts : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
             query = "select Rp.*,P.ProductName,P.ImageUrl,P.ProductImages from RecommendedProducts Rp inner join Products P on P.ProductID=Rp.ProductID where Rp.Status!=0"
             let results = await CommonController.products(query);  
@@ -767,6 +785,7 @@ const adminproductcontroller={
     },
     
     addRecommendedProducts : async (req, resp, next) => {
+        let RecommendedProducts, body, query; // per-request (were implicit globals)
         try {
 
             body=req.body 
@@ -797,6 +816,7 @@ const adminproductcontroller={
     },
 
     delete_RecommendedProducts : async (req, resp, next) => {
+        let RecommendedProductdelete; // per-request (were implicit globals)
         try {
             
             RecommendedProductdelete=await deleteRecommendedProducts(req.params.RecProductID)          
@@ -954,6 +974,7 @@ module.exports = adminproductcontroller;
 
 
 function convertimage(ProductID,ImageUrl) {
+    let image; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             
@@ -999,6 +1020,7 @@ function convertimage(ProductID,ImageUrl) {
 }
 
 function convertimagekit(KitID,ImageUrl) {
+    let image; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             
@@ -1162,6 +1184,7 @@ function getkits() {
 }
 
 function createproduct(body) {
+    let subcategorycheck; // per-request (were implicit globals)
     try {
         return new Promise(async function (resolve, reject) {
             if (body.Description == null || body.Description == undefined)
@@ -1202,6 +1225,7 @@ function createproduct(body) {
 }
 
 function addvariantsfromproducts(product,ProductVariants) {
+    let variants; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             console.log('add variants from product ***************************')

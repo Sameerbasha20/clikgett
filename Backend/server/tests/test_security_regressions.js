@@ -24,6 +24,12 @@ const request = async (method, path, { auth, body, headers = {} } = {}) => {
 };
 
 const checks = [
+    // Product search used to put the text into SQL with only quotes escaped.
+    {
+        name: "search text cannot break out of the SQL string (a\\' OR 1=1 --)",
+        run: () => request('GET', `/products/search/${encodeURIComponent("a\\' OR 1=1 -- ")}`),
+        expect: (r) => r.status === 200 && Array.isArray(r.json && r.json.Products) && r.json.Products.length === 0,
+    },
     // Admin/data endpoints that used to be open must now require an admin token.
     ...[
         ['POST', '/adminuser/sendnotifications'],

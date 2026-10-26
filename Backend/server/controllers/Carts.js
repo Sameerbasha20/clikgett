@@ -206,6 +206,7 @@ const cartcontroller = {
     },
 
     ValidateCart: async (req, resp, next) => {
+        let body, getproduct_availablestock; // per-request (were implicit globals)
         try {
             body = req.body || {};
             if (!body.OrderItems || !Array.isArray(body.OrderItems)) {
@@ -274,6 +275,7 @@ const cartcontroller = {
     },
 
     addcart: async (req, resp, next) => {
+        let Cart, CartID, Cartitem, Cartitemexists, body, cartexists, getproduct_availablestock, result, updatecartitem; // per-request (were implicit globals)
         try {
             body = req.body
             if (body.Quantity <= 0) {
@@ -338,6 +340,7 @@ const cartcontroller = {
     },
 
     deletecartitem_variant: async (req, resp, next) => {
+        let deletecartitem, getexicartitem, id, query; // per-request (were implicit globals)
         try {
 
 
@@ -375,6 +378,7 @@ const cartcontroller = {
     },
 
     deletekit: async (req, resp, next) => {
+        let deletecartitem, getexicartitem, id, query; // per-request (were implicit globals)
         try {
 
 
@@ -617,6 +621,7 @@ function checkID(CartID) {
 }
 
 function getproductstock(VariantID, ProductID) {
+    let query; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
 
@@ -647,6 +652,7 @@ function getproductstock(VariantID, ProductID) {
 }
 
 function getcartitems(CartID) {
+    let items; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
 
@@ -786,6 +792,7 @@ function cartitems_delete(CartID) {
 }
 
 function getradius(storelatitude, storeLongitude, body) {
+    let query; // per-request (were implicit globals)
 
     return new Promise(function (resolve, reject) {
         try {

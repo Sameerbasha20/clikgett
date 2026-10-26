@@ -65,6 +65,7 @@ CommonController.settings = () => {
 }
 
 CommonController.currentdate = () => {
+    let CreatedAt, createdAt, issuedate; // per-request (were implicit globals)
     try {
 
         return new Promise(function (resolve, reject) {
@@ -181,6 +182,7 @@ CommonController.send_push_notifications = (Body, UserID) => {
 
 
 CommonController.getproducts = (query, params) => {
+    let variants; // per-request (were implicit globals)
     try {
         // console.log(query,'***************************************************************************')
         return new Promise(function (resolve, reject) {
@@ -192,15 +194,16 @@ CommonController.getproducts = (query, params) => {
                 else {
                     console.log("retrieved Products : ", results.length);
                     if (results.length > 0) {
+                        // All variants in one query (one query per product took seconds on a remote DB).
+                        let variantsByProduct = new Map();
+                        try {
+                            variantsByProduct = await CommonController.getvariantsForProducts(results.map((r) => r.ProductID));
+                        } catch (e) {
+                            console.error('loading product variants failed', e.message);
+                        }
                         for (var j = 0; j < results.length; j++) {
-                            try {
-                                variants = await CommonController.getproductvariants(results[j]['ProductID']);
-                            } catch (e) {
-                                variants = [];
-                            }
-
-                            results[j].ProductVariants = variants || [];
-                            console.log(results[j].ImageUrl, Products_s3);
+                            variants = variantsByProduct.get(results[j].ProductID) || [];
+                            results[j].ProductVariants = variants;
 
                             if (results[j].ImageUrl && results[j].ImageUrl !== "NA" && !results[j].ImageUrl.startsWith("http")) {
                                 results[j].ImageUrl = Products_s3 + results[j].ImageUrl;
@@ -229,7 +232,6 @@ CommonController.getproducts = (query, params) => {
                             console.log('attaching deals failed', e.message);
                         }
                         resolve(results);
-                        console.log("Final Products length by category Id: ", results.length);
                     }
                     else {
                         resolve(results);
@@ -341,8 +343,6 @@ CommonController.products = (query) => {
                     console.log("retrived Products : ", results.length);
                     if (results.length > 0) {
                         for (var j = 0; j < results.length; j++) {
-                            console.log(results[j].ImageUrl, Products_s3);
-
                             if (results[j].ImageUrl !== "NA") {
                                 results[j].ImageUrl = Products_s3 + results[j].ImageUrl;
                             }
@@ -379,6 +379,7 @@ CommonController.products = (query) => {
 }
 
 CommonController.GetReferredDetails = (UserID, OrderID) => {
+    let RefferedUserID; // per-request (were implicit globals)
     try {
         return new Promise(async function (resolve, reject) {
             let GetUsers = `select * from Users where UserID=?`
@@ -456,6 +457,7 @@ CommonController.GetReferredDetails = (UserID, OrderID) => {
 }
 
 CommonController.Referred_Amount_Details = (RefferedUserID, UserID, OrderID, Type) => {
+    let Amount, ContentID, ContentType; // per-request (were implicit globals)
     try {
         return new Promise(async function (resolve, reject) {
             let newUser_viaReferralCode_bonus_amount = 0;
@@ -596,6 +598,21 @@ CommonController.Get_Configuration = () => {
 
 
 
+/** Active variants for many products at once: Map(ProductID -> variants[]). */
+CommonController.getvariantsForProducts = async (productIds) => {
+    const ids = [...new Set(productIds.filter(Boolean))];
+    const map = new Map();
+    if (!ids.length) return map;
+    const rows = await new Promise((resolve, reject) => pool.query(
+        "select * from ProductVariants where ProductID in (?) and status=1 order by ProductID, VariantID", [ids],
+        (err, results) => (err ? reject(err) : resolve(results || []))));
+    for (const row of rows) {
+        if (!map.has(row.ProductID)) map.set(row.ProductID, []);
+        map.get(row.ProductID).push(row);
+    }
+    return map;
+};
+
 CommonController.getproductvariants = (ProductID) => {
     return new Promise(function (resolve, reject) {
         pool.query("select * from ProductVariants where ProductID=? and status=1", [ProductID], (err, results) => {
@@ -609,6 +626,7 @@ CommonController.getproductvariants = (ProductID) => {
 };
 
 CommonController.kitsanditems = (query, key) => {
+    let items; // per-request (were implicit globals)
     try {
         console.log(query, '***************************************************************************')
         return new Promise(function (resolve, reject) {
@@ -648,8 +666,10 @@ CommonController.kitsanditems = (query, key) => {
 }
 
 CommonController.getkititems = (KitID, key) => {
+    let query; // per-request (were implicit globals)
+    // Plain products carry KitID 0 and have no kit items; skip the query.
+    if (!KitID || Number(KitID) === 0) return Promise.resolve([]);
     try {
-        console.log(KitID, key)
         return new Promise(function (resolve, reject) {
             if (key == 'user')
                 query = "select KI.*,P.ProductName,V.metrictype,V.metricvalue,P.ImageUrl,V.Price,V.OfferPrice,V.AvailableQty from KitItems KI inner join Products P on \
@@ -762,6 +782,7 @@ CommonController.Update_NotificationLastSeen = (Query) => {
 }
 
 CommonController.CurrentUTC_DateTime = () => {
+    let currentdatetime; // per-request (were implicit globals)
     return new Promise(async (resolve, reject) => {
         try {
             var datetimenow = new Date(Date.now());
@@ -776,6 +797,7 @@ CommonController.CurrentUTC_DateTime = () => {
 }
 
 CommonController.convertdate = (CreatedAtDate) => {
+    let Created_At, converteddate; // per-request (were implicit globals)
     try {
 
         return new Promise(function (resolve, reject) {

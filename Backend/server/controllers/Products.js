@@ -81,6 +81,7 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
     // },
    
     productsby_ProductID : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
                 query="select * from Products where Status=1 and ProductID="+pool.escape(req.params.ProductID)                
                 let results = await CommonController.getproducts(query); 
@@ -98,13 +99,15 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
     },
 
     searchProduct : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{                 
-            query=`select * from Products p inner join ProductVariants PV on PV.ProductID=p.ProductID 
-            WHERE p.status=1 and PV.Status=1 and p.ProductName LIKE 
-            '%${req.params.SearchString.replace(/'/g, "\\'")}%' group by p.ProductID order by 
+            // The search text is a bound parameter (quote-escaping alone let "\" break out of the string).
+            const like = `%${String(req.params.SearchString || '').replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+            query=`select * from Products p inner join ProductVariants PV on PV.ProductID=p.ProductID
+            WHERE p.status=1 and PV.Status=1 and p.ProductName LIKE ? group by p.ProductID order by
              CASE WHEN PV.AvailableQty = 0 THEN 1 ELSE 0 END,
              CONCAT(p.ProductName, '', PV.AvailableQty) ASC`
-            let results = await CommonController.getproducts(query); 
+            let results = await CommonController.getproducts(query, [like]);
 
             // Log search query for analytics
             const searchKw = req.params.SearchString ? req.params.SearchString.trim() : '';
@@ -242,6 +245,7 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
     },
     
     kits : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
                 query="select * from Products where Status=1 and Type=2 order by ProductName asc"
                 let results = await CommonController.getproducts(query);                 
@@ -256,6 +260,7 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
     },
     
     allKits : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
             query = "select * from Kits where Status=1"
             let results = await CommonController.products(query);  
@@ -272,6 +277,7 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
     },
 
     kitdetail : async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try{
             query = "select * from Kits where KitID="+pool.escape(req.params.KitID)
             let results = await CommonController.kitsanditems(query,'user');  

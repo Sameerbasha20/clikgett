@@ -106,6 +106,7 @@ const subcategorycontroller = {
     },
 
     addsubcategory: async (req, resp, next) => {
+        let Categoryexists, addsubcategory, body, column; // per-request (were implicit globals)
         try {
 
             body = req.body
@@ -144,6 +145,7 @@ const subcategorycontroller = {
     },
 
     updatesubcategory: async (req, resp, next) => {
+        let Body, CategoryID, Categoryexists, Status, SubCategoryName, queryString; // per-request (were implicit globals)
         try {
             Body = req.body
 
@@ -201,6 +203,7 @@ const subcategorycontroller = {
     },
 
     deletesubcategory: async (req, resp, next) => {
+        let products; // per-request (were implicit globals)
         try {
             console.log('here')
             products = await getproducts(req.params.SubCategoryID)

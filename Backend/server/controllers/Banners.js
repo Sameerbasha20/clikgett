@@ -35,6 +35,7 @@ const bannercontroller = {
     //send otp and insert into verifymob
 
     getallbanners: async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try {
 
             query = "SELECT B.*, SC.CategoryID as ParentCategoryID FROM Banners B LEFT JOIN SubCategories SC ON B.DestinationType = 'subcategory' AND B.DestinationID = SC.SubCategoryID WHERE B.Status!=0 ORDER BY B.CreatedAt DESC;"
@@ -59,6 +60,7 @@ const bannercontroller = {
     },
 
     bannersdetail: async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try {
             console.log(req.AdminID);
             query = "select * from Banners where Status!=0 and BannerID=" + pool.escape(req.params.BannerID)
@@ -86,6 +88,7 @@ const bannercontroller = {
     },
 
     addbanner: async (req, resp, next) => {
+        let BannerID, body, column, image; // per-request (were implicit globals)
         try {
 
             body = req.body
@@ -165,6 +168,7 @@ const bannercontroller = {
     },
 
     updateBanner: async (req, resp, next) => {
+        let BannerID, BannerName, Body, Description, Status, getbanners, image, queryString; // per-request (were implicit globals)
         try {
             Body = req.body
 
@@ -263,6 +267,7 @@ const bannercontroller = {
 
 
     deleteBanner: async (req, resp, next) => {
+        let getallbanners; // per-request (were implicit globals)
         try {
 
             getallbanners = await getbanner(req.params.BannerID)

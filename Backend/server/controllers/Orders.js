@@ -4,7 +4,7 @@ require('dotenv').config()
 var moment = require('moment');
 const crypto = require('crypto');
 const { body } = require('express-validator');
-Razorpay = require('razorpay')
+const Razorpay = require('razorpay')
 const CommonController = require("../controllers/CommonController");
 const PDFDocument = require('pdfkit');
 var fs = require('fs')
@@ -15,6 +15,7 @@ const OrderLifecycle = require('../services/OrderLifecycle');
 const CheckoutBill = require('../services/CheckoutBill');
 const DeliveryTime = require('../services/DeliveryTime');
 const PrintStore = require('../services/PrintStore');
+const Products_s3 = 'http://clikgett-media.local/Products/';
 const StoreHours = require('../services/StoreHours');
 const PRODUCTS_S3 = "http://clikgett-media.local/Products/";
 const { ORDER_STATUS, STATUS_LABELS, FINAL_STATUSES } = require('../utils/orderStatus');
@@ -151,6 +152,7 @@ const ordercontroller = {
     },
 
     orderpayments: async (req, resp, next) => {
+        let OrderReceiptID, RazorpayOrderID, order, orderPayment, result; // per-request (were implicit globals)
         try {
             console.log('*************order payments**************')
             var body = req.body
@@ -233,6 +235,7 @@ const ordercontroller = {
     },
 
     addorder: async (req, resp, next) => {
+        let OrderID, createorder, createorderitems, decreasevariantsQuantity, decreasewalletAmount, expecteddate, result; // per-request (were implicit globals)
         try {
 
             console.log('Order Body', req.body)
@@ -492,6 +495,7 @@ const ordercontroller = {
     },
 
     reorder: async (req, resp, next) => {
+        let Body, Cart, Cartitem, result; // per-request (were implicit globals)
         try {
 
             Body = req.body || {}
@@ -988,6 +992,7 @@ function getorderitems(OrderID) {
 }
 
 function unlinkcart(CartID) {
+    let query; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             // console.log(cartId,'unlink cart')
@@ -1141,6 +1146,7 @@ function deletecart(CartID) {
 }
 
 async function createinvoice(orderresult, orderitems) {
+    let Order_Date, filename, invdate, issuedate, location, newline1, newline2, noofpages; // per-request (were implicit globals)
 
     return new Promise(async function (resolve, reject) {
         console.log('pdf started')

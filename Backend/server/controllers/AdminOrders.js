@@ -9,11 +9,12 @@ const s3 = require('../utils/s3');
 const pool = require('../utils/db');
 const OrderLifecycle = require('../services/OrderLifecycle');
 const { ORDER_STATUS } = require('../utils/orderStatus');
-Products_s3 = "http://clikgett-media.local/Products/"
+const Products_s3 = "http://clikgett-media.local/Products/"
 
 const ordercontroller = {
 
     currentorders: async (req, resp, next) => {
+        let converteddate, query; // per-request (were implicit globals)
         try {
 
             query = "select *,LPAD(OrderID, 4, '0') AS OrderSequence from Orders where  OrderStatus not in (1,3,4,6) order by CreatedAt desc;"
@@ -122,6 +123,7 @@ const ordercontroller = {
     },
 
     myorder: async (req, resp, next) => {
+        let cartitems, converteddate, myorder, userresult; // per-request (were implicit globals)
         try {
 
             myorder = await getorderbyorderid(req.query.OrderID)
@@ -221,6 +223,7 @@ const ordercontroller = {
     },
 
     pendingorders: async (req, resp, next) => {
+        let image, location, newlist, query, records; // per-request (were implicit globals)
         try {
 
 
@@ -275,6 +278,7 @@ const ordercontroller = {
 
 
 function getorderbyorderid(OrderID) {
+    let query; // per-request (were implicit globals)
 
     return new Promise(function (resolve, reject) {
         query = "select O.*,LPAD(OrderID, 4, '0') AS OrderSequence,coalesce(W.Amount,0) as WalletDebit from Orders O left join Wallets W on O.OrderID=W.ContentID where O.OrderID=? group by OrderID" 
@@ -292,6 +296,7 @@ function getorderbyorderid(OrderID) {
 }
 
 function userOrderCount(OrderID, userID) {
+    let query; // per-request (were implicit globals)
 
     return new Promise(function (resolve, reject) {
         query = `SELECT COUNT(*) AS orderCount FROM Orders WHERE UserID = ${pool.escape(userID)} AND OrderID <= ${pool.escape(OrderID)}`
@@ -309,6 +314,7 @@ function userOrderCount(OrderID, userID) {
 }
 
 function getcartitems(OrderID) {
+    let queryString; // per-request (were implicit globals)
     try {
         queryString = "select oi.*,p.ProductImages from OrderItems oi inner join Products p on p.productId=oi.productId\
                  where oi.OrderID=?"
@@ -345,6 +351,7 @@ function getcartitems(OrderID) {
 }
 
 function deliverboy(AdminID) {
+    let query; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             query = "select *,concat(firstName,' ',lastName) as Name from AdminUsers where AdminID=?"
@@ -442,6 +449,7 @@ function incWalletAmount(WalletAmount, UserID, OrderID) {
 
 
 function AssignDeliveryBoy(OrderIDs, DeliveryBoyID) {
+    let query; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             for (var j = 0; j < OrderIDs.length; j++) {
@@ -465,6 +473,7 @@ function AssignDeliveryBoy(OrderIDs, DeliveryBoyID) {
 
 
 function incvariantsQuantity(items) {
+    let query; // per-request (were implicit globals)
     try {
         return new Promise(function (resolve, reject) {
             for (var j = 0; j < items.length; j++) {
@@ -587,6 +596,7 @@ pastordersfilter: async (req, resp, next) => {
 },
 // Past orders sorting
 pastorderssort: async (req, resp, next) => {
+    let converteddate; // per-request (were implicit globals)
     try {
         const { sortBy } = req.query;
         let query;
@@ -632,6 +642,7 @@ pastorderssort: async (req, resp, next) => {
 
 // Past orders filtering by mobile number
 pastordersmobilefilter: async (req, resp, next) => {
+    let converteddate; // per-request (were implicit globals)
     try {
         const { mobileNumber } = req.query;
         let query = "SELECT *, LPAD(OrderID, 4, '0') AS OrderSequence FROM Orders WHERE MobileNumber LIKE ? AND OrderStatus IN (1,3,4,6) ORDER BY CreatedAt DESC";
@@ -652,6 +663,7 @@ pastordersmobilefilter: async (req, resp, next) => {
 
 // Past orders filtering by username
 pastordersusernamefilter: async (req, resp, next) => {
+    let converteddate; // per-request (were implicit globals)
     try {
         const { username } = req.query;
         let query = "SELECT O.*, LPAD(O.OrderID, 4, '0') AS OrderSequence, U.FirstName, U.LastName FROM Orders O INNER JOIN Users U ON O.UserID = U.UserID WHERE (U.FirstName LIKE ? OR U.LastName LIKE ?) AND O.OrderStatus IN (1,3,4,6) ORDER BY O.CreatedAt DESC";
@@ -672,6 +684,7 @@ pastordersusernamefilter: async (req, resp, next) => {
 
 // Past orders filtering by order ID
 pastordersorderidfilter: async (req, resp, next) => {
+    let converteddate; // per-request (were implicit globals)
     try {
         const { orderId } = req.query;
         let query = "SELECT *, LPAD(OrderID, 4, '0') AS OrderSequence FROM Orders WHERE OrderID LIKE ? AND OrderStatus IN (1,3,4,6) ORDER BY CreatedAt DESC";

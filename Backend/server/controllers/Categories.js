@@ -65,6 +65,7 @@ const categoriescontroller = {
     },
 
     categories: async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try {
             query = `select C.CategoryID,C.CategoryName,C.ImageUrl from Categories C 
             inner join SubCategories S on S.CategoryID=C.CategoryID\
@@ -104,6 +105,7 @@ const categoriescontroller = {
     ////// admin /////
 
     getallCategoriesforadmin: async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try {
 
             query = "select * from Categories where Status!=0 order by Priority asc"
@@ -130,6 +132,7 @@ const categoriescontroller = {
     },
 
     categorydetail: async (req, resp, next) => {
+        let query; // per-request (were implicit globals)
         try {
 
             query = "select * from Categories where Status!=0 and CategoryID=" + pool.escape(req.params.CategoryID)
@@ -156,6 +159,7 @@ const categoriescontroller = {
     },
 
     addcategory: async (req, resp, next) => {
+        let CategoryID, body, image; // per-request (were implicit globals)
         try {
 
             body = req.body
@@ -220,6 +224,7 @@ const categoriescontroller = {
     },
 
     updatecategory: async (req, resp, next) => {
+        let Body, CategoryID, CategoryName, Description, Priority, Status, image, queryString; // per-request (were implicit globals)
         try {
             Body = req.body
             console.log(Body, 'body')
@@ -314,6 +319,7 @@ const categoriescontroller = {
     },
 
     deletecategory: async (req, resp, next) => {
+        let products; // per-request (were implicit globals)
         try {
             console.log('here')
             products = await getproducts(req.params.CategoryID)
