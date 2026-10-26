@@ -1,17 +1,11 @@
 import 'package:fav_app/new/Constants/colors.dart';
-import 'package:fav_app/new/Constants/imageslist.dart';
-import 'package:fav_app/new/Constants/textStyles.dart';
 import 'package:fav_app/new/Controllers/auth_controller.dart';
-import 'package:fav_app/new/NewScreens/Widgets/buttonWidget.dart';
-import 'package:fav_app/new/NewScreens/Widgets/textfieldWidget.dart';
-import 'package:flutter/gestures.dart';
+import 'package:fav_app/new/NewScreens/Auth/auth_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
 
 import '../../Controllers/home_controller.dart';
-import '../Widgets/customToast.dart';
 import 'Signup.dart';
 
 class Login extends StatefulWidget {
@@ -22,14 +16,14 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  TextEditingController mobileNumber = TextEditingController();
-  final FocusNode _mobileNumber = FocusNode();
-  List<String> number = List<String>.filled(1, '');
+  final TextEditingController mobileNumber = TextEditingController();
   final signUpKey = GlobalKey<FormState>();
   final AuthController controller = Get.find();
+
   @override
   void dispose() {
     controller.loadingBtnReset();
+    mobileNumber.dispose();
     super.dispose();
   }
 
@@ -41,178 +35,54 @@ class _LoginState extends State<Login> {
         controller.updateTabIndex(-1);
       });
     }
-
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(5.w),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                height: 8.h,
-              ),
-              imageWidget(context),
-              fieldWidget(context),
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: "Don’t have an account? ",
-                      style: GoogleFonts.poppins(
-                          color: Colors.black, fontSize: 17.sp),
-                    ),
-                    TextSpan(
-                      text: "Register",
-                      style:
-                          GoogleFonts.poppins(color: primary, fontSize: 17.sp),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          // Navigate to the new screen
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SignUp(),
-                            ),
-                          );
-                        },
-                    ),
-                    TextSpan(
-                      text: " here",
-                      style: GoogleFonts.poppins(
-                          color: Colors.black, fontSize: 17.sp),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget imageWidget(context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return AuthShell(
+      title: 'Welcome back 👋',
+      subtitle: 'Log in with your mobile number. We\'ll send you a one-time code.',
       children: [
-        // Image(
-        //   image: AssetImage(loginBanner),
-        //   width: 37.w,
-        //   height: 27.h,
-        //   fit: BoxFit.cover,
-        // ),
-        // SizedBox(
-        //   height: 2.2.h,
-        // ),
-        Text(
-         "Login",
-          style: GoogleFonts.poppins(
-            fontSize: 21.sp,
-            fontWeight: FontWeight.w600,
-            color: tblack1c,
-          ),
-
-        ),
-        SizedBox(
-          height: 1.2.h,
-        ),
-        Padding(
-          padding: EdgeInsets.only(bottom: 4.h),
-          child: Text(
-             "Enter your details to login",
-              style: GoogleFonts.poppins(
-                fontSize: 17.sp,
-                fontWeight: FontWeight.w500,
-                color: tblack1c,
-    ),
-          )
-
-        ),
-      ],
-    );
-  }
-
-  Widget fieldWidget(context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        customText(
-            text: "Mobile Number",
-            fontSize: 17.sp,
-            fontWeight: FontWeight.w500,
-            color: tblack1c),
-        SizedBox(
-          height: 2.h,
-        ),
         Form(
           key: signUpKey,
-          child: NumbertextFieldWidget(
-              context: context,
-              hint: "Mobile Number",
-              hinttext: "Enter Mobile Number",
-              hintStyle: GoogleFonts.montserrat(
-                      fontSize: 16.sp, color: black.withOpacity(0.5)),
-              controller: mobileNumber,
-              currentFocus: _mobileNumber,
-              nextFocus: null,
-              holder: number,
-              isPhoneNumber: true,
-              onChanged: (p0) {
-                if (p0.isNotEmpty) {
-                  if (int.parse(p0) <= 5) {
-                    mobileNumber.clear();
-                    customToast(
-                        message: 'Mobile Number Cannot Be Start With $p0');
-                  }
-                }
-              },
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              textColor: black,
-              prefixIcon: Padding(
-                  padding: const EdgeInsets.only(bottom: 0),
-                  child: Image.asset(
-                    mobicon,
-                    height: 2.h,
-                  ))),
+          child: AuthField(
+            controller: mobileNumber,
+            label: 'Mobile number',
+            hint: '98765 43210',
+            icon: Icons.phone_iphone_rounded,
+            phone: true,
+            action: TextInputAction.done,
+            onSubmitted: (_) => validate(),
+            validator: validateMobile,
+          ),
         ),
-        SizedBox(
-          height: 3.h,
-        ),
-        Obx(() => controller.isLoading.isTrue
-            ? const Center(
-                child: CircularProgressIndicator.adaptive(),
-              )
-            :
-        buttonWidget(
-                borderRadius: 26,
-                onTap: validate,
-                context: context,
-                text: "Send OTP")),
-        SizedBox(
-          height: 4.h,
+        const SizedBox(height: 6),
+        Obx(() => AuthButton(text: 'Send OTP', loading: controller.isLoading.isTrue, onTap: validate)),
+        const SizedBox(height: 18),
+        Row(children: [
+          const Icon(Icons.verified_user_outlined, size: 18, color: primaryDark),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text('Your number is only used to log in and to update you about orders.',
+                style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        AuthSwitch(
+          question: 'New to ClikGett?',
+          action: 'Create an account',
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUp())),
         ),
       ],
     );
   }
 
-  validate() {
+  void validate() {
     if (signUpKey.currentState!.validate()) {
-      Map<String, dynamic> body = <String, dynamic>{};
-      body['MobileNumber'] = mobileNumber.text;
-
       controller.sendOtp(
         context: context,
-        body: body,
+        body: <String, dynamic>{'MobileNumber': mobileNumber.text.trim()},
       );
       FocusManager.instance.primaryFocus?.unfocus();
     }

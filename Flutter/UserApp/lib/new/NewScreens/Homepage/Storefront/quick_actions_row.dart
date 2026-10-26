@@ -49,8 +49,8 @@ class _QuickActionsRowState extends State<QuickActionsRow> {
         Expanded(
           child: _ActionCard(
             icon: Icons.lock_open_rounded,
-            iconBg: const Color(0xFFEDE9FE),
-            iconColor: const Color(0xFF6D28D9),
+            iconBg: const Color(0xFFDCFCE7),
+            iconColor: const Color(0xFF15803D),
             title: 'Unlock deals',
             subtitle: 'Special prices as your cart grows',
             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UnlockDealsScreen())),

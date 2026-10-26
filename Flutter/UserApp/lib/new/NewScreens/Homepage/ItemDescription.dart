@@ -175,21 +175,23 @@ class _ItemDescriptionState extends State<ItemDescription> {
                                   ),
                                   // Buy-more packs ("2 x 750 ml ₹77") for the selected size.
                                   PackOptions(
-                                    key: ValueKey('packs-${categoryController.productVariant?.variantId}'),
+                                    key: ValueKey('packs-${categoryController.varientID.value}'),
                                     productId: categoryController.productsDetails?.productId ?? 0,
-                                    variantId: categoryController.productVariant?.variantId ?? 0,
+                                    // Same pack id the Add button uses.
+                                    variantId: categoryController.varientID.value,
                                     unit: categoryController.selectedMetricTypeandValue.value,
                                     price: categoryController.offerammount.value,
                                     mrp: categoryController.ammount.value,
                                     tiers: categoryController.productsDetails?.bulkTiers ?? const [],
-                                    buy2Price: categoryController.productVariant?.buy2Price,
+                                    buy2Price: categoryController.productsDetails?.productVariants
+                                        ?.firstWhereOrNull((v) => v.variantId == categoryController.varientID.value)
+                                        ?.buy2Price,
                                     maxQty: categoryController.maxavailableQty.value,
                                     categoryId: categoryController.productsDetails?.categoryId,
                                     subCategoryId: categoryController.productsDetails?.subCategoryId,
                                   ),
-                                  if (categoryController.productsDetails
-                                          ?.productVariants?.first.ExpiryDate !=
-                                      "0000-00-00")
+                                  // Blank dates come back as 0000-00-00 / 1899; only show a real one.
+                                  if ((DateTime.tryParse(categoryController.productsDetails?.productVariants?.first.ExpiryDate ?? '')?.year ?? 0) >= 2000)
                                     Text(
                                       'Expire Date: ${formatDateString(categoryController.productsDetails?.productVariants?.first.ExpiryDate ?? '')}',
                                       style: customTextstyle(

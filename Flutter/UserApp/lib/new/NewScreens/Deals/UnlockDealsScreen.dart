@@ -10,9 +10,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-const _deep = Color(0xFF4C1D95);
-const _violet = Color(0xFF6D28D9);
-const _accent = Color(0xFF7C3AED);
+// ClikGett greens: deep leaf header, fresh green tabs, lime highlights.
+const _deep = Color(0xFF14532D);
+const _violet = Color(0xFF15803D); // tab strip
+const _accent = Color(0xFF16A34A);
+const _tabIdle = Color(0xFF22C55E);
+const _lime = Color(0xFFDCFCE7);
 
 String _rs(double v) => '₹${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
 
@@ -129,7 +132,7 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
                     ),
         ),
       ]),
-      bottomSheet: _bottomBar(),
+      bottomNavigationBar: _bottomBar(),
     );
   }
 
@@ -149,6 +152,8 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
+        const Text('🥬 🍅 🥕', style: TextStyle(fontSize: 22)),
+        const SizedBox(height: 2),
         Text(cheapest == null ? 'Unlock deals' : 'Items from ${_tierLabel(cheapest)}!',
             style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.w800, fontStyle: FontStyle.italic, color: white)),
         const SizedBox(height: 4),
@@ -173,7 +178,7 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
                   margin: const EdgeInsets.only(right: 6, top: 8),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: t == _tier ? white : const Color(0xFF8B5CF6),
+                    color: t == _tier ? white : _tabIdle,
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                   ),
                   child: Row(children: [
@@ -181,8 +186,7 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(color: t == _tier ? _accent : white, borderRadius: BorderRadius.circular(6)),
                       child: Text(_tierLabel(t),
-                          style: GoogleFonts.poppins(
-                              fontSize: 14, fontWeight: FontWeight.w800, color: t == _tier ? white : _accent)),
+                          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w800, color: t == _tier ? white : _accent)),
                     ),
                     const SizedBox(width: 6),
                     Text('Items',
@@ -208,7 +212,9 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
               padding: const EdgeInsets.all(8),
               child: Opacity(
                 opacity: d.inStock ? 1 : 0.4,
-                child: d.imageUrl.isNotEmpty ? CustomNetworkImage(url: d.imageUrl, fit: BoxFit.contain) : const Icon(Icons.image_outlined, color: grey70),
+                child: d.imageUrl.isNotEmpty
+                    ? CustomNetworkImage(url: d.imageUrl, fit: BoxFit.contain)
+                    : const Icon(Icons.image_outlined, color: grey70),
               ),
             ),
           ),
@@ -220,8 +226,8 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 3),
         decoration: BoxDecoration(color: bg1, borderRadius: BorderRadius.circular(6)),
-        child: Text(d.unit.isEmpty ? '1 unit' : d.unit,
-            textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 11, color: tColor3)),
+        child:
+            Text(d.unit.isEmpty ? '1 unit' : d.unit, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 11, color: tColor3)),
       ),
       const SizedBox(height: 6),
       Text(d.name,
@@ -234,7 +240,7 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
         child: LinearProgressIndicator(
           value: d.progress,
           minHeight: 5,
-          backgroundColor: const Color(0xFFEDE9FE),
+          backgroundColor: _lime,
           color: _accent,
         ),
       ),
@@ -253,8 +259,7 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
             style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w800, color: tColor)),
         const SizedBox(width: 4),
         if (d.wasPrice > d.unlockPrice)
-          Text(_rs(d.wasPrice),
-              style: GoogleFonts.poppins(fontSize: 11.5, color: grey70, decoration: TextDecoration.lineThrough)),
+          Text(_rs(d.wasPrice), style: GoogleFonts.poppins(fontSize: 11.5, color: grey70, decoration: TextDecoration.lineThrough)),
       ]),
     ]);
   }
@@ -264,7 +269,7 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
     final box = BoxDecoration(
       color: white,
       borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: const Color(0xFFDDD6FE)),
+      border: Border.all(color: const Color(0xFFBBF7D0)),
       boxShadow: softCardShadow,
     );
     if (busy) {
@@ -279,16 +284,20 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
     if (qty <= 0) {
       return InkWell(
         onTap: () => _setQty(d, 1),
-        child: Container(width: 38, height: 38, decoration: box, child: const Icon(Icons.add_rounded, color: Color(0xFF2563EB), size: 26)),
+        child: Container(width: 38, height: 38, decoration: box, child: const Icon(Icons.add_rounded, color: _accent, size: 26)),
       );
     }
     return Container(
       height: 34,
       decoration: BoxDecoration(color: _accent, borderRadius: BorderRadius.circular(10)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        InkWell(onTap: () => _setQty(d, qty - 1), child: const Padding(padding: EdgeInsets.all(6), child: Icon(Icons.remove_rounded, color: white, size: 16))),
+        InkWell(
+            onTap: () => _setQty(d, qty - 1),
+            child: const Padding(padding: EdgeInsets.all(6), child: Icon(Icons.remove_rounded, color: white, size: 16))),
         Text('$qty', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: white)),
-        InkWell(onTap: () => _setQty(d, qty + 1), child: const Padding(padding: EdgeInsets.all(6), child: Icon(Icons.add_rounded, color: white, size: 16))),
+        InkWell(
+            onTap: () => _setQty(d, qty + 1),
+            child: const Padding(padding: EdgeInsets.all(6), child: Icon(Icons.add_rounded, color: white, size: 16))),
       ]),
     );
   }
@@ -318,34 +327,38 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
               : 'Add ${_rs(next)} more to unlock ${page.nextUnlockPrice != null ? '${_tierLabel(page.nextUnlockPrice!)} deals' : 'more deals'}';
       return SafeArea(
         top: false,
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-          padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)]),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: softElevatedShadow,
-          ),
-          child: Row(children: [
-            Expanded(
-              child: Text(message, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: white)),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+            padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+            constraints: const BoxConstraints(minHeight: 56),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [_deep, _accent]),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: softElevatedShadow,
             ),
-            if (items > 0)
-              InkWell(
-                onTap: () async {
-                  await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Cart(isFromHomeScreen: false)));
-                  _load();
-                },
-                child: Row(children: [
-                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    Text('CART', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, color: white)),
-                    Text('$items ITEM${items == 1 ? '' : 'S'}', style: GoogleFonts.poppins(fontSize: 10.5, color: white.withOpacity(0.85))),
-                  ]),
-                  const Icon(Icons.chevron_right_rounded, color: white),
-                ]),
+            child: Row(children: [
+              Expanded(
+                child: Text(message, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: white)),
               ),
-          ]),
-        ),
+              if (items > 0)
+                InkWell(
+                  onTap: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Cart(isFromHomeScreen: false)));
+                    _load();
+                  },
+                  child: Row(children: [
+                    Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                      Text('CART', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, color: white)),
+                      Text('$items ITEM${items == 1 ? '' : 'S'}',
+                          style: GoogleFonts.poppins(fontSize: 10.5, color: white.withOpacity(0.85))),
+                    ]),
+                    const Icon(Icons.chevron_right_rounded, color: white),
+                  ]),
+                ),
+            ]),
+          ),
+        ]),
       );
     });
   }

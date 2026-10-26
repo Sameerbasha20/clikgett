@@ -48,8 +48,12 @@ class PackOptions extends StatelessWidget {
     this.subCategoryId,
   });
 
+  /// "1.000 Ltr" -> "1 Ltr", "0.500 kg" -> "0.5 kg".
+  static String _tidy(String unit) => unit.trim().replaceAllMapped(
+      RegExp(r'^(\d+)\.(\d*?)0+(?=\s|$)'), (m) => m[2]!.isEmpty ? m[1]! : '${m[1]}.${m[2]}');
+
   List<_Pack> get _packs {
-    final base = unit.trim().isEmpty ? '1 unit' : unit.trim();
+    final base = unit.trim().isEmpty ? '1 unit' : _tidy(unit);
     final unitMrp = mrp > price ? mrp : price;
     final byQty = <int, _Pack>{1: _Pack(1, base, price, unitMrp)};
     for (final t in tiers) {
