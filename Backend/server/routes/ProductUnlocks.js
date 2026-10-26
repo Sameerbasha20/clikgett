@@ -12,6 +12,7 @@ router
     .post('/unlocks', util.authenticate.adminAuthenticate, ProductUnlocksController.createUnlock)
     .put('/unlocks/:UnlockID', util.authenticate.adminAuthenticate, ProductUnlocksController.updateUnlock)
     .delete('/unlocks/:UnlockID', util.authenticate.adminAuthenticate, ProductUnlocksController.deleteUnlock)
-    .get('/list', ProductUnlocksController.getUnlocks);
+    .get('/list', ProductUnlocksController.getUnlocks)
+    .get('/deals', util.authenticate.optionalUserAuthenticate, ProductUnlocksController.deals);
 
 module.exports = router;

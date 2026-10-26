@@ -121,6 +121,78 @@ const ProductUnlocksController = {
             console.error("Error deleting product unlock:", err);
             return res.status(500).json({ Status: 0, status: 0, Message: "Error deleting product unlock", message: "Error deleting product unlock" });
         }
+    },
+
+    // Customer deals screen: every active unlock with how much more the cart needs.
+    // Uses the checkout bill, so "unlocked" here is exactly what the cart will charge.
+    deals: async (req, res) => {
+        try {
+            const rows = await queryAsync(`
+                SELECT pu.UnlockID, pu.ProductID, v.VariantID, pu.ThresholdAmount, pu.UnlockPrice, pu.Message,
+                       p.ProductName, p.ImageUrl, p.ProductImages, p.CategoryID, p.SubCategoryID,
+                       v.Price, v.OfferPrice, v.metricvalue, v.metrictype, v.AvailableQty, v.maxQty
+                  FROM product_unlocks pu
+                  JOIN Products p ON p.ProductID = pu.ProductID AND p.Status = 1
+                  JOIN ProductVariants v ON v.VariantID = COALESCE(pu.VariantID,
+                       (SELECT MIN(v2.VariantID) FROM ProductVariants v2 WHERE v2.ProductID = pu.ProductID AND v2.Status = 1))
+                 WHERE pu.Status = 1
+                   AND (pu.StartDate IS NULL OR pu.StartDate <= NOW())
+                   AND (pu.EndDate IS NULL OR pu.EndDate >= NOW())
+                 ORDER BY pu.UnlockPrice ASC, pu.ThresholdAmount ASC`);
+            const progress = new Map();
+            const cartQty = new Map();
+            if (req.UserID) {
+                const bill = await require('../services/CheckoutBill').computeBill({ userId: req.UserID });
+                (bill.ProductUnlocks || []).forEach((u) => progress.set(u.UnlockID, u));
+                (bill.Items || []).forEach((i) => cartQty.set(`${i.ProductID}:${i.VariantID}`, parseInt(i.Quantity, 10) || 0));
+            }
+            const image = (r) => {
+                let img = r.ImageUrl && r.ImageUrl !== 'NA' ? r.ImageUrl : null;
+                if (!img) {
+                    try {
+                        const list = JSON.parse(r.ProductImages || '[]');
+                        if (list.length) img = list[0];
+                    } catch (_) { /* no images */ }
+                }
+                return img ? (String(img).startsWith('http') ? img : `http://clikgett-media.local/Products/${img}`) : null;
+            };
+            const deals = rows.map((r) => {
+                const p = progress.get(r.UnlockID);
+                const threshold = parseFloat(r.ThresholdAmount) || 0;
+                return {
+                    UnlockID: r.UnlockID,
+                    ProductID: r.ProductID,
+                    VariantID: r.VariantID,
+                    ProductName: r.ProductName,
+                    ImageUrl: image(r),
+                    Unit: r.metrictype ? `${parseFloat(r.metricvalue)} ${r.metrictype}` : '',
+                    Price: parseFloat(r.Price) || 0,
+                    OfferPrice: parseFloat(r.OfferPrice || r.Price) || 0,
+                    UnlockPrice: parseFloat(r.UnlockPrice) || 0,
+                    ThresholdAmount: threshold,
+                    IsUnlocked: p ? p.IsUnlocked === true : false,
+                    AmountNeeded: p ? p.AmountNeeded : threshold + 1,
+                    InStock: (parseInt(r.AvailableQty, 10) || 0) > 0,
+                    MaxQty: Math.min(parseInt(r.AvailableQty, 10) || 0, parseInt(r.maxQty, 10) || 99),
+                    InCart: cartQty.get(`${r.ProductID}:${r.VariantID}`) || 0,
+                    Message: r.Message || null,
+                    CategoryID: r.CategoryID,
+                    SubCategoryID: r.SubCategoryID,
+                };
+            });
+            const locked = deals.filter((d) => !d.IsUnlocked && d.InStock).sort((a, b) => a.AmountNeeded - b.AmountNeeded);
+            return res.json({
+                Status: 1,
+                Deals: deals,
+                NextUnlock: locked.length
+                    ? { AmountNeeded: locked[0].AmountNeeded, ThresholdAmount: locked[0].ThresholdAmount, UnlockPrice: locked[0].UnlockPrice }
+                    : null,
+                LoggedIn: !!req.UserID,
+            });
+        } catch (err) {
+            console.error('Error loading unlock deals:', err.message);
+            return res.status(500).json({ Status: 0, Message: 'Could not load the deals' });
+        }
     }
 };
 

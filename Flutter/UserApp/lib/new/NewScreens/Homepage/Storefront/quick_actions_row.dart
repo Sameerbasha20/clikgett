@@ -1,5 +1,6 @@
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
+import 'package:fav_app/new/NewScreens/Deals/UnlockDealsScreen.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/clikgett_product_card.dart';
 import 'package:fav_app/new/NewScreens/PhotoOrders/PhotoOrderUploadScreen.dart';
 import 'package:fav_app/new/NewScreens/Widgets/floating_cart_bar.dart';
@@ -9,7 +10,7 @@ import 'package:fav_app/old/Models/Home/home_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Shortcut card under the search bar: order with a photo of your list.
+/// Shortcut cards under the search bar: order with a photo of your list, and unlock deals.
 class QuickActionsRow extends StatefulWidget {
   const QuickActionsRow({super.key});
 
@@ -42,6 +43,17 @@ class _QuickActionsRowState extends State<QuickActionsRow> {
             title: 'Order with a photo',
             subtitle: 'Snap your list, we pack it',
             onTap: _photoOrder,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _ActionCard(
+            icon: Icons.lock_open_rounded,
+            iconBg: const Color(0xFFEDE9FE),
+            iconColor: const Color(0xFF6D28D9),
+            title: 'Unlock deals',
+            subtitle: 'Special prices as your cart grows',
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UnlockDealsScreen())),
           ),
         ),
       ]),

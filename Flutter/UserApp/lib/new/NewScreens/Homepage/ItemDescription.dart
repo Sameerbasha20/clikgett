@@ -24,6 +24,7 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:fav_app/new/Constants/stock_helper.dart';
 import 'package:fav_app/new/NewScreens/Widgets/purchase_options_sheet.dart';
 import 'package:fav_app/new/NewScreens/Homepage/widgets/similar_products_widget.dart';
+import 'package:fav_app/new/NewScreens/Homepage/widgets/pack_options.dart';
 
 class ItemDescription extends StatefulWidget {
   const ItemDescription({
@@ -171,6 +172,20 @@ class _ItemDescriptionState extends State<ItemDescription> {
                                     availableQty:
                                         categoryController.availableQty.value,
                                     discount: widget.percent,
+                                  ),
+                                  // Buy-more packs ("2 x 750 ml ₹77") for the selected size.
+                                  PackOptions(
+                                    key: ValueKey('packs-${categoryController.productVariant?.variantId}'),
+                                    productId: categoryController.productsDetails?.productId ?? 0,
+                                    variantId: categoryController.productVariant?.variantId ?? 0,
+                                    unit: categoryController.selectedMetricTypeandValue.value,
+                                    price: categoryController.offerammount.value,
+                                    mrp: categoryController.ammount.value,
+                                    tiers: categoryController.productsDetails?.bulkTiers ?? const [],
+                                    buy2Price: categoryController.productVariant?.buy2Price,
+                                    maxQty: categoryController.maxavailableQty.value,
+                                    categoryId: categoryController.productsDetails?.categoryId,
+                                    subCategoryId: categoryController.productsDetails?.subCategoryId,
                                   ),
                                   if (categoryController.productsDetails
                                           ?.productVariants?.first.ExpiryDate !=

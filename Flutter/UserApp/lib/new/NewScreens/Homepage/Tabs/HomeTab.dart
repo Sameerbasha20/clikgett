@@ -15,6 +15,7 @@ import 'package:fav_app/new/NewScreens/Homepage/Tabs/flash_sale_section.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_hero_banner_carousel.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:fav_app/old/Models/Home/home_model.dart' as home_model;
+import 'package:fav_app/new/Services/storefront_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -39,6 +40,9 @@ class _HomeTabState extends State<Home> {
 
   bool _isLoggedIn = false;
 
+  /// "Previously bought" rail under the search bar (logged-in customers).
+  List<home_model.BestItem> _previouslyBought = [];
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +54,9 @@ class _HomeTabState extends State<Home> {
     _isLoggedIn = token.isNotEmpty;
     if (mounted) setState(() {});
     if (_isLoggedIn) {
+      StorefrontServices.previouslyBought().then((list) {
+        if (mounted) setState(() => _previouslyBought = list);
+      });
       timingController.checkTiming(token);
       ordersController.getcurrentorder(context: context);
       ordersController.getpastorder(context: context);
@@ -103,6 +110,14 @@ class _HomeTabState extends State<Home> {
               SliverToBoxAdapter(child: StorefrontHeader(isLoggedIn: _isLoggedIn)),
               SliverPersistentHeader(pinned: true, delegate: StickySearchBarDelegate(hints: _searchHints)),
               SliverToBoxAdapter(child: _StoreClosedCard(timingController: timingController)),
+              if (_previouslyBought.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: SectionProductRail(
+                    title: 'Previously bought',
+                    subtitle: 'Your usuals, ready to add again',
+                    products: _previouslyBought,
+                  ),
+                ),
               const SliverToBoxAdapter(child: QuickActionsRow()),
               SliverList(delegate: SliverChildListDelegate(_sections())),
               const SliverToBoxAdapter(child: SizedBox(height: 120)), // room for the floating cart bar

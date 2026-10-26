@@ -12,6 +12,7 @@ router
 .get('/weblist',util.authenticate.optionalUserAuthenticate,productcontroller.productsbyCategory_subcategory)
 
 .get('/bulk-deals',util.authenticate.optionalUserAuthenticate,productcontroller.bulkDeals)
+.get('/previously-bought',util.authenticate.optionalUserAuthenticate,productcontroller.previouslyBought)
 .get('/detail/:ProductID',util.authenticate.optionalUserAuthenticate,productcontroller.productsby_ProductID)
 
 .get('/search/:SearchString',util.authenticate.optionalUserAuthenticate,productcontroller.searchProduct)

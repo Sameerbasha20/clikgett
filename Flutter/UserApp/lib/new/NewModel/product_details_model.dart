@@ -4,6 +4,7 @@
 
 import 'dart:convert';
 import 'package:fav_app/new/Services/common/server_date.dart';
+import 'package:fav_app/old/Models/Home/home_model.dart' as home_model show BulkTier;
 
 /// MySQL DECIMAL columns arrive as text ("750.000"); accept numbers or text.
 double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
@@ -64,7 +65,11 @@ class Products {
     this.updatedAt,
     this.productVariants,
     required this.productImages,
+    this.bulkTiers = const [],
   });
+
+  /// Buy-more prices (bundles such as "2 for ₹77", or per-item slabs).
+  List<home_model.BulkTier> bulkTiers;
 
   factory Products.fromJson(Map<String, dynamic> json) => Products(
         productId: json["ProductID"],
@@ -86,6 +91,12 @@ class Products {
             ? []
             : List<ProductVariant>.from(json["ProductVariants"]!
                 .map((x) => ProductVariant.fromJson(x))),
+        bulkTiers: json["BulkTiers"] is List
+            ? (json["BulkTiers"] as List)
+                .whereType<Map>()
+                .map((t) => home_model.BulkTier.fromJson(Map<String, dynamic>.from(t)))
+                .toList()
+            : const [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -120,6 +131,8 @@ class ProductVariant {
   double? salePrice;
   /// The signed-in member's price (only sent when it's lower than offerPrice).
   double? memberPrice;
+  /// Per-item price when buying 2 or more (0 / null when not set).
+  double? buy2Price;
   int? status;
   DateTime? createdAt;
   DateTime? updatedAt;
@@ -145,6 +158,7 @@ class ProductVariant {
     this.offerPrice,
     this.salePrice,
     this.memberPrice,
+    this.buy2Price,
     this.status,
     this.createdAt,
     this.updatedAt,
@@ -163,6 +177,7 @@ class ProductVariant {
             _toDouble(json["OfferPrice"]) ?? 0.0, // Handle null offerPrice
         salePrice: _toDouble(json["SalePrice"]),
         memberPrice: _toDouble(json["MemberPrice"]),
+        buy2Price: _toDouble(json["Buy2Price"]),
         status: json["Status"],
         createdAt: json["CreatedAt"] == null
             ? null

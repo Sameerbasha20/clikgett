@@ -10,6 +10,28 @@ const pool = require('../utils/db');
 const Products_s3="http://clikgett-media.local/Products/"
 
 const productcontroller={
+    // GET /products/previously-bought: what this customer ordered before, most recent first.
+    previouslyBought: async (req, resp) => {
+        try {
+            if (!req.UserID) return resp.json({ Status: 1, Products: [] });
+            const limit = Math.min(30, Math.max(1, parseInt(req.query.limit, 10) || 15));
+            const results = await CommonController.getproducts(
+                `select p.* from Products p
+                   join (select OI.ProductID, max(O.CreatedAt) as LastOrdered, count(distinct O.OrderID) as TimesOrdered
+                           from OrderItems OI join Orders O on O.OrderID = OI.OrderID
+                          where O.UserID = ? and O.OrderStatus not in (3, 4)
+                          group by OI.ProductID) r on r.ProductID = p.ProductID
+                  where p.Status = 1
+                  order by r.LastOrdered desc
+                  limit ${limit}`,
+                [req.UserID]);
+            return resp.json({ Status: 1, Products: results || [] });
+        } catch (e) {
+            console.log('previously bought failed', e && e.message);
+            return resp.status(500).json({ Status: 0, Message: 'Could not load your previous items' });
+        }
+    },
+
     // GET /products/bulk-deals: products that get cheaper when you buy more.
     bulkDeals: async (req, resp) => {
         try {

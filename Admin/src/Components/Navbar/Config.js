@@ -1,6 +1,6 @@
 import { AiOutlineUnorderedList, AiOutlineGift, AiOutlineDashboard } from "react-icons/ai";
 import { GiNewspaper } from "react-icons/gi";
-import { MdOutlineCategory, MdOutlineDeliveryDining, MdOutlinePriceChange, MdOutlineRemoveShoppingCart } from "react-icons/md";
+import { MdOutlineCategory, MdOutlineDeliveryDining, MdOutlineInventory2, MdOutlinePriceChange, MdOutlineRemoveShoppingCart } from "react-icons/md";
 import { CgShoppingCart } from "react-icons/cg";
 import { IoPricetagsOutline } from "react-icons/io5";
 import { FiSettings, FiDownload } from "react-icons/fi";
@@ -28,6 +28,7 @@ export const menuSections = [
         title: "Catalog",
         items: [
             { name: "Products", menuLink: "/products", active: "products", icon: MdOutlineCategory },
+            { name: "Stock", menuLink: "/stock", active: "stock", icon: MdOutlineInventory2 },
             { name: "Out of stock", menuLink: "/out-of-stock", active: "out-of-stock", icon: MdOutlineRemoveShoppingCart },
             { name: "Categories", menuLink: "/categories", active: "categories", icon: AiOutlineUnorderedList },
             { name: "Sub categories", menuLink: "/subcategories", active: "subcategories", icon: MdOutlineCategory },

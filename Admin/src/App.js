@@ -37,6 +37,7 @@ import ProductRequests from "./Components/dashboard/ProductRequests/ProductReque
 import Membership from "./Components/dashboard/Membership/Membership";
 import AdminUsers from "./Components/dashboard/adminusers/Adminusers";
 import OutOfStock from "./Components/dashboard/OutOfStock/OutOfStock";
+import Stock from "./Components/dashboard/Stock/Stock";
 
 const isLoggedIn = () => {
     const token = sessionStorage.getItem("token");
@@ -62,6 +63,7 @@ const pages = [
     ["/products", <Products />],
     ["/products/details/:productID", <Details />],
     ["/out-of-stock", <OutOfStock />],
+    ["/stock", <Stock />],
     ["/categories", <Category />],
     ["/subcategories", <Subcategories />],
     ["/update-price", <Update />],

@@ -691,4 +691,8 @@ export const Services = {
     // Out of stock
     getOutOfStock: (token) => httpcall("adminproducts/out-of-stock", "GET", null, token),
     restockVariant: (id, qty, token) => httpcall(`adminproducts/restock/${id}`, "PUT", { AvailableQty: qty }, token),
+    // Stock page: every pack, add stock, and the out-of-stock reminder
+    getStockLevels: (token) => httpcall("admin-stock", "GET", null, token),
+    addStock: (variantId, qty, token) => httpcall(`admin-stock/${variantId}/add`, "POST", { Quantity: qty }, token),
+    getStockAlerts: (token) => httpcall("admin-stock/alerts", "GET", null, token),
 };

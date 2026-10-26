@@ -123,6 +123,19 @@ class StorefrontServices {
     }
   }
 
+  /// What this customer ordered before, most recent first (empty for guests).
+  static Future<List<home_model.BestItem>> previouslyBought() async {
+    try {
+      final response = await _client.get(Uri.parse('${Constants.baseUrl}/products/previously-bought'));
+      final data = jsonDecode(response.body);
+      final list = (data is Map ? data['Products'] : null) as List? ?? [];
+      return list.map((e) => home_model.BestItem.fromJson(Map<String, dynamic>.from(e))).toList();
+    } catch (e) {
+      debugPrint('previouslyBought failed: $e');
+      return [];
+    }
+  }
+
   /// Products that get cheaper when you buy more (bundles, slabs, "buy 2" prices).
   static Future<List<home_model.BestItem>> bulkDeals() async {
     try {
