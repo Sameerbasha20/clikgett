@@ -7,9 +7,11 @@ const pool = require('../utils/db.js');
 
 const BASE_URL = 'http://localhost:5000';
 
-// Test JWT Tokens
-const DRIVER_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBZG1pbklEIjozMywiUm9sZSI6MiwiaWF0IjoxNzkxMjYxMTI2LCJleHAiOjE4MjI3OTcxMjZ9.xYrbgZj9TzmfasudBnTPn5hUjLAchzuYQNEQINO-_Tw'; // Delivery Boy ID 33
-const ADMIN_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBZG1pbklEIjoxLCJpYXQiOjE3OTExODEyOTQsImV4cCI6MTgyMjcxNzI5NH0.Ip5j-K8hEKNiT6j3P1wlo-fPm-nIsmiNTJq2orlWDoA'; // Admin ID 1
+// Test tokens, signed with this server's SECRET_KEY when the script runs.
+require('dotenv').config();
+const jwt = require('jsonwebtoken');
+const DRIVER_TOKEN = jwt.sign({ AdminID: 33, Role: 2 }, process.env.SECRET_KEY, { expiresIn: '1h' }); // Delivery Boy ID 33
+const ADMIN_TOKEN = jwt.sign({ AdminID: 1 }, process.env.SECRET_KEY, { expiresIn: '1h' }); // Admin ID 1
 
 const TEST_ORDER_ID = 909;
 

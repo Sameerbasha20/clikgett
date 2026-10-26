@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/Constants.dart';
 import 'package:fav_app/new/NewScreens/Address/AddAddress.dart';
 import 'package:fav_app/new/NewScreens/location/locationaccess.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ class _PlacesSearchPageState extends State<Saerchaddress> {
           children: [
             GooglePlaceAutoCompleteTextField(
               textEditingController: _controller,
-              googleAPIKey: "AIzaSyBOpDNV4tKa_jCSFuwV1IdFa1WXsB0PguA",
+              googleAPIKey: Constants.googlePlacesKey,
               inputDecoration: const InputDecoration(
                 hintText: "Search for a place",
                 border: OutlineInputBorder(),

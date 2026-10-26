@@ -29,4 +29,8 @@ class Constants {
   static String baseUrl = baseUrlDev;
 
   static String rupee = '₹';
+
+  /// Google Places key for address search. Not kept in the source: pass it at build time
+  /// with --dart-define=GOOGLE_PLACES_KEY=... (restrict the key to the Places API).
+  static const String googlePlacesKey = String.fromEnvironment('GOOGLE_PLACES_KEY');
 }
