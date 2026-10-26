@@ -219,10 +219,12 @@ class UnsupportedLocationScreen extends StatelessWidget {
                               buttonColor: Color(0xFF70B943),
                               textColor: Colors.white,
                               borderRadius: 12,
-                              onTap: () {
-                                Get.to(() => ManageAddress(
+                              onTap: () async {
+                                final picked = await Get.to(() => ManageAddress(
                                       isFromCartScreen: isFromCart,
                                     ));
+                                // A new address was picked: go back to checkout with it.
+                                if (picked != null && isFromCart) Get.back();
                               },
                             ),
                             SizedBox(height: 1.5.h),

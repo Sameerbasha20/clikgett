@@ -8,6 +8,8 @@
 const MIGRATIONS = [
     require('./print_store_migration'),
     require('./product_unlock_limits_migration'),
+    require('./enquiry_attachments_migration'),
+    require('./notification_preferences_migration'),
 ];
 
 (async () => {

@@ -38,34 +38,40 @@ function CustomerEnquiries() {
 
     // Modal state for photo preview
     const [showPhotoModal, setShowPhotoModal] = useState(false);
-    const [previewPhotoUrl, setPreviewPhotoUrl] = useState("");
+    const [previewPhotoUrls, setPreviewPhotoUrls] = useState([]);
     const [loadingPhoto, setLoadingPhoto] = useState(false);
+
+    /** Number of photos on an enquiry (ImagePaths list, or the single ImagePath). */
+    const photoCount = (enquiry) => {
+        try {
+            const list = JSON.parse(enquiry.ImagePaths || "null");
+            if (Array.isArray(list) && list.length) return list.length;
+        } catch (e) { /* single photo */ }
+        return enquiry.ImagePath ? 1 : 0;
+    };
 
     const openPhotoPreview = async (enquiry) => {
         setSelectedEnquiry(enquiry);
         setShowPhotoModal(true);
         setLoadingPhoto(true);
-
+        setPreviewPhotoUrls([]);
+        const rawToken = sessionStorage.getItem("token");
+        const count = Math.max(1, photoCount(enquiry));
         try {
-            const rawToken = sessionStorage.getItem("token");
-            const response = await fetch(`/api/admin/customer-enquiries/image/${enquiry.EnquiryID}`, {
-                headers: {
-                    Authorization: `token ${rawToken}`,
-                },
-            });
-
-            if (response.ok) {
-                const blob = await response.blob();
-                const objectUrl = URL.createObjectURL(blob);
-                setPreviewPhotoUrl(objectUrl);
-            } else {
-                toast.error("Unable to load image from server");
-                setPreviewPhotoUrl("");
-            }
+            const urls = await Promise.all(
+                Array.from({ length: count }, async (_, index) => {
+                    const response = await fetch(`/api/admin/customer-enquiries/image/${enquiry.EnquiryID}?index=${index}`, {
+                        headers: { Authorization: `token ${rawToken}` },
+                    });
+                    return response.ok ? URL.createObjectURL(await response.blob()) : null;
+                })
+            );
+            const loaded = urls.filter(Boolean);
+            if (!loaded.length) toast.error("The photo could not be loaded from the server");
+            setPreviewPhotoUrls(loaded);
         } catch (err) {
-            console.error("Error fetching photo blob:", err);
-            toast.error("Failed to fetch photo");
-            setPreviewPhotoUrl("");
+            console.error("Error fetching photos:", err);
+            toast.error("Failed to fetch photos");
         } finally {
             setLoadingPhoto(false);
         }
@@ -652,7 +658,7 @@ function CustomerEnquiries() {
             <Modal show={showPhotoModal} onHide={() => setShowPhotoModal(false)} size="lg" centered>
                 <Modal.Header closeButton>
                     <Modal.Title style={{ fontSize: "1.15rem", fontWeight: 600 }}>
-                        📷 Attached Photo {selectedEnquiry?.ProductName ? `— ${selectedEnquiry.ProductName}` : ""}
+                        📷 Attached {previewPhotoUrls.length > 1 ? `Photos (${previewPhotoUrls.length})` : "Photo"} {selectedEnquiry?.ProductName ? `— ${selectedEnquiry.ProductName}` : ""}
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="text-center p-4">
@@ -661,19 +667,24 @@ function CustomerEnquiries() {
                             <ScaleLoader color="#1c6758" loading={true} />
                             <p style={{ marginTop: "12px", color: "#666" }}>Loading image securely...</p>
                         </div>
-                    ) : previewPhotoUrl ? (
-                        <div>
-                            <img
-                                src={previewPhotoUrl}
-                                alt="Customer Attached Product Request"
-                                style={{
-                                    maxWidth: "100%",
-                                    maxHeight: "70vh",
-                                    objectFit: "contain",
-                                    borderRadius: "8px",
-                                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                                }}
-                            />
+                    ) : previewPhotoUrls.length ? (
+                        <div style={{ display: "grid", gap: "14px" }}>
+                            {previewPhotoUrls.map((url, i) => (
+                                <div key={url}>
+                                    {previewPhotoUrls.length > 1 && <div className="text-muted small mb-1">Photo {i + 1} of {previewPhotoUrls.length}</div>}
+                                    <img
+                                        src={url}
+                                        alt={`Customer attachment ${i + 1}`}
+                                        style={{
+                                            maxWidth: "100%",
+                                            maxHeight: "60vh",
+                                            objectFit: "contain",
+                                            borderRadius: "8px",
+                                            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                                        }}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         <p className="text-muted">No preview available</p>

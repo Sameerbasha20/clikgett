@@ -20,6 +20,11 @@ const queryAsync = (sql, params = []) => {
 };
 
 // Ensure product request photo storage directory exists
+const customerPhotos = require('../utils/customerPhotos');
+const MAX_ENQUIRY_PHOTOS = 3;
+
+/** "Sam" + "NA" -> "Sam": NA is the placeholder for a missing name. */
+const fullName = (...parts) => parts.map((p) => String(p || '').trim()).filter((p) => p && p.toUpperCase() !== 'NA').join(' ');
 const productRequestPhotoDir = path.resolve(__dirname, '../images/product_requests');
 if (!fs.existsSync(productRequestPhotoDir)) {
     fs.mkdirSync(productRequestPhotoDir, { recursive: true });
@@ -59,7 +64,8 @@ const CustomerRequestsController = {
                 brand,
                 sizeOrQty,
                 imageBase64,
-                mimeType
+                mimeType,
+                images
             } = req.body;
 
             if (!description || typeof description !== 'string' || description.trim().length === 0) {
@@ -75,7 +81,7 @@ const CustomerRequestsController = {
                 if (userRows && userRows.length > 0) {
                     const u = userRows[0];
                     if (!customerName) {
-                        customerName = `${u.FirstName || ''} ${u.LastName || ''}`.trim() || 'Valued Customer';
+                        customerName = fullName(u.FirstName, u.LastName) || 'Valued Customer';
                     }
                     if (!contactMobile) {
                         contactMobile = u.MobileNumber || req.MobileNumber || null;
@@ -99,28 +105,28 @@ const CustomerRequestsController = {
 
             const cleanDescription = description.trim();
 
-            // Optional image processing for enquiry / product request photo
-            let imagePath = null;
-            if (imageBase64 && typeof imageBase64 === 'string' && imageBase64.trim().length > 0) {
-                const cleanMime = (mimeType || 'image/jpeg').toLowerCase();
-                const extension = ALLOWED_MIME_TYPES[cleanMime] || '.jpg';
-
-                const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-                const buffer = Buffer.from(base64Data, 'base64');
-
-                if (buffer.length > 10 * 1024 * 1024) {
-                    return resp.status(400).json({ Status: 0, Message: 'Image size exceeds maximum limit of 10MB' });
-                }
-
-                if (buffer.length >= 10) {
-                    const uniqueId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
-                    const fileName = `enq_img_${Date.now()}_${uniqueId}${extension}`;
-                    const localFilePath = path.join(productRequestPhotoDir, fileName);
-
-                    fs.writeFileSync(localFilePath, buffer);
-                    imagePath = `images/product_requests/${fileName}`;
-                }
+            // Photos: `images` [{ imageBase64, mimeType }] (up to 3), or the older single image fields.
+            const uploads = (Array.isArray(images) ? images : [])
+                .filter((img) => img && typeof img.imageBase64 === 'string' && img.imageBase64.trim())
+                .map((img) => ({ data: img.imageBase64, mime: img.mimeType }));
+            if (!uploads.length && typeof imageBase64 === 'string' && imageBase64.trim()) uploads.push({ data: imageBase64, mime: mimeType });
+            if (uploads.length > MAX_ENQUIRY_PHOTOS) {
+                return resp.status(400).json({ Status: 0, Message: `You can attach up to ${MAX_ENQUIRY_PHOTOS} photos` });
             }
+            const imagePaths = [];
+            for (const upload of uploads) {
+                const cleanMime = (upload.mime || 'image/jpeg').toLowerCase();
+                const extension = ALLOWED_MIME_TYPES[cleanMime] || '.jpg';
+                const buffer = Buffer.from(String(upload.data).replace(/^data:image\/\w+;base64,/, ''), 'base64');
+                if (buffer.length > 10 * 1024 * 1024) {
+                    return resp.status(400).json({ Status: 0, Message: 'Each photo can be up to 10 MB' });
+                }
+                if (buffer.length < 10) continue;
+                const uniqueId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
+                const fileName = `enq_img_${Date.now()}_${uniqueId}${extension}`;
+                imagePaths.push(await customerPhotos.save(buffer, 'product_requests', fileName, cleanMime));
+            }
+            const imagePath = imagePaths[0] || null;
 
             // Product requests live only in ProductRequests (admin: Customer Requests > Product requests);
             // saving them as enquiries too showed every request twice.
@@ -150,8 +156,8 @@ const CustomerRequestsController = {
 
             const insertSql = `
                 INSERT INTO CustomerEnquiries (
-                    UserID, Name, MobileNumber, Subject, Description, Category, ProductName, ImagePath, Status, CreatedAt
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())
+                    UserID, Name, MobileNumber, Subject, Description, Category, ProductName, ImagePath, ImagePaths, Status, CreatedAt
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())
             `;
             const result = await queryAsync(insertSql, [
                 userId,
@@ -161,7 +167,8 @@ const CustomerRequestsController = {
                 cleanDescription,
                 cleanCategory,
                 cleanProductName,
-                imagePath
+                imagePath,
+                imagePaths.length ? JSON.stringify(imagePaths) : null
             ]);
 
             return resp.status(200).json({
@@ -275,35 +282,24 @@ const CustomerRequestsController = {
             const userId = req.UserID;
             const adminId = req.AdminID;
 
-            const rows = await queryAsync('SELECT UserID, ImagePath FROM CustomerEnquiries WHERE EnquiryID = ?', [enquiryId]);
+            const rows = await queryAsync('SELECT UserID, ImagePath, ImagePaths FROM CustomerEnquiries WHERE EnquiryID = ?', [enquiryId]);
             if (!rows || rows.length === 0 || !rows[0].ImagePath) {
                 return resp.status(404).send('Image not found');
             }
+            let paths = [rows[0].ImagePath];
+            try {
+                const list = JSON.parse(rows[0].ImagePaths || 'null');
+                if (Array.isArray(list) && list.length) paths = list;
+            } catch (_) { /* single photo */ }
+            const index = Math.max(0, parseInt(req.query.index, 10) || 0);
+            if (index >= paths.length) return resp.status(404).send('Image not found');
 
             // Access control: Only the customer who submitted it or an authenticated admin
             if (!adminId && rows[0].UserID !== userId) {
                 return resp.status(403).send('Forbidden: Access denied to this image');
             }
 
-            const storagePath = rows[0].ImagePath;
-            const absolutePath = path.resolve(__dirname, '..', storagePath);
-
-            if (!fs.existsSync(absolutePath)) {
-                return resp.status(404).send('Image file not found on server');
-            }
-
-            const ext = path.extname(absolutePath).toLowerCase();
-            const contentTypes = {
-                '.jpg': 'image/jpeg',
-                '.jpeg': 'image/jpeg',
-                '.png': 'image/png',
-                '.webp': 'image/webp'
-            };
-
-            resp.setHeader('Content-Type', contentTypes[ext] || 'image/jpeg');
-            resp.setHeader('Cache-Control', 'private, max-age=86400');
-            const readStream = fs.createReadStream(absolutePath);
-            return readStream.pipe(resp);
+            return customerPhotos.send(resp, paths[index]);
         } catch (err) {
             console.error('Error serving secure enquiry image:', err);
             return resp.status(500).send('Internal server error');
@@ -366,7 +362,7 @@ const CustomerRequestsController = {
             const userRows = await queryAsync('SELECT FirstName, LastName, MobileNumber FROM Users WHERE UserID = ?', [userId]);
             if (userRows && userRows.length > 0) {
                 const u = userRows[0];
-                customerName = `${u.FirstName || ''} ${u.LastName || ''}`.trim() || 'Valued Customer';
+                customerName = fullName(u.FirstName, u.LastName) || 'Valued Customer';
                 if (!contactMobile) contactMobile = u.MobileNumber;
             }
 
@@ -386,10 +382,7 @@ const CustomerRequestsController = {
                 if (buffer.length >= 10) {
                     const uniqueId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
                     const fileName = `prod_req_${Date.now()}_${uniqueId}${extension}`;
-                    const localFilePath = path.join(productRequestPhotoDir, fileName);
-
-                    fs.writeFileSync(localFilePath, buffer);
-                    imagePath = `images/product_requests/${fileName}`;
+                    imagePath = await customerPhotos.save(buffer, 'product_requests', fileName, cleanMime);
                 }
             }
 
@@ -462,19 +455,7 @@ const CustomerRequestsController = {
                 return resp.status(403).send('Forbidden: Access denied to this image');
             }
 
-            const storagePath = rows[0].ImagePath;
-            const absolutePath = path.resolve(__dirname, '..', storagePath);
-
-            if (fs.existsSync(absolutePath)) {
-                const ext = path.extname(absolutePath).toLowerCase();
-                const mime = ext === '.png' ? 'image/png' : (ext === '.webp' ? 'image/webp' : 'image/jpeg');
-                resp.setHeader('Content-Type', mime);
-                resp.setHeader('Cache-Control', 'private, max-age=3600');
-                const stream = fs.createReadStream(absolutePath);
-                return stream.pipe(resp);
-            } else {
-                return resp.status(404).send('Image file not found on disk');
-            }
+            return customerPhotos.send(resp, rows[0].ImagePath);
         } catch (err) {
             console.error('Error serving product request image:', err);
             return resp.status(500).send('Error serving image');

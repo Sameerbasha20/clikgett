@@ -6,6 +6,7 @@ var fs = require('fs')
 const CommonController = require("../controllers/CommonController");
 
 const pool = require('../utils/db');
+const catalogImages = require('../utils/catalogImages');
 
 const category_s3 = "http://clikgett-media.local/Categories/"
 const Products_s3 = "http://clikgett-media.local/Products/"
@@ -159,67 +160,39 @@ const categoriescontroller = {
     },
 
     addcategory: async (req, resp, next) => {
-        let CategoryID, body, image; // per-request (were implicit globals)
         try {
+            const body = req.body || {};
+            const name = String(body.CategoryName || '').trim();
+            if (!name) return resp.status(400).json({ Status: 0, Message: 'Enter the category name' });
+            const description = body.Description == null || body.Description === '' ? 'NA' : body.Description;
+            const existing = await CommonController.commonget('SELECT CategoryID FROM Categories WHERE CategoryName = ? AND Status <> 2', [name]);
+            if (existing.length) return resp.status(400).json({ Status: 0, Message: `A category named "${name}" already exists` });
 
-            body = req.body
-
-            if (body.Description == null || body.Description == undefined)
-                body.Description = 'NA'
-            const getQyery = `select Priority from Categories order by Priority desc limit 1`
-            const priority = await CommonController.getCategoryPriority(getQyery)
-
-            // console.log('ImageUrl',body.ImageUrl)
-            let InsertCategories = { CategoryName: body.CategoryName, Priority: priority[0].Priority, Description: body.Description, ImageUrl: body.ImageUrl, Status: 1 }
-
-            let sql = "INSERT INTO Categories set ?";
-
-            pool.query(sql, InsertCategories, (err, results) => {
-                if (err) console.log('db error', err.sqlMessage || err.message); results = results || { affectedRows: 0 };  // never crash on a failed query
-                console.log('post method', results, err)
-                if (results.affectedRows === 1) {
-
-                    CategoryID = results.insertId
-                    if (body.ImageUrl != null || body.ImageUrl != undefined) {
-                        let base64String = 'data:image/png;base64,' + body.ImageUrl; // Not a real image 
-                        let base64Image = base64String.split(';base64,').pop();
-                        var imagename = Date.now() + "_" + CategoryID + '.png'
-                        console.log(imagename)
-                        image = "ImageUrl=" + pool.escape(imagename) + "";
-                        fs.writeFile("images/" + imagename, base64Image, { encoding: 'base64' }, function (err) {
-
-                            const fileContent = fs.readFileSync("images/" + imagename);
-                            const params = {
-                                Bucket: process.env.bucketname, Key: 'Categories/' + imagename,
-                                Body: fileContent,
-                                ACL: 'public-read'
-                            };
-
-                            s3.upload(params, function (err, data) {
-                                if (err) {
-                                    throw err;
-                                }
-                                console.log("UPDATE Categories SET " + image + " WHERE CategoryID=" + CategoryID)
-                                pool.query("UPDATE Categories SET " + image + " WHERE CategoryID=" + CategoryID + ";", function (err, results, fields) { })
-
-                                console.log(`File uploaded successfully. ${data.Location}`);
-
-
-                            });
-                        });
-                    }
-
-                    return resp.json({ "Status": 1, "Message": "Category Added successfully" });
+            const priority = await CommonController.getCategoryPriority('select Priority from Categories order by Priority desc limit 1');
+            // The image is stored first-class in object storage; the row only keeps its file name.
+            const result = await CommonController.commonget('INSERT INTO Categories SET ?', [{
+                CategoryName: name,
+                Priority: priority && priority[0] ? priority[0].Priority : 1,
+                Description: description,
+                ImageUrl: 'NA',
+                Status: 1,
+            }]);
+            const categoryId = result.insertId;
+            if (body.ImageUrl) {
+                try {
+                    const fileName = await catalogImages.saveDataUrl(body.ImageUrl, 'Categories', `${Date.now()}_${categoryId}`);
+                    await CommonController.commonget('UPDATE Categories SET ImageUrl = ? WHERE CategoryID = ?', [fileName, categoryId]);
+                } catch (imgErr) {
+                    console.log('category image upload failed', imgErr.message);
+                    return resp.json({ Status: 1, Message: `Category added, but the image was not saved: ${imgErr.message}. Edit the category to add it.`, CategoryID: categoryId });
                 }
-                else {
-                    console.log("error in insert user to table ", results.affectedRows);
-                    return resp.json({ "Status": 0, "Message": "error" });
-                }
-            })
+            }
+            return resp.json({ Status: 1, Message: 'Category added successfully', CategoryID: categoryId });
         }
         catch (err) {
             console.log("exception in adding Categories ", err);
-            return resp.json({ "Status": 0, "Message": "Error in adding Categories" });
+            const reason = (err && (err.sqlMessage || err.message)) || 'database error';
+            return resp.status(500).json({ Status: 0, Message: `Could not add the category (${reason}). Please try again.` });
         }
     },
 
@@ -257,7 +230,7 @@ const categoriescontroller = {
 
                     s3.upload(params, function (err, data) {
                         if (err) {
-                            throw err;
+                            return console.error('image upload failed:', err.message); // never throw in a callback (crashes the server)
                         }
                         console.log("UPDATE Categories SET " + image + " WHERE CategoryID=" + CategoryID)
                         pool.query("UPDATE Categories SET " + image + " WHERE CategoryID=" + CategoryID + ";", function (err, results, fields) { })

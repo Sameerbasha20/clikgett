@@ -21,6 +21,7 @@ function PhotoOrders() {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [page, setPage] = useState(1);
+    const [reloadKey, setReloadKey] = useState(0);
 
     const statusTabs = [
         { label: "All Requests", value: "ALL" },
@@ -60,7 +61,18 @@ function PhotoOrders() {
 
     useEffect(() => {
         fetchRequests();
-    }, [selectedStatus, page]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedStatus, page, reloadKey]);
+
+    const hasFilters = selectedStatus !== "ALL" || searchTerm || startDate || endDate;
+    const clearFilters = () => {
+        setSelectedStatus("ALL");
+        setSearchTerm("");
+        setStartDate("");
+        setEndDate("");
+        setPage(1);
+        setReloadKey((k) => k + 1);
+    };
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -84,29 +96,29 @@ function PhotoOrders() {
                         Review uploaded customer photos, prepare priced catalog proposals, and track confirmations.
                     </p>
 
-                    {/* Filter Tabs */}
-                    <div className={styles.filterTabs}>
-                        {statusTabs.map((tab) => (
-                            <button
-                                key={tab.value}
-                                className={`${styles.filterTabBtn} ${selectedStatus === tab.value ? styles.filterTabActive : ""}`}
-                                onClick={() => {
-                                    setSelectedStatus(tab.value);
-                                    setPage(1);
-                                }}
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
-                    </div>
-
                     {/* Search & Date Filter Bar */}
                     <form className={styles.filterBar} onSubmit={handleSearch}>
-                        <div style={{ position: "relative", flex: 1, minWidth: 240 }}>
+                        <select
+                            className={styles.searchInput}
+                            style={{ flex: "none", width: 200 }}
+                            value={selectedStatus}
+                            onChange={(e) => {
+                                setSelectedStatus(e.target.value);
+                                setPage(1);
+                            }}
+                            aria-label="Status"
+                        >
+                            {statusTabs.map((tab) => (
+                                <option key={tab.value} value={tab.value}>{tab.label}</option>
+                            ))}
+                        </select>
+                        <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
                             <input
-                                type="text"
+                                type="search"
                                 className={styles.searchInput}
-                                placeholder="Search by Request Code, Mobile, or Customer Name..."
+                                style={{ width: "100%" }}
+                                title="Search by request code, mobile number or customer name"
+                                placeholder="Code, mobile or customer name"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -142,6 +154,15 @@ function PhotoOrders() {
                         >
                             <FaSearch size={14} /> Filter
                         </button>
+                        {hasFilters && (
+                            <button
+                                type="button"
+                                onClick={clearFilters}
+                                style={{ padding: "8px 14px", borderRadius: 8, background: "#fff", color: "#334155", border: "1px solid #cbd5e1", fontWeight: 600, cursor: "pointer" }}
+                            >
+                                Clear filters
+                            </button>
+                        )}
                     </form>
 
                     {/* Table View */}

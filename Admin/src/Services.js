@@ -306,8 +306,8 @@ const updatepromocode = (method, body, token, id) => {
 const DeletePromocode = (method, body, token, id) => {
     return httpcall(`promocodes/admin/delete/${id}`, method, body, token);
 };
-const getAllCurrentOrders = (method, body, token) => {
-    return httpcall(`adminorders/currentorders`, method, body, token);
+const getAllCurrentOrders = (method, body, token, query = "") => {
+    return httpcall(query ? `adminorders/currentorders${query}` : `adminorders/currentorders`, method, body, token);
 };
 const getAllPastOrders = (method, body, token, query = "") => {
     return httpcall(query ? `adminorders/pastorders${query}` : `adminorders/pastorders`, method, body, token);

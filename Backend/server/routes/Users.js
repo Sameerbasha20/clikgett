@@ -28,6 +28,8 @@ router
  .put('/update', util.authenticate.userAuthenticate, usercontroller.updateuser)
 
  .get('/detail', util.authenticate.userAuthenticate, usercontroller.Userdetail)
+ .get('/notification-preferences', util.authenticate.userAuthenticate, usercontroller.getNotificationPreferences)
+ .put('/notification-preferences', util.authenticate.userAuthenticate, usercontroller.updateNotificationPreferences)
 
  .post('/addfeedback/', util.authenticate.userAuthenticate, usercontroller.addFeedback)
  .post('/addfeedback', util.authenticate.userAuthenticate, usercontroller.addFeedback)

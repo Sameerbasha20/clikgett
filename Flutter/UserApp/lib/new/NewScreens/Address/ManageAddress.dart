@@ -7,7 +7,6 @@ import 'package:fav_app/new/Controllers/adress_controller.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
 import 'package:fav_app/new/NewScreens/Address/AddAddress.dart';
 import 'package:fav_app/new/NewScreens/Address/EditAddress.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Tabs/Cart/Cart.dart';
 import 'package:fav_app/new/NewScreens/Widgets/buttonWidget.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:flutter/material.dart';
@@ -164,8 +163,10 @@ class _ManageAddressState extends State<ManageAddress> {
                   address,
                   adressController.address,
                 );
+                // Opened to pick an address (checkout, photo order): return the choice to
+                // that screen instead of jumping to the checkout page.
                 if (widget.isFromCartScreen == true) {
-                  Get.to(() => Cart(isFromHomeScreen: true));
+                  Navigator.of(context).pop(address);
                 }
               },
               child: Container(

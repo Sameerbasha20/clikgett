@@ -12,6 +12,7 @@ router
     .get('/request/:id', util.authenticate.userAuthenticate, photoOrdersController.getRequestDetail)
     .get('/image/:id', util.authenticate.userAuthenticate, photoOrdersController.getSecureImage)
     .post('/request/:id/confirm', util.authenticate.userAuthenticate, photoOrdersController.confirmProposal)
-    .post('/request/:id/reject', util.authenticate.userAuthenticate, photoOrdersController.rejectProposal);
+    .post('/request/:id/reject', util.authenticate.userAuthenticate, photoOrdersController.rejectProposal)
+    .post('/request/:id/cancel', util.authenticate.userAuthenticate, photoOrdersController.cancelRequest);
 
 module.exports = router;

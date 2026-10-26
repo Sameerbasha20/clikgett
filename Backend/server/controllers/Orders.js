@@ -1331,7 +1331,7 @@ async function createinvoice(orderresult, orderitems) {
             console.log('upload')
             if (err) {
                 console.log(err)
-                throw err;
+                return console.error('image upload failed:', err.message); // never throw in a callback (crashes the server)
             }
             location = data.Location
             console.log(`File uploaded successfully. ${data.Location}`);

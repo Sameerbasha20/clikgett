@@ -3,6 +3,7 @@ import 'package:fav_app/constants.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/imageslist.dart';
 import 'package:fav_app/new/Controllers/photo_orders_controller.dart';
+import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/OrderDetails.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -18,6 +19,7 @@ class PhotoOrderProposalScreen extends StatefulWidget {
 }
 
 class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
+  String _token = '';
   final PhotoOrdersController controller = Get.find<PhotoOrdersController>();
 
   String selectedPaymentMethod = 'COD';
@@ -26,6 +28,10 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
   @override
   void initState() {
     super.initState();
+    // The photo is private: the image request needs the customer's token.
+    CommonServices.getToken().then((t) {
+      if (mounted) setState(() => _token = t);
+    });
     controller.fetchDetail(widget.requestId);
   }
 
@@ -86,6 +92,30 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
     );
   }
 
+  void _confirmCancel() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("Cancel this request?", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: Text("The store will stop preparing a proposal for this photo.", style: GoogleFonts.poppins(fontSize: 13.sp)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text("Keep it", style: GoogleFonts.poppins(color: Colors.grey[600])),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx);
+              controller.cancelRequest(widget.requestId);
+            },
+            child: Text("Cancel request", style: GoogleFonts.poppins(color: white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,7 +148,7 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
 
         final isAwaiting = req.requestStatus == 'AWAITING_CUSTOMER_CONFIRMATION';
         final isCreated = req.requestStatus == 'ORDER_CREATED';
-        final isDeclined = req.requestStatus == 'CUSTOMER_REJECTED';
+        final isDeclined = req.requestStatus == 'CUSTOMER_REJECTED' || req.requestStatus == 'CANCELLED';
         final isPending = req.requestStatus == 'PENDING' || req.requestStatus == 'UNDER_REVIEW' || req.requestStatus == 'PROPOSAL_DRAFT';
 
         final imageApiUrl = "${Constants.baseUrl}/photo-orders/image/${req.requestID}";
@@ -170,7 +200,7 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                                 : (isCreated
                                     ? "Order Placed Successfully! (#${req.createdOrderID ?? ''})"
                                     : (isDeclined
-                                        ? "Proposal Declined by You"
+                                        ? (req.requestStatus == 'CANCELLED' ? "Request Cancelled" : "Proposal Declined by You")
                                         : "We are preparing your matching items")),
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w700,
@@ -183,7 +213,9 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                                 ? "Please review the proposed items and pricing below before confirming."
                                 : (isCreated
                                     ? "Your order has been created in ClikGett and is being prepared for delivery."
-                                    : "Our store team is verifying catalog stock and prices."),
+                                    : (isDeclined
+                                        ? "No order was placed for this request."
+                                        : "Our store team is checking stock and prices. You'll usually get a proposal within 15 minutes during store hours, and we'll notify you.")),
                             style: GoogleFonts.poppins(fontSize: 11.5.sp, color: Colors.grey[800]),
                           ),
                         ],
@@ -219,13 +251,15 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                         },
                       ),
                     ),
-                    if (isImageExpanded) ...[
+                    if (isImageExpanded && _token.isNotEmpty) ...[
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: CachedNetworkImage(
                             imageUrl: imageApiUrl,
+                            httpHeaders: {'Authorization': 'bearer $_token'},
+                            cacheKey: 'photo-order-${req.requestID}',
                             height: 30.h,
                             width: double.infinity,
                             fit: BoxFit.contain,
@@ -322,7 +356,24 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                       style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey[600]),
                     ),
                   ),
-                )
+                ),
+                if (isPending) ...[
+                  SizedBox(height: 1.5.h),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        padding: EdgeInsets.symmetric(vertical: 1.4.h),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.close_rounded),
+                      label: Text("Cancel request", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                      onPressed: _confirmCancel,
+                    ),
+                  ),
+                ],
               ] else ...[
                 Container(
                   decoration: BoxDecoration(

@@ -142,7 +142,7 @@ const bannercontroller = {
 
                             s3.upload(params, function (err, data) {
                                 if (err) {
-                                    throw err;
+                                    return console.error('image upload failed:', err.message); // never throw in a callback (crashes the server)
                                 }
                                 console.log("UPDATE Banners SET " + image + " WHERE BannerID=" + BannerID)
                                 pool.query("UPDATE Banners SET " + image + " WHERE BannerID=" + BannerID + ";", function (err, results, fields) { })
@@ -205,7 +205,7 @@ const bannercontroller = {
 
                     s3.upload(params, function (err, data) {
                         if (err) {
-                            throw err;
+                            return console.error('image upload failed:', err.message); // never throw in a callback (crashes the server)
                         }
                         console.log("UPDATE Banners SET " + image + " WHERE BannerID=" + BannerID)
                         pool.query("UPDATE Banners SET " + image + " WHERE BannerID=" + BannerID + ";", function (err, results, fields) { })

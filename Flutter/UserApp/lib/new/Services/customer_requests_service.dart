@@ -25,6 +25,8 @@ class CustomerRequestsService {
     String? sizeOrQty,
     String? imageBase64,
     String? mimeType,
+    /// Up to 3 photos: [{'imageBase64': ..., 'mimeType': ...}].
+    List<Map<String, String>> images = const [],
   }) async {
     final headers = await _getHeaders();
     final url = Uri.parse('${Constants.baseUrl}/customer/enquiries');
@@ -38,8 +40,9 @@ class CustomerRequestsService {
       'productName': productName,
       'brand': brand,
       'sizeOrQty': sizeOrQty,
-      'imageBase64': imageBase64,
-      'mimeType': mimeType,
+      'imageBase64': imageBase64 ?? (images.isNotEmpty ? images.first['imageBase64'] : null),
+      'mimeType': mimeType ?? (images.isNotEmpty ? images.first['mimeType'] : null),
+      if (images.isNotEmpty) 'images': images,
     });
 
     final response = await http.post(url, headers: headers, body: body);

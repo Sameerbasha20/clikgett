@@ -478,11 +478,11 @@ function HomeSections() {
             </div>
             <div className={dashboardclasses["dashboard-rightside"]}>
                 <TopNav />
-                <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+                <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto", boxSizing: "border-box", width: "100%" }}>
                     
                     {/* Page Header */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
-                        <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px 20px", marginBottom: "24px" }}>
+                        <div style={{ flex: "1 1 320px", minWidth: 0 }}>
                             <h2 style={{ fontWeight: 700, color: "#1F2937", margin: 0, fontSize: "24px" }}>
                                 Dynamic Home Page Sections
                             </h2>
@@ -490,7 +490,7 @@ function HomeSections() {
                                 Manage, schedule, and reorder dynamic storefront sections displayed on the ClikGett customer mobile app.
                             </p>
                         </div>
-                        <div style={{ display: "flex", gap: "10px" }}>
+                        <div style={{ display: "flex", gap: "10px", flexShrink: 0, flexWrap: "wrap" }}>
                             <button
                                 className="btn btn-outline-secondary"
                                 onClick={fetchSections}

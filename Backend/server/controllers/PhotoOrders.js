@@ -37,6 +37,8 @@ const ALLOWED_MIME_TYPES = {
     'image/webp': '.webp'
 };
 
+const customerPhotos = require('../utils/customerPhotos');
+
 const PhotoOrdersController = {
 
     /**
@@ -78,27 +80,8 @@ const PhotoOrdersController = {
             // Generate safe filename & storage path
             const uniqueId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
             const fileName = `photo_order_${Date.now()}_${uniqueId}${extension}`;
-            const localFilePath = path.join(localPhotoDir, fileName);
-
-            // Write to disk
-            fs.writeFileSync(localFilePath, buffer);
-            const storagePath = `images/photo_orders/${fileName}`;
-
-            // Try S3 upload if configured (with private ACL)
-            if (process.env.bucketname && process.env.S3AccessKey) {
-                try {
-                    const s3Key = `photo_orders/${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}/${fileName}`;
-                    await s3.putObject({
-                        Bucket: process.env.bucketname,
-                        Key: s3Key,
-                        Body: buffer,
-                        ContentType: cleanMime,
-                        ACL: 'private'
-                    }).promise();
-                } catch (s3Err) {
-                    console.log('S3 private upload notice (falling back to secure local storage):', s3Err.message);
-                }
-            }
+            // Object storage, not the server's disk (wiped on every deploy).
+            const storagePath = await customerPhotos.save(buffer, 'photo_orders', fileName, cleanMime);
 
             // Generate unique reference code: POR-YYYYMMDD-XXXX
             const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -258,19 +241,7 @@ const PhotoOrdersController = {
                 return resp.status(403).send('Forbidden');
             }
 
-            const storagePath = rows[0].ImageStoragePath;
-            const absolutePath = path.resolve(__dirname, '..', storagePath);
-
-            if (fs.existsSync(absolutePath)) {
-                const ext = path.extname(absolutePath).toLowerCase();
-                const mime = ext === '.png' ? 'image/png' : (ext === '.webp' ? 'image/webp' : 'image/jpeg');
-                resp.setHeader('Content-Type', mime);
-                resp.setHeader('Cache-Control', 'private, max-age=3600');
-                const stream = fs.createReadStream(absolutePath);
-                return stream.pipe(resp);
-            } else {
-                return resp.status(404).send('Image file not found on disk');
-            }
+            return customerPhotos.send(resp, rows[0].ImageStoragePath);
         } catch (err) {
             console.error('Error serving secure image:', err);
             return resp.status(500).send('Error serving image');
@@ -547,6 +518,33 @@ const PhotoOrdersController = {
         } catch (err) {
             console.error('Error rejecting proposal:', err);
             return resp.status(500).json({ Status: 0, Message: 'Error rejecting proposal' });
+        }
+    },
+
+    /**
+     * Customer: cancel a request the store has not finished reviewing
+     * POST /api/photo-orders/request/:id/cancel
+     */
+    cancelRequest: async (req, resp) => {
+        try {
+            const requestId = req.params.id;
+            const userId = req.UserID;
+            const rows = await queryAsync("SELECT UserID, RequestStatus FROM PhotoOrderRequests WHERE RequestID = ?", [requestId]);
+            if (!rows.length) return resp.status(404).json({ Status: 0, Message: 'Request not found' });
+            if (rows[0].UserID !== userId) return resp.status(403).json({ Status: 0, Message: 'Unauthorized' });
+            const status = rows[0].RequestStatus;
+            if (!['PENDING', 'UNDER_REVIEW', 'PROPOSAL_DRAFT', 'AWAITING_CUSTOMER_CONFIRMATION'].includes(status)) {
+                return resp.status(400).json({ Status: 0, Message: 'This request can no longer be cancelled' });
+            }
+            await queryAsync("UPDATE PhotoOrderRequests SET RequestStatus = 'CANCELLED', ResolvedAt = NOW() WHERE RequestID = ?", [requestId]);
+            await queryAsync(`
+                INSERT INTO PhotoOrderStatusTimeline (RequestID, PreviousStatus, NewStatus, ChangedByRole, ChangedByID, Notes, CreatedAt)
+                VALUES (?, ?, 'CANCELLED', 'CUSTOMER', ?, 'Cancelled by customer', NOW())
+            `, [requestId, status, userId]);
+            return resp.json({ Status: 1, Message: 'Photo order cancelled' });
+        } catch (err) {
+            console.error('Error cancelling photo order:', err);
+            return resp.status(500).json({ Status: 0, Message: 'Could not cancel. Please try again.' });
         }
     },
 

@@ -15,6 +15,7 @@ import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/CouponAndOffers/Offers.dart';
 import 'package:fav_app/new/NewScreens/CouponAndOffers/wallet.dart';
 import 'package:fav_app/new/NewScreens/Notifications.dart';
+import 'package:fav_app/new/NewScreens/Account/notification_settings_screen.dart';
 import 'package:fav_app/new/NewScreens/PhotoOrders/PhotoOrdersListScreen.dart';
 import 'package:fav_app/new/NewScreens/Referral/referralScreen.dart';
 import 'package:fav_app/new/NewScreens/Support/Support.dart';
@@ -136,6 +137,7 @@ class _ProfileState extends State<Profile> {
                 MenuTile(icon: Icons.photo_camera_outlined, title: 'Photo orders', subtitle: 'Orders you sent as a photo of your list', onTap: () => _push(const PhotoOrdersListScreen())),
                 MenuTile(icon: Icons.forum_outlined, title: 'My requests', subtitle: 'Product requests and messages to us', onTap: () => _push(const MyRequestsScreen())),
                 MenuTile(icon: Icons.notifications_none_rounded, title: 'Notifications', onTap: () => _push(const Notifications())),
+                MenuTile(icon: Icons.tune_rounded, title: 'Notification settings', subtitle: 'Order updates and offers', onTap: () => _push(const NotificationSettingsScreen())),
               ]),
               const SectionTitle('Rewards'),
               MenuGroup([

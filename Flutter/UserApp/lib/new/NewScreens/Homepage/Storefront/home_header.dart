@@ -271,14 +271,20 @@ class StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                         const SizedBox(width: 8),
                         Text('Search ', style: GoogleFonts.poppins(fontSize: 13.5, color: grey70)),
                         Expanded(
-                          child: AnimatedTextKit(
-                            key: ValueKey(shownHints.join('|')),
-                            repeatForever: true,
-                            pause: const Duration(milliseconds: 1400),
-                            animatedTexts: shownHints
-                                .map((h) => RotateAnimatedText('"$h"',
-                                    textStyle: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: tColor4)))
-                                .toList(),
+                          // IgnorePointer: the animation has its own tap handler, which swallowed
+                          // taps on the search bar while the hint was moving.
+                          child: IgnorePointer(
+                            child: AnimatedTextKit(
+                              key: ValueKey(shownHints.join('|')),
+                              repeatForever: true,
+                              pause: const Duration(milliseconds: 1400),
+                              animatedTexts: shownHints
+                                  .map((h) => RotateAnimatedText('"$h"',
+                                      // Hints sit right after "Search", not centred in the bar.
+                                      alignment: Alignment.centerLeft,
+                                      textStyle: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: tColor4)))
+                                  .toList(),
+                            ),
                           ),
                         ),
                       ],

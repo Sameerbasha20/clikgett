@@ -249,8 +249,8 @@ function LiveOperations() {
                         <div className="col-12 col-sm-6 col-xl">
                             <div className="card shadow-sm border-0 border-start border-info border-4 p-3">
                                 <div className="text-muted small fw-bold">ONLINE FLEET</div>
-                                <div className="h3 fw-bold mb-0 text-info">{kpis.onlineDrivers} <span className="small text-muted fs-6">/ {fleetDrivers.length}</span></div>
-                                <div className="small text-muted mt-1">{kpis.offlineDrivers} offline riders</div>
+                                <div className="h3 fw-bold mb-0 text-info">{kpis.onlineDrivers}</div>
+                                <div className="small text-muted mt-1">of {fleetDrivers.length} riders online · {kpis.offlineDrivers} offline</div>
                             </div>
                         </div>
                     </div>
@@ -272,15 +272,15 @@ function LiveOperations() {
                                     <div className="table-responsive">
                                         <table className="table table-hover align-middle mb-0">
                                             <thead className="table-light">
-                                                <tr className="small text-uppercase">
+                                                <tr className="small text-uppercase text-nowrap">
                                                     <th>Order #</th>
                                                     <th>Customer & Drop Location</th>
                                                     <th>Assigned Rider</th>
                                                     <th>Distance</th>
-                                                    <th>Authoritative ETA</th>
+                                                    <th>Promised ETA</th>
                                                     <th>SLA Status</th>
-                                                    <th>Delay State</th>
-                                                    <th className="text-end">Operational Actions</th>
+                                                    <th className="text-nowrap">Delay status</th>
+                                                    <th className="text-end text-nowrap">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -427,7 +427,7 @@ function LiveOperations() {
                                     <div className="table-responsive">
                                         <table className="table table-hover align-middle mb-0">
                                             <thead className="table-light">
-                                                <tr className="small text-uppercase">
+                                                <tr className="small text-uppercase text-nowrap">
                                                     <th>Delay ID</th>
                                                     <th>Order #</th>
                                                     <th>Rider</th>
@@ -437,7 +437,7 @@ function LiveOperations() {
                                                     <th>Driver Remarks</th>
                                                     <th>Submitted At</th>
                                                     <th>Status</th>
-                                                    <th className="text-end">Review Actions</th>
+                                                    <th className="text-end text-nowrap">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -526,7 +526,7 @@ function LiveOperations() {
                                     <div className="table-responsive">
                                         <table className="table table-hover align-middle mb-0">
                                             <thead className="table-light">
-                                                <tr className="small text-uppercase">
+                                                <tr className="small text-uppercase text-nowrap">
                                                     <th>Driver ID</th>
                                                     <th>Partner Name</th>
                                                     <th>Mobile Number</th>

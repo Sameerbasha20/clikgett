@@ -11,116 +11,83 @@ const OrderLifecycle = require('../services/OrderLifecycle');
 const { ORDER_STATUS } = require('../utils/orderStatus');
 const Products_s3 = "http://clikgett-media.local/Products/"
 
+const FINAL_ORDER_STATUSES = [1, 3, 4, 6];
+// Admin filter names -> status codes (utils/orderStatus.js); numbers are accepted as they are.
+const ORDER_STATUS_BY_NAME = {
+    RECEIVED: [8], PACKING: [9], ASSIGNED: [2], OUT_FOR_DELIVERY: [5], PICKED_UP: [5], ARRIVED: [7],
+    DELIVERED: [1], CANCELLED: [3, 4], CANCELLED_BY_STORE: [3], CANCELLED_BY_CUSTOMER: [4], RETURNED: [6],
+};
+
+/** Order list for the admin Orders page (current = not finished, past = finished). */
+async function listAdminOrders(req, resp, past) {
+    try {
+        const { sort, mobile, username, orderId, status, startDate, endDate } = req.query;
+        let query = `
+            SELECT o.*, LPAD(o.OrderID, 4, '0') AS OrderSequence, u.FirstName AS UserName
+            FROM Orders o
+            LEFT JOIN Users u ON o.UserID = u.UserID
+            WHERE o.OrderStatus ${past ? 'IN' : 'NOT IN'} (${FINAL_ORDER_STATUSES.join(', ')})
+        `;
+        const params = [];
+
+        if (orderId) {
+            query += " AND (o.OrderID = ? OR LPAD(o.OrderID, 4, '0') LIKE ?)";
+            params.push(String(orderId).replace(/^#/, ''), `%${String(orderId).replace(/^#/, '')}%`);
+        }
+        if (mobile) {
+            query += " AND o.MobileNumber LIKE ?";
+            params.push(`%${mobile}%`);
+        }
+        if (username) {
+            query += " AND u.FirstName LIKE ?";
+            params.push(`%${username}%`);
+        }
+        if (status) {
+            const codes = /^\d+$/.test(String(status))
+                ? [parseInt(status, 10)]
+                : ORDER_STATUS_BY_NAME[String(status).toUpperCase().replace(/\s+/g, '_')] || [];
+            if (!codes.length) return resp.status(400).json({ Status: 0, Message: `Unknown status "${status}"` });
+            query += ` AND o.OrderStatus IN (${codes.map(() => '?').join(', ')})`;
+            params.push(...codes);
+        }
+        if (startDate) {
+            query += " AND DATE(o.CreatedAt) >= ?";
+            params.push(startDate);
+        }
+        if (endDate) {
+            query += " AND DATE(o.CreatedAt) <= ?";
+            params.push(endDate);
+        }
+
+        const orderBy = {
+            oldest: 'o.CreatedAt ASC',
+            highest_value: 'o.GrandTotal DESC',
+            lowest_value: 'o.GrandTotal ASC',
+            status: 'o.OrderStatus ASC, o.CreatedAt DESC',
+            scheduled_date: 'o.ScheduledDateTime DESC, o.CreatedAt DESC',
+            delivery_date: 'o.deliveredDateTime DESC, o.Delivered_Cancelled_datetime DESC, o.CreatedAt DESC',
+        }[sort] || 'o.CreatedAt DESC';
+        query += ` ORDER BY ${orderBy}`;
+        if (past) query += ' LIMIT 2000';
+
+        const orders = await CommonController.commonget(query, params);
+        for (const order of orders) {
+            order.OrderID = order.OrderID.toString().padStart(4, '0');
+            order.CreatedAt = await CommonController.convertdate(order.CreatedAt);
+        }
+        return resp.json({ Status: 1, Orders: orders });
+    } catch (err) {
+        console.log("exception in getting orders", err);
+        return resp.status(500).json({ Status: 0, Message: "Could not load orders. Please try again." });
+    }
+}
+
 const ordercontroller = {
 
-    currentorders: async (req, resp, next) => {
-        let converteddate, query; // per-request (were implicit globals)
-        try {
+    // Current / Past tabs share one list with filters and sorting (listAdminOrders below).
+    currentorders: (req, resp) => listAdminOrders(req, resp, false),
 
-            query = "select *,LPAD(OrderID, 4, '0') AS OrderSequence from Orders where  OrderStatus not in (1,3,4,6) order by CreatedAt desc;"
-            let allordersforadmin = await CommonController.commonget(query);
-
-            if (allordersforadmin.length > 0) {
-                for (var j = 0; j < allordersforadmin.length; j++) {
-                    allordersforadmin[j].OrderID = allordersforadmin[j].OrderID.toString().padStart(4, '0');
-                    converteddate = await CommonController.convertdate(allordersforadmin[j].CreatedAt);
-                    allordersforadmin[j].CreatedAt = converteddate
-                }
-
-            }
-            resp.json({ "Status": 1, "Orders": allordersforadmin })
-
-        }
-        catch (err) {
-            console.log("exception in getting orders", err);
-            return resp.json({ "Status": 0, "Message": "Error in getting orders" });
-        }
-    },
-
-    pastorders: async (req, resp, next) => {
-        try {
-            const { sort, mobile, username, orderId, status, startDate, endDate } = req.query;
-
-            let query = `
-                SELECT o.*, LPAD(o.OrderID, 4, '0') AS OrderSequence, u.FirstName AS UserName
-                FROM Orders o 
-                LEFT JOIN Users u ON o.UserID = u.UserID
-                WHERE o.OrderStatus IN (1, 3, 4, 6)
-            `;
-            const params = [];
-
-            if (orderId) {
-                query += " AND (o.OrderID = ? OR LPAD(o.OrderID, 4, '0') LIKE ?)";
-                params.push(orderId, `%${orderId}%`);
-            }
-            if (mobile) {
-                query += " AND o.MobileNumber LIKE ?";
-                params.push(`%${mobile}%`);
-            }
-            if (username) {
-                query += " AND u.FirstName LIKE ?";
-                params.push(`%${username}%`);
-            }
-            if (status) {
-                query += " AND o.OrderStatus = ?";
-                params.push(parseInt(status, 10));
-            }
-            if (startDate && endDate) {
-                query += " AND DATE(o.CreatedAt) BETWEEN ? AND ?";
-                params.push(startDate, endDate);
-            } else if (startDate) {
-                query += " AND DATE(o.CreatedAt) >= ?";
-                params.push(startDate);
-            } else if (endDate) {
-                query += " AND DATE(o.CreatedAt) <= ?";
-                params.push(endDate);
-            }
-
-            switch (sort) {
-                case 'oldest':
-                    query += " ORDER BY o.CreatedAt ASC";
-                    break;
-                case 'highest_value':
-                    query += " ORDER BY o.GrandTotal DESC";
-                    break;
-                case 'lowest_value':
-                    query += " ORDER BY o.GrandTotal ASC";
-                    break;
-                case 'status':
-                    query += " ORDER BY o.OrderStatus ASC, o.CreatedAt DESC";
-                    break;
-                case 'scheduled_date':
-                    query += " ORDER BY o.ScheduledDateTime DESC, o.CreatedAt DESC";
-                    break;
-                case 'delivery_date':
-                    query += " ORDER BY o.deliveredDateTime DESC, o.Delivered_Cancelled_datetime DESC, o.CreatedAt DESC";
-                    break;
-                case 'latest':
-                default:
-                    query += " ORDER BY o.CreatedAt DESC";
-                    break;
-            }
-
-            pool.query(query, params, async (err, allordersforadmin) => {
-                if (err) {
-                    console.log("Error querying past orders:", err);
-                    return resp.json({ Status: 0, Message: "Error in getting orders" });
-                }
-
-                if (allordersforadmin && allordersforadmin.length > 0) {
-                    for (var j = 0; j < allordersforadmin.length; j++) {
-                        allordersforadmin[j].OrderID = allordersforadmin[j].OrderID.toString().padStart(4, '0');
-                        allordersforadmin[j].CreatedAt = await CommonController.convertdate(allordersforadmin[j].CreatedAt);
-                    }
-                }
-                resp.json({ Status: 1, Orders: allordersforadmin || [] });
-            });
-        }
-        catch (err) {
-            console.log("exception in getting orders", err);
-            return resp.json({ "Status": 0, "Message": "Error in getting orders" });
-        }
-    },
+    pastorders: (req, resp) => listAdminOrders(req, resp, true),
 
     myorder: async (req, resp, next) => {
         let cartitems, converteddate, myorder, userresult; // per-request (were implicit globals)

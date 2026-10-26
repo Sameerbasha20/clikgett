@@ -111,7 +111,9 @@ const BuyMoreController = {
 
             // If no tiers provided or all cleared, clear tiers and return success
             if (parsedItems.length === 0) {
-                return pool.query(deleteSql, deleteParams, (delErr) => {
+                // Not `return pool.query(...)`: an async function would try to await the
+                // query object, which mysql2 rejects (unhandled rejection).
+                pool.query(deleteSql, deleteParams, (delErr) => {
                     if (delErr) {
                         console.error("Error clearing existing tiers:", delErr);
                         return res.status(500).json({ Status: 0, Message: "Error clearing pricing tiers" });
@@ -122,6 +124,7 @@ const BuyMoreController = {
                         Count: 0
                     });
                 });
+                return;
             }
 
             // Otherwise delete existing tiers and insert the new tiers

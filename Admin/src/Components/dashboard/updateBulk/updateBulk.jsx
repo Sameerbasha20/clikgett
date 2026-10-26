@@ -33,29 +33,25 @@ function UpdatePrice() {
         // eslint-disable-next-line
     }, []);
     const handleChange = (file) => {
-        // console.log(file.file);
-        setUploadSpinner(true);
-        const timestamp = Date.now();
-        const newfile = new File(
-            [file],
-            `${timestamp}.${String(file.type).split("/")[1]}`,
-            { type: file.type }
-        );
-        setFileName(`${timestamp}.${String(file.type).split("/")[1]}`);
-        if (file.type === "text/csv") {
-            Services.uploadFile(newfile, "productscsv")
-                .then((res) => {
-                    console.log(res);
-                    setUrl(res.location);
-                    setUploadSpinner(false);
-                })
-                .catch((err) => {
-                    alert(err);
-                    console.log(err);
-                });
-        } else {
-            alert("please upload file in CSV format ");
+        // Windows often reports CSV as application/vnd.ms-excel, so check the extension too.
+        const isCsv = /\.csv$/i.test(file.name || "") || ["text/csv", "application/vnd.ms-excel"].includes(file.type);
+        if (!isCsv) {
+            toast.error("Please choose a .csv file", { position: "top-center" });
+            return;
         }
+        setUploadSpinner(true);
+        const name = `${Date.now()}.csv`;
+        const newfile = new File([file], name, { type: "text/csv" });
+        Services.uploadFile(newfile, "productscsv")
+            .then((res) => {
+                setUrl(res.location);
+                setFileName(name);
+            })
+            .catch((err) => {
+                console.log(err);
+                toast.error("Could not upload the file. Please try again.", { position: "top-center" });
+            })
+            .finally(() => setUploadSpinner(false));
     };
 
     const fileuploadDesign = (
@@ -78,7 +74,7 @@ function UpdatePrice() {
                 setUploadSpinner(false);
                 console.log(res);
                 setUrl(undefined);
-                setFileName();
+                setFileName("");
                 if (res.Status === 1) {
                     toast.success(`${res.Message}`, {
                         position: "top-center",
@@ -105,8 +101,8 @@ function UpdatePrice() {
                 }
             })
             .catch((err) => {
-                // alert(err);
-                alert("something went wrong please try again");
+                setUploadSpinner(false);
+                toast.error("Something went wrong. Please try again.", { position: "top-center" });
                 console.log(err);
             });
     };

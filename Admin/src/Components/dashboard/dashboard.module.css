@@ -64,6 +64,9 @@
 .CategoryWrapper {
     margin-top: 4rem;
     display: grid;
+    /* minmax(0, 1fr): a wide table scrolls inside its .table-responsive box instead of
+       stretching the page past the screen (where it was clipped). */
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
     padding: 2rem;
 }

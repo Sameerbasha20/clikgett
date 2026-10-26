@@ -655,6 +655,32 @@ const usercontroller = {
         }
     },
 
+    getNotificationPreferences: (req, resp) => {
+        pool.query("SELECT NotifyOrderUpdates, NotifyOffers FROM Users WHERE UserID = ?", [req.UserID], (err, rows) => {
+            if (err || !rows.length) {
+                if (err) console.error('Error reading notification preferences:', err);
+                return resp.status(err ? 500 : 404).json({ Status: 0, Message: 'Could not load your notification settings' });
+            }
+            return resp.json({ Status: 1, OrderUpdates: rows[0].NotifyOrderUpdates !== 0, Offers: rows[0].NotifyOffers !== 0 });
+        });
+    },
+
+    updateNotificationPreferences: (req, resp) => {
+        const fields = {};
+        if (typeof req.body.OrderUpdates === 'boolean') fields.NotifyOrderUpdates = req.body.OrderUpdates ? 1 : 0;
+        if (typeof req.body.Offers === 'boolean') fields.NotifyOffers = req.body.Offers ? 1 : 0;
+        if (!Object.keys(fields).length) {
+            return resp.status(400).json({ Status: 0, Message: 'Nothing to update' });
+        }
+        pool.query("UPDATE Users SET ? WHERE UserID = ?", [fields, req.UserID], (err) => {
+            if (err) {
+                console.error('Error saving notification preferences:', err);
+                return resp.status(500).json({ Status: 0, Message: 'Could not save your notification settings' });
+            }
+            return resp.json({ Status: 1, Message: 'Notification settings saved' });
+        });
+    },
+
     Userdetail: async (req, resp, next) => {
         try {
             let GetUser = "select * from Users where Status!=0 and UserID=" + req.UserID + ";"

@@ -181,6 +181,24 @@ class PhotoOrdersController extends GetxController {
     }
   }
 
+  /// Cancel a request that is still waiting for the store
+  Future<bool> cancelRequest(int requestId) async {
+    try {
+      final res = await PhotoOrdersService.cancelRequest(requestId: requestId);
+      customToast(message: res['Message'] ?? (res['Status'] == 1 ? 'Photo order cancelled' : 'Could not cancel'));
+      if (res['Status'] == 1) {
+        fetchDetail(requestId);
+        fetchMyPhotoOrders();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error cancelling photo order: $e');
+      customToast(message: 'Could not cancel. Please try again.');
+      return false;
+    }
+  }
+
   @override
   void onClose() {
     notesController.dispose();

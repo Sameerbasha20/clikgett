@@ -33,8 +33,14 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
   final TextEditingController _brandVariantController = TextEditingController();
 
   final ImagePicker _picker = ImagePicker();
-  File? _attachedImage;
+  /// Photos to send: up to 3 for an enquiry, 1 for a product request.
+  final List<File> _attachedImages = [];
   bool _isSubmitting = false;
+
+  int get _maxPhotos => _selectedCategory == 'Product Request' ? 1 : 3;
+
+  /// Opened from "Request with Camera": the photo is already attached.
+  bool get _fromCamera => widget.initialImageFile != null;
 
   late String _selectedCategory;
   final List<String> _categories = [
@@ -44,8 +50,7 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
     'Delivery Related',
     'Payment Related',
     'Offer & Voucher Related',
-    'BB Wallet Related',
-    'Tataneu Related',
+    'Wallet Related',
   ];
 
   @override
@@ -53,7 +58,7 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
     super.initState();
     _productNameController =
         TextEditingController(text: widget.initialProductName ?? '');
-    _attachedImage = widget.initialImageFile;
+    if (widget.initialImageFile != null) _attachedImages.add(widget.initialImageFile!);
 
     if (widget.initialCategory != null &&
         _categories.contains(widget.initialCategory)) {
@@ -85,7 +90,8 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
       );
       if (picked != null) {
         setState(() {
-          _attachedImage = File(picked.path);
+          if (_attachedImages.length >= _maxPhotos) _attachedImages.removeLast();
+          _attachedImages.add(File(picked.path));
         });
       }
     } catch (e) {
@@ -106,7 +112,7 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                "Attach Product Photo",
+                _maxPhotos > 1 ? "Add a photo (${_attachedImages.length + 1} of $_maxPhotos)" : "Attach Product Photo",
                 style: GoogleFonts.poppins(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -179,23 +185,19 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
             ? '[$_selectedCategory] $customSubject'
             : '[$_selectedCategory] Support Request');
 
-    String? imageBase64;
-    String? mimeType;
-
-    if (_attachedImage != null && await _attachedImage!.exists()) {
+    final images = <Map<String, String>>[];
+    for (final file in _attachedImages.take(_maxPhotos)) {
+      if (!await file.exists()) continue;
       try {
-        final bytes = await _attachedImage!.readAsBytes();
-        imageBase64 = base64Encode(bytes);
-        final pathLower = _attachedImage!.path.toLowerCase();
-        if (pathLower.endsWith('.png')) {
-          mimeType = 'image/png';
-        } else if (pathLower.endsWith('.webp')) {
-          mimeType = 'image/webp';
-        } else {
-          mimeType = 'image/jpeg';
-        }
+        final pathLower = file.path.toLowerCase();
+        images.add({
+          'imageBase64': base64Encode(await file.readAsBytes()),
+          'mimeType': pathLower.endsWith('.png')
+              ? 'image/png'
+              : (pathLower.endsWith('.webp') ? 'image/webp' : 'image/jpeg'),
+        });
       } catch (e) {
-        customToast(message: "Failed to read image file. Please try again.");
+        customToast(message: "Failed to read a photo. Please try again.");
         return;
       }
     }
@@ -213,8 +215,7 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
         brand: isProductRequest && brandVariant.isNotEmpty ? brandVariant : null,
         sizeOrQty:
             isProductRequest && brandVariant.isNotEmpty ? brandVariant : null,
-        imageBase64: imageBase64,
-        mimeType: mimeType,
+        images: images,
       );
 
       if (!mounted) return;
@@ -418,6 +419,28 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // "Request with Camera": say what happened so this doesn't look like the plain form.
+                  if (_fromCamera && isProductRequest)
+                    Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.only(bottom: 2.h),
+                      padding: EdgeInsets.all(3.w),
+                      decoration: BoxDecoration(
+                        color: Appprimary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Appprimary.withOpacity(0.3)),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.photo_camera_rounded, color: Appprimary),
+                        SizedBox(width: 3.w),
+                        Expanded(
+                          child: Text(
+                            "Your photo is attached. Just add the product name and a short note, then send.",
+                            style: GoogleFonts.poppins(fontSize: 12.5.sp, color: Colors.black87),
+                          ),
+                        ),
+                      ]),
+                    ),
                   Text(
                     isProductRequest
                         ? "Product Request Details"
@@ -602,7 +625,7 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
                   ] else ...[
                     // Subject Field for Standard Enquiries
                     Text(
-                      "Subject (Optional)",
+                      "Subject *",
                       style: GoogleFonts.poppins(
                         fontSize: 13.5.sp,
                         fontWeight: FontWeight.w600,
@@ -613,7 +636,12 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
                     TextFormField(
                       controller: _subjectController,
                       textInputAction: TextInputAction.next,
+                      maxLength: 80,
+                      validator: (val) => (val ?? '').trim().length < 4
+                          ? "Add a short subject (e.g. Missing item in order #1202)"
+                          : null,
                       decoration: InputDecoration(
+                        counterText: '',
                         hintText:
                             "e.g., Order issue, Delivery question, App feedback",
                         hintStyle: GoogleFonts.poppins(
@@ -714,118 +742,57 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
                   ),
                   SizedBox(height: 0.8.h),
 
-                  if (_attachedImage != null) ...[
-                    Container(
-                      padding: EdgeInsets.all(3.w),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              _attachedImage!,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          SizedBox(width: 3.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.check_circle,
-                                        color: Colors.green, size: 16),
-                                    SizedBox(width: 1.w),
-                                    Text(
-                                      "Photo Attached",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12.5.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 0.3.h),
-                                Text(
-                                  _attachedImage!.path.split('/').last.split('\\').last,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11.sp,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.refresh_rounded,
-                                color: Appprimary),
-                            tooltip: "Replace Photo",
-                            onPressed: _showImagePickerSheet,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded,
-                                color: Colors.red),
-                            tooltip: "Remove Photo",
-                            onPressed: () {
-                              setState(() {
-                                _attachedImage = null;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
+                  if (_maxPhotos > 1)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 0.8.h),
+                      child: Text("Up to $_maxPhotos photos, e.g. the damaged item and the bill",
+                          style: GoogleFonts.poppins(fontSize: 11.5.sp, color: Colors.grey[600])),
                     ),
-                  ] else ...[
-                    InkWell(
-                      onTap: _showImagePickerSheet,
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isProductRequest
-                                ? Appprimary.withOpacity(0.4)
-                                : Colors.grey[300]!,
-                            style: BorderStyle.solid,
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      for (var i = 0; i < _attachedImages.length; i++)
+                        Stack(clipBehavior: Clip.none, children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(_attachedImages[i], width: 86, height: 86, fit: BoxFit.cover),
                           ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.camera_alt_outlined,
-                              color: isProductRequest ? Appprimary : Colors.grey[600],
-                              size: 22,
-                            ),
-                            SizedBox(width: 2.w),
-                            Text(
-                              isProductRequest
-                                  ? "Take Photo or Upload Image"
-                                  : "Attach Photo / Screenshot",
-                              style: GoogleFonts.poppins(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w500,
-                                color: isProductRequest ? Appprimary : Colors.grey[700],
+                          Positioned(
+                            top: -8,
+                            right: -8,
+                            child: InkWell(
+                              onTap: () => setState(() => _attachedImages.removeAt(i)),
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                                child: const Icon(Icons.close_rounded, size: 14, color: Colors.white),
                               ),
                             ),
-                          ],
+                          ),
+                        ]),
+                      if (_attachedImages.length < _maxPhotos)
+                        InkWell(
+                          onTap: _showImagePickerSheet,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            width: 86,
+                            height: 86,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: isProductRequest ? Appprimary.withOpacity(0.5) : Colors.grey[300]!),
+                            ),
+                            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                              Icon(Icons.add_a_photo_outlined, color: isProductRequest ? Appprimary : Colors.grey[600]),
+                              const SizedBox(height: 4),
+                              Text(_attachedImages.isEmpty ? "Add photo" : "Add more",
+                                  style: GoogleFonts.poppins(fontSize: 11.sp, color: Colors.grey[700])),
+                            ]),
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
 
                   SizedBox(height: 3.h),
 

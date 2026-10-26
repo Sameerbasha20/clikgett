@@ -19,7 +19,7 @@ import TimePicker from "rc-time-picker";
 import "rc-time-picker/assets/index.css";
 import { FaDownload, FaBan } from "react-icons/fa";
 import AssignDeliveryBoyModal from "./AssignDeliveryBoyModal";
-import { statusOptions, isFinal } from "../../../orderStatus";
+import { statusOptions, isFinal, STATUS_LABEL } from "../../../orderStatus";
 import CancelOrderModal from "./CancelOrderModal";
 
 function Products() {
@@ -82,10 +82,10 @@ function Products() {
             });
     };
     const getorders = (status, query = "") => {
-        let api = Services.getAllCurrentOrders("GET", null, token);
-        if (status === "2") {
-            api = Services.getAllPastOrders("GET", null, token, query);
-        }
+        // Both tabs take the same filters (server: AdminOrders listAdminOrders).
+        const api = status === "2"
+            ? Services.getAllPastOrders("GET", null, token, query)
+            : Services.getAllCurrentOrders("GET", null, token, query);
         api.then((res) => {
             console.log(res);
             setLoading(false);
@@ -409,11 +409,11 @@ function Products() {
         return (
             <div className={dashboardclasses["order_status"]}>
                 <select
-                    key={`${cellContent.OrderID}-${cell}`}
-                    defaultValue={cell}
-                    disabled={isFinal(cell)}
+                    key={`${cellContent.OrderID}-${cellContent.OrderStatus}`}
+                    defaultValue={cellContent.OrderStatus}
+                    disabled={isFinal(cellContent.OrderStatus)}
                     onChange={(e) => statusHandler(e, cellContent)}>
-                    {statusOptions(cell).map((o) => (
+                    {statusOptions(cellContent.OrderStatus).map((o) => (
                         <option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>
                     ))}
                 </select>
@@ -585,7 +585,7 @@ function Products() {
         },
         {
             dataField: "ACTIONS",
-            text: "ORDER DETAILS",
+            text: "ACTIONS",
             sort: false,
             formatter: ActionFormatter,
             headerStyle: (colum, colIndex) => {
@@ -618,14 +618,6 @@ function Products() {
             order: "desc",
         },
     ];
-    const searchHandler = (e) => {
-        const search = orders.filter((item) =>
-            String(item.OrderID).includes(e.target.value)
-        );
-        setOrdersSearch(search);
-    };
-
-    
     const buildQuery = () => {
         const params = new URLSearchParams();
         if (filterMobile) params.append("mobile", filterMobile);
@@ -662,6 +654,7 @@ function Products() {
         let status = e.currentTarget.getAttribute("id");
         setNavactive(status);
         localStorage.setItem("active", status);
+        setFilterStatus("");
         getorders(status);
     };
     return (
@@ -685,16 +678,6 @@ function Products() {
                             </div>
                         ) : (
                             <>
-                                <div
-                                    className={
-                                        dashboardclasses["customer-form"]
-                                    }>
-                                    <input
-                                        type={"text"}
-                                        placeholder="Search by Orderid"
-                                        onChange={searchHandler}
-                                    />
-                                </div>
                                 <div
                                     className={
                                         dashboardclasses["orders-navbar"]
@@ -721,7 +704,7 @@ function Products() {
                                 <div className="card p-3 mb-3 bg-light border">
                                     <form onSubmit={handleApplyFilters} className="row g-2 align-items-end">
                                         <div className="col-md-2 form-group mb-2">
-                                            <label className="small font-weight-bold">Mobile # (DB Query):</label>
+                                            <label className="small font-weight-bold">Mobile number:</label>
                                             <input
                                                 type="text"
                                                 className="form-control form-control-sm"
@@ -773,17 +756,15 @@ function Products() {
                                                 value={filterStatus}
                                                 onChange={(e) => setFilterStatus(e.target.value)}
                                             >
-                                                <option value="">All Statuses</option>
-                                                <option value="DELIVERED">Delivered</option>
-                                                <option value="CANCELLED">Cancelled</option>
-                                                <option value="PACKING">Packing</option>
-                                                <option value="ARRIVED">Arrived</option>
-                                                <option value="RECEIVED">Received</option>
+                                                <option value="">All statuses</option>
+                                                {(Navactive === "2" ? [1, 3, 4, 6] : [8, 9, 2, 5, 7]).map((code) => (
+                                                    <option key={code} value={code}>{STATUS_LABEL[code]}</option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div className="col-md-3 form-group mb-2 d-flex gap-2">
                                             <button type="submit" className="btn btn-sm btn-primary flex-grow-1">
-                                                Apply Query
+                                                Apply filters
                                             </button>
                                             <button type="button" className="btn btn-sm btn-outline-secondary" onClick={handleResetFilters}>
                                                 Reset

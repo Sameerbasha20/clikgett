@@ -157,7 +157,7 @@ class RetentionEngine {
 
                     // Also as a phone notification (only reaches customers with notifications on).
                     try {
-                        await require('../controllers/CommonController').send_push_notifications({ Title: title, Message: message }, cart.UserID);
+                        await require('../controllers/CommonController').send_push_notifications({ Title: title, Message: message }, cart.UserID, 'offers');
                     } catch (pushErr) {
                         console.error('[RetentionEngine] cart reminder push failed:', pushErr && pushErr.message);
                     }

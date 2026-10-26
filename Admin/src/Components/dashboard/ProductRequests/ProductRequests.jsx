@@ -7,6 +7,7 @@ import "react-bootstrap-table-next/dist/react-bootstrap-table2.css";
 import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css";
 import BootstrapTable from "react-bootstrap-table-next";
 import paginationFactory from "react-bootstrap-table2-paginator";
+
 import { Services } from "../../../Services";
 import RequestTabs from "./RequestTabs";
 import { toast } from "react-toastify";
@@ -14,6 +15,8 @@ import ScaleLoader from "react-spinners/ScaleLoader";
 import { css } from "@emotion/react";
 import { Modal, Button, Form, Badge } from "react-bootstrap";
 import { FaEdit, FaSearch, FaFilter, FaCamera, FaBell, FaCheckCircle } from "react-icons/fa";
+
+const cleanName = (name) => String(name || "").split(/\s+/).filter((p) => p && p.toUpperCase() !== "NA").join(" ");
 
 function ProductRequests() {
     const override = css`
@@ -270,7 +273,7 @@ function ProductRequests() {
             headerStyle: { color: "#707275", fontWeight: 700 },
             formatter: (cell, row) => (
                 <div>
-                    <strong>{row.CustomerName || "Valued Customer"}</strong>
+                    <strong>{cleanName(row.CustomerName) || "Valued Customer"}</strong>
                     <div style={{ fontSize: "0.8rem", color: "#666" }}>
                         Tel: {row.MobileNumber || row.UserAccountMobile || "N/A"}
                     </div>
@@ -442,6 +445,11 @@ function ProductRequests() {
                                     pagination={paginationFactory({
                                         sizePerPage: 10,
                                         sizePerPageList: [10, 20, 50],
+                                        showTotal: true,
+                                        alwaysShowAllBtns: true,
+                                        paginationTotalRenderer: (from, to, size) => (
+                                            <span className="ms-2 text-muted small">Showing {from}–{to} of {size}</span>
+                                        ),
                                     })}
                                     noDataIndication="No product requests found"
                                 />
@@ -507,7 +515,7 @@ function ProductRequests() {
                                 <div><strong>Requested Item:</strong> {selectedRequest.ProductName}</div>
                                 {selectedRequest.Brand && <div><strong>Brand:</strong> {selectedRequest.Brand}</div>}
                                 {selectedRequest.SizeOrQty && <div><strong>Size/Qty:</strong> {selectedRequest.SizeOrQty}</div>}
-                                <div><strong>Customer:</strong> {selectedRequest.CustomerName} ({selectedRequest.MobileNumber || "N/A"})</div>
+                                <div><strong>Customer:</strong> {cleanName(selectedRequest.CustomerName) || "Valued Customer"} ({selectedRequest.MobileNumber || "N/A"})</div>
                                 {selectedRequest.Description && (
                                     <div style={{ marginTop: "4px", fontSize: "0.85rem", color: "#555" }}>
                                         <strong>Notes:</strong> {selectedRequest.Description}

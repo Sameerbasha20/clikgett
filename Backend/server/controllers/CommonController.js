@@ -88,9 +88,8 @@ CommonController.currentdate = () => {
 CommonController.Send_Notification = (Body, UserID, Type) => {
     return new Promise(async (resolve, reject) => {
         try {
-
-
-            await CommonController.send_push_notifications(Body, UserID)
+            // Admin broadcasts are promotional; everything else is about the customer's orders.
+            await CommonController.send_push_notifications(Body, UserID, Type === 'admin' ? 'offers' : 'orders')
 
 
             let Insert_Notifications = {
@@ -124,13 +123,19 @@ CommonController.Send_Notification = (Body, UserID, Type) => {
     });
 }
 
-CommonController.send_push_notifications = (Body, UserID) => {
+// category: 'orders' (order/wallet/referral updates) or 'offers' (promotions, cart reminders).
+// The customer can switch either off in the app; the in-app notification list still gets the message.
+CommonController.send_push_notifications = (Body, UserID, category = 'orders') => {
     return new Promise(async function (resolve, reject) {
         try {
-            let Get_Fcm = "Select FCMToken from Users where UserID=" + UserID;
+            let Get_Fcm = "Select FCMToken, NotifyOrderUpdates, NotifyOffers from Users where UserID=" + pool.escape(UserID);
             let ResultFcm = await CommonController.commonget(Get_Fcm);
             if (!ResultFcm || ResultFcm.length === 0 || !ResultFcm[0]['FCMToken']) {
                 console.log('No user or FCM token found for UserID:', UserID);
+                return resolve(0);
+            }
+            const wanted = category === 'offers' ? ResultFcm[0]['NotifyOffers'] : ResultFcm[0]['NotifyOrderUpdates'];
+            if (wanted === 0) {
                 return resolve(0);
             }
 

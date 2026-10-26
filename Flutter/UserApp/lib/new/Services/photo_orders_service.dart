@@ -105,4 +105,12 @@ class PhotoOrdersService {
     final response = await http.post(url, headers: headers, body: body);
     return jsonDecode(response.body);
   }
+
+  /// Customer cancels a request the store has not answered yet
+  static Future<Map<String, dynamic>> cancelRequest({required int requestId}) async {
+    final headers = await _getHeaders();
+    final url = Uri.parse('${Constants.baseUrl}/photo-orders/request/$requestId/cancel');
+    final response = await http.post(url, headers: headers);
+    return jsonDecode(response.body);
+  }
 }

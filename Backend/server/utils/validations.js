@@ -51,7 +51,14 @@ const user_mandatoryfields = {
          
         check('Type', "Type cannot be empty")
                 .notEmpty(),        
-        check('ProductImages', "ProductImages cannot be empty")
+        // Images are added in the next step of the admin form, so they are optional here.
+        check('ProductImages', "ProductImages must be a list")
+                .optional()
+                .isArray(),
+        check('ProductName', "Enter the product name")
+                .trim()
+                .notEmpty(),
+        check('SubCategoryID', "Choose a subcategory")
                 .notEmpty(),
         check('ProductVariants', "ProductVariants cannot be empty")
                 .notEmpty(),

@@ -34,6 +34,7 @@ function AddCategory(props) {
     const [categoryItems, setCategoryItems] = useState([]);
     const [subCategoryItems, setSubCategoryItems] = useState([]);
     const [descriptionValue, setDescriptionValue] = useState("");
+    const [basicError, setBasicError] = useState("");
     const [paths, setPaths] = useState([]);
     const [uploadSpinner, setUploadSpinner] = useState(false);
     const [loadingProduct, setLoadingProduct] = useState(false);
@@ -412,17 +413,20 @@ function AddCategory(props) {
         if (!productId) {
             // STEP 1: CREATE NEW PRODUCT
             if (!initialVariant.Price || isNaN(parseFloat(initialVariant.Price))) {
-                toast.error("Please enter a valid initial Base Price");
+                setBasicError("Enter a valid base price for the first pack.");
+                toast.error("Enter a valid base price for the first pack.", { position: "top-center" });
                 return;
             }
 
             const offerP = initialVariant.OfferPrice ? parseFloat(initialVariant.OfferPrice) : parseFloat(initialVariant.Price);
             const baseP = parseFloat(initialVariant.Price);
             if (offerP > baseP) {
-                toast.error("Offer Price cannot exceed Base Price");
+                setBasicError("Offer price cannot be more than the base price.");
+                toast.error("Offer price cannot be more than the base price.", { position: "top-center" });
                 return;
             }
 
+            setBasicError("");
             setSavingBasic(true);
             const createPayload = JSON.stringify({
                 CategoryID: data.CategoryID,
@@ -458,7 +462,8 @@ function AddCategory(props) {
                         if (props.getCategories) props.getCategories(props.categoryId);
                         props.setmodal(false);
                     } else {
-                        toast.error(res.Message || "Failed to create product");
+                        setBasicError(res.Message || "Failed to create product");
+                        toast.error(res.Message || "Failed to create product", { position: "top-center" });
                     }
                 })
                 .catch((err) => {
@@ -1312,16 +1317,22 @@ function AddCategory(props) {
                                 <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                                     Product Description
                                 </label>
+                                <style>{`.product-description .ql-editor { min-height: 140px; }`}</style>
                                 <ReactQuill
+                                    className="product-description"
                                     theme="snow"
                                     value={descriptionValue}
                                     onChange={setDescriptionValue}
-                                    style={{ height: "160px", marginBottom: "40px" }}
                                 />
                             </div>
 
+                            {basicError && (
+                                <div role="alert" style={{ background: "#fef2f2", color: "#b91c1c", border: "1px solid #fecaca", borderRadius: "6px", padding: "8px 12px", fontSize: "0.85rem", marginTop: "8px" }}>
+                                    {basicError}
+                                </div>
+                            )}
                             <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "16px" }}>
-                                <button
+                                {!productId && <button
                                     type="button"
                                     onClick={handleCloseModal}
                                     style={{
@@ -1335,7 +1346,7 @@ function AddCategory(props) {
                                         cursor: "pointer"
                                     }}>
                                     Cancel
-                                </button>
+                                </button>}
                                 <button
                                     type="submit"
                                     disabled={savingBasic}
@@ -2236,6 +2247,7 @@ function AddCategory(props) {
                 </div>
 
                 {/* MODAL FOOTER */}
+                {productId && (
                 <div style={{
                     padding: "12px 24px",
                     borderTop: "1px solid #e2e8f0",
@@ -2245,7 +2257,7 @@ function AddCategory(props) {
                     alignItems: "center"
                 }}>
                     <div style={{ fontSize: "0.78rem", color: "#64748b" }}>
-                        {productId ? `Configuring Product #${productId}` : "Step 1 of 2: Create basic product to unlock all tabs"}
+                        {`Configuring Product #${productId}`}
                     </div>
                     <button
                         type="button"
@@ -2263,6 +2275,7 @@ function AddCategory(props) {
                         Done / Close
                     </button>
                 </div>
+                )}
             </div>
         </div>
     );

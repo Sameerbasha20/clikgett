@@ -166,12 +166,12 @@ const adminproductcontroller={
 
              
             if (Body.ProductName != null || Body.ProductName != undefined)
-            ProductName = "ProductName='" + Body.ProductName.replace(/'/g, "\\'") + "',";
+            ProductName = "ProductName=" + pool.escape(Body.ProductName) + ",";
             else
             ProductName = "ProductName = ProductName,";
 
             if (Body.Description != null || Body.Description != undefined)
-            Description = "Description='" + Body.Description.replace(/'/g, "\\'") + "',";
+            Description = "Description=" + pool.escape(Body.Description) + ",";
             else
             Description = "Description = Description,";
 
@@ -588,12 +588,12 @@ const adminproductcontroller={
             
              
             if (Body.KitName != null || Body.KitName != undefined)
-            KitName = "KitName='" + Body.KitName.replace(/'/g, "\\'") + "',";
+            KitName = "KitName=" + pool.escape(Body.KitName) + ",";
             else
             KitName = "KitName = KitName,";
 
             if (Body.Description != null || Body.Description != undefined)
-            Description = "Description='" + Body.Description.replace(/'/g, "\\'") + "',";
+            Description = "Description=" + pool.escape(Body.Description) + ",";
             else
             Description = "Description = Description,";
 
@@ -1191,7 +1191,7 @@ function createproduct(body) {
                                 body.Description = 'NA'
             
             if (body.ProductImages == null || body.ProductImages == undefined){
-                body.ProductImages = JSON.stringify([])}
+                body.ProductImages = []}
 
             if (body.CategoryID == null || body.CategoryID == undefined)
                                 body.CategoryID = 0
@@ -1201,10 +1201,11 @@ function createproduct(body) {
             else{
                 subcategorycheck = await getsubcategoryid(body.SubCategoryID)
                 if(subcategorycheck.length == 0){
-                    resolve(2)}
+                    return resolve(2)}
             }
 
-            let InsertProducts = {ProductImages:JSON.stringify(body.ProductImages),SubCategoryID:body.SubCategoryID,ProductName: body.ProductName.replace(/'/g, "\\'"), Description: body.Description.replace(/'/g, "\\'"),ImageUrl: "NA",status:1,CategoryID:body.CategoryID,Type:body.Type}
+            // Parameterised insert: values go in as they are (no manual quote escaping).
+            let InsertProducts = {ProductImages:JSON.stringify(body.ProductImages),SubCategoryID:body.SubCategoryID,ProductName: String(body.ProductName).trim(), Description: body.Description,ImageUrl: "NA",status:1,CategoryID:body.CategoryID,Type:body.Type}
             let sql = "INSERT INTO Products set ?";
             pool.query(sql, InsertProducts, (err, results) => {
                     console.log('add product')

@@ -293,14 +293,14 @@ const PromoCodecontroller = {
                 if (check_PromoCodes.length > 0) {
                     return resp.json({ "status": 0, "Message": "PromoCode Already Exists" })
                 }
-                PromoCode = "PromoCode='" + Body.PromoCode.replace(/'/g, "\\'").toUpperCase() + "',";
+                PromoCode = "PromoCode=" + pool.escape(Body.PromoCode.toUpperCase()) + ",";
             }
             else {
                 PromoCode = "PromoCode = PromoCode,";
             }
 
             if (Body.Description != null || Body.Description != undefined) {
-                Description = "Description='" + Body.Description.replace(/'/g, "\\'") + "',";
+                Description = "Description=" + pool.escape(Body.Description) + ",";
             }
             else {
                 Description = "Description = Description,";
