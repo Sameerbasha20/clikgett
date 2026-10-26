@@ -50,6 +50,20 @@ const pool = mysql.createPool({
     ...(ssl ? { ssl } : {})
 });
 
+// Pooled connections are shared, so their callbacks would otherwise run in whichever
+// request's context first opened the connection. Bind every callback to the caller's
+// request (utils/requestContext.js: e.g. member prices for the signed-in customer).
+const { AsyncResource } = require('async_hooks');
+const bindLast = (args) => {
+    const last = args.length - 1;
+    if (last >= 0 && typeof args[last] === 'function') args[last] = AsyncResource.bind(args[last]);
+    return args;
+};
+const rawQuery = pool.query.bind(pool);
+const rawGetConnection = pool.getConnection.bind(pool);
+pool.query = (...args) => rawQuery(...bindLast(args));
+pool.getConnection = (...args) => rawGetConnection(...bindLast(args));
+
 // Hosted MySQL can default to ANSI mode (Aiven: ANSI_QUOTES, PIPES_AS_CONCAT,
 // ONLY_FULL_GROUP_BY), which breaks queries that use "double-quoted" strings or loose
 // GROUP BYs. Every connection gets the same mode as the local MySQL 8 the code is built on.

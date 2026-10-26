@@ -67,6 +67,43 @@ const call = async (method, path, token, body) => {
     const guest = await call('GET', '/product-unlocks/deals');
     check('guests see deals, all locked', guest.data.Deals.every((d) => d.IsUnlocked === false) && guest.data.LoggedIn === false);
 
+    // ---- Admin creates a ₹1 deal (limit 1 per order) and checkout honours it
+    const [dealPack, otherPack] = await q(
+        `SELECT V.ProductID, V.VariantID, COALESCE(NULLIF(V.OfferPrice, 0), V.Price) AS Selling
+           FROM ProductVariants V JOIN Products P ON P.ProductID = V.ProductID
+          WHERE P.Status = 1 AND V.Status = 1 AND V.AvailableQty > 10 AND COALESCE(NULLIF(V.OfferPrice, 0), V.Price) BETWEEN 20 AND 200
+          ORDER BY V.VariantID LIMIT 2`);
+    const tooHigh = await call('POST', '/product-unlocks/unlocks', admin, {
+        ProductID: dealPack.ProductID, VariantID: dealPack.VariantID, UnlockPrice: dealPack.Selling, ThresholdAmount: 100 });
+    check('deal price must be below the normal price', tooHigh.status === 400, JSON.stringify(tooHigh.data));
+    const wrongPack = await call('POST', '/product-unlocks/unlocks', admin, {
+        ProductID: dealPack.ProductID, VariantID: otherPack.VariantID, UnlockPrice: 1, ThresholdAmount: 100 });
+    check('pack must belong to the product', wrongPack.status === 400 || dealPack.ProductID === otherPack.ProductID);
+    const created = await call('POST', '/product-unlocks/unlocks', admin, {
+        ProductID: dealPack.ProductID, VariantID: dealPack.VariantID, UnlockPrice: 1, ThresholdAmount: 100,
+        MaxQtyPerOrder: 1, Message: 'Test deal' });
+    check('admin creates a deal', created.data.Status === 1, JSON.stringify(created.data));
+    const unlockId = created.data.UnlockID;
+    const listed = (await call('GET', '/product-unlocks/unlocks', admin)).data.Unlocks.find((u) => u.UnlockID === unlockId);
+    check('deal lists its pack, limit and message', listed && listed.VariantID === dealPack.VariantID
+        && listed.MaxQtyPerOrder === 1 && listed.UnlockMessage === 'Test deal', JSON.stringify(listed));
+
+    const [cartRow] = await q('SELECT CartID FROM Carts WHERE UserID = ? AND IsOrderLinked = 1', [buyer.UserID]);
+    if (cartRow) await call('DELETE', `/carts/deletecart/${cartRow.CartID}`, user);
+    await call('POST', '/carts/addcart', user, { ProductID: dealPack.ProductID, VariantID: dealPack.VariantID, Quantity: 2, Type: 1 });
+    let deal = (await call('POST', '/carts/bill', user, {})).data.Bill.Items.find((i) => i.VariantID === dealPack.VariantID);
+    check('deal item alone does not unlock itself', deal && Math.abs(deal.LineTotal - dealPack.Selling * 2) < 0.01,
+        `line ${deal && deal.LineTotal}`);
+    const fillQty = Math.ceil(110 / otherPack.Selling);
+    await call('POST', '/carts/addcart', user, { ProductID: otherPack.ProductID, VariantID: otherPack.VariantID, Quantity: fillQty, Type: 1 });
+    deal = (await call('POST', '/carts/bill', user, {})).data.Bill.Items.find((i) => i.VariantID === dealPack.VariantID);
+    check('unlocked: ₹1 for 1, normal price for the 2nd', deal && Math.abs(deal.LineTotal - (1 + dealPack.Selling)) < 0.01,
+        `line ${deal && deal.LineTotal}, expected ${1 + dealPack.Selling}`);
+
+    await call('DELETE', `/product-unlocks/unlocks/${unlockId}`, admin);
+    const [cleanup] = await q('SELECT CartID FROM Carts WHERE UserID = ? AND IsOrderLinked = 1', [buyer.UserID]);
+    if (cleanup) await call('DELETE', `/carts/deletecart/${cleanup.CartID}`, user);
+
     console.log(`\n${passed}/${passed + failed} passed against ${BASE}`);
     process.exit(failed ? 1 : 0);
 })().catch((err) => {

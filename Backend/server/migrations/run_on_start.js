@@ -7,6 +7,7 @@
 // stay manual.
 const MIGRATIONS = [
     require('./print_store_migration'),
+    require('./product_unlock_limits_migration'),
 ];
 
 (async () => {

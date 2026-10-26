@@ -10,20 +10,64 @@ function queryAsync(sql, params = []) {
     });
 }
 
+const MAX_DEAL_QTY = 20;
+
+/**
+ * Validates an unlock rule from the admin form. The deal price is required (₹0 = free),
+ * the pack must belong to the product, and at most MaxQtyPerOrder units get the price.
+ */
+async function readRule(body) {
+    const threshold = parseFloat(body.ThresholdAmount);
+    const productId = parseInt(body.ProductID, 10);
+    const variantId = body.VariantID ? parseInt(body.VariantID, 10) : null;
+    const unlockPrice = body.UnlockPrice === '' || body.UnlockPrice === null || body.UnlockPrice === undefined
+        ? NaN : parseFloat(body.UnlockPrice);
+    const maxQty = body.MaxQtyPerOrder === undefined || body.MaxQtyPerOrder === '' ? 1 : parseInt(body.MaxQtyPerOrder, 10);
+    if (!(threshold > 0)) return { error: 'Enter the cart value that unlocks the deal' };
+    if (!(productId > 0)) return { error: 'Choose a product' };
+    if (Number.isNaN(unlockPrice) || unlockPrice < 0) return { error: 'Enter the deal price (0 for free)' };
+    if (!(maxQty >= 1 && maxQty <= MAX_DEAL_QTY)) return { error: `Limit per order must be between 1 and ${MAX_DEAL_QTY}` };
+    const packs = await queryAsync(
+        'SELECT VariantID, COALESCE(NULLIF(OfferPrice, 0), Price) AS Selling FROM ProductVariants WHERE ProductID = ? AND Status = 1',
+        [productId]);
+    if (!packs.length) return { error: 'This product has no active pack' };
+    const pack = variantId ? packs.find((p) => p.VariantID === variantId) : null;
+    if (variantId && !pack) return { error: 'That pack does not belong to this product' };
+    if (pack && unlockPrice >= parseFloat(pack.Selling)) {
+        return { error: `The deal price must be below the normal price (₹${parseFloat(pack.Selling)})` };
+    }
+    const message = String(body.Message || body.UnlockMessage || '').trim().slice(0, 255) || null;
+    return {
+        threshold,
+        productId,
+        variantId,
+        unlockPrice,
+        maxQty,
+        message,
+        startDate: toDbTime(body.StartDate),
+        endDate: toDbTime(body.EndDate),
+        status: body.Status !== undefined && body.Status !== '' ? (parseInt(body.Status, 10) === 1 ? 1 : 0) : 1,
+    };
+}
+
 const ProductUnlocksController = {
     // List all configured product unlocks
     getUnlocks: async (req, res) => {
         try {
+            // VariantID is the rule's pack, or the product's first active pack when none was chosen
+            // (the same pack the pricing engine and the deals screen use).
             const sql = `
-                SELECT pu.*, p.ProductName, p.ProductImages, 
-                       COALESCE(pv.OfferPrice, 0) as OfferPrice, 
-                       COALESCE(pv.Price, 0) as Price
+                SELECT pu.UnlockID, pu.ProductID, pv.VariantID, pu.VariantID AS RuleVariantID, pu.ThresholdAmount,
+                       pu.UnlockPrice, pu.Message, pu.Message AS UnlockMessage, pu.StartDate, pu.EndDate, pu.Status,
+                       COALESCE(pu.MaxQtyPerOrder, 1) AS MaxQtyPerOrder,
+                       p.ProductName, p.ProductImages,
+                       COALESCE(pv.OfferPrice, 0) AS OfferPrice, COALESCE(pv.Price, 0) AS Price,
+                       pv.metricvalue, pv.metrictype, GREATEST(COALESCE(pv.AvailableQty, 0), 0) AS AvailableQty
                 FROM product_unlocks pu
                 JOIN Products p ON pu.ProductID = p.ProductID
-                LEFT JOIN ProductVariants pv ON (pu.VariantID IS NOT NULL AND pu.VariantID = pv.VariantID) 
-                                             OR (pu.VariantID IS NULL AND p.ProductID = pv.ProductID)
-                GROUP BY pu.UnlockID
-                ORDER BY pu.ThresholdAmount ASC
+                LEFT JOIN ProductVariants pv ON pv.VariantID = COALESCE(pu.VariantID,
+                     (SELECT MIN(v2.VariantID) FROM ProductVariants v2 WHERE v2.ProductID = pu.ProductID AND v2.Status = 1))
+                ORDER BY pu.UnlockPrice ASC, pu.ThresholdAmount ASC
             `;
             const unlocks = await queryAsync(sql);
             const list = unlocks || [];
@@ -37,35 +81,15 @@ const ProductUnlocksController = {
     // Create a new product unlock rule
     createUnlock: async (req, res) => {
         try {
-            const { ThresholdAmount, ProductID, VariantID, UnlockPrice, Message, StartDate, EndDate, Status } = req.body;
-            const threshold = parseFloat(ThresholdAmount);
-            const productId = parseInt(ProductID, 10);
-
-            if (isNaN(threshold) || threshold <= 0) {
-                return res.status(400).json({ Status: 0, status: 0, Message: "Valid threshold amount is required", message: "Valid threshold amount is required" });
-            }
-            if (isNaN(productId) || productId <= 0) {
-                return res.status(400).json({ Status: 0, status: 0, Message: "Valid ProductID is required", message: "Valid ProductID is required" });
-            }
-
-            const unlockPriceVal = (UnlockPrice !== undefined && UnlockPrice !== null && UnlockPrice !== '') ? parseFloat(UnlockPrice) : null;
-
-            const insertSql = `
-                INSERT INTO product_unlocks
-                (ThresholdAmount, ProductID, VariantID, UnlockPrice, Message, StartDate, EndDate, Status, CreatedAt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-            `;
-            const result = await queryAsync(insertSql, [
-                threshold,
-                productId,
-                VariantID || null,
-                unlockPriceVal,
-                Message || null,
-                toDbTime(StartDate),
-                toDbTime(EndDate),
-                Status !== undefined ? Status : 1
-            ]);
-
+            const rule = await readRule(req.body || {});
+            if (rule.error) return res.status(400).json({ Status: 0, status: 0, Message: rule.error, message: rule.error });
+            const result = await queryAsync(
+                `INSERT INTO product_unlocks
+                 (ThresholdAmount, ProductID, VariantID, UnlockPrice, MaxQtyPerOrder, Message, StartDate, EndDate, Status, CreatedAt)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                [rule.threshold, rule.productId, rule.variantId, rule.unlockPrice, rule.maxQty, rule.message,
+                    rule.startDate, rule.endDate, rule.status]
+            );
             return res.json({
                 Status: 1,
                 status: 1,
@@ -82,28 +106,18 @@ const ProductUnlocksController = {
     // Update product unlock rule
     updateUnlock: async (req, res) => {
         try {
-            const UnlockID = req.params.UnlockID || req.body.UnlockID;
-            const { ThresholdAmount, ProductID, VariantID, UnlockPrice, Message, StartDate, EndDate, Status } = req.body;
-
-            const unlockPriceVal = (UnlockPrice !== undefined && UnlockPrice !== null && UnlockPrice !== '') ? parseFloat(UnlockPrice) : null;
-
-            const updateSql = `
-                UPDATE product_unlocks
-                SET ThresholdAmount = ?, ProductID = ?, VariantID = ?, UnlockPrice = ?, Message = ?, StartDate = ?, EndDate = ?, Status = ?
-                WHERE UnlockID = ?
-            `;
-            await queryAsync(updateSql, [
-                parseFloat(ThresholdAmount),
-                parseInt(ProductID, 10),
-                VariantID || null,
-                unlockPriceVal,
-                Message || null,
-                toDbTime(StartDate),
-                toDbTime(EndDate),
-                Status !== undefined ? Status : 1,
-                UnlockID
-            ]);
-
+            const UnlockID = req.params.UnlockID || (req.body || {}).UnlockID;
+            const rule = await readRule(req.body || {});
+            if (rule.error) return res.status(400).json({ Status: 0, status: 0, Message: rule.error, message: rule.error });
+            const result = await queryAsync(
+                `UPDATE product_unlocks
+                    SET ThresholdAmount = ?, ProductID = ?, VariantID = ?, UnlockPrice = ?, MaxQtyPerOrder = ?, Message = ?,
+                        StartDate = ?, EndDate = ?, Status = ?
+                  WHERE UnlockID = ?`,
+                [rule.threshold, rule.productId, rule.variantId, rule.unlockPrice, rule.maxQty, rule.message,
+                    rule.startDate, rule.endDate, rule.status, UnlockID]
+            );
+            if (!result.affectedRows) return res.status(404).json({ Status: 0, status: 0, Message: "Rule not found", message: "Rule not found" });
             return res.json({ Status: 1, status: 1, Message: "Product unlock updated successfully", message: "Product unlock updated successfully" });
         } catch (err) {
             console.error("Error updating product unlock:", err);
@@ -129,6 +143,7 @@ const ProductUnlocksController = {
         try {
             const rows = await queryAsync(`
                 SELECT pu.UnlockID, pu.ProductID, v.VariantID, pu.ThresholdAmount, pu.UnlockPrice, pu.Message,
+                       COALESCE(pu.MaxQtyPerOrder, 1) AS DealLimit,
                        p.ProductName, p.ImageUrl, p.ProductImages, p.CategoryID, p.SubCategoryID,
                        v.Price, v.OfferPrice, v.metricvalue, v.metrictype, v.AvailableQty, v.maxQty
                   FROM product_unlocks pu
@@ -174,6 +189,7 @@ const ProductUnlocksController = {
                     AmountNeeded: p ? p.AmountNeeded : threshold + 1,
                     InStock: (parseInt(r.AvailableQty, 10) || 0) > 0,
                     MaxQty: Math.min(parseInt(r.AvailableQty, 10) || 0, parseInt(r.maxQty, 10) || 99),
+                    DealLimit: parseInt(r.DealLimit, 10) || 1,
                     InCart: cartQty.get(`${r.ProductID}:${r.VariantID}`) || 0,
                     Message: r.Message || null,
                     CategoryID: r.CategoryID,

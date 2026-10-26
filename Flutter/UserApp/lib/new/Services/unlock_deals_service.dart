@@ -29,6 +29,9 @@ class UnlockDeal {
   final bool inStock;
   final int maxQty;
   final int inCart;
+
+  /// Units per order at the deal price (more are charged the normal price).
+  final int dealLimit;
   final int? categoryId;
   final int? subCategoryId;
 
@@ -48,6 +51,7 @@ class UnlockDeal {
         inStock = j['InStock'] == true,
         maxQty = _i(j['MaxQty']),
         inCart = _i(j['InCart']),
+        dealLimit = _i(j['DealLimit']) < 1 ? 1 : _i(j['DealLimit']),
         categoryId = j['CategoryID'] == null ? null : _i(j['CategoryID']),
         subCategoryId = j['SubCategoryID'] == null ? null : _i(j['SubCategoryID']);
 

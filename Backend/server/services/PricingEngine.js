@@ -416,16 +416,17 @@ const PricingEngine = {
             queryAsync("SELECT * FROM AdminShopToggleSettings LIMIT 1"),
             queryAsync("SELECT * FROM Settings"),
             queryAsync(`
-                SELECT pu.*, p.ProductName, p.ProductImages,
-                       pv.Price, pv.OfferPrice, pv.VariantID, pv.metrictype, pv.metricvalue
-                FROM product_unlocks pu 
-                JOIN Products p ON pu.ProductID = p.ProductID 
-                LEFT JOIN ProductVariants pv ON (pu.VariantID IS NOT NULL AND pu.VariantID = pv.VariantID) 
-                                             OR (pu.VariantID IS NULL AND p.ProductID = pv.ProductID)
-                WHERE pu.Status = 1 
-                  AND (pu.StartDate IS NULL OR pu.StartDate <= NOW()) 
+                SELECT pu.UnlockID, pu.ProductID, pv.VariantID, pu.ThresholdAmount, pu.UnlockPrice, pu.Message,
+                       pu.StartDate, pu.EndDate, pu.Status, COALESCE(pu.MaxQtyPerOrder, 1) AS MaxQtyPerOrder,
+                       p.ProductName, p.ProductImages, pv.Price, pv.OfferPrice, pv.metrictype, pv.metricvalue
+                FROM product_unlocks pu
+                JOIN Products p ON pu.ProductID = p.ProductID
+                -- The rule's pack, or the product's first active pack (same as the deals screen).
+                JOIN ProductVariants pv ON pv.VariantID = COALESCE(pu.VariantID,
+                     (SELECT MIN(v2.VariantID) FROM ProductVariants v2 WHERE v2.ProductID = pu.ProductID AND v2.Status = 1))
+                WHERE pu.Status = 1
+                  AND (pu.StartDate IS NULL OR pu.StartDate <= NOW())
                   AND (pu.EndDate IS NULL OR pu.EndDate >= NOW())
-                GROUP BY pu.UnlockID
                 ORDER BY pu.ThresholdAmount ASC
             `),
             queryAsync(`
@@ -634,12 +635,13 @@ const PricingEngine = {
         const totalEstimatedMinutes = baseDeliveryMinutes + additionalDeliveryMinutes;
 
         // 5. Dynamic Product Unlocks Evaluation (Threshold > ₹1000)
-        const unlockProductIds = new Set((activeUnlocks || []).map(u => parseInt(u.ProductID)));
+        const unlockPacks = new Set((activeUnlocks || []).map(u => `${parseInt(u.ProductID)}:${parseInt(u.VariantID)}`));
         const qualifyingBaseSubTotal = processedItems
-            .filter(i => !unlockProductIds.has(parseInt(i.ProductID)))
+            .filter(i => !unlockPacks.has(`${parseInt(i.ProductID)}:${parseInt(i.VariantID)}`))
             .reduce((sum, item) => sum + item.LineTotal, 0);
 
-        const evalSubTotal = qualifyingBaseSubTotal > 0 ? qualifyingBaseSubTotal : subTotal;
+        // Only other items count towards a deal (a deal item can't unlock itself).
+        const evalSubTotal = qualifyingBaseSubTotal;
 
         // Check if any unlock items in cart qualify for unlock pricing
         let didApplyUnlockPrice = false;
@@ -649,13 +651,18 @@ const PricingEngine = {
             if (isUnlocked && u.UnlockPrice !== null && u.UnlockPrice !== undefined && parseFloat(u.UnlockPrice) >= 0) {
                 const uPrice = parseFloat(u.UnlockPrice);
                 processedItems.forEach(item => {
-                    if (item.ProductID == u.ProductID && (!u.VariantID || item.VariantID == u.VariantID)) {
+                    if (item.ProductID == u.ProductID && item.VariantID == u.VariantID) {
                         if (uPrice < item.UnitPrice) {
+                            // The deal price covers up to MaxQtyPerOrder units; the rest are at the normal price.
                             const qty = item.Quantity || 1;
-                            item.UnitPrice = uPrice;
-                            item.LineTotal = parseFloat((uPrice * qty).toFixed(2));
+                            const dealQty = Math.min(qty, Math.max(1, parseInt(u.MaxQtyPerOrder, 10) || 1));
+                            const regularUnit = item.UnitPrice;
+                            item.LineTotal = parseFloat((uPrice * dealQty + regularUnit * (qty - dealQty)).toFixed(2));
+                            item.UnitPrice = parseFloat((item.LineTotal / qty).toFixed(2));
                             item.TotalDiscount = Math.max(0, item.OriginalTotal - item.LineTotal);
-                            item.AppliedRule = `Special Unlock Price (₹${uPrice.toFixed(2)})`;
+                            item.AppliedRule = dealQty < qty
+                                ? `Unlock price ₹${uPrice.toFixed(2)} on ${dealQty}, rest at ₹${regularUnit.toFixed(2)}`
+                                : `Special Unlock Price (₹${uPrice.toFixed(2)})`;
                             item.IsUnlockedProduct = true;
                             didApplyUnlockPrice = true;
                         }
@@ -688,6 +695,7 @@ const PricingEngine = {
                 Unit: u.metrictype ? `${u.metricvalue} ${u.metrictype}` : (u.Unit || ''),
                 IsUnlocked: isUnlocked,
                 AmountNeeded: gap,
+                MaxQtyPerOrder: Math.max(1, parseInt(u.MaxQtyPerOrder, 10) || 1),
                 Message: isUnlocked ? 'Special Products Unlocked' : (u.Message || `Add ₹${gap} more to unlock`)
             };
         });

@@ -118,17 +118,24 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
                   : RefreshIndicator(
                       color: _accent,
                       onRefresh: _load,
-                      child: GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(12, 14, 12, 120),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 10,
-                          childAspectRatio: 0.44,
-                        ),
-                        itemCount: deals.length,
-                        itemBuilder: (_, i) => _card(deals[i]),
-                      ),
+                      child: LayoutBuilder(builder: (context, box) {
+                        // Each cell is the square image plus the fixed text block below it,
+                        // so cards sit tight with no stretched gaps.
+                        const side = 12.0, gap = 10.0;
+                        final cellWidth = (box.maxWidth - side * 2 - gap * 2) / 3;
+                        final textScale = MediaQuery.textScalerOf(context).scale(1);
+                        return GridView.builder(
+                          padding: const EdgeInsets.fromLTRB(side, 14, side, 24),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: gap,
+                            mainAxisExtent: cellWidth + _textBlockHeight * textScale + 4,
+                          ),
+                          itemCount: deals.length,
+                          itemBuilder: (_, i) => _card(deals[i]),
+                        );
+                      }),
                     ),
         ),
       ]),
@@ -198,6 +205,9 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
         ),
       );
 
+  /// Height of everything under the image in [_card] at normal text size.
+  static const double _textBlockHeight = 160;
+
   Widget _card(UnlockDeal d) {
     final qty = _qtyInCart(d);
     final busy = _busy.contains(d.unlockId);
@@ -230,11 +240,15 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
             Text(d.unit.isEmpty ? '1 unit' : d.unit, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 11, color: tColor3)),
       ),
       const SizedBox(height: 6),
-      Text(d.name,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: tColor4, height: 1.25)),
-      const Spacer(),
+      // Two lines are always reserved for the name, so every card lines up.
+      SizedBox(
+        height: 32 * MediaQuery.textScalerOf(context).scale(1),
+        child: Text(d.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: tColor4, height: 1.25)),
+      ),
+      const SizedBox(height: 8),
       ClipRRect(
         borderRadius: BorderRadius.circular(4),
         child: LinearProgressIndicator(
@@ -245,6 +259,7 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
         ),
       ),
       const SizedBox(height: 5),
+      Text('Limit ${d.dealLimit} per order', style: GoogleFonts.poppins(fontSize: 10, color: grey70)),
       if (!d.inStock)
         Text('Out of stock', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: red))
       else if (d.unlocked)
