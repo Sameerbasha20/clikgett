@@ -16,4 +16,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider "http://127.0.0.1:${PORT:-5000}/health" || exit 1
 
-CMD ["node", "server/server.js"]
+# Safe, repeatable migrations first (server/migrations/run_on_start.js), then the server.
+CMD ["sh", "-c", "node server/migrations/run_on_start.js && exec node server/server.js"]

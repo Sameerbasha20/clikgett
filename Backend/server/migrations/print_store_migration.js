@@ -1,4 +1,4 @@
-// Print store tables and prices. Safe to re-run.
+// Print store tables and prices. Safe to re-run (also runs on every deploy via run_on_start.js).
 //   node server/migrations/print_store_migration.js   (uses the same DB_* env as the server)
 const pool = require('../utils/db');
 
@@ -32,14 +32,19 @@ const queries = [
         SELECT 'PrintStoreEnabled', '1' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM Settings WHERE SettingKey = 'PrintStoreEnabled')`,
 ];
 
-(async () => {
+async function run() {
     for (const [i, sql] of queries.entries()) {
         await new Promise((resolve, reject) => pool.query(sql, (err) => (err ? reject(err) : resolve())));
-        console.log(`Step ${i + 1}/${queries.length} done`);
+        console.log(`Print store migration: step ${i + 1}/${queries.length} done`);
     }
     console.log('Print store migration complete');
-    process.exit(0);
-})().catch((err) => {
-    console.error('Print store migration failed:', err.message);
-    process.exit(1);
-});
+}
+
+module.exports = { run };
+
+if (require.main === module) {
+    run().then(() => process.exit(0)).catch((err) => {
+        console.error('Print store migration failed:', err.message);
+        process.exit(1);
+    });
+}
