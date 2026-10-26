@@ -35,13 +35,19 @@ async function generateReceiptPdf(orderId, res) {
                 const order = orderRows[0];
 
                 // 2. Fetch Order Items
+                // Products, then print-store jobs as one line each.
                 const itemsQuery = `
-                    SELECT oi.*
+                    SELECT oi.ProductID, oi.ProductName, oi.Quantity, oi.Price, oi.OfferPrice, oi.metricvalue, oi.metrictype
                     FROM OrderItems oi
                     WHERE oi.OrderID = ?
+                    UNION ALL
+                    SELECT 0, CONCAT('Print: ', pj.FileName, IF(pj.ColorMode = 'COLOR', ' (colour)', ' (B&W)')), 1, pj.LineTotal, pj.LineTotal,
+                           pj.Pages * pj.Copies, 'pages'
+                    FROM PrintJobs pj
+                    WHERE pj.OrderID = ?
                 `;
 
-                pool.query(itemsQuery, [orderId], (err2, itemRows) => {
+                pool.query(itemsQuery, [orderId, orderId], (err2, itemRows) => {
                     if (err2) {
                         console.error('Error fetching order items for receipt:', err2);
                         return res.status(500).json({ Status: 0, Message: 'Database error fetching order items' });

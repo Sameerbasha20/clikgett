@@ -282,7 +282,10 @@ class _EditProfileState extends State<EditProfile> {
         backgroundColor: green.withOpacity(0.8),
         child:
         customText(
-          text: '${widget.users?.firstName[0]}${widget.users?.lastName[0]}',
+          text: [widget.users?.firstName ?? '', widget.users?.lastName ?? '']
+              .where((n) => n.isNotEmpty)
+              .map((n) => n[0].toUpperCase())
+              .join(),
           color: white,
           fontSize: 28.sp,
         ),

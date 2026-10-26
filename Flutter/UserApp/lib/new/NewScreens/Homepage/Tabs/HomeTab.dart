@@ -86,7 +86,15 @@ class _HomeTabState extends State<Home> {
         if (homeController.isLoading.isTrue && homeController.homepagesectionList.isEmpty) {
           return Center(child: CustomLoader());
         }
-        return RefreshIndicator(
+        // The status bar keeps a green strip and the page scrolls below it, so the
+        // pinned search bar stops under the status bar instead of behind it.
+        return Column(children: [
+          Container(color: primary, height: MediaQuery.of(context).padding.top),
+          Expanded(
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: true,
+              child: RefreshIndicator(
           color: primary,
           onRefresh: _load,
           child: CustomScrollView(
@@ -100,7 +108,10 @@ class _HomeTabState extends State<Home> {
               const SliverToBoxAdapter(child: SizedBox(height: 120)), // room for the floating cart bar
             ],
           ),
-        );
+              ),
+            ),
+          ),
+        ]);
       }),
     );
   }

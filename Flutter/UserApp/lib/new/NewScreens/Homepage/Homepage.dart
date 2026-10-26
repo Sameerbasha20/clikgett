@@ -12,6 +12,7 @@ import 'package:fav_app/new/NewScreens/Homepage/Tabs/Categories/Categories.dart'
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/HomeTab.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/Orders.dart';
 import 'package:fav_app/new/NewScreens/Homepage/widgets/homeDeliveryDetails.dart';
+import 'package:fav_app/new/NewScreens/PrintStore/PrintStoreScreen.dart';
 import 'package:fav_app/new/NewScreens/Widgets/floating_cart_bar.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -19,7 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// App shell: Home / Categories / My Orders / Profile tabs, the floating cart
+/// App shell: Home / Categories / My Orders / Print / Profile tabs, the floating cart
 /// bar (on browse tabs) and a strip with the customer's active orders.
 class Homepage extends StatefulWidget {
   const Homepage({Key? key}) : super(key: key);
@@ -41,6 +42,7 @@ class _HomepageState extends State<Homepage> {
     const Home(),
     Categories(backtoCategory: true),
     Orders(),
+    const PrintStoreScreen(),
     Profile(),
   ];
 
@@ -74,8 +76,8 @@ class _HomepageState extends State<Homepage> {
   }
 
   void _onTab(int index) {
-    // Home and Categories are open to guests; orders and profile need an account.
-    if (index >= 2 && token.isEmpty) {
+    // Home, Categories and Print are open to guests; orders and profile need an account.
+    if ((index == 2 || index == 4) && token.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please login to see your orders and profile')),
       );
@@ -94,7 +96,7 @@ class _HomepageState extends State<Homepage> {
         return Stack(children: [
           Positioned.fill(child: screens[tab]),
           // Blinkit-style "View cart" pill floating over the browse tabs.
-          if (tab == 0 || tab == 1) const Positioned(left: 0, right: 0, bottom: 12, child: FloatingCartBar()),
+          if (tab == 0 || tab == 1 || tab == 3) const Positioned(left: 0, right: 0, bottom: 12, child: FloatingCartBar()),
         ]);
       }),
       bottomNavigationBar: Obx(() {
@@ -146,6 +148,7 @@ class _HomepageState extends State<Homepage> {
                   _item(bottombarHomeIcon, 'Home'),
                   _item(bottombarCategoryIcon, 'Categories'),
                   _item(myorders, 'My Orders'),
+                  _printItem(index == 3),
                   _item(userIcon, 'Profile'),
                 ],
               ),
@@ -155,6 +158,26 @@ class _HomepageState extends State<Homepage> {
       ),
     );
   }
+
+  /// Print store tab with a small "NEW" tag.
+  BottomNavigationBarItem _printItem(bool selected) => BottomNavigationBarItem(
+        icon: Padding(
+          padding: const EdgeInsets.only(bottom: 3),
+          child: Stack(clipBehavior: Clip.none, children: [
+            Icon(selected ? Icons.print_rounded : Icons.print_outlined, size: 23),
+            Positioned(
+              right: -16,
+              top: -5,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(color: red, borderRadius: BorderRadius.circular(6)),
+                child: Text('NEW', style: GoogleFonts.poppins(fontSize: 7.5, fontWeight: FontWeight.w800, color: white)),
+              ),
+            ),
+          ]),
+        ),
+        label: 'Print',
+      );
 
   BottomNavigationBarItem _item(String asset, String label) => BottomNavigationBarItem(
         icon: Padding(

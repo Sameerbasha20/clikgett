@@ -91,6 +91,7 @@ dependencies:
   shimmer: ^3.0.0
   slide_to_act: ^2.0.2
   flutter_html: 3.0.0-beta.2
+  file_picker: ^11.0.3
 
 dev_dependencies:
   flutter_test:

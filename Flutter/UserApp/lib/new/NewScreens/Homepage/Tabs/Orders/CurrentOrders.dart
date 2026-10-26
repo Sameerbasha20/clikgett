@@ -8,6 +8,9 @@ import 'package:fav_app/new/Constants/static_loader.dart';
 import 'package:fav_app/new/Constants/textStyles.dart';
 import 'package:fav_app/new/Controllers/orders_controller.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/OrderDetails.dart';
+import 'package:fav_app/new/NewModel/photo_order_model.dart';
+import 'package:fav_app/new/NewScreens/PhotoOrders/PhotoOrderProposalScreen.dart';
+import 'package:fav_app/new/Services/photo_orders_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,10 +28,78 @@ class CurrentOrders extends StatefulWidget {
 }
 
 class _CurrentOrdersState extends State<CurrentOrders> {
+  /// Photo orders the store is still reviewing (not yet an order). Placed ones
+  /// are regular orders and show below with a "Photo order" label.
+  List<PhotoOrderModel> _photoRequests = [];
+  static const _openPhotoStatuses = {'PENDING', 'UNDER_REVIEW', 'PROPOSAL_DRAFT', 'AWAITING_CUSTOMER_CONFIRMATION'};
+
   @override
   initState() {
     super.initState();
     ordersController.getcurrentorder(context: context);
+    _loadPhotoRequests();
+  }
+
+  Future<void> _loadPhotoRequests() async {
+    try {
+      final list = await PhotoOrdersService.getMyPhotoOrders();
+      if (!mounted) return;
+      setState(() => _photoRequests = list.where((p) => _openPhotoStatuses.contains(p.requestStatus)).toList());
+    } catch (_) {/* the regular orders still show */}
+  }
+
+  String _photoStatusText(String? status) {
+    switch (status) {
+      case 'AWAITING_CUSTOMER_CONFIRMATION':
+        return 'Items ready · tap to confirm your order';
+      case 'UNDER_REVIEW':
+      case 'PROPOSAL_DRAFT':
+        return 'We are picking items from your list';
+      default:
+        return 'Sent · waiting for the store to review';
+    }
+  }
+
+  Widget _photoRequestCard(PhotoOrderModel p) {
+    final needsAction = p.requestStatus == 'AWAITING_CUSTOMER_CONFIRMATION';
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        await Get.to(() => PhotoOrderProposalScreen(requestId: p.requestID ?? 0));
+        _loadPhotoRequests();
+        if (mounted) ordersController.getcurrentorder(context: context);
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 1.5.h),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: needsAction ? primary : cardBorder, width: needsAction ? 1.4 : 1),
+          boxShadow: softCardShadow,
+        ),
+        child: Row(children: [
+          Container(
+            height: 60,
+            width: 60,
+            decoration: BoxDecoration(color: primaryGhost, borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.photo_camera_rounded, color: primaryDark, size: 28),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Photo order', style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w800, color: tColor)),
+              Text(_photoStatusText(p.requestStatus),
+                  style: GoogleFonts.poppins(
+                      fontSize: 13.sp, fontWeight: FontWeight.w500, color: needsAction ? primaryDark : Colors.orange.shade700)),
+              if ((p.grandTotal ?? 0) > 0)
+                Text('₹${p.grandTotal!.toStringAsFixed(2)}', style: GoogleFonts.poppins(fontSize: 12.sp, color: tColor3)),
+            ]),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: grey70),
+        ]),
+      ),
+    );
   }
 
   final OrdersController ordersController = Get.find();
@@ -41,19 +112,21 @@ class _CurrentOrdersState extends State<CurrentOrders> {
           id: 'orders',
           builder: (controller) => ordersController.isLoading.isTrue
               ? CustomLoader()
-              : ordersController.orders.isEmpty
+              : ordersController.orders.isEmpty && _photoRequests.isEmpty
                   ? emptyWidget()
                   : RefreshIndicator(
                       onRefresh: () async {
+                        _loadPhotoRequests();
                         await ordersController.getcurrentorder(
                             context: context);
                       },
                       child: ListView.builder(
-                        itemCount: ordersController.orders.length,
-                        physics: const BouncingScrollPhysics(),
+                        itemCount: _photoRequests.length + ordersController.orders.length,
+                        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
                         itemBuilder: (context, index) {
-                          var orders = ordersController.orders[index];
+                          if (index < _photoRequests.length) return _photoRequestCard(_photoRequests[index]);
+                          var orders = ordersController.orders[index - _photoRequests.length];
                           return ordersBody(orders: orders, context: context);
                         },
                       ),
@@ -313,10 +386,12 @@ Widget ordersBody(
                       border: Border.all(color: cardBorder, width: 0.8),
                     ),
                     padding: const EdgeInsets.all(4),
-                    child: CustomNetworkImage(
-                      url: orders.productImages.isNotEmpty ? (orders.productImages.first ?? '') : '',
-                      fit: BoxFit.contain,
-                    ),
+                    child: orders.productImages.isEmpty && orders.hasPrints
+                        ? const Icon(Icons.print_rounded, color: primaryDark, size: 30)
+                        : CustomNetworkImage(
+                            url: orders.productImages.isNotEmpty ? (orders.productImages.first ?? '') : '',
+                            fit: BoxFit.contain,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -326,6 +401,14 @@ Widget ordersBody(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (orders.isPhotoOrder || orders.hasPrints)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text(
+                            [if (orders.isPhotoOrder) 'Photo order', if (orders.hasPrints) 'Print order'].join(' · '),
+                            style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w800, color: tColor),
+                          ),
+                        ),
                       Text(
                         statusText,
                         maxLines: 2,

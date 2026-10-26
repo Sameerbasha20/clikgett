@@ -56,6 +56,12 @@ class Order {
   DateTime? scheduledDateTime;
   List<String> productImages;
 
+  /// Placed from a photo of the customer's list.
+  bool isPhotoOrder;
+
+  /// Has print-store files.
+  bool hasPrints;
+
   Order({
     this.orderId,
     this.OrderSequence,
@@ -72,6 +78,8 @@ class Order {
     this.scheduledDateTime,
     this.createdAt,
     required this.productImages,
+    this.isPhotoOrder = false,
+    this.hasPrints = false,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
@@ -83,6 +91,8 @@ class Order {
         grandTotal: _toDouble(json["GrandTotal"]),
         productImages: List<String>.from(json['ProductImages'] ?? []),
         imageUrl: json["ImageUrl"],
+        isPhotoOrder: json["IsPhotoOrder"] == 1 || json["IsPhotoOrder"] == true,
+        hasPrints: json["HasPrints"] == 1 || json["HasPrints"] == true,
         createdAt: json["CreatedAt"] == null
             ? null
             : serverDate(json["CreatedAt"])!,

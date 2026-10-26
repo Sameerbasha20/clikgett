@@ -57,6 +57,7 @@ function Products() {
     const [etaReason, setEtaReason] = useState("");
     const [etaAdjustments, setEtaAdjustments] = useState([]);
     const [timeline, setTimeline] = useState([]);
+    const [printJobs, setPrintJobs] = useState([]);
     const [isEditMode, setIsEditMode] = useState(false);
     const [removeModal, setRemoveModal] = useState(false);
     const [selectedItemForRemoval, setSelectedItemForRemoval] = useState(null);
@@ -138,6 +139,11 @@ function Products() {
                 if (res.Status === 1) {
                     setTimeline(res.Timeline || []);
                 }
+            })
+            .catch(console.error);
+        Services.getOrderPrintJobs("GET", null, token, id)
+            .then((res) => {
+                if (res.Status === 1) setPrintJobs(res.PrintJobs || []);
             })
             .catch(console.error);
     };
@@ -926,6 +932,31 @@ function Products() {
                                                 )) : (
                                                     <div style={{ padding: "16px 8px", color: "#6b7280", fontStyle: "italic" }}>
                                                         No ordered items recorded for this order.
+                                                    </div>
+                                                )}
+
+                                                {/* Print store files */}
+                                                {printJobs.length > 0 && (
+                                                    <div style={{ width: "100%", marginTop: "1.5rem", background: "#f0fdf4", padding: "1.25rem", borderRadius: "8px", border: "1px solid #bbf7d0" }}>
+                                                        <div style={{ fontWeight: 700, color: "#166534", marginBottom: "0.75rem" }}>
+                                                            🖨️ Print files ({printJobs.length}) · print before packing
+                                                        </div>
+                                                        {printJobs.map((job) => (
+                                                            <div key={job.PrintJobID} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", padding: "10px 0", borderTop: "1px solid #dcfce7" }}>
+                                                                <div>
+                                                                    <div style={{ fontWeight: 600 }}>{job.FileName}</div>
+                                                                    <div style={{ fontSize: "0.85rem", color: "#4b5563" }}>
+                                                                        {job.Pages} page{job.Pages === 1 ? "" : "s"} × {job.Copies} cop{job.Copies === 1 ? "y" : "ies"} ·{" "}
+                                                                        <strong>{job.ColorMode === "COLOR" ? "Colour" : "Black & white"}</strong> ·{" "}
+                                                                        {job.Orientation === "LANDSCAPE" ? "Landscape" : "Portrait"} · ₹{job.LineTotal}
+                                                                    </div>
+                                                                </div>
+                                                                <a className="btn btn-sm btn-success" href={job.FileUrl} target="_blank" rel="noreferrer">
+                                                                    <FaDownload /> Open file
+                                                                </a>
+                                                            </div>
+                                                        ))}
+                                                        <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "6px" }}>Links expire after an hour; reload the page for fresh ones.</div>
                                                     </div>
                                                 )}
 

@@ -29,6 +29,7 @@ function Sales() {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [selectedProductIds, setSelectedProductIds] = useState([]);
+    const [productSearch, setProductSearch] = useState("");
 
     const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
 
@@ -75,6 +76,7 @@ function Sales() {
         setStartDate("");
         setEndDate("");
         setSelectedProductIds([]);
+        setProductSearch("");
     };
 
     const handleOpenCreate = () => {
@@ -322,23 +324,58 @@ function Sales() {
                                         </div>
                                         <div className="col-md-12">
                                             <label className="form-label">Assign Eligible Products</label>
-                                            <select 
-                                                multiple 
-                                                className="form-select" 
-                                                style={{ height: "140px" }}
-                                                value={selectedProductIds.map(String)}
-                                                onChange={(e) => {
-                                                    const selected = Array.from(e.target.selectedOptions, option => parseInt(option.value));
-                                                    setSelectedProductIds(selected);
-                                                }}
-                                            >
-                                                {availableProducts.map((prod) => (
-                                                    <option key={prod.ProductID} value={prod.ProductID}>
-                                                        {prod.ProductName} (SKU: {prod.SKU || prod.ProductID})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <small className="text-muted">Hold Ctrl (Windows) / Cmd (Mac) to select multiple products.</small>
+                                            <input
+                                                type="search"
+                                                className="form-control mb-2"
+                                                placeholder="Search products by name or SKU"
+                                                value={productSearch}
+                                                onChange={(e) => setProductSearch(e.target.value)}
+                                            />
+                                            {selectedProductIds.length > 0 && (
+                                                <div className="d-flex flex-wrap gap-1 mb-2">
+                                                    {selectedProductIds.map((id) => {
+                                                        const prod = availableProducts.find((p) => p.ProductID === id);
+                                                        return (
+                                                            <span key={id} className="badge bg-success d-inline-flex align-items-center" style={{ fontSize: "0.8rem" }}>
+                                                                {prod ? prod.ProductName : `#${id}`}
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn-close btn-close-white ms-1"
+                                                                    style={{ fontSize: "0.55rem" }}
+                                                                    aria-label="Remove"
+                                                                    onClick={() => setSelectedProductIds(selectedProductIds.filter((x) => x !== id))}
+                                                                />
+                                                            </span>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                            <div className="border rounded" style={{ maxHeight: "220px", overflowY: "auto" }}>
+                                                {(() => {
+                                                    const q = productSearch.trim().toLowerCase();
+                                                    const matches = availableProducts.filter((prod) => !q ||
+                                                        String(prod.ProductName || "").toLowerCase().includes(q) ||
+                                                        String(prod.SKU || prod.ProductID).toLowerCase().includes(q));
+                                                    if (!matches.length) return <div className="p-3 text-muted small">No products match "{productSearch}"</div>;
+                                                    return matches.slice(0, 200).map((prod) => {
+                                                        const checked = selectedProductIds.includes(prod.ProductID);
+                                                        return (
+                                                            <label key={prod.ProductID} className={`d-flex align-items-center gap-2 px-3 py-2 m-0 border-bottom ${checked ? "bg-light" : ""}`} style={{ cursor: "pointer" }}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="form-check-input m-0"
+                                                                    checked={checked}
+                                                                    onChange={() => setSelectedProductIds(checked
+                                                                        ? selectedProductIds.filter((x) => x !== prod.ProductID)
+                                                                        : [...selectedProductIds, prod.ProductID])}
+                                                                />
+                                                                <span>{prod.ProductName} <span className="text-muted">(SKU: {prod.SKU || prod.ProductID})</span></span>
+                                                            </label>
+                                                        );
+                                                    });
+                                                })()}
+                                            </div>
+                                            <small className="text-muted">{selectedProductIds.length} product{selectedProductIds.length === 1 ? "" : "s"} selected. Search, then tick the products to include.</small>
                                         </div>
                                     </div>
                                 </div>

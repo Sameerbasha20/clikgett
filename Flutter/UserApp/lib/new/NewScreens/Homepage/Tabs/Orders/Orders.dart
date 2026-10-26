@@ -12,7 +12,6 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../../../Constants/imageslist.dart';
 import '../../../../Controllers/home_controller.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/milestone_reward_card.dart';
-import 'package:fav_app/new/NewScreens/PhotoOrders/PhotoOrdersListScreen.dart';
 
 class Orders extends StatefulWidget {
   const Orders({super.key, this.isFromSuccess = false});
@@ -62,41 +61,6 @@ class _OrdersState extends State<Orders> {
                     color: tColor,
                   ),
                 ),
-                actions: [
-                  Container(
-                    margin: EdgeInsets.only(right: 3.w),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: () => Get.to(() => const PhotoOrdersListScreen()),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: primaryLight,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: primary.withOpacity(0.2)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.camera_alt_rounded, color: primary, size: 16),
-                              SizedBox(width: 5),
-                              Text(
-                                "Photo Orders",
-                                style: GoogleFonts.poppins(
-                                  color: primary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13.sp,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
                 bottom: PreferredSize(
                   preferredSize: Size.fromHeight(56),
                   child: Container(

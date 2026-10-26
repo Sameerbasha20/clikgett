@@ -4,6 +4,7 @@
 const pool = require('../utils/db');
 const PricingEngine = require('./PricingEngine');
 const DeliveryTime = require('./DeliveryTime');
+const PrintStore = require('./PrintStore');
 
 const MAX_TIP = 1000;
 const PRODUCTS_S3 = 'http://clikgett-media.local/Products/';
@@ -104,18 +105,24 @@ async function computeBill(opts) {
     const calc = await PricingEngine.calculateCart(inStock, promoCode, userId, location);
     const allItems = [...(calc.Items || []), ...outOfStock];
 
+    // Print-store jobs: priced per page, outside coupons and offers.
+    const printItems = await PrintStore.cartJobs(cart.cartId);
+    const printTotal = money(printItems.reduce((n, p) => n + p.LineTotal, 0));
+    const printOnly = printItems.length > 0 && cart.items.length === 0;
+    const distanceKm = await DeliveryTime.distanceFromStore(lat, lng);
+
     const itemsTotal = money(calc.SubTotal);
     const couponDiscount = money(calc.CouponDiscount);
     const offerDiscount = money(calc.CartOfferDiscount);
-    const deliveryFee = money(calc.DeliveryCharges);
+    const deliveryFee = printOnly ? money(await PrintStore.printOnlyDeliveryFee(printTotal, distanceKm)) : money(calc.DeliveryCharges);
     const itemsAfterDiscounts = money(itemsTotal - couponDiscount - offerDiscount);
-    const payableBeforeWallet = money(Math.max(0, itemsAfterDiscounts + deliveryFee + tip));
+    const goodsTotal = money(itemsAfterDiscounts + printTotal);
+    const payableBeforeWallet = money(Math.max(0, goodsTotal + deliveryFee + tip));
     const usable = walletUsable(walletBalance, payableBeforeWallet, cfg);
     const walletApplied = opts.useWallet ? usable : 0;
     const toPay = money(payableBeforeWallet - walletApplied);
 
-    const distanceKm = await DeliveryTime.distanceFromStore(lat, lng);
-    const eta = await DeliveryTime.estimate({ distanceKm, items: calc.Items || [] });
+    const eta = await DeliveryTime.estimate({ distanceKm, items: calc.Items || [], printJobs: printItems.length });
 
     const freeDeliverySavings = calc.FreeDeliveryApplied
         ? money(Math.max(0, (parseFloat(calc.DeliveryChargesBeforeWaiver) || 0) - deliveryFee))
@@ -128,7 +135,10 @@ async function computeBill(opts) {
     return {
         CartID: cart.cartId,
         Items: allItems,
-        ItemCount: (calc.Items || []).reduce((n, i) => n + (parseInt(i.Quantity, 10) || 0), 0),
+        ItemCount: (calc.Items || []).reduce((n, i) => n + (parseInt(i.Quantity, 10) || 0), 0) + printItems.length,
+        PrintItems: printItems,
+        PrintTotal: printTotal,
+        PrintOnly: printOnly,
         MRPTotal: money(calc.OriginalSubTotal),
         ItemsTotal: itemsTotal,
         ProductSavings: money(calc.OriginalSubTotal - itemsTotal),
@@ -150,8 +160,9 @@ async function computeBill(opts) {
         FreeDeliverySavings: freeDeliverySavings,
         TotalSavings: money(calc.OriginalSubTotal - itemsTotal + couponDiscount + offerDiscount + freeDeliverySavings),
         MinOrderValue: cfg.minOrderValue,
-        MinOrderMet: itemsAfterDiscounts >= cfg.minOrderValue,
-        AmountForMinOrder: money(Math.max(0, cfg.minOrderValue - itemsAfterDiscounts)),
+        // A prints-only order has no minimum (a few pages cost less than the minimum).
+        MinOrderMet: printOnly || goodsTotal >= cfg.minOrderValue,
+        AmountForMinOrder: printOnly ? 0 : money(Math.max(0, cfg.minOrderValue - goodsTotal)),
         WalletRule: {
             MinOrderForFullWallet: cfg.minOrderForFullWallet,
             SmallOrderWalletCap: cfg.smallOrderWalletCap,
@@ -161,6 +172,7 @@ async function computeBill(opts) {
         SuggestedCoupons: calc.SuggestedCoupons || [],
         ProductUnlocks: calc.ProductUnlocks || [],
         EtaMinutes: eta.totalMinutes,
+        Eta: eta,
         LargeCartNotice: eta.notes.length ? eta.notes.join(' · ') : null,
         StockIssues: stockIssues,
     };

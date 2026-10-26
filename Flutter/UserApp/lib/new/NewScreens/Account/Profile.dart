@@ -204,8 +204,6 @@ class _ProfileState extends State<Profile> {
       );
 
   Widget _quickActions() => Row(children: [
-        _quick(Icons.receipt_long_rounded, 'Orders', null, () => homeController.updateTabIndex(2)),
-        const SizedBox(width: 8),
         Obx(() => _quick(Icons.account_balance_wallet_outlined, 'Wallet', rupees(walletController.walletAmount.value), () => _push(const WalletScreen()))),
         const SizedBox(width: 8),
         _quick(Icons.support_agent_rounded, 'Help', null, () => _push(const Support())),

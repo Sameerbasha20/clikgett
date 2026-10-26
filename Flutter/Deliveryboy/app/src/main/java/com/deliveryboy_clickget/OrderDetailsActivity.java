@@ -206,12 +206,23 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 || status == STATUS_CANCELLED_CUSTOMER || status == STATUS_RETURNED;
         if (status == STATUS_CANCELLED_STORE || status == STATUS_CANCELLED_CUSTOMER) {
             bannerTxt.setVisibility(View.VISIBLE);
+            bannerTxt.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.color_danger_bg));
+            bannerTxt.setTextColor(ContextCompat.getColor(this, R.color.color_danger));
             bannerTxt.setText("This order was cancelled. Do not deliver it. Return the items to the store.");
         } else if (status == STATUS_DELIVERED) {
             bannerTxt.setVisibility(View.VISIBLE);
             bannerTxt.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.color_online_bg));
             bannerTxt.setTextColor(ContextCompat.getColor(this, R.color.clikgett_green_dark));
             bannerTxt.setText("Delivered. Thank you!");
+        } else if (!order.isNull("EtaMinutesLeft")) {
+            // The delivery time the customer sees on their tracking screen.
+            int left = order.optInt("EtaMinutesLeft", 0);
+            String by = order.optString("EstimateTimeText", "");
+            bannerTxt.setVisibility(View.VISIBLE);
+            bannerTxt.setBackgroundTintList(ContextCompat.getColorStateList(this, left <= 0 ? R.color.color_danger_bg : R.color.color_online_bg));
+            bannerTxt.setTextColor(ContextCompat.getColor(this, left <= 0 ? R.color.color_danger : R.color.clikgett_green_dark));
+            bannerTxt.setText((left <= 0 ? "Delivery is due now" : "Customer expects delivery in " + left + " min")
+                    + (by.isEmpty() || "null".equals(by) ? "" : " (by " + by + ")"));
         } else {
             bannerTxt.setVisibility(View.GONE);
         }

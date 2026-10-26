@@ -68,7 +68,8 @@ public class PendingOrdersAdapter extends RecyclerView.Adapter<PendingOrdersAdap
         holder.userorderId.setText("Order #" + order.getOrderSequence());
         String name = order.getUserName() == null || "null".equals(order.getUserName()) ? "Customer" : order.getUserName().trim();
         holder.userName.setText(name);
-        holder.orderdate.setText(formatTime(order.getCreatedAt()));
+        String placed = formatTime(order.getCreatedAt());
+        holder.orderdate.setText(finished ? placed : placed + etaText(order.getEtaMinutesLeft(), order.getEstimateTimeText()));
 
         String address = joinAddress(order.getFlatNo(), order.getAddress(), order.getLandMark());
         holder.addressRow.setVisibility(address.isEmpty() ? View.GONE : View.VISIBLE);
@@ -177,5 +178,12 @@ public class PendingOrdersAdapter extends RecyclerView.Adapter<PendingOrdersAdap
     @Override
     public int getItemCount() {
         return orderLists.size();
+    }
+
+    /** " · Deliver in 12 min (by 07:05 PM)": the same time the customer sees. */
+    static String etaText(Integer minutesLeft, String byTime) {
+        if (minutesLeft == null) return "";
+        String by = byTime == null || byTime.isEmpty() ? "" : " (by " + byTime + ")";
+        return minutesLeft <= 0 ? " · Due now" + by : " · Deliver in " + minutesLeft + " min" + by;
     }
 }

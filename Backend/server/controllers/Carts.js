@@ -424,6 +424,10 @@ const cartcontroller = {
             if (cartitems.length > 0) {
                 await cartitems_delete(req.params.CartID)
             }
+            // Prints in the cart go back to the customer's drafts.
+            await new Promise((resolve) => pool.query(
+                "UPDATE PrintJobs SET CartID = NULL, Status = 'DRAFT' WHERE CartID = ? AND Status = 'IN_CART'",
+                [req.params.CartID], () => resolve()));
             await cartdelete(req.params.CartID)
             // Mark any active abandoned cart log as expired
             pool.query(

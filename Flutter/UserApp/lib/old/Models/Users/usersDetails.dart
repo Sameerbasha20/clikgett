@@ -63,18 +63,25 @@ class Users {
 
   factory Users.fromJson(Map<String, dynamic> json) => Users(
         userId: json["UserID"],
-        mobileNumber: json["MobileNumber"],
+        mobileNumber: '${json["MobileNumber"] ?? ''}',
         emailId: json["EmailID"],
-        firstName: json["FirstName"],
+        firstName: _text(json["FirstName"]),
         myReferralCode: json["MyReferralCode"],
-        lastName: json["LastName"],
+        lastName: _text(json["LastName"]),
         // fcmToken: json["FcmToken"],
-        otp: json["OTP"],
+        // The server clears the OTP after login, so it is usually null.
+        otp: '${json["OTP"] ?? ''}',
         userStatus: json["UserStatus"],
-        profilePic: json["ProfilePic"],
-        createdAt: serverDate(json["CreatedAt"])!,
-        updatedAt: serverDate(json["UpdatedAt"])!,
+        profilePic: '${json["ProfilePic"] ?? ''}',
+        createdAt: serverDate(json["CreatedAt"]) ?? DateTime.now(),
+        updatedAt: serverDate(json["UpdatedAt"]) ?? DateTime.now(),
       );
+
+  /// Names come back as "NA" when the customer left them empty.
+  static String _text(dynamic v) {
+    final t = '${v ?? ''}'.trim();
+    return t == 'NA' ? '' : t;
+  }
 
   Map<String, dynamic> toJson() => {
         "UserID": userId,

@@ -637,6 +637,8 @@ export const Services = {
     editDeliveryTime: (method = "PUT", body, token, orderId) => httpcall(`adminorders/editedeliverytime/${orderId}`, method, body, token),
     // Order Timeline
     getOrderTimeline: (method = "GET", body = null, token, orderId) => httpcall(`adminorders/ordertimeline/${orderId}`, method, body, token),
+    // Print store: files to print for an order (signed links, valid for an hour)
+    getOrderPrintJobs: (method = "GET", body = null, token, orderId) => httpcall(`print/admin/orders/${orderId}`, method, body, token),
     // Live Delivery Operations & Fleet
     getLiveOperations: (method = "GET", body = null, token) => httpcall("adminorders/live-operations", method, body, token),
     getDelayQueue: (method = "GET", body = null, token) => httpcall("adminorders/delays", method, body, token),

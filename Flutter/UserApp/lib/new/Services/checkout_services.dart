@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fav_app/new/Constants/Constants.dart';
 import 'package:fav_app/new/Services/common/intercepter.dart';
+import 'package:fav_app/new/Services/print_store_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
@@ -108,6 +109,11 @@ class BillUnlock {
 /// The server's bill for the current cart (see Backend services/CheckoutBill.js).
 class CheckoutBill {
   final List<BillItem> items;
+
+  /// Print-store files in the cart, and what they cost.
+  final List<PrintJob> printItems;
+  final double printTotal;
+  final bool printOnly;
   final int itemCount;
   final double mrpTotal;
   final double itemsTotal;
@@ -143,11 +149,17 @@ class CheckoutBill {
   /// Delivery time for this cart and address (distance + items + fresh fruit).
   final int? etaMinutes;
 
+  /// Nothing to order: no products and no prints.
+  bool get isEmpty => items.isEmpty && printItems.isEmpty;
+
   /// Items that are out of stock or have fewer left than the cart asks for.
   List<BillItem> get stockProblems => items.where((i) => i.stockProblem).toList();
 
   CheckoutBill.fromJson(Map<String, dynamic> j)
       : items = _list(j['Items']).map((e) => BillItem.fromJson(e)).toList(),
+        printItems = _list(j['PrintItems']).map((e) => PrintJob.fromJson(e)).toList(),
+        printTotal = _d(j['PrintTotal']),
+        printOnly = j['PrintOnly'] == true,
         itemCount = _i(j['ItemCount']),
         mrpTotal = _d(j['MRPTotal']),
         itemsTotal = _d(j['ItemsTotal']),

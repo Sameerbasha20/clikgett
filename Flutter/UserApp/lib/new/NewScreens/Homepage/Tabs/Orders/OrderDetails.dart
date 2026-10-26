@@ -475,7 +475,34 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
 
   Widget _itemsCard(TrackedOrder o) => _card(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _title('${o.items.length} item${o.items.length == 1 ? '' : 's'}'),
+          _title([
+            if (o.items.isNotEmpty) '${o.items.length} item${o.items.length == 1 ? '' : 's'}',
+            if (o.printJobs.isNotEmpty) '${o.printJobs.length} print${o.printJobs.length == 1 ? '' : 's'}',
+          ].join(' · ')),
+          for (final job in o.printJobs)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(color: bg3, borderRadius: BorderRadius.circular(8), border: Border.all(color: cardBorder)),
+                  child: Icon(job.isPdf ? Icons.picture_as_pdf_rounded : Icons.image_outlined,
+                      color: job.isPdf ? const Color(0xFFDC2626) : primaryDark, size: 22),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Print: ${job.fileName}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: tColor)),
+                    Text(job.summary, style: GoogleFonts.poppins(fontSize: 11.5, color: tColor3)),
+                  ]),
+                ),
+                Text(_rs(job.lineTotal), style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor)),
+              ]),
+            ),
           for (final item in o.items)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),

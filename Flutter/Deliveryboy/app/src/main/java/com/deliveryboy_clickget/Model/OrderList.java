@@ -103,6 +103,12 @@ public class OrderList {
     @SerializedName("EstimateDateTime")
     @Expose
     private String estimateDateTime;
+    @SerializedName("EtaMinutesLeft")
+    @Expose
+    private Integer etaMinutesLeft;
+    @SerializedName("EstimateTimeText")
+    @Expose
+    private String estimateTimeText;
     @SerializedName("DeliveryInstructions")
     @Expose
     private String deliveryInstructions;
@@ -324,6 +330,16 @@ public class OrderList {
 
     public void setDiscount(String discount) {
         this.discount = discount;
+    }
+
+    /** Minutes until the delivery time the customer is shown (server-computed). */
+    public Integer getEtaMinutesLeft() {
+        return etaMinutesLeft;
+    }
+
+    /** That delivery time in IST, e.g. "07:05 PM". */
+    public String getEstimateTimeText() {
+        return estimateTimeText;
     }
 
     public String getEstimateDateTime() {

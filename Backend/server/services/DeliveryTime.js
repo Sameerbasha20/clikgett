@@ -6,9 +6,12 @@
 //               then every further (Threshold2 - Threshold1) items (10) adds LargeCartThreshold2Minutes (10)
 //               (AdminShopToggleSettings, editable by admin)
 //   fruit     : any fresh-fruit item adds FRUIT_MINUTES, at any distance
+//   prints    : prints only -> PRINT_ONLY_MINUTES flat; prints with other items -> +PRINT_EXTRA_MINUTES
 const pool = require('../utils/db');
 
 const FRUIT_MINUTES = 10;
+const PRINT_ONLY_MINUTES = 20;
+const PRINT_EXTRA_MINUTES = 10;
 
 const queryAsync = (sql, params = []) => new Promise((resolve, reject) => {
     pool.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
@@ -64,12 +67,18 @@ async function hasFreshFruit(items) {
 }
 
 /**
- * @param {object} p { distanceKm, items: [{ Quantity, SubCategoryID }] }
+ * @param {object} p { distanceKm, items: [{ Quantity, SubCategoryID }], printJobs: number of print jobs }
  * @returns {{ totalMinutes, distanceMinutes, itemMinutes, fruitMinutes, itemQuantity, distanceKm, band, notes: string[] }}
  */
-async function estimate({ distanceKm = null, items = [] } = {}) {
+async function estimate({ distanceKm = null, items = [], printJobs = 0 } = {}) {
     const r = await loadRules();
     const dist = parseFloat(distanceKm);
+    if (printJobs > 0 && !items.length) {
+        return {
+            totalMinutes: PRINT_ONLY_MINUTES, distanceMinutes: PRINT_ONLY_MINUTES, itemMinutes: 0, fruitMinutes: 0, printMinutes: 0,
+            itemQuantity: 0, distanceKm: isNaN(dist) ? null : dist, band: 'print_only', notes: ['Prints only'],
+        };
+    }
     const distanceMinutes = !isNaN(dist) && dist > r.nearKm ? r.farMinutes : r.nearMinutes;
     const qty = items.reduce((n, i) => n + (parseInt(i.Quantity, 10) || 0), 0);
     const extraForItems = itemMinutes(qty, r);
@@ -77,11 +86,14 @@ async function estimate({ distanceKm = null, items = [] } = {}) {
     const notes = [];
     if (extraForItems) notes.push(`${qty} items · +${extraForItems} min to pack`);
     if (fruitMinutes) notes.push(`Fresh fruit · +${fruitMinutes} min`);
+    const printMinutes = printJobs > 0 ? PRINT_EXTRA_MINUTES : 0;
+    if (printMinutes) notes.push(`Prints · +${printMinutes} min`);
     return {
-        totalMinutes: distanceMinutes + extraForItems + fruitMinutes,
+        totalMinutes: distanceMinutes + extraForItems + fruitMinutes + printMinutes,
         distanceMinutes,
         itemMinutes: extraForItems,
         fruitMinutes,
+        printMinutes,
         itemQuantity: qty,
         distanceKm: isNaN(dist) ? null : dist,
         band: isNaN(dist) ? 'unknown_distance' : (dist > r.nearKm ? `above_${r.nearKm}km` : `within_${r.nearKm}km`),
@@ -89,4 +101,4 @@ async function estimate({ distanceKm = null, items = [] } = {}) {
     };
 }
 
-module.exports = { estimate, distanceFromStore, haversineKm, FRUIT_MINUTES };
+module.exports = { estimate, distanceFromStore, haversineKm, FRUIT_MINUTES, PRINT_ONLY_MINUTES, PRINT_EXTRA_MINUTES };

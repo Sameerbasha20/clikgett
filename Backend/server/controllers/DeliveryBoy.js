@@ -302,7 +302,12 @@ const deliveryboycontroller = {
                 iterator.GrandTotal = formatToSingleDecimal(parseFloat(iterator.GrandTotal));
                 iterator.PromoAmount = formatToSingleDecimal(parseFloat(iterator.PromoAmount));
                 iterator.Discount = formatToSingleDecimal(parseFloat(iterator.Discount));
-
+                // Same minutes-left the customer sees on their tracking screen (Orders.js addTrackingDetails).
+                const finished = [1, 3, 4, 6].includes(Number(iterator.OrderStatus));
+                iterator.EtaMinutesLeft = !finished && iterator.EstimateDateTime && moment(iterator.EstimateDateTime).isValid()
+                    ? Math.max(0, Math.ceil(moment(iterator.EstimateDateTime).diff(moment(), 'seconds') / 60)) : null;
+                iterator.EstimateTimeText = iterator.EstimateDateTime && moment(iterator.EstimateDateTime).isValid()
+                    ? moment(iterator.EstimateDateTime).utcOffset(330).format('hh:mm A') : null;
             }
 
             resp.json({ "Status": 1, "Orders": OrdersResult })
@@ -373,6 +378,12 @@ const deliveryboycontroller = {
                 }
 
                 delete myorder.OTP; // the rider must get the OTP from the customer
+                // Same minutes-left the customer sees on their tracking screen.
+                const finished = [1, 3, 4, 6].includes(Number(myorder.OrderStatus));
+                myorder.EtaMinutesLeft = !finished && myorder.EstimateDateTime && moment(myorder.EstimateDateTime).isValid()
+                    ? Math.max(0, Math.ceil(moment(myorder.EstimateDateTime).diff(moment(), 'seconds') / 60)) : null;
+                myorder.EstimateTimeText = myorder.EstimateDateTime && moment(myorder.EstimateDateTime).isValid()
+                    ? moment(myorder.EstimateDateTime).utcOffset(330).format('hh:mm A') : null;
                 // Shown as-is by the rider app, so formatted in IST.
                 const ist = (v) => (v ? moment(v).utcOffset(330).format('DD-MM-YYYY hh:mm:ss A') : null);
                 myorder.CreatedAt = ist(myorder.CreatedAt);

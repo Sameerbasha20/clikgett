@@ -7,6 +7,7 @@ import 'package:fav_app/new/Controllers/orders_controller.dart';
 import 'package:fav_app/new/Controllers/searchandrecomend_controller.dart';
 import 'package:fav_app/new/NewModel/promocodes_model.dart';
 import 'package:fav_app/new/NewModel/youmaylike_model.dart';
+import 'package:fav_app/new/Services/print_store_service.dart';
 import 'package:fav_app/old/Models/Home/cart_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -88,6 +89,13 @@ class CartController extends GetxController {
     });
   }
 
+  /// Print-store files in the cart (they are not product lines).
+  RxList<PrintJob> printJobs = RxList();
+
+  Future<void> refreshPrints() async {
+    printJobs(await PrintStoreService.cart());
+  }
+
   Future getCart({
     required context,
     bool removeLoader = false,
@@ -95,6 +103,7 @@ class CartController extends GetxController {
     longitude,
     latitude,
   }) async {
+    refreshPrints();
     if (!removeLoader) {
       Future.delayed(
         Duration.zero,
@@ -323,6 +332,7 @@ class CartController extends GetxController {
 
   void clearCart() {
     cartItems.clear();
+    printJobs.clear();
     _quantity(0);
     _ammount('');
     _totadisammount('');

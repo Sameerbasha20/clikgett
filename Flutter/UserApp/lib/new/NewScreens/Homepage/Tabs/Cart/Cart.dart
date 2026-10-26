@@ -20,6 +20,7 @@ import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:fav_app/new/Services/account_services.dart';
 import 'package:fav_app/new/Services/checkout_services.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
+import 'package:fav_app/new/Services/print_store_service.dart';
 import 'package:fav_app/new/Services/storefront_services.dart';
 import 'package:fav_app/old/Models/Account/adresses.dart';
 import 'package:fav_app/old/Models/Home/home_model.dart';
@@ -79,6 +80,9 @@ class _CartState extends State<Cart> {
   int _tip = 0;
   bool _useWallet = false;
   String _payment = 'COD';
+
+  /// Online payment needs the store's Razorpay key (admin settings / server env).
+  bool _onlineAvailable = false;
   final Set<String> _instructions = {};
   ScheduledSlotInfo? _slot;
   List<BestItem> _suggestions = [];
@@ -93,6 +97,7 @@ class _CartState extends State<Cart> {
   void initState() {
     super.initState();
     _workers.add(ever(cartController.cartItems, (_) => _scheduleRefresh()));
+    _workers.add(ever(cartController.printJobs, (_) => _scheduleRefresh()));
     _workers.add(ever(addressController.selectedAdressId, (_) => _scheduleRefresh()));
     _init();
   }
@@ -100,6 +105,13 @@ class _CartState extends State<Cart> {
   Future<void> _init() async {
     final token = await CommonServices.getToken();
     timingController.checkTiming(token);
+    AccountServices.config(refresh: true).then((c) {
+      if (!mounted) return;
+      setState(() {
+        _onlineAvailable = c.razorpayKey.isNotEmpty;
+        if (!_onlineAvailable) _payment = 'COD';
+      });
+    });
     await Future.wait([
       addressController.getAdresses(context: context),
       walletController.getWallet(context: context),
@@ -215,7 +227,7 @@ class _CartState extends State<Cart> {
         titleSpacing: 0,
         title: Text('Checkout', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700)),
         actions: [
-          if (bill != null && bill.items.isNotEmpty)
+          if (bill != null && !bill.isEmpty)
             TextButton.icon(
               onPressed: _placing ? null : () => _confirmClearCart(bill),
               icon: const Icon(Icons.delete_sweep_outlined, size: 20, color: red),
@@ -223,9 +235,9 @@ class _CartState extends State<Cart> {
             ),
         ],
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight((bill != null && bill.totalSavings > 0 && bill.items.isNotEmpty ? 34 : 0) + 2),
+          preferredSize: Size.fromHeight((bill != null && bill.totalSavings > 0 && !bill.isEmpty ? 34 : 0) + 2),
           child: Column(children: [
-            if (bill != null && bill.totalSavings > 0 && bill.items.isNotEmpty)
+            if (bill != null && bill.totalSavings > 0 && !bill.isEmpty)
               Container(
                 height: 34,
                 width: double.infinity,
@@ -253,7 +265,7 @@ class _CartState extends State<Cart> {
           ? const Center(child: CircularProgressIndicator(color: primary))
           : bill == null
               ? _errorState()
-              : bill.items.isEmpty
+              : bill.isEmpty
                   ? _emptyState()
                   : RefreshIndicator(
                       color: primary,
@@ -263,7 +275,8 @@ class _CartState extends State<Cart> {
                         children: [
                           _storeStatus(),
                           _deliveryHeader(bill),
-                          _itemsCard(bill),
+                          if (bill.items.isNotEmpty) _itemsCard(bill),
+                          if (bill.printItems.isNotEmpty) _printsCard(bill),
                           if (!bill.minOrderMet) _minOrderBanner(bill),
                           _freeDeliveryCard(bill),
                           _unlocksCard(bill),
@@ -281,7 +294,7 @@ class _CartState extends State<Cart> {
                         ],
                       ),
                     ),
-      bottomNavigationBar: bill == null || bill.items.isEmpty ? null : _checkoutBar(bill),
+      bottomNavigationBar: bill == null || bill.isEmpty ? null : _checkoutBar(bill),
     );
   }
 
@@ -426,6 +439,65 @@ class _CartState extends State<Cart> {
   }
 
   static const Color _darkRed = Color(0xFFB91C1C);
+
+  // ---------------------------------------------------------------- prints
+
+  Widget _printsCard(CheckoutBill bill) => _card(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _title('Prints', icon: Icons.print_rounded),
+          for (var i = 0; i < bill.printItems.length; i++) ...[
+            if (i > 0) const Divider(height: 1, color: cardBorder),
+            _printRow(bill.printItems[i]),
+          ],
+        ]),
+      );
+
+  Widget _printRow(PrintJob job) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(color: bg3, borderRadius: BorderRadius.circular(10), border: Border.all(color: cardBorder)),
+            child: Icon(job.isPdf ? Icons.picture_as_pdf_rounded : Icons.image_outlined,
+                color: job.isPdf ? const Color(0xFFDC2626) : primaryDark),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(job.fileName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: tColor)),
+              Text(job.summary, style: GoogleFonts.poppins(fontSize: 11.5, color: tColor3)),
+              GestureDetector(
+                onTap: () => _changePrint(job, 0),
+                child: Text('Remove',
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: red, decoration: TextDecoration.underline)),
+              ),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            _Stepper(
+              quantity: job.copies,
+              canAdd: job.copies < 50,
+              onChanged: (q) => _changePrint(job, q),
+            ),
+            const SizedBox(height: 6),
+            Text(_rs(job.lineTotal), style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor)),
+          ]),
+        ]),
+      );
+
+  /// Copies of a print in the cart; 0 removes it.
+  Future<void> _changePrint(PrintJob job, int copies) async {
+    final result = copies <= 0 ? await PrintStoreService.remove(job.id) : await PrintStoreService.setCopies(job.id, copies);
+    if (!result.ok) customToast(message: result.error ?? 'Could not update the print');
+    await cartController.refreshPrints();
+    _refreshBill();
+  }
 
   Widget _itemRow(BillItem item) {
     final showMrp = item.mrp > item.unitPrice && !item.outOfStock;
@@ -829,7 +901,7 @@ class _CartState extends State<Cart> {
 
   /// Empties the whole cart in one go (for carts that piled up over time).
   Future<void> _confirmClearCart(CheckoutBill bill) async {
-    final count = bill.items.length;
+    final count = bill.items.length + bill.printItems.length;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -845,6 +917,15 @@ class _CartState extends State<Cart> {
       ),
     );
     if (confirmed != true || !mounted) return;
+    if (bill.items.isEmpty) {
+      // Prints only: the product cart id is not known, so remove them one by one.
+      for (final job in bill.printItems) {
+        await PrintStoreService.remove(job.id);
+      }
+      await cartController.refreshPrints();
+      _refreshBill();
+      return;
+    }
     await cartController.deleteCart(context: context);
     if (mounted) homeController.getHome(context: context);
   }
@@ -959,7 +1040,9 @@ class _CartState extends State<Cart> {
   Widget _billCard(CheckoutBill bill) => _card(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _title('Bill details', icon: Icons.receipt_long_outlined),
-          _billRow('Items total', _rs(bill.itemsTotal), strike: bill.mrpTotal > bill.itemsTotal ? _rs(bill.mrpTotal) : null),
+          if (bill.items.isNotEmpty)
+            _billRow('Items total', _rs(bill.itemsTotal), strike: bill.mrpTotal > bill.itemsTotal ? _rs(bill.mrpTotal) : null),
+          if (bill.printItems.isNotEmpty) _billRow('Prints', _rs(bill.printTotal)),
           if (bill.couponDiscount > 0) _billRow('Coupon (${bill.promoCode})', '-${_rs(bill.couponDiscount)}', green: true),
           if (bill.cartOfferDiscount > 0)
             _billRow((bill.cartOfferName ?? '').isNotEmpty ? bill.cartOfferName! : 'Cart offer', '-${_rs(bill.cartOfferDiscount)}', green: true),
@@ -1090,12 +1173,13 @@ class _CartState extends State<Cart> {
     } else if (!bill.minOrderMet) {
       label = 'Add ${_rs(bill.amountForMinOrder)} more';
     } else if (bill.toPay <= 0) {
-      label = 'Place order · Paid by wallet';
+      label = 'Place order';
       onTap = _placeOrder;
     } else {
-      label = _payment == 'ONLINE' ? 'Pay ${_rs(bill.toPay)}' : 'Place order · ${_rs(bill.toPay)}';
+      label = _payment == 'ONLINE' ? 'Pay now' : 'Place order';
       onTap = _placeOrder;
     }
+    final ready = onTap != null && onTap == _placeOrder;
     return SizedBox(
       height: 50,
       child: ElevatedButton(
@@ -1110,7 +1194,21 @@ class _CartState extends State<Cart> {
         onPressed: _placing || _refreshing ? null : onTap,
         child: _placing
             ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: white))
-            : Text(label, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
+            : ready
+                ? Row(children: [
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                      Text(bill.toPay <= 0 ? 'Paid by wallet' : _rs(bill.toPay),
+                          style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, height: 1.1)),
+                      Text('TOTAL', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, height: 1.2, letterSpacing: 0.4)),
+                    ]),
+                    const Spacer(),
+                    Text(label, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
+                    const Icon(Icons.chevron_right_rounded, size: 22),
+                  ])
+                : FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(label, maxLines: 1, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
+                  ),
       ),
     );
   }
@@ -1137,15 +1235,18 @@ class _CartState extends State<Cart> {
             child: Text('Choose payment method', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: tColor)),
           ),
           _paymentTile(ctx, 'COD', Icons.payments_outlined, 'Cash on delivery', 'Pay cash or UPI to the delivery partner'),
-          _paymentTile(ctx, 'ONLINE', Icons.account_balance_outlined, 'Pay online', 'UPI, cards, net banking (Razorpay)'),
+          _paymentTile(ctx, 'ONLINE', Icons.account_balance_outlined, 'Pay online',
+              _onlineAvailable ? 'UPI, cards, net banking (Razorpay)' : 'Not available right now',
+              enabled: _onlineAvailable),
           const SizedBox(height: 8),
         ]),
       ),
     );
   }
 
-  Widget _paymentTile(BuildContext ctx, String value, IconData icon, String title, String subtitle) => ListTile(
-        leading: Icon(icon, color: primaryDark),
+  Widget _paymentTile(BuildContext ctx, String value, IconData icon, String title, String subtitle, {bool enabled = true}) => ListTile(
+        enabled: enabled,
+        leading: Icon(icon, color: enabled ? primaryDark : grey70),
         title: Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
         subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
         trailing: Icon(_payment == value ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,

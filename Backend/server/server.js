@@ -56,6 +56,7 @@ const photoOrdersRouter = require('./routes/PhotoOrders');
 const adminPhotoOrdersRouter = require('./routes/AdminPhotoOrders');
 const customerRequestsRouter = require('./routes/CustomerRequests');
 const adminCustomerRequestsRouter = require('./routes/AdminCustomerRequests');
+const printStoreRouter = require('./routes/PrintStore');
 
 // Behind nginx / a load balancer set TRUST_PROXY=1 so rate limits see each client's
 // own IP instead of the proxy's.
@@ -163,6 +164,7 @@ try {
     app.use('/api/admin/delivery', AdminOrdersrouter);
     app.use('/api/photo-orders', photoOrdersRouter);
     app.use('/api/admin/photo-orders', adminPhotoOrdersRouter);
+    app.use('/api/print', printStoreRouter);
     app.use('/api/customer', customerRequestsRouter);
     app.use('/api/admin', adminCustomerRequestsRouter);
     app.use('/api/admin', adminRouter);

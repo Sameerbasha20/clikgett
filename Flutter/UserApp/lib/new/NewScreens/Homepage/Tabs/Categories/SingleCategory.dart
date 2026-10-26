@@ -162,7 +162,6 @@ class _SingleCategoryState extends State<SingleCategory> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _rail(),
-              const VerticalDivider(width: 1, color: cardBorder),
               Expanded(child: _grid()),
             ],
           ),
@@ -172,45 +171,113 @@ class _SingleCategoryState extends State<SingleCategory> {
     );
   }
 
+  static const _railTints = [
+    Color(0xFFE8F5E9), Color(0xFFFFF3E0), Color(0xFFE3F2FD), Color(0xFFFCE4EC),
+    Color(0xFFF3E5F5), Color(0xFFFFFDE7), Color(0xFFE0F7FA), Color(0xFFEFEBE9),
+  ];
+
+  /// An icon that fits the subcategory name, for subcategories without a picture.
+  static IconData _railIcon(String name) {
+    final n = name.toLowerCase();
+    const map = <String, IconData>{
+      'oil': Icons.water_drop_outlined,
+      'ghee': Icons.water_drop_outlined,
+      'shampoo': Icons.soap_outlined,
+      'soap': Icons.soap_outlined,
+      'wash': Icons.local_laundry_service_outlined,
+      'detergent': Icons.local_laundry_service_outlined,
+      'clean': Icons.cleaning_services_outlined,
+      'colour': Icons.palette_outlined,
+      'color': Icons.palette_outlined,
+      'hair': Icons.face_retouching_natural_outlined,
+      'tea': Icons.emoji_food_beverage_outlined,
+      'coffee': Icons.coffee_outlined,
+      'juice': Icons.local_drink_outlined,
+      'drink': Icons.local_drink_outlined,
+      'milk': Icons.local_drink_outlined,
+      'biscuit': Icons.cookie_outlined,
+      'cookie': Icons.cookie_outlined,
+      'chocolate': Icons.cookie_outlined,
+      'rice': Icons.rice_bowl_outlined,
+      'atta': Icons.bakery_dining_outlined,
+      'flour': Icons.bakery_dining_outlined,
+      'bread': Icons.bakery_dining_outlined,
+      'masala': Icons.local_fire_department_outlined,
+      'spice': Icons.local_fire_department_outlined,
+      'fruit': Icons.apple,
+      'vegetable': Icons.eco_outlined,
+      'dal': Icons.grain_outlined,
+      'pulse': Icons.grain_outlined,
+      'snack': Icons.fastfood_outlined,
+      'namkeen': Icons.fastfood_outlined,
+      'noodle': Icons.ramen_dining_outlined,
+      'sugar': Icons.icecream_outlined,
+      'salt': Icons.grain_outlined,
+      'dry': Icons.spa_outlined,
+      'nut': Icons.spa_outlined,
+      'baby': Icons.child_care_outlined,
+      'tooth': Icons.clean_hands_outlined,
+      'skin': Icons.face_outlined,
+      'cream': Icons.face_outlined,
+    };
+    for (final e in map.entries) {
+      if (n.contains(e.key)) return e.value;
+    }
+    return Icons.shopping_basket_outlined;
+  }
+
+  /// Subcategory rail: tinted tiles, the selected one lifted onto white with a green bar.
   Widget _rail() {
     if (_loadingSubs) {
-      return const SizedBox(width: 84, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: primary)));
+      return const SizedBox(width: 88, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: primary)));
     }
     final items = <SubCategoryItem?>[null, ..._subcategories];
-    return SizedBox(
-      width: 84,
+    final categoryImage = widget.categories.imageUrl;
+    return Container(
+      width: 88,
+      color: bg1,
       child: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: const EdgeInsets.only(top: 6, bottom: 100),
         itemCount: items.length,
         itemBuilder: (_, i) {
           final sub = items[i];
           final selected = sub?.id == _selected?.id;
           final label = sub?.name ?? 'All';
-          return InkWell(
+          final image = sub == null ? categoryImage : sub.imageUrl;
+          final tint = _railTints[i % _railTints.length];
+          return GestureDetector(
             onTap: () => _select(sub),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(6, 10, 6, 10),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              margin: const EdgeInsets.only(bottom: 4, right: 6),
+              padding: const EdgeInsets.fromLTRB(8, 10, 6, 10),
               decoration: BoxDecoration(
-                color: selected ? primaryGhost : null,
-                border: Border(right: BorderSide(color: selected ? primary : Colors.transparent, width: 3)),
+                color: selected ? white : Colors.transparent,
+                borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
+                boxShadow: selected ? softCardShadow : null,
               ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(color: selected ? white : bg3, shape: BoxShape.circle),
-                    child: sub?.imageUrl != null
-                        ? CustomNetworkImage(url: sub!.imageUrl!, fit: BoxFit.cover)
-                        : Center(
-                            child: sub == null
-                                ? const Icon(Icons.grid_view_rounded, color: primaryDark, size: 22)
-                                : Text(label.isNotEmpty ? label[0].toUpperCase() : '?',
-                                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: primaryDark)),
-                          ),
+              child: Stack(clipBehavior: Clip.none, children: [
+                Column(children: [
+                  AnimatedScale(
+                    scale: selected ? 1.08 : 1,
+                    duration: const Duration(milliseconds: 220),
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: selected ? primaryGhost : tint,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
+                      ),
+                      child: image != null && image.isNotEmpty
+                          ? Padding(padding: const EdgeInsets.all(4), child: CustomNetworkImage(url: image, fit: BoxFit.contain))
+                          : Icon(sub == null ? Icons.grid_view_rounded : _railIcon(label),
+                              color: selected ? primaryDark : tColor4, size: 26),
+                    ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 6),
                   Text(label,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -219,9 +286,22 @@ class _SingleCategoryState extends State<SingleCategory> {
                           fontSize: 10.5,
                           height: 1.2,
                           fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                          color: selected ? tColor : tColor3)),
-                ],
-              ),
+                          color: selected ? primaryDark : tColor3)),
+                ]),
+                Positioned(
+                  left: -8,
+                  top: 6,
+                  bottom: 6,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    width: 4,
+                    decoration: BoxDecoration(
+                      color: selected ? primary : Colors.transparent,
+                      borderRadius: const BorderRadius.horizontal(right: Radius.circular(4)),
+                    ),
+                  ),
+                ),
+              ]),
             ),
           );
         },

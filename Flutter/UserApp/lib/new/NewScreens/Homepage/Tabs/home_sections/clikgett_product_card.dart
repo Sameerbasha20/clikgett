@@ -1,6 +1,7 @@
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
+import 'package:fav_app/new/Controllers/home_controller.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/Homepage/ItemDescription.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
@@ -121,6 +122,22 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     final avail = selectedVariant?.availableQty ?? 0;
     final maxQ = selectedVariant?.maxQty ?? avail;
     return avail < maxQ ? avail : maxQ;
+  }
+
+  /// 1-9 left: shown on the card so customers know to hurry.
+  int? get _fewLeft {
+    final left = _maxAllowed;
+    return !_isOutOfStock && left > 0 && left < 10 ? left : null;
+  }
+
+  /// Cold drinks, juices and ice creams get a "Chilled" tag (matched on the category name).
+  static final RegExp _chilledCategory = RegExp(r'cool ?drink|soft ?drink|juice|beverage|soda|ice ?cream|frozen', caseSensitive: false);
+
+  bool get _isChilled {
+    final id = widget.product.categoryId;
+    if (id == null || !Get.isRegistered<HomeController>()) return false;
+    final category = Get.find<HomeController>().categories.firstWhereOrNull((c) => c.categoryId == id);
+    return category != null && _chilledCategory.hasMatch(category.categoryName ?? '');
   }
 
   String get _packSize => "${_fmt(selectedVariant?.metricvalue)} ${selectedVariant?.metrictype ?? ''}".trim();
@@ -290,7 +307,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                       top: 0,
                       left: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                         decoration: const BoxDecoration(
                           color: Color(0xFF2563EB),
                           borderRadius: BorderRadius.vertical(bottom: Radius.circular(6)),
@@ -298,7 +315,37 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                         child: Text("$_discountPercent%\nOFF",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
-                                color: white, fontSize: 9, height: 1.1, fontWeight: FontWeight.w700)),
+                                color: white, fontSize: 11.5, height: 1.05, fontWeight: FontWeight.w800)),
+                      ),
+                    ),
+                  if (_isChilled && !_isOutOfStock)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0F2FE),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF7DD3FC)),
+                        ),
+                        child: Text('❄️ Chilled',
+                            style: GoogleFonts.poppins(color: const Color(0xFF0369A1), fontSize: 9.5, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  if (_fewLeft != null)
+                    Positioned(
+                      bottom: 6,
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFFFB74D)),
+                        ),
+                        child: Text('Only $_fewLeft left',
+                            style: GoogleFonts.poppins(color: const Color(0xFFE65100), fontSize: 10, fontWeight: FontWeight.w700)),
                       ),
                     ),
                   if (_isOutOfStock)
@@ -322,15 +369,18 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Name and pack size sit together; the fixed block keeps cards in a row aligned.
                     SizedBox(
-                      height: 34,
-                      child: Text(product.productName ?? '',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, fontWeight: FontWeight.w600, color: tColor, height: 1.25)),
-                    ),
-                    const SizedBox(height: 4),
+                      height: 54,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                    Text(product.productName ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w600, color: tColor, height: 1.25)),
+                    const SizedBox(height: 2),
                     GestureDetector(
                       onTap: hasVariants ? _openVariantPicker : null,
                       child: Container(
@@ -350,6 +400,9 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                               const Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: grey70),
                           ],
                         ),
+                      ),
+                    ),
+                        ],
                       ),
                     ),
                     SizedBox(

@@ -8,6 +8,7 @@ import 'package:fav_app/new/NewScreens/Address/ManageAddress.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/CouponAndOffers/wallet.dart';
 import 'package:fav_app/new/NewScreens/Homepage/SearchScreen.dart';
+import 'package:fav_app/new/NewScreens/PhotoOrders/PhotoOrderUploadScreen.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -285,7 +286,31 @@ class StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                   ),
                 ),
               ),
-              // Photo orders: "Order with a photo" card below the search bar.
+              // Camera: snap a shopping list (or a product) and the store packs it.
+              Container(width: 1, height: 26, color: cardBorder),
+              InkWell(
+                borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
+                onTap: () async {
+                  if (!await _requireLogin(context, 'order with a photo')) return;
+                  if (!context.mounted) return;
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PhotoOrderUploadScreen()));
+                },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 6, 14, 6),
+                  child: Stack(clipBehavior: Clip.none, children: [
+                    const Icon(Icons.photo_camera_outlined, color: primaryDark, size: 24),
+                    Positioned(
+                      right: -12,
+                      top: -9,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(color: red, borderRadius: BorderRadius.circular(6)),
+                        child: Text('NEW', style: GoogleFonts.poppins(fontSize: 7.5, fontWeight: FontWeight.w800, color: white)),
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
             ],
           ),
         ),

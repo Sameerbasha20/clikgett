@@ -14,6 +14,7 @@ const pool = require('../utils/db');
 const OrderLifecycle = require('../services/OrderLifecycle');
 const CheckoutBill = require('../services/CheckoutBill');
 const DeliveryTime = require('../services/DeliveryTime');
+const PrintStore = require('../services/PrintStore');
 const StoreHours = require('../services/StoreHours');
 const PRODUCTS_S3 = "http://clikgett-media.local/Products/";
 const { ORDER_STATUS, STATUS_LABELS, FINAL_STATUSES } = require('../utils/orderStatus');
@@ -38,10 +39,12 @@ const ordercontroller = {
         try {
             // let query = "select * from Orders where OrderStatus in (1,3,4,6) and UserID="+req.UserID+" order by CreatedAt desc;"
             let getPastOrders = "select LPAD(O.OrderID, 4, '0') as OrderSequence,O.OrderID,O.CartID,O.UserID,O.GrandTotal,OI.ImageUrl,\
-            O.CreatedAt,O.OrderStatus,O.Delivered_Cancelled_datetime,p.productId,p.ProductImages from Orders O \
-            inner join OrderItems OI on O.OrderID=OI.OrderID \
-            inner join Products p on p.productId=OI.productId where O.OrderStatus in (1,3,4,6) and O.UserID="+ req.UserID + "  \
-            group by OI.OrderID order by O.CreatedAt desc"
+            O.CreatedAt,O.OrderStatus,O.Delivered_Cancelled_datetime,p.productId,p.ProductImages,\
+            EXISTS(SELECT 1 FROM PhotoOrderRequests por WHERE por.CreatedOrderID = O.OrderID) AS IsPhotoOrder,\
+            EXISTS(SELECT 1 FROM PrintJobs pj WHERE pj.OrderID = O.OrderID) AS HasPrints from Orders O \
+            left join OrderItems OI on O.OrderID=OI.OrderID \
+            left join Products p on p.productId=OI.productId where O.OrderStatus in (1,3,4,6) and O.UserID="+ req.UserID + "  \
+            group by O.OrderID order by O.CreatedAt desc"
             let results = await CommonController.commonget(getPastOrders)
             for (var j = 0; j < results.length; j++) {
 
@@ -70,10 +73,12 @@ const ordercontroller = {
         try {
             // let query = "select * from Orders where OrderStatus in (2,5) and UserID="+req.UserID+" order by CreatedAt desc;"
             let getCurrentOrders = "select LPAD(O.OrderID, 4, '0') as OrderSequence,O.OrderID,O.CartID,O.UserID,O.GrandTotal,OI.ImageUrl,\
-            O.CreatedAt,O.OrderStatus,O.Delivered_Cancelled_datetime,O.EstimateDateTime,O.TotalDelayMinutes,O.OrderSizeBufferMinutes,O.ScheduleStatus,O.ScheduledDateTime,p.ProductImages from Orders O \
-            inner join OrderItems OI on O.OrderID=OI.OrderID \
-            inner join Products p on p.productId=OI.productId where O.OrderStatus not in (1,3,4,6) and O.UserID="+ req.UserID + "  \
-            group by OI.OrderID order by O.CreatedAt desc"
+            O.CreatedAt,O.OrderStatus,O.Delivered_Cancelled_datetime,O.EstimateDateTime,O.TotalDelayMinutes,O.OrderSizeBufferMinutes,O.ScheduleStatus,O.ScheduledDateTime,p.ProductImages,\
+            EXISTS(SELECT 1 FROM PhotoOrderRequests por WHERE por.CreatedOrderID = O.OrderID) AS IsPhotoOrder,\
+            EXISTS(SELECT 1 FROM PrintJobs pj WHERE pj.OrderID = O.OrderID) AS HasPrints from Orders O \
+            left join OrderItems OI on O.OrderID=OI.OrderID \
+            left join Products p on p.productId=OI.productId where O.OrderStatus not in (1,3,4,6) and O.UserID="+ req.UserID + "  \
+            group by O.OrderID order by O.CreatedAt desc"
             let results = await CommonController.commonget(getCurrentOrders)
             for (var j = 0; j < results.length; j++) {
 
@@ -115,6 +120,7 @@ const ordercontroller = {
                 } catch (e) {
                     results[0]['RemovedItems'] = [];
                 }
+                results[0]['PrintJobs'] = await PrintStore.orderJobs(results[0]['OrderID']);
                 await addTrackingDetails(results[0]);
                 resp.json({ "Status": 1, "Orders": results[0] });
             }
@@ -162,7 +168,7 @@ const ordercontroller = {
                     tip: body.TipAmount,
                     useWallet: (parseFloat(body.WalletAmount) || 0) > 0,
                 });
-                if (!bill.Items.length) return resp.status(400).json({ Status: 0, Message: 'Your cart is empty.' });
+                if (!bill.Items.length && !bill.PrintItems.length) return resp.status(400).json({ Status: 0, Message: 'Your cart is empty.' });
                 if (!bill.MinOrderMet) return resp.status(400).json({ Status: 0, Message: `Minimum order value is Rs.${bill.MinOrderValue}.` });
                 if (bill.ToPay <= 0) return resp.status(400).json({ Status: 0, Message: 'Nothing to pay online for this order.' });
                 body.OrderAmount = bill.ToPay;
@@ -266,7 +272,7 @@ const ordercontroller = {
                 tip: body.TipAmount,
                 useWallet: (parseFloat(body.WalletAmount) || 0) > 0,
             });
-            if (!bill.CartID || bill.Items.length === 0)
+            if (!bill.CartID || (bill.Items.length === 0 && bill.PrintItems.length === 0))
                 return fail(400, "Your cart is empty.");
             if (body.PromoCode && body.PromoCode !== 'NA' && !bill.PromoCode)
                 return fail(400, bill.CouponMessage || "This coupon cannot be applied to your cart.");
@@ -289,7 +295,7 @@ const ordercontroller = {
 
             body.PaymentMethod = paymentMethod;
             body.CartID = bill.CartID;
-            body.SubTotal = bill.ItemsTotal;
+            body.SubTotal = Math.round((bill.ItemsTotal + bill.PrintTotal) * 100) / 100;
             body.PromoCode = bill.PromoCode || undefined;
             body.PromoAmount = Math.round((bill.CouponDiscount + bill.CartOfferDiscount) * 100) / 100;
             body.Discount = body.PromoAmount;
@@ -350,16 +356,16 @@ const ordercontroller = {
 
             body.current_date = await CommonController.currentdate();
 
-            // Delivery time: distance + order size + fresh fruit (services/DeliveryTime.js)
+            // Delivery time: distance + order size + fresh fruit + prints (services/DeliveryTime.js)
             const exactDistance = await DeliveryTime.distanceFromStore(body.Latitude, body.Longitude);
-            const eta = await DeliveryTime.estimate({ distanceKm: exactDistance, items: bill.Items });
+            const eta = await DeliveryTime.estimate({ distanceKm: exactDistance, items: bill.Items, printJobs: bill.PrintItems.length });
             const isScheduledOrder = body.ScheduleStatus === 'Scheduled' && body.ScheduledDateTime;
             expecteddate = isScheduledOrder
                 ? moment(body.ScheduledDateTime).format('YYYY-MM-DD HH:mm:ss')
                 : moment().add(eta.totalMinutes, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 
             body.BaseETAMinutes = eta.distanceMinutes;
-            body.OrderSizeBufferMinutes = eta.itemMinutes + eta.fruitMinutes;
+            body.OrderSizeBufferMinutes = eta.itemMinutes + eta.fruitMinutes + (eta.printMinutes || 0);
             body.TotalItemQuantity = eta.itemQuantity;
             body.DistanceETABand = eta.band;
             body.ETACalculationDetails = JSON.stringify(eta);
@@ -369,6 +375,7 @@ const ordercontroller = {
             console.log(createorder.insertId, 'createorder.insertIdcreateorder.insertIdcreateorder.insertIdcreateorder.insertIdcreateorder.insertId')
 
             createorderitems = await Orderitemscreate(body.OrderItems, createorder.insertId)
+            if (bill.PrintItems.length) await PrintStore.attachToOrder(body.CartID, createorder.insertId, bill.PrintItems)
             decreasevariantsQuantity = await decvariantsQuantity(body.OrderItems)
             if (requestedWallet > 0) {
                 decreasewalletAmount = await decWalletAmount(body.WalletAmount, req.UserID, body.orderid)
@@ -381,7 +388,10 @@ const ordercontroller = {
             //body.OrderSequence = OrderID.toString().padStart(4, '0');
             body.OrderSequence = createorder.insertId.toString().padStart(4, '0');
             console.log("Generated Order ID: ", body.OrderSequence);
-            await createinvoice(body, body.OrderItems)
+            await createinvoice(body, [...body.OrderItems, ...bill.PrintItems.map((p) => ({
+                ProductName: `Print: ${p.FileName}`, Quantity: 1, Price: p.LineTotal, OfferPrice: p.LineTotal,
+                metricvalue: p.PrintedPages, metrictype: 'pages',
+            }))])
             const notificationBody = await CommonController.notificationMessages(8, body.OrderSequence);
             await CommonController.Send_Notification(notificationBody, req.UserID);
             resp.status(200).json({ "Status": 1, "Message": "Order placed successfully", "OrderID": createorder.insertId });

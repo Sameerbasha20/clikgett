@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
 import 'package:fav_app/new/Services/common/server_date.dart';
+import 'package:fav_app/new/Services/print_store_service.dart';
 
 final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
 
@@ -145,6 +146,7 @@ class TrackedOrder {
   final List<TimelineEntry> timeline;
   final List<TrackedItem> items;
   final List<String> removedItems;
+  final List<PrintJob> printJobs;
   final double subTotal;
   final double discount;
   final double deliveryFee;
@@ -185,6 +187,10 @@ class TrackedOrder {
         removedItems = (j['RemovedItems'] is List ? j['RemovedItems'] as List : const [])
             .whereType<Map>()
             .map((e) => '${e['ProductName'] ?? ''} × ${e['Quantity'] ?? ''}'.trim())
+            .toList(),
+        printJobs = (j['PrintJobs'] is List ? j['PrintJobs'] as List : const [])
+            .whereType<Map>()
+            .map((e) => PrintJob.fromJson(Map<String, dynamic>.from(e)))
             .toList(),
         subTotal = _d(j['SubTotal']),
         discount = _d(j['PromoAmount']),

@@ -21,8 +21,9 @@ class FloatingCartBar extends StatelessWidget {
 
     return Obx(() {
       final items = cart.cartItems.toList();
-      final count = cart.totalCartItemCount;
-      final visible = items.isNotEmpty && count > 0;
+      final prints = cart.printJobs.length;
+      final count = cart.totalCartItemCount + prints;
+      final visible = count > 0;
       return AnimatedSwitcher(
         duration: const Duration(milliseconds: 250),
         transitionBuilder: (child, anim) => SlideTransition(
@@ -78,7 +79,9 @@ class FloatingCartBar extends StatelessWidget {
                   width: stackWidth,
                   height: size,
                   child: thumbs.isEmpty
-                      ? _circle(child: const Icon(Icons.shopping_bag_rounded, size: 20, color: primaryDark))
+                      ? _circle(
+                          child: Icon(items.isEmpty ? Icons.print_rounded : Icons.shopping_bag_rounded,
+                              size: 20, color: primaryDark))
                       : Stack(children: [
                           for (var i = thumbs.length - 1; i >= 0; i--)
                             Positioned(
