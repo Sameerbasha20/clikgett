@@ -1,170 +1,131 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import TopNav from "../../Navbar/topNav";
 import SideNav from "../../Navbar/sideNav";
 import dashboardclasses from "../dashboard.module.css";
 import classes from "../Dashboard/Dashboard.module.css";
 import { Services } from "../../../Services";
 import { toast } from "react-toastify";
-import { FaEdit, FaTrash, FaPlus, FaUnlock } from "react-icons/fa";
-import { localDateTimeToUtc, toDateTimeInput } from "../../../dateInputs";
+import { FaTrash } from "react-icons/fa";
 
+const PAGE = 100;
 const PRICE_CHIPS = [0, 1, 9, 29, 49, 99];
 const CART_CHIPS = [199, 299, 499, 799, 999];
 const tabLabel = (price) => (Number(price) <= 0 ? "FREE" : `₹${Number(price)}`);
+const selling = (p) => Number(p.OfferPrice || p.Price || 0);
 const unitOf = (r) => (r.metrictype ? `${Number(r.metricvalue)} ${r.metrictype}` : r.Unit || "");
+const ok = (res) => res && (res.Status === 1 || res.status === 1);
 
-const emptyForm = {
-    pack: null,
-    unlockPrice: "",
-    thresholdAmount: "",
-    maxQty: "1",
-    message: "",
-    startDate: "",
-    endDate: "",
-    status: 1,
+const SORTS = {
+    "name-asc": { label: "Name A → Z", fn: (a, b) => a.ProductName.localeCompare(b.ProductName) },
+    "name-desc": { label: "Name Z → A", fn: (a, b) => b.ProductName.localeCompare(a.ProductName) },
+    "price-asc": { label: "Price: low to high", fn: (a, b) => selling(a) - selling(b) },
+    "price-desc": { label: "Price: high to low", fn: (a, b) => selling(b) - selling(a) },
+    "stock-desc": { label: "Stock: most first", fn: (a, b) => b.AvailableQty - a.AvailableQty },
 };
 
 /**
- * Unlock deals: a product pack sold at a special price (FREE, ₹1, ₹9...) once the rest
- * of the cart reaches a value. The app groups deals into tabs by their price.
+ * Unlock deals: pick any product and sell it at a special price (FREE, ₹1, ₹9...) once
+ * the rest of the cart reaches a value. The app shows deals in tabs by their price.
  */
 function ProductUnlocks() {
-    const [unlocks, setUnlocks] = useState(null);
-    const [packs, setPacks] = useState([]);
-    const [modal, setModal] = useState(false);
-    const [editId, setEditId] = useState(null);
-    const [form, setForm] = useState(emptyForm);
-    const [packSearch, setPackSearch] = useState("");
-    const [saving, setSaving] = useState(false);
+    const [tab, setTab] = useState("products");
+    const [packs, setPacks] = useState(null);
+    const [deals, setDeals] = useState([]);
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState("name-asc");
+    const [limit, setLimit] = useState(PAGE);
+    const [defaults, setDefaults] = useState({ price: "1", cart: "499", maxQty: "1" });
+    const [rowEdits, setRowEdits] = useState({});
+    const [busy, setBusy] = useState(null);
 
-    const set = (patch) => setForm((f) => ({ ...f, ...patch }));
-
-    const fetchUnlocks = () => {
-        Services.getProductUnlocks("GET", null)
-            .then((res) => setUnlocks(res && (res.Status === 1 || res.status === 1) ? res.Unlocks || res.data || [] : []))
-            .catch(() => {
-                setUnlocks([]);
-                toast.error("Error loading unlock deals");
-            });
-    };
-
-    useEffect(() => {
-        fetchUnlocks();
-        Services.getStockLevels().then((res) => {
-            if (res && res.Status === 1) setPacks((res.Stock || []).filter((p) => p.Active));
-        });
+    const loadDeals = useCallback(() => {
+        Services.getProductUnlocks("GET", null).then((res) => setDeals(ok(res) ? res.Unlocks || res.data || [] : []));
     }, []);
 
-    const packMatches = useMemo(() => {
-        const q = packSearch.trim().toLowerCase();
-        if (!q) return [];
-        return packs
-            .filter((p) => `${p.ProductID} ${p.ProductName} ${p.Unit} ${p.CategoryName}`.toLowerCase().includes(q))
-            .slice(0, 30);
-    }, [packs, packSearch]);
+    useEffect(() => {
+        loadDeals();
+        Services.getStockLevels().then((res) => setPacks(res && res.Status === 1 ? (res.Stock || []).filter((p) => p.Active) : []));
+    }, [loadDeals]);
 
-    const openAdd = () => {
-        setEditId(null);
-        setForm(emptyForm);
-        setPackSearch("");
-        setModal(true);
+    const dealByPack = useMemo(() => new Map(deals.map((d) => [d.VariantID, d])), [deals]);
+
+    const shown = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        return (packs || [])
+            .filter((p) => !q || `${p.ProductID} ${p.ProductName} ${p.Unit} ${p.CategoryName}`.toLowerCase().includes(q))
+            .sort(SORTS[sort].fn);
+    }, [packs, search, sort]);
+
+    const shownDeals = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        return deals
+            .filter((d) => !q || `${d.ProductID} ${d.ProductName}`.toLowerCase().includes(q))
+            .sort((a, b) => Number(a.UnlockPrice) - Number(b.UnlockPrice) || Number(a.ThresholdAmount) - Number(b.ThresholdAmount));
+    }, [deals, search]);
+
+    const edit = (key, patch) => setRowEdits((e) => ({ ...e, [key]: { ...(e[key] || {}), ...patch } }));
+    const valueOf = (key, field, fallback) => (rowEdits[key] && rowEdits[key][field] !== undefined ? rowEdits[key][field] : fallback);
+
+    const saveDeal = async (key, body, id) => {
+        setBusy(key);
+        const res = id
+            ? await Services.updateProductUnlock("PUT", JSON.stringify(body), undefined, id)
+            : await Services.createProductUnlock("POST", JSON.stringify(body));
+        setBusy(null);
+        if (ok(res)) {
+            toast.success(id ? "Deal updated" : `Added to ${tabLabel(body.UnlockPrice)} deals`, { autoClose: 1500 });
+            setRowEdits((e) => ({ ...e, [key]: undefined }));
+            loadDeals();
+            return true;
+        }
+        toast.error((res && (res.Message || res.message)) || "Could not save the deal");
+        return false;
     };
 
-    const openEdit = (row) => {
-        const pack = packs.find((p) => p.VariantID === row.VariantID) || {
-            ProductID: row.ProductID,
-            VariantID: row.VariantID,
-            ProductName: row.ProductName,
-            Unit: unitOf(row),
-            Price: Number(row.Price),
-            OfferPrice: Number(row.OfferPrice),
-            AvailableQty: row.AvailableQty,
-        };
-        setEditId(row.UnlockID);
-        setForm({
-            pack,
-            unlockPrice: row.UnlockPrice === null || row.UnlockPrice === undefined ? "" : String(Number(row.UnlockPrice)),
-            thresholdAmount: String(Number(row.ThresholdAmount)),
-            maxQty: String(row.MaxQtyPerOrder || 1),
-            message: row.UnlockMessage || row.Message || "",
-            startDate: toDateTimeInput(row.StartDate),
-            endDate: toDateTimeInput(row.EndDate),
-            status: Number(row.Status) === 1 ? 1 : 0,
+    const addDeal = (p) => {
+        const key = `p${p.VariantID}`;
+        return saveDeal(key, {
+            ProductID: p.ProductID,
+            VariantID: p.VariantID,
+            UnlockPrice: valueOf(key, "price", defaults.price),
+            ThresholdAmount: valueOf(key, "cart", defaults.cart),
+            MaxQtyPerOrder: defaults.maxQty,
+            Status: 1,
         });
-        setPackSearch("");
-        setModal(true);
     };
 
-    const payloadOf = (f) => ({
-        ProductID: f.pack && f.pack.ProductID,
-        VariantID: f.pack && f.pack.VariantID,
-        UnlockPrice: f.unlockPrice,
-        ThresholdAmount: f.thresholdAmount,
-        MaxQtyPerOrder: f.maxQty,
-        Message: f.message,
-        StartDate: localDateTimeToUtc(f.startDate),
-        EndDate: localDateTimeToUtc(f.endDate),
-        Status: f.status,
-    });
+    const updateDeal = (d, patch) => saveDeal(`d${d.UnlockID}`, {
+        ProductID: d.ProductID,
+        VariantID: d.RuleVariantID || d.VariantID,
+        UnlockPrice: d.UnlockPrice,
+        ThresholdAmount: d.ThresholdAmount,
+        MaxQtyPerOrder: d.MaxQtyPerOrder,
+        Message: d.UnlockMessage || d.Message || "",
+        StartDate: d.StartDate,
+        EndDate: d.EndDate,
+        Status: d.Status,
+        ...patch,
+    }, d.UnlockID);
 
-    const save = async () => {
-        if (!form.pack) return toast.error("Choose the product pack for this deal");
-        if (form.unlockPrice === "") return toast.error("Enter the deal price (0 for free)");
-        if (!(Number(form.thresholdAmount) > 0)) return toast.error("Enter the cart value that unlocks the deal");
-        setSaving(true);
-        const body = JSON.stringify(payloadOf(form));
-        const res = editId
-            ? await Services.updateProductUnlock("PUT", body, undefined, editId)
-            : await Services.createProductUnlock("POST", body);
-        setSaving(false);
-        if (res && (res.Status === 1 || res.status === 1)) {
-            toast.success(editId ? "Deal updated" : "Deal created");
-            setModal(false);
-            fetchUnlocks();
+    const removeDeal = async (d) => {
+        if (!window.confirm(`Remove ${d.ProductName} from ${tabLabel(d.UnlockPrice)} deals?`)) return;
+        const res = await Services.deleteProductUnlock("DELETE", null, undefined, d.UnlockID);
+        if (ok(res)) {
+            toast.success("Removed from deals", { autoClose: 1500 });
+            loadDeals();
         } else {
-            toast.error((res && (res.Message || res.message)) || "Could not save the deal");
+            toast.error("Could not remove the deal");
         }
     };
 
-    const toggle = async (row) => {
-        const body = JSON.stringify({
-            ProductID: row.ProductID,
-            VariantID: row.RuleVariantID || row.VariantID,
-            UnlockPrice: row.UnlockPrice,
-            ThresholdAmount: row.ThresholdAmount,
-            MaxQtyPerOrder: row.MaxQtyPerOrder,
-            Message: row.UnlockMessage || row.Message || "",
-            StartDate: row.StartDate,
-            EndDate: row.EndDate,
-            Status: Number(row.Status) === 1 ? 0 : 1,
-        });
-        const res = await Services.updateProductUnlock("PUT", body, undefined, row.UnlockID);
-        if (res && (res.Status === 1 || res.status === 1)) fetchUnlocks();
-        else toast.error((res && (res.Message || res.message)) || "Could not update");
-    };
-
-    const remove = async (row) => {
-        if (!window.confirm(`Delete the ${tabLabel(row.UnlockPrice)} deal on ${row.ProductName}?`)) return;
-        const res = await Services.deleteProductUnlock("DELETE", null, undefined, row.UnlockID);
-        if (res && (res.Status === 1 || res.status === 1)) {
-            toast.success("Deal deleted");
-            fetchUnlocks();
-        } else {
-            toast.error("Could not delete the deal");
-        }
-    };
-
-    const tabs = useMemo(() => {
+    const tabCounts = useMemo(() => {
         const map = new Map();
-        (unlocks || []).forEach((u) => {
-            const k = tabLabel(u.UnlockPrice);
-            map.set(k, (map.get(k) || 0) + (Number(u.Status) === 1 ? 1 : 0));
-        });
+        deals.filter((d) => Number(d.Status) === 1).forEach((d) => map.set(tabLabel(d.UnlockPrice), (map.get(tabLabel(d.UnlockPrice)) || 0) + 1));
         return [...map.entries()];
-    }, [unlocks]);
+    }, [deals]);
 
-    const regular = form.pack ? Number(form.pack.OfferPrice || form.pack.Price || 0) : 0;
     const chip = (active) => `btn btn-sm ${active ? "btn-success" : "btn-outline-secondary"}`;
+    const small = { width: 82 };
 
     return (
         <div className={dashboardclasses["dashboard-wrapper"]}>
@@ -176,213 +137,154 @@ function ProductUnlocks() {
                 <div className={classes.page}>
                     <div className={classes.pageHead}>
                         <div>
-                            <h2>Unlock deals {unlocks && <span className={classes.count}>{unlocks.length}</span>}</h2>
+                            <h2>Unlock deals</h2>
                             <span className={classes.muted}>
-                                A product at a special price (FREE, ₹1, ₹9…) once the rest of the cart reaches a value. The app shows them on
-                                "Unlock deals", in tabs by deal price.
+                                Sell any product at a special price once the rest of the cart reaches a value. The app groups deals into tabs by price
+                                {tabCounts.length > 0 && <>: {tabCounts.map(([l, n]) => `${l} (${n})`).join(", ")}</>}.
                             </span>
                         </div>
-                        <button className="btn btn-success" onClick={openAdd}>
-                            <FaPlus /> Add deal
-                        </button>
                     </div>
 
-                    {tabs.length > 0 && (
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-                            {tabs.map(([label, live]) => (
-                                <span key={label} style={{ background: "#dcfce7", color: "#166534", borderRadius: 14, padding: "4px 12px", fontWeight: 700 }}>
-                                    {label} items · {live} live
-                                </span>
-                            ))}
+                    <div className={classes.card} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                        <div className="btn-group">
+                            <button type="button" className={chip(tab === "products")} onClick={() => setTab("products")}>All products</button>
+                            <button type="button" className={chip(tab === "deals")} onClick={() => setTab("deals")}>Live deals ({deals.length})</button>
+                        </div>
+                        <input type="search" className="form-control" style={{ maxWidth: 300 }} placeholder="Search name, pack or product ID"
+                            value={search} onChange={(e) => { setSearch(e.target.value); setLimit(PAGE); }} />
+                        {tab === "products" && (
+                            <select className="form-select" style={{ maxWidth: 200 }} value={sort} onChange={(e) => setSort(e.target.value)}>
+                                {Object.entries(SORTS).map(([k, s]) => <option key={k} value={k}>{s.label}</option>)}
+                            </select>
+                        )}
+                    </div>
+
+                    {tab === "products" && (
+                        <div className={classes.card} style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", background: "#f0fdf4" }}>
+                            <b>Default for “+ Add”:</b>
+                            <span>Deal price{" "}
+                                {PRICE_CHIPS.map((p) => (
+                                    <button key={p} type="button" className={`${chip(defaults.price === String(p))} me-1`}
+                                        onClick={() => setDefaults((d) => ({ ...d, price: String(p) }))}>{tabLabel(p)}</button>
+                                ))}
+                            </span>
+                            <span>Unlocks at cart{" "}
+                                {CART_CHIPS.map((v) => (
+                                    <button key={v} type="button" className={`${chip(defaults.cart === String(v))} me-1`}
+                                        onClick={() => setDefaults((d) => ({ ...d, cart: String(v) }))}>₹{v}</button>
+                                ))}
+                            </span>
+                            <span>Limit/order{" "}
+                                <input type="number" min="1" max="20" className="form-control form-control-sm d-inline-block" style={{ width: 64 }}
+                                    value={defaults.maxQty} onChange={(e) => setDefaults((d) => ({ ...d, maxQty: e.target.value }))} />
+                            </span>
                         </div>
                     )}
 
                     <div className={classes.card}>
-                        {unlocks === null ? (
-                            <span className={classes.muted}>Loading…</span>
-                        ) : unlocks.length === 0 ? (
-                            <span className={classes.muted}>No deals yet. Add one, e.g. a tea pack for ₹1 when the cart crosses ₹299.</span>
+                        {tab === "products" ? (
+                            packs === null ? <span className={classes.muted}>Loading products…</span> : (
+                                <>
+                                    <table className={classes.table}>
+                                        <thead>
+                                            <tr><th>Product</th><th>Pack</th><th>Price</th><th>Stock</th><th>Deal price ₹</th><th>Unlocks at ₹</th><th></th></tr>
+                                        </thead>
+                                        <tbody>
+                                            {shown.slice(0, limit).map((p) => {
+                                                const key = `p${p.VariantID}`;
+                                                const existing = dealByPack.get(p.VariantID);
+                                                return (
+                                                    <tr key={p.VariantID}>
+                                                        <td>
+                                                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                                                {p.ImageUrl && <img src={p.ImageUrl} alt="" style={{ width: 34, height: 34, objectFit: "contain" }} />}
+                                                                <span>{p.ProductName} <span className={classes.muted}>#{p.ProductID}</span></span>
+                                                            </div>
+                                                        </td>
+                                                        <td>{p.Unit}</td>
+                                                        <td>₹{selling(p)}</td>
+                                                        <td className={p.AvailableQty <= 0 ? classes.hot : ""}>{p.AvailableQty <= 0 ? "Out" : p.AvailableQty}</td>
+                                                        {existing ? (
+                                                            <td colSpan={3}>
+                                                                <span style={{ background: "#dcfce7", color: "#166534", borderRadius: 12, padding: "3px 10px", fontWeight: 700 }}>
+                                                                    In {tabLabel(existing.UnlockPrice)} deals · unlocks at ₹{Number(existing.ThresholdAmount)}
+                                                                </span>
+                                                                <button type="button" className="btn btn-link btn-sm" onClick={() => { setTab("deals"); setSearch(p.ProductName.trim()); }}>Edit</button>
+                                                            </td>
+                                                        ) : (
+                                                            <>
+                                                                <td>
+                                                                    <input type="number" min="0" className="form-control form-control-sm" style={small}
+                                                                        value={valueOf(key, "price", defaults.price)} onChange={(e) => edit(key, { price: e.target.value })} />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" min="1" className="form-control form-control-sm" style={small}
+                                                                        value={valueOf(key, "cart", defaults.cart)} onChange={(e) => edit(key, { cart: e.target.value })} />
+                                                                </td>
+                                                                <td>
+                                                                    <button type="button" className="btn btn-sm btn-success" disabled={busy === key} onClick={() => addDeal(p)}>
+                                                                        {busy === key ? "…" : "+ Add"}
+                                                                    </button>
+                                                                </td>
+                                                            </>
+                                                        )}
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                    {shown.length > limit && (
+                                        <div style={{ textAlign: "center", marginTop: 12 }}>
+                                            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setLimit((l) => l + PAGE)}>
+                                                Show {Math.min(PAGE, shown.length - limit)} more of {shown.length}
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )
+                        ) : shownDeals.length === 0 ? (
+                            <span className={classes.muted}>No deals yet. Go to “All products” and press “+ Add” on any product.</span>
                         ) : (
                             <table className={classes.table}>
                                 <thead>
-                                    <tr><th>Product</th><th>Deal price</th><th>Unlocks at cart</th><th>Limit / order</th><th>Window</th><th>Stock</th><th>Live</th><th></th></tr>
+                                    <tr><th>Product</th><th>Deal price ₹</th><th>Unlocks at ₹</th><th>Limit/order</th><th>Stock</th><th>Live</th><th></th></tr>
                                 </thead>
                                 <tbody>
-                                    {unlocks.map((u) => (
-                                        <tr key={u.UnlockID}>
-                                            <td>
-                                                <strong>{u.ProductName}</strong>
-                                                <div className={classes.muted}>{unitOf(u)} · normally ₹{Number(u.OfferPrice || u.Price)}</div>
-                                                {(u.UnlockMessage || u.Message) && <div style={{ fontSize: 12, color: "#166534" }}>{u.UnlockMessage || u.Message}</div>}
-                                            </td>
-                                            <td><span style={{ fontWeight: 800, color: "#15803d" }}>{tabLabel(u.UnlockPrice)}</span></td>
-                                            <td><FaUnlock size={12} /> ₹{Number(u.ThresholdAmount)}</td>
-                                            <td>{u.MaxQtyPerOrder || 1}</td>
-                                            <td style={{ fontSize: 13 }}>
-                                                {u.StartDate ? new Date(u.StartDate).toLocaleDateString("en-IN") : "Now"} – {u.EndDate ? new Date(u.EndDate).toLocaleDateString("en-IN") : "No end"}
-                                            </td>
-                                            <td className={Number(u.AvailableQty) <= 0 ? classes.hot : ""}>{Number(u.AvailableQty) <= 0 ? "Out" : u.AvailableQty}</td>
-                                            <td>
-                                                <div className="form-check form-switch m-0">
-                                                    <input className="form-check-input" type="checkbox" checked={Number(u.Status) === 1} onChange={() => toggle(u)} />
-                                                </div>
-                                            </td>
-                                            <td style={{ whiteSpace: "nowrap" }}>
-                                                <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openEdit(u)}><FaEdit /></button>
-                                                <button className="btn btn-sm btn-outline-danger" onClick={() => remove(u)}><FaTrash /></button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {shownDeals.map((d) => {
+                                        const key = `d${d.UnlockID}`;
+                                        const price = valueOf(key, "price", String(Number(d.UnlockPrice)));
+                                        const cart = valueOf(key, "cart", String(Number(d.ThresholdAmount)));
+                                        const max = valueOf(key, "max", String(d.MaxQtyPerOrder || 1));
+                                        const changed = price !== String(Number(d.UnlockPrice)) || cart !== String(Number(d.ThresholdAmount)) || max !== String(d.MaxQtyPerOrder || 1);
+                                        return (
+                                            <tr key={d.UnlockID}>
+                                                <td><strong>{d.ProductName}</strong><div className={classes.muted}>{unitOf(d)} · normally ₹{Number(d.OfferPrice || d.Price)}</div></td>
+                                                <td><input type="number" min="0" className="form-control form-control-sm" style={small} value={price} onChange={(e) => edit(key, { price: e.target.value })} /></td>
+                                                <td><input type="number" min="1" className="form-control form-control-sm" style={small} value={cart} onChange={(e) => edit(key, { cart: e.target.value })} /></td>
+                                                <td><input type="number" min="1" max="20" className="form-control form-control-sm" style={{ width: 64 }} value={max} onChange={(e) => edit(key, { max: e.target.value })} /></td>
+                                                <td className={Number(d.AvailableQty) <= 0 ? classes.hot : ""}>{Number(d.AvailableQty) <= 0 ? "Out" : d.AvailableQty}</td>
+                                                <td>
+                                                    <div className="form-check form-switch m-0">
+                                                        <input className="form-check-input" type="checkbox" checked={Number(d.Status) === 1}
+                                                            onChange={() => updateDeal(d, { Status: Number(d.Status) === 1 ? 0 : 1 })} />
+                                                    </div>
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    {changed && (
+                                                        <button type="button" className="btn btn-sm btn-success me-1" disabled={busy === key}
+                                                            onClick={() => updateDeal(d, { UnlockPrice: price, ThresholdAmount: cart, MaxQtyPerOrder: max })}>Save</button>
+                                                    )}
+                                                    <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => removeDeal(d)}><FaTrash /></button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         )}
                     </div>
                 </div>
             </div>
-
-            {modal && (
-                <div className="modal d-block" style={{ background: "rgba(0,0,0,0.45)" }} onClick={() => !saving && setModal(false)}>
-                    <div className="modal-dialog modal-lg modal-dialog-scrollable" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">{editId ? "Edit deal" : "Add deal"}</h5>
-                                <button type="button" className="btn-close" onClick={() => setModal(false)} disabled={saving} />
-                            </div>
-                            <div className="modal-body">
-                                <div className="row g-4">
-                                    <div className="col-md-7">
-                                        <label className="form-label fw-bold">1. Product pack</label>
-                                        {form.pack ? (
-                                            <div className="d-flex align-items-center justify-content-between border rounded p-2 mb-2" style={{ background: "#f0fdf4" }}>
-                                                <div>
-                                                    <div className="fw-bold">{form.pack.ProductName}</div>
-                                                    <div className={classes.muted}>#{form.pack.ProductID} · {form.pack.Unit} · ₹{regular} · {form.pack.AvailableQty} in stock</div>
-                                                </div>
-                                                <button className="btn btn-sm btn-link" onClick={() => set({ pack: null })}>Change</button>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <input
-                                                    type="search"
-                                                    autoFocus
-                                                    className="form-control"
-                                                    placeholder="Search product name, pack or product ID"
-                                                    value={packSearch}
-                                                    onChange={(e) => setPackSearch(e.target.value)}
-                                                />
-                                                <div className="border rounded mt-1" style={{ maxHeight: 220, overflowY: "auto" }}>
-                                                    {packSearch.trim() === "" ? (
-                                                        <div className="p-2 text-muted small">Type to find the product.</div>
-                                                    ) : packMatches.length === 0 ? (
-                                                        <div className="p-2 text-muted small">No product matches.</div>
-                                                    ) : (
-                                                        packMatches.map((p) => (
-                                                            <button
-                                                                key={p.VariantID}
-                                                                type="button"
-                                                                className="d-flex w-100 align-items-center gap-2 border-0 border-bottom bg-white text-start px-2 py-2"
-                                                                onClick={() => set({ pack: p })}
-                                                            >
-                                                                {p.ImageUrl && <img src={p.ImageUrl} alt="" style={{ width: 32, height: 32, objectFit: "contain" }} />}
-                                                                <span className="flex-grow-1">{p.ProductName} <span className="text-muted">· {p.Unit}</span></span>
-                                                                <span className="text-muted small">₹{Number(p.OfferPrice || p.Price)} · {p.AvailableQty <= 0 ? "out" : `${p.AvailableQty} left`}</span>
-                                                            </button>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </>
-                                        )}
-
-                                        <label className="form-label fw-bold mt-3">2. Deal price (the app tab)</label>
-                                        <div className="d-flex gap-1 flex-wrap mb-2">
-                                            {PRICE_CHIPS.map((p) => (
-                                                <button key={p} type="button" className={chip(form.unlockPrice === String(p))} onClick={() => set({ unlockPrice: String(p) })}>
-                                                    {tabLabel(p)}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <input type="number" min="0" step="0.5" className="form-control" placeholder="Or type a price"
-                                            value={form.unlockPrice} onChange={(e) => set({ unlockPrice: e.target.value })} />
-                                        {form.pack && form.unlockPrice !== "" && Number(form.unlockPrice) >= regular && (
-                                            <small className="text-danger">Must be below the normal price (₹{regular}).</small>
-                                        )}
-
-                                        <label className="form-label fw-bold mt-3">3. Unlocks when the cart reaches (₹)</label>
-                                        <div className="d-flex gap-1 flex-wrap mb-2">
-                                            {CART_CHIPS.map((v) => (
-                                                <button key={v} type="button" className={chip(form.thresholdAmount === String(v))} onClick={() => set({ thresholdAmount: String(v) })}>
-                                                    ₹{v}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        <input type="number" min="1" className="form-control" placeholder="Or type a cart value"
-                                            value={form.thresholdAmount} onChange={(e) => set({ thresholdAmount: e.target.value })} />
-                                        <small className="text-muted">Other items in the cart count towards this, not the deal item itself.</small>
-
-                                        <div className="row mt-3">
-                                            <div className="col-6">
-                                                <label className="form-label fw-bold">Limit per order</label>
-                                                <input type="number" min="1" max="20" className="form-control" value={form.maxQty} onChange={(e) => set({ maxQty: e.target.value })} />
-                                                <small className="text-muted">Extra units are charged the normal price.</small>
-                                            </div>
-                                            <div className="col-6">
-                                                <label className="form-label fw-bold">Live</label>
-                                                <select className="form-select" value={form.status} onChange={(e) => set({ status: Number(e.target.value) })}>
-                                                    <option value={1}>Live</option>
-                                                    <option value={0}>Paused</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <label className="form-label fw-bold mt-3">Message (optional)</label>
-                                        <input className="form-control" maxLength={255} placeholder="e.g. Diwali special" value={form.message} onChange={(e) => set({ message: e.target.value })} />
-                                        <div className="row mt-3">
-                                            <div className="col-6">
-                                                <label className="form-label">Starts</label>
-                                                <input type="datetime-local" className="form-control" value={form.startDate} onChange={(e) => set({ startDate: e.target.value })} />
-                                            </div>
-                                            <div className="col-6">
-                                                <label className="form-label">Ends</label>
-                                                <input type="datetime-local" className="form-control" value={form.endDate} onChange={(e) => set({ endDate: e.target.value })} />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-md-5">
-                                        <label className="form-label fw-bold">Preview in the app</label>
-                                        <div style={{ border: "1px solid #e5e7eb", borderRadius: 16, overflow: "hidden" }}>
-                                            <div style={{ background: "linear-gradient(135deg,#14532d,#16a34a)", color: "#fff", padding: "12px 14px", fontWeight: 800 }}>
-                                                {form.unlockPrice === "" ? "Deal" : tabLabel(form.unlockPrice)} Items
-                                            </div>
-                                            <div style={{ padding: 14 }}>
-                                                <div style={{ background: "#f8fafc", borderRadius: 12, height: 120, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                                    {form.pack && form.pack.ImageUrl ? <img src={form.pack.ImageUrl} alt="" style={{ maxHeight: 100, maxWidth: "80%" }} /> : <span className="text-muted">No product</span>}
-                                                </div>
-                                                <div className="text-center small mt-2" style={{ background: "#f1f5f9", borderRadius: 6 }}>{form.pack ? form.pack.Unit : "—"}</div>
-                                                <div className="fw-semibold mt-2">{form.pack ? form.pack.ProductName : "Product name"}</div>
-                                                <div style={{ height: 5, borderRadius: 4, background: "#dcfce7", marginTop: 10 }}>
-                                                    <div style={{ width: "45%", height: 5, borderRadius: 4, background: "#16a34a" }} />
-                                                </div>
-                                                <div className="small fw-semibold text-muted mt-1">
-                                                    Add ₹{form.thresholdAmount || "…"} worth of items to unlock
-                                                </div>
-                                                <div className="mt-1">
-                                                    <span style={{ fontSize: 20, fontWeight: 800 }}>{form.unlockPrice === "" ? "₹…" : tabLabel(form.unlockPrice)}</span>{" "}
-                                                    {form.pack && <s className="text-muted">₹{regular}</s>}
-                                                </div>
-                                                <div className="small text-muted">Limit {form.maxQty || 1} per order</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button className="btn btn-secondary" onClick={() => setModal(false)} disabled={saving}>Cancel</button>
-                                <button className="btn btn-success" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save deal"}</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

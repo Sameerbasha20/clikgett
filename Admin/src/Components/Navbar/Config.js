@@ -57,7 +57,7 @@ export const menuSections = [
         items: [
             { name: "Cashback Review", menuLink: "/cashback-review", active: "cashback-review", icon: FaCoins },
             { name: "Milestones", menuLink: "/milestones", active: "milestones", icon: AiOutlineGift },
-            { name: "Product Unlocks", menuLink: "/product-unlocks", active: "product-unlocks", icon: FaUnlockAlt },
+            { name: "Unlock deals", menuLink: "/product-unlocks", active: "product-unlocks", icon: FaUnlockAlt },
             { name: "Feedback & Rewards", menuLink: "/feedback", active: "feedback", icon: FaCommentDots },
             { name: "Membership", menuLink: "/membership", active: "membership", icon: FaCrown },
         ],
