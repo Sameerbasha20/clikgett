@@ -131,6 +131,9 @@ class BestItem {
   int? productId;
   int? categoryId;
   int? subCategoryId;
+  /// Category / subcategory names (used for tags such as "Chilled").
+  String? categoryName;
+  String? subCategoryName;
   String? productName;
   Description? description;
   int? type;
@@ -155,6 +158,8 @@ class BestItem {
     this.productId,
     this.categoryId,
     this.subCategoryId,
+    this.categoryName,
+    this.subCategoryName,
     this.productName,
     this.description,
     this.type,
@@ -173,6 +178,8 @@ class BestItem {
         productId: json["ProductID"],
         categoryId: json["CategoryID"],
         subCategoryId: json["SubCategoryID"],
+        categoryName: json["CategoryName"] is String ? json["CategoryName"] : null,
+        subCategoryName: json["SubCategoryName"] is String ? json["SubCategoryName"] : null,
         productName: json["ProductName"],
         description: descriptionValues.map[json["Description"]],
         type: json["Type"],

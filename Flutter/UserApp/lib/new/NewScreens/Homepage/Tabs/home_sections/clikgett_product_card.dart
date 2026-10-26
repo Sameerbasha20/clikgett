@@ -32,6 +32,14 @@ class ClikgettProductCard extends StatefulWidget {
   factory ClikgettProductCard.fromJson(Map<String, dynamic> json, {Key? key, double? width = 156, VoidCallback? onTap}) =>
       ClikgettProductCard(key: key, product: homeModel.BestItem.fromJson(json), width: width, onTap: onTap);
 
+  /// Height a card needs: 110 image + name (2 lines), pack size, an offer tag and the
+  /// price row, scaled with the phone's text size. Rails and grids use this so cards
+  /// have no empty space.
+  static double heightFor(BuildContext context) {
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    return 110 + 15 + (30 + 2 + 17 + 19) * scale + (36 * scale < 32 ? 32 : 36 * scale) + 2;
+  }
+
   @override
   State<ClikgettProductCard> createState() => _ClikgettProductCardState();
 }
@@ -131,10 +139,15 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
   }
 
   /// Cold drinks, juices and ice creams get a "Chilled" tag (matched on the category name).
-  static final RegExp _chilledCategory = RegExp(r'cool ?drink|soft ?drink|juice|beverage|soda|ice ?cream|frozen', caseSensitive: false);
+  static final RegExp _chilledCategory =
+      RegExp(r'cool ?drinks?|soft ?drinks?|cold ?drinks?|energy ?drinks?|juice|beverage|soda|ice ?cream|frozen', caseSensitive: false);
 
   bool get _isChilled {
-    final id = widget.product.categoryId;
+    final p = widget.product;
+    final names = '${p.categoryName ?? ''} ${p.subCategoryName ?? ''}';
+    if (names.trim().isNotEmpty) return _chilledCategory.hasMatch(names);
+    // Older responses without names: look the category up in what the home page loaded.
+    final id = p.categoryId;
     if (id == null || !Get.isRegistered<HomeController>()) return false;
     final category = Get.find<HomeController>().categories.firstWhereOrNull((c) => c.categoryId == id);
     return category != null && _chilledCategory.hasMatch(category.categoryName ?? '');
@@ -364,17 +377,14 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                     ),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(9, 8, 9, 9),
+              // Name, pack size and any offer tag sit together; the price row is pinned to the
+              // bottom so prices line up across a row of cards.
+              Expanded(
+                child: Padding(
+                padding: const EdgeInsets.fromLTRB(9, 7, 9, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name and pack size sit together; the fixed block keeps cards in a row aligned.
-                    SizedBox(
-                      height: 54,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
                     Text(product.productName ?? '',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -384,7 +394,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                     GestureDetector(
                       onTap: hasVariants ? _openVariantPicker : null,
                       child: Container(
-                        padding: hasVariants ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2) : EdgeInsets.zero,
+                        padding: hasVariants ? const EdgeInsets.symmetric(horizontal: 6, vertical: 1) : EdgeInsets.zero,
                         decoration: hasVariants
                             ? BoxDecoration(
                                 color: bg3,
@@ -395,30 +405,28 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(_packSize.isNotEmpty ? _packSize : '1 unit',
-                                style: GoogleFonts.poppins(fontSize: 11, color: grey70)),
+                                style: GoogleFonts.poppins(fontSize: 11, color: grey70, height: 1.3)),
                             if (hasVariants)
                               const Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: grey70),
                           ],
                         ),
                       ),
                     ),
-                        ],
+                    if (memberPrice != null || dealPrice != null || bulkHint != null) ...[
+                      const SizedBox(height: 3),
+                      SizedBox(
+                        height: 16,
+                        child: memberPrice != null
+                            ? const _MemberChip()
+                            : dealPrice != null
+                                ? _DealChip(price: dealPrice, ends: _dealEnds)
+                                : Text(bulkHint!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: primaryDark)),
                       ),
-                    ),
-                    SizedBox(
-                      height: 16,
-                      child: memberPrice != null
-                          ? const _MemberChip()
-                          : dealPrice != null
-                          ? _DealChip(price: dealPrice, ends: _dealEnds)
-                          : bulkHint != null
-                              ? Text(bulkHint,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: primaryDark))
-                              : null,
-                    ),
-                    const SizedBox(height: 4),
+                    ],
+                    const Spacer(),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -453,6 +461,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                     ),
                   ],
                 ),
+              ),
               ),
             ],
           ),

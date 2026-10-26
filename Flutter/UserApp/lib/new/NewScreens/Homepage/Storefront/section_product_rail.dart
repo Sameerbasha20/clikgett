@@ -83,7 +83,7 @@ class SectionProductRail extends StatelessWidget {
                   )),
         ),
         SizedBox(
-          height: 262,
+          height: ClikgettProductCard.heightFor(context) + 4,
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             scrollDirection: Axis.horizontal,
@@ -162,11 +162,11 @@ class _SectionProductsScreenState extends State<SectionProductsScreen> {
             children: [
               GridView.builder(
                 padding: const EdgeInsets.fromLTRB(10, 10, 10, 110),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
-                  mainAxisExtent: 258,
+                  mainAxisExtent: ClikgettProductCard.heightFor(context),
                 ),
                 itemCount: products.length,
                 itemBuilder: (_, i) => ClikgettProductCard(

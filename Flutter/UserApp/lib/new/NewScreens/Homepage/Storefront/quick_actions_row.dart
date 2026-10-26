@@ -160,11 +160,11 @@ class _BulkDealsScreenState extends State<BulkDealsScreen> {
                 ])
               : GridView.builder(
                   padding: const EdgeInsets.fromLTRB(10, 10, 10, 110),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 8,
                     crossAxisSpacing: 8,
-                    mainAxisExtent: 258,
+                    mainAxisExtent: ClikgettProductCard.heightFor(context),
                   ),
                   itemCount: _items.length,
                   itemBuilder: (_, i) => ClikgettProductCard(key: ValueKey('bulk-${_items[i].productId}'), product: _items[i], width: null),

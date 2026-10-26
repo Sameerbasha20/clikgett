@@ -225,6 +225,23 @@ CommonController.getproducts = (query, params) => {
                                 }
                             }
                         }
+                        // Category / subcategory names (the app tags cold drinks "Chilled" from them).
+                        try {
+                            const catIds = [...new Set(results.map((r) => r.CategoryID).filter(Boolean))];
+                            const subIds = [...new Set(results.map((r) => r.SubCategoryID).filter(Boolean))];
+                            const [cats, subs] = await Promise.all([
+                                catIds.length ? CommonController.commonget('SELECT CategoryID, CategoryName FROM Categories WHERE CategoryID IN (?)', [catIds]) : [],
+                                subIds.length ? CommonController.commonget('SELECT SubCategoryID, SubCategoryName FROM SubCategories WHERE SubCategoryID IN (?)', [subIds]) : [],
+                            ]);
+                            const catName = new Map(cats.map((c) => [c.CategoryID, c.CategoryName]));
+                            const subName = new Map(subs.map((s) => [s.SubCategoryID, s.SubCategoryName]));
+                            results.forEach((r) => {
+                                r.CategoryName = catName.get(r.CategoryID) || r.CategoryName || null;
+                                r.SubCategoryName = subName.get(r.SubCategoryID) || r.SubCategoryName || null;
+                            });
+                        } catch (e) {
+                            console.log('attaching category names failed', e.message);
+                        }
                         // Flash-sale prices and bulk tiers, so cards match the cart.
                         try {
                             await require('../services/ProductDeals').attachDeals(results);

@@ -347,11 +347,11 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _productGrid(List<BestItem> items, String keyPrefix) => SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         sliver: SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            mainAxisExtent: 258,
+            mainAxisExtent: ClikgettProductCard.heightFor(context),
           ),
           delegate: SliverChildBuilderDelegate(
             (_, i) => ClikgettProductCard(key: ValueKey('$keyPrefix-${items[i].productId}'), product: items[i], width: null),

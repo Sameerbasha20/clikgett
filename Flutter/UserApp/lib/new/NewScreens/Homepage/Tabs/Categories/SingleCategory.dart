@@ -333,11 +333,11 @@ class _SingleCategoryState extends State<SingleCategory> {
     return GridView.builder(
       controller: _scroll,
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 110),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
-        mainAxisExtent: 258,
+        mainAxisExtent: ClikgettProductCard.heightFor(context),
       ),
       itemCount: _products.length + (_nextOffset >= 0 ? 1 : 0),
       itemBuilder: (_, i) {

@@ -676,7 +676,7 @@ class _CartState extends State<Cart> {
             child: Text('Similar to your items', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: tColor)),
           ),
           SizedBox(
-            height: 262,
+            height: ClikgettProductCard.heightFor(context) + 4,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _suggestions.length,
