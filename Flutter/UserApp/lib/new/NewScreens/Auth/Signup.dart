@@ -13,7 +13,10 @@ import '../../Controllers/auth_controller.dart';
 import '../../Services/common/CommonFunctions.dart';
 
 class SignUp extends StatefulWidget {
-  const SignUp({super.key});
+  const SignUp({super.key, this.initialMobile});
+
+  /// Prefilled when login finds no account for the number.
+  final String? initialMobile;
 
   @override
   State<SignUp> createState() => _SignUpState();
@@ -38,6 +41,21 @@ class _SignUpState extends State<SignUp> {
   final AuthController controller = Get.find();
 
   bool _showReferral = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialMobile != null) mobileNumber.text = widget.initialMobile!;
+  }
+
+  /// Back to login (with the number) — pop if login opened us, otherwise replace.
+  void _goToLogin([String? mobile]) {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context, mobile);
+    } else {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Login(initialMobile: mobile)));
+    }
+  }
 
   @override
   void dispose() {
@@ -136,7 +154,7 @@ class _SignUpState extends State<SignUp> {
         AuthSwitch(
           question: 'Already have an account?',
           action: 'Log in',
-          onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Login())),
+          onTap: () => _goToLogin(),
         ),
       ],
     );
@@ -158,6 +176,7 @@ class _SignUpState extends State<SignUp> {
         controller.sendOtp(
           context: context,
           body: body,
+          onUserExists: () => _goToLogin(body['MobileNumber']),
         );
         FocusManager.instance.primaryFocus?.unfocus();
       }

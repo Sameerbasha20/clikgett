@@ -43,6 +43,8 @@ function SettingsPage() {
     const [shopSettingId, setShopSettingId] = useState(1);
     const [minWalletOrderValue, setMinWalletOrderValue] = useState("399");
     const [cashbackMode, setCashbackMode] = useState("automatic");
+    const [cashbackPercent, setCashbackPercent] = useState("0");
+    const [cashbackMax, setCashbackMax] = useState("0");
     const [longDistanceEnabled, setLongDistanceEnabled] = useState(false);
     const [longDistanceThreshold, setLongDistanceThreshold] = useState("8.00");
     const [longDistanceFee, setLongDistanceFee] = useState("40.00");
@@ -93,6 +95,8 @@ function SettingsPage() {
                     const s = res.Shop;
                     setShopSettingId(s.SettingID || 1);
                     setCashbackMode(s.CashbackMode || "automatic");
+                    setCashbackPercent(s.CashbackEnabled == 1 ? String(Number(s.CashbackPercentage || 0)) : "0");
+                    setCashbackMax(String(Number(s.CashbackMaxAmount || 0)));
                     setLongDistanceEnabled(Boolean(s.LongDistanceFeeEnabled));
                     setLongDistanceThreshold(s.LongDistanceThresholdKm ? String(s.LongDistanceThresholdKm) : "8.00");
                     setLongDistanceFee(s.LongDistanceFee ? String(s.LongDistanceFee) : "40.00");
@@ -122,6 +126,9 @@ function SettingsPage() {
 
         const togglePayload = {
             CashbackMode: cashbackMode,
+            CashbackEnabled: parseFloat(cashbackPercent) > 0 ? 1 : 0,
+            CashbackPercentage: Math.min(100, Math.max(0, parseFloat(cashbackPercent) || 0)),
+            CashbackMaxAmount: Math.max(0, parseFloat(cashbackMax) || 0),
             BaseDeliveryCharge: parseFloat(baseDeliveryCharge) >= 0 ? parseFloat(baseDeliveryCharge) : 25,
             PricePerKm: parseFloat(pricePerKm) >= 0 ? parseFloat(pricePerKm) : 5,
             LongDistanceFeeEnabled: longDistanceEnabled ? 1 : 0,
@@ -288,11 +295,23 @@ function SettingsPage() {
 
                                 {/* 2. Cashback Mode */}
                                 <div className="card p-3 mb-4" style={{ background: "#f8fafc" }}>
-                                    <h5 style={{ color: "#1e40af", marginBottom: "8px" }}>Cashback Credit Mode</h5>
+                                    <h5 style={{ color: "#1e40af", marginBottom: "8px" }}>Cashback</h5>
                                     <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: "12px" }}>
-                                        Choose whether order completion promotional cashback credits automatically or queues for Admin review.
+                                        {cashbackMode === "disabled" || !(parseFloat(cashbackPercent) > 0)
+                                            ? "No store-wide cashback. Members' extra cashback and cashback offers still apply unless processing is Disabled."
+                                            : `Every delivered order earns ${parseFloat(cashbackPercent)}% back in the wallet${parseFloat(cashbackMax) > 0 ? `, up to ₹${parseFloat(cashbackMax)} per order` : ""}. Set 0% to stop it.`}
                                     </p>
                                     <div className="row">
+                                        <div className="col-md-3 form-group">
+                                            <label><strong>Cashback on every order (%):</strong></label>
+                                            <input type="number" min="0" max="100" step="0.5" className="form-control"
+                                                value={cashbackPercent} onChange={(e) => setCashbackPercent(e.target.value)} />
+                                        </div>
+                                        <div className="col-md-3 form-group">
+                                            <label><strong>Max per order (₹, 0 = no limit):</strong></label>
+                                            <input type="number" min="0" step="1" className="form-control"
+                                                value={cashbackMax} onChange={(e) => setCashbackMax(e.target.value)} />
+                                        </div>
                                         <div className="col-md-6 form-group mb-0">
                                             <label><strong>Cashback Processing:</strong></label>
                                             <select

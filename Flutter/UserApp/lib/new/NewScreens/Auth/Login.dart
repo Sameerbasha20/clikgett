@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:fav_app/new/Constants/colors.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Homepage.dart';
 import 'package:fav_app/new/Controllers/auth_controller.dart';
 import 'package:fav_app/new/NewScreens/Auth/auth_shell.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +12,10 @@ import '../../Controllers/home_controller.dart';
 import 'Signup.dart';
 
 class Login extends StatefulWidget {
-  const Login({super.key, this.isScreenFromLogout = false});
+  const Login({super.key, this.isScreenFromLogout = false, this.initialMobile});
   final bool isScreenFromLogout;
+  /// Prefilled when sign-up finds the number already has an account.
+  final String? initialMobile;
   @override
   State<Login> createState() => _LoginState();
 }
@@ -29,6 +34,7 @@ class _LoginState extends State<Login> {
 
   @override
   void initState() {
+    if (widget.initialMobile != null) mobileNumber.text = widget.initialMobile!;
     if (widget.isScreenFromLogout) {
       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
         final HomeController controller = Get.find();
@@ -72,17 +78,34 @@ class _LoginState extends State<Login> {
         AuthSwitch(
           question: 'New to ClikGett?',
           action: 'Create an account',
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SignUp())),
+          onTap: () => _openSignUp(),
         ),
+        // App Store review: people must be able to browse without an account.
+        if (Platform.isIOS)
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Homepage())),
+              child: Text('Continue as guest', style: GoogleFonts.poppins(fontSize: 13.5, color: tColor3)),
+            ),
+          ),
       ],
     );
   }
 
+  /// Sign-up sits on top of login; if it finds an existing account it comes back here with the number.
+  Future<void> _openSignUp([String? mobile]) async {
+    final back = await Navigator.push<String>(
+        context, MaterialPageRoute(builder: (context) => SignUp(initialMobile: mobile)));
+    if (back != null && mounted) mobileNumber.text = back;
+  }
+
   void validate() {
     if (signUpKey.currentState!.validate()) {
+      final mobile = mobileNumber.text.trim();
       controller.sendOtp(
         context: context,
-        body: <String, dynamic>{'MobileNumber': mobileNumber.text.trim()},
+        body: <String, dynamic>{'MobileNumber': mobile},
+        onUserNotFound: () => _openSignUp(mobile),
       );
       FocusManager.instance.primaryFocus?.unfocus();
     }

@@ -86,6 +86,10 @@ class AuthController extends GetxController {
     context,
     body,
     bool resend = false,
+    // Login with a number that has no account -> open sign-up instead.
+    VoidCallback? onUserNotFound,
+    // Sign-up with a number that already has an account -> open login instead.
+    VoidCallback? onUserExists,
   }) async {
     _isLoading(true);
     Network.networkCheck(context).then((value) async => value != null
@@ -113,6 +117,7 @@ class AuthController extends GetxController {
         else
           {
             customToast(message: value.message),
+            if (value.code == 'USER_EXISTS' && onUserExists != null) onUserExists(),
           },
         _isLoading(false),
       }
@@ -150,6 +155,7 @@ class AuthController extends GetxController {
         else
           {
             customToast(message: value.message),
+            if (value.code == 'USER_NOT_FOUND' && onUserNotFound != null) onUserNotFound(),
           },
         _isLoading(false),
       }

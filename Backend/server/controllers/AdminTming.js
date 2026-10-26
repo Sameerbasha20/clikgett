@@ -257,11 +257,18 @@ updateBanner : async (req, resp, next) => {
 
       const allowedFields = [
           'PricePerKm', 'BaseDeliveryCharge', 'Longitude', 'Latitude',
-          'CashbackMode', 'LongDistanceFeeEnabled', 'LongDistanceThresholdKm', 'LongDistanceFee',
+          'CashbackMode', 'CashbackEnabled', 'CashbackPercentage', 'CashbackMaxAmount', 'LongDistanceFeeEnabled', 'LongDistanceThresholdKm', 'LongDistanceFee',
           'LargeCartThreshold1Items', 'LargeCartThreshold1Minutes',
           'LargeCartThreshold2Items', 'LargeCartThreshold2Minutes',
           'DeliveryAddressVisibility', 'DeliveryProductListVisibility'
       ];
+
+      if (Body.CashbackPercentage !== undefined && !(Number(Body.CashbackPercentage) >= 0 && Number(Body.CashbackPercentage) <= 100)) {
+          return resp.status(400).json({ status: 0, Message: "Cashback % must be between 0 and 100" });
+      }
+      if (Body.CashbackMaxAmount !== undefined && !(Number(Body.CashbackMaxAmount) >= 0)) {
+          return resp.status(400).json({ status: 0, Message: "Maximum cashback cannot be negative" });
+      }
 
       allowedFields.forEach(field => {
           if (Body[field] !== undefined && Body[field] !== null) {

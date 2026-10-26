@@ -1233,10 +1233,11 @@ CommonController.ProcessOrderCashback = async (OrderID, UserID) => {
         if (!OrderID || !UserID) return 0;
         const PricingEngine = require('../services/PricingEngine');
 
-        // Check if cashback was already credited for this order
+        // Check if cashback was already credited for this order. Feedback rewards share
+        // ContentType 4, so match on the cashback description or they would block it.
         const existingTx = await new Promise(r => pool.query(
-            "SELECT * FROM Wallets WHERE ContentID = ? AND ContentType = 4", 
-            [OrderID], 
+            "SELECT 1 FROM Wallets WHERE ContentID = ? AND UserID = ? AND ContentType = 4 AND Description LIKE 'Cashback earned%' LIMIT 1",
+            [OrderID, UserID], 
             (e, rows) => r(rows || [])
         ));
         if (existingTx.length > 0) {

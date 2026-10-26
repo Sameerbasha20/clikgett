@@ -703,7 +703,10 @@ const PricingEngine = {
         // 6. Dynamic Cashback Calculation
         let cashbackEarned = 0;
         const cashbackExpiryDays = parseInt(shopSettings.CashbackExpiryDays || 30);
-        const cashbackEnabled = shopSettings.CashbackEnabled == 1 || (userMembership && userMembership.ExtraCashbackPercentage > 0);
+        // "Disabled" in admin Settings means no cashback at all, so checkout must not promise any.
+        const cashbackSwitchedOff = String(shopSettings.CashbackMode || '').toLowerCase() === 'disabled';
+        const cashbackEnabled = !cashbackSwitchedOff
+            && (shopSettings.CashbackEnabled == 1 || (userMembership && userMembership.ExtraCashbackPercentage > 0));
 
         if (cashbackEnabled) {
             const basePercent = parseFloat(shopSettings.CashbackPercentage || 0);
@@ -729,7 +732,7 @@ const PricingEngine = {
                 cashbackEarned = maxCashback;
             }
         }
-        if (offerBonusCashback > 0) {
+        if (offerBonusCashback > 0 && !cashbackSwitchedOff) {
             cashbackEarned += offerBonusCashback;
         }
 

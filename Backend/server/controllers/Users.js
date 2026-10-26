@@ -326,7 +326,7 @@ const usercontroller = {
             if (userData.length === 1) {
 
                 if (userData[0]['SignupCompleted'] == 1) {
-                    return resp.status(200).json({ "Status": 0, "Message": "User already exists please login" });
+                    return resp.status(200).json({ "Status": 0, "Code": "USER_EXISTS", "Message": "You already have an account. Please log in." });
                 }
                 return resp.status(200).json(await LoginOtp.send('customer', req.body.MobileNumber));
             }
@@ -511,7 +511,7 @@ const usercontroller = {
                 return resp.status(200).json(await LoginOtp.send('customer', req.body.MobileNumber));
             }
             else {
-                return resp.status(200).json({ "Status": 0, "Message": "User doesnot exists please register" });
+                return resp.status(200).json({ "Status": 0, "Code": "USER_NOT_FOUND", "Message": "No account with this number. Let's create one." });
             }
 
 

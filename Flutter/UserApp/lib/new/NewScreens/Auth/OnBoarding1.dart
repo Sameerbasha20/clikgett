@@ -1,4 +1,4 @@
-import 'package:fav_app/new/NewScreens/Auth/LoginIntro.dart';
+import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -123,7 +123,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const LoginIntro(),
+                            builder: (context) => const Login(),
                           ),
                         );
                       }

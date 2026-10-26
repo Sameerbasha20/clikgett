@@ -18,7 +18,9 @@ import {
     FaCloudRain,
     FaTrafficLight,
     FaTools,
-    FaUtensils
+    FaUtensils,
+    FaClock,
+    FaUsers
 } from "react-icons/fa";
 import { Modal, Button, Form, Badge, Tabs, Tab } from "react-bootstrap";
 import AssignDeliveryBoyModal from "../orders/AssignDeliveryBoyModal";
@@ -216,43 +218,36 @@ function LiveOperations() {
                         </div>
                     </div>
 
-                    {/* KPI Cards Row */}
+                    {/* KPI cards: same layout in each, so the numbers line up */}
                     <div className="row g-3 mb-4">
-                        <div className="col-12 col-sm-6 col-xl">
-                            <div className="card shadow-sm border-0 border-start border-primary border-4 p-3">
-                                <div className="text-muted small fw-bold">ACTIVE DELIVERIES</div>
-                                <div className="h3 fw-bold mb-0 text-primary">{kpis.activeDeliveries}</div>
-                                <div className="small text-muted mt-1">In progress on road</div>
+                        {[
+                            { label: "Active deliveries", value: kpis.activeDeliveries, note: "On the road now", color: "#2563eb", Icon: FaMotorcycle },
+                            { label: "On time", value: kpis.onTimeCount, note: "More than 5 min to spare", color: "#16a34a", Icon: FaCheckCircle },
+                            { label: "At risk", value: kpis.atRiskCount, note: "Under 5 min left", color: "#d97706", Icon: FaExclamationTriangle },
+                            { label: "Delayed", value: kpis.delayedCount, note: "Past the promised ETA", color: "#dc2626", Icon: FaClock },
+                            { label: "Riders online", value: kpis.onlineDrivers, suffix: `/ ${fleetDrivers.length}`, note: `${kpis.offlineDrivers} offline`, color: "#0891b2", Icon: FaUsers },
+                        ].map(({ label, value, suffix, note, color, Icon }) => (
+                            <div className="col-12 col-sm-6 col-lg-4 col-xl" key={label}>
+                                <div className="card border-0 shadow-sm h-100" style={{ borderRadius: 14, borderTop: `4px solid ${color}` }}>
+                                    <div className="card-body d-flex align-items-center gap-3 py-3">
+                                        <div
+                                            className="d-flex align-items-center justify-content-center flex-shrink-0"
+                                            style={{ width: 46, height: 46, borderRadius: 12, background: `${color}1a`, color }}
+                                        >
+                                            <Icon size={20} />
+                                        </div>
+                                        <div style={{ minWidth: 0 }}>
+                                            <div className="text-muted text-truncate" style={{ fontSize: 13, fontWeight: 600 }} title={label}>{label}</div>
+                                            <div className="fw-bold lh-1 my-1" style={{ fontSize: 28, color }}>
+                                                {value}
+                                                {suffix && <span className="text-muted fw-semibold ms-1" style={{ fontSize: 15 }}>{suffix}</span>}
+                                            </div>
+                                            <div className="text-muted text-truncate" style={{ fontSize: 12.5 }} title={note}>{note}</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div className="col-12 col-sm-6 col-xl">
-                            <div className="card shadow-sm border-0 border-start border-success border-4 p-3">
-                                <div className="text-muted small fw-bold">ON TIME</div>
-                                <div className="h3 fw-bold mb-0 text-success">{kpis.onTimeCount}</div>
-                                <div className="small text-muted mt-1">&gt; 5m buffer</div>
-                            </div>
-                        </div>
-                        <div className="col-12 col-sm-6 col-xl">
-                            <div className="card shadow-sm border-0 border-start border-warning border-4 p-3">
-                                <div className="text-muted small fw-bold">AT RISK</div>
-                                <div className="h3 fw-bold mb-0 text-warning">{kpis.atRiskCount}</div>
-                                <div className="small text-muted mt-1">&lt; 5m remaining</div>
-                            </div>
-                        </div>
-                        <div className="col-12 col-sm-6 col-xl">
-                            <div className="card shadow-sm border-0 border-start border-danger border-4 p-3">
-                                <div className="text-muted small fw-bold">DELAYED (BREACHED)</div>
-                                <div className="h3 fw-bold mb-0 text-danger">{kpis.delayedCount}</div>
-                                <div className="small text-muted mt-1">Past promised ETA</div>
-                            </div>
-                        </div>
-                        <div className="col-12 col-sm-6 col-xl">
-                            <div className="card shadow-sm border-0 border-start border-info border-4 p-3">
-                                <div className="text-muted small fw-bold">ONLINE FLEET</div>
-                                <div className="h3 fw-bold mb-0 text-info">{kpis.onlineDrivers}</div>
-                                <div className="small text-muted mt-1">of {fleetDrivers.length} riders online · {kpis.offlineDrivers} offline</div>
-                            </div>
-                        </div>
+                        ))}
                     </div>
 
                     {loading ? (

@@ -95,6 +95,30 @@ const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwA
     check('empty update is refused', (await call('PUT', '/users/notification-preferences', user, {})).status === 400);
     await call('PUT', '/users/notification-preferences', user, { Offers: true });
 
+    // ---- Login with an unknown number points to sign-up, sign-up with a known one points to login
+    const unknownMobile = `9${String(Date.now()).slice(-9)}`;
+    const login = await call('POST', '/users/login/sendotp', null, { MobileNumber: unknownMobile });
+    check('login with a new number says USER_NOT_FOUND', login.data.Status === 0 && login.data.Code === 'USER_NOT_FOUND');
+    const [known] = await q("SELECT MobileNumber FROM Users WHERE SignupCompleted = 1 AND MobileNumber REGEXP '^[6-9][0-9]{9}$' LIMIT 1");
+    if (known) {
+        const signup = await call('POST', '/users/signup/sendotp', null, { MobileNumber: known.MobileNumber, FirstName: 'QA' });
+        check('sign-up with a registered number says USER_EXISTS', signup.data.Status === 0 && signup.data.Code === 'USER_EXISTS');
+    }
+
+    // ---- Cashback: admin sees and edits the store-wide %, "Disabled" stops promising it
+    const [shop] = await q('SELECT SettingID, CashbackEnabled, CashbackPercentage, CashbackMaxAmount, CashbackMode FROM AdminShopToggleSettings LIMIT 1');
+    const status = await call('GET', '/admintiming/shopstatus', admin);
+    check('admin settings return the cashback %', status.data.Shop === undefined || status.data.Shop.CashbackPercentage !== undefined);
+    const badPct = await call('PUT', `/admintiming/updatesettings/${shop.SettingID}`, admin, { CashbackPercentage: 150 });
+    check('cashback above 100% is refused', badPct.status === 400, `HTTP ${badPct.status}`);
+    const [variant] = await q('SELECT VariantID, ProductID FROM ProductVariants WHERE AvailableQty > 0 LIMIT 1');
+    const PricingEngine = require('../services/PricingEngine');
+    await q("UPDATE AdminShopToggleSettings SET CashbackMode = 'disabled', CashbackEnabled = 1, CashbackPercentage = 10");
+    const noCashback = await PricingEngine.calculateCart([{ ProductID: variant.ProductID, VariantID: variant.VariantID, Quantity: 2 }], null, buyer.UserID);
+    check('disabled cashback promises nothing at checkout', noCashback.CashbackEarned === 0, `got ${noCashback.CashbackEarned}`);
+    await q('UPDATE AdminShopToggleSettings SET CashbackMode = ?, CashbackEnabled = ?, CashbackPercentage = ?, CashbackMaxAmount = ? WHERE SettingID = ?',
+        [shop.CashbackMode, shop.CashbackEnabled, shop.CashbackPercentage, shop.CashbackMaxAmount, shop.SettingID]);
+
     // ---- Clean up
     await q('DELETE FROM Categories WHERE CategoryName = ?', [catName]);
     if (prod.data.ProductID) {

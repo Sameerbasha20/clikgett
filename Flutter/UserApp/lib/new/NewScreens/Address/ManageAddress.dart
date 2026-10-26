@@ -1,22 +1,40 @@
 // ignore_for_file: prefer_const_constructors
 import 'package:fav_app/new/Constants/colors.dart';
-import 'package:fav_app/new/Constants/imageslist.dart';
 import 'package:fav_app/new/Constants/static_loader.dart';
-import 'package:fav_app/new/Constants/textStyles.dart';
 import 'package:fav_app/new/Controllers/adress_controller.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
 import 'package:fav_app/new/NewScreens/Address/AddAddress.dart';
 import 'package:fav_app/new/NewScreens/Address/EditAddress.dart';
-import 'package:fav_app/new/NewScreens/Widgets/buttonWidget.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
 
 import '../../../old/Models/Account/adresses.dart';
+
+const _leaf = Color(0xFF14532D);
+const _fresh = Color(0xFF16A34A);
+const _ink = Color(0xFF0F172A);
+const _muted = Color(0xFF64748B);
+const _screenBg = Color(0xFFF4F7F5);
+
+/// Icon, colour and label for an address type (home / work / anything else).
+class _AddressType {
+  final IconData icon;
+  final Color color;
+  final String label;
+  const _AddressType(this.icon, this.color, this.label);
+
+  factory _AddressType.of(String type) {
+    final t = type.trim().toLowerCase();
+    if (t == 'home') return const _AddressType(Icons.home_rounded, _fresh, 'Home');
+    if (t == 'work' || t == 'office') return const _AddressType(Icons.work_rounded, Color(0xFF2563EB), 'Work');
+    final label = t.isEmpty ? 'Other' : t[0].toUpperCase() + t.substring(1);
+    return _AddressType(Icons.location_on_rounded, const Color(0xFFEA580C), label);
+  }
+}
 
 class ManageAddress extends StatefulWidget {
   const ManageAddress({super.key, this.isFromCartScreen = false});
@@ -26,586 +44,449 @@ class ManageAddress extends StatefulWidget {
 }
 
 class _ManageAddressState extends State<ManageAddress> {
-  String selectedAddress = 'home';
   bool isMapsOpened = false;
   final AdressController adressController = Get.find();
+  final HomeController homeController = Get.find();
+
+  /// Opened from checkout / photo order to choose where to deliver.
+  bool get _picking => widget.isFromCartScreen == true;
+
   @override
   void initState() {
     super.initState();
     adressController.getAdresses(context: context);
   }
 
-  final HomeController homeController = Get.find();
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => adressController.address.isEmpty
-          ? emptyWidget()
-          : Scaffold(
-              appBar: AppBar(
-                elevation: 0,
-                backgroundColor: Colors.white,
-                surfaceTintColor: Colors.transparent,
-                title: Text(
-                  "Manage Addresses",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 17,
-                    color: const Color(0xFF0F172A),
-                  ),
-                ),
-                leading: IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Color(0xFF0F172A),
-                    size: 20,
+    return Obx(() {
+      final addresses = adressController.address;
+      final selectedId = adressController.selectedAdressId.value;
+      Address? active;
+      for (final a in addresses) {
+        if (a.addressId == selectedId) active = a;
+      }
+      return Scaffold(
+        backgroundColor: _screenBg,
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _header(active)),
+            if (adressController.isLoading.isTrue && addresses.isEmpty)
+              const SliverFillRemaining(hasScrollBody: false, child: CustomLoader())
+            else if (addresses.isEmpty)
+              SliverFillRemaining(hasScrollBody: false, child: _emptyState())
+            else ...[
+              SliverToBoxAdapter(child: _addTile()),
+              SliverToBoxAdapter(child: _sectionLabel('SAVED ADDRESSES', addresses.length)),
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).padding.bottom + 24),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => addressTile(address: addresses[index], index: index),
+                    childCount: addresses.length,
                   ),
                 ),
               ),
-              backgroundColor: const Color(0xFFF8FAFC),
-              body: adressController.isLoading.isTrue
-                  ? const CustomLoader()
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
-                      itemCount: adressController.address.length,
-                      itemBuilder: (context, index) {
-                        var address = adressController.address[index];
-                        return addressTile(address: address, index: index);
-                      },
-                    ),
-              bottomNavigationBar: Container(
-                padding: EdgeInsets.fromLTRB(5.w, 10, 5.w, MediaQuery.of(context).padding.bottom + 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: cardBorder, width: 1)),
-                  boxShadow: softElevatedShadow,
-                ),
-                child: GetBuilder<AdressController>(
-                  id: 'update-address',
-                  builder: (controller) => isMapsOpened
-                      ? const Center(
-                          child: CircularProgressIndicator.adaptive(),
-                        )
-                      : InkWell(
-                          onTap: () async {
-                            if (isMapsOpened == false) {
-                              isMapsOpened = true;
-                              Get.find<AdressController>().updateUI();
-                              await pickLocation(context: context, iseditpage: 1);
-                              isMapsOpened = false;
-                              Get.find<AdressController>().updateUI();
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: primary,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: primary.withOpacity(0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.add_rounded, color: Colors.white, size: 22),
-                                const SizedBox(width: 8),
-                                Text(
-                                  "Add New Address",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                ),
+            ],
+          ],
+        ),
+      );
+    });
+  }
+
+  // ---------------------------------------------------------------- header
+
+  Widget _header(Address? active) {
+    final top = MediaQuery.of(context).padding.top;
+    return Container(
+      padding: EdgeInsets.fromLTRB(8, top + 6, 16, 22),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [_leaf, _fresh]),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Stack(children: [
+        // Soft decorative pins in the corner.
+        Positioned(
+          right: -6,
+          top: 4,
+          child: Icon(Icons.location_on_rounded, size: 96, color: Colors.white.withOpacity(0.07)),
+        ),
+        Positioned(
+          right: 70,
+          top: 46,
+          child: Icon(Icons.location_on_rounded, size: 40, color: Colors.white.withOpacity(0.08)),
+        ),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(
+                _picking ? 'Where should we deliver?' : 'Your addresses',
+                style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white, height: 1.2),
               ),
-            ),
+              const SizedBox(height: 4),
+              Text(
+                _picking ? 'Tap an address to deliver there' : 'Save the places you order to most',
+                style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.white.withOpacity(0.85)),
+              ),
+              if (active != null) ...[
+                const SizedBox(height: 16),
+                _deliveringTo(active),
+              ],
+            ]),
+          ),
+        ]),
+      ]),
     );
+  }
+
+  Widget _deliveringTo(Address address) {
+    final type = _AddressType.of(address.type);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.22)),
+      ),
+      child: Row(children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          child: Icon(type.icon, color: _fresh, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('DELIVERING TO · ${type.label.toUpperCase()}',
+                style: GoogleFonts.poppins(
+                    fontSize: 10.5, letterSpacing: 0.6, fontWeight: FontWeight.w700, color: Colors.white.withOpacity(0.8))),
+            Text(
+              _oneLine(address),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  // ---------------------------------------------------------------- add / list
+
+  Future<void> _addAddress() async {
+    if (isMapsOpened) return;
+    isMapsOpened = true;
+    adressController.updateUI();
+    try {
+      await pickLocation(context: context, iseditpage: 1);
+    } catch (_) {
+      // pickLocation already told the user (location off / permission denied).
+    }
+    isMapsOpened = false;
+    adressController.updateUI();
+  }
+
+  Widget _addTile() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
+      child: GetBuilder<AdressController>(
+        id: 'update-address',
+        builder: (controller) => Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: _addAddress,
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: primary.withOpacity(0.35), width: 1.4),
+              ),
+              child: Row(children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(color: primaryLight, borderRadius: BorderRadius.circular(14)),
+                  child: isMapsOpened
+                      ? const Padding(
+                          padding: EdgeInsets.all(13),
+                          child: CircularProgressIndicator(strokeWidth: 2.4, color: primary),
+                        )
+                      : const Icon(Icons.add_location_alt_rounded, color: primaryDark),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Add a new address',
+                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: primaryDark)),
+                    Text('Use your current location or pick on the map',
+                        style: GoogleFonts.poppins(fontSize: 12, color: _muted)),
+                  ]),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: primaryDark),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String text, int count) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+      child: Row(children: [
+        Text(text, style: GoogleFonts.poppins(fontSize: 12, letterSpacing: 0.8, fontWeight: FontWeight.w700, color: _muted)),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+          decoration: BoxDecoration(color: cardBorder, borderRadius: BorderRadius.circular(20)),
+          child: Text('$count', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: _muted)),
+        ),
+      ]),
+    );
+  }
+
+  String _oneLine(Address a) =>
+      [a.flatNo, a.landmark, a.address].where((s) => s.trim().isNotEmpty).join(', ');
+
+  void _select(Address address) {
+    adressController.storeSelectedAdress(address.addressId, address.longitude, address.latitude);
+    homeController.storeLocation(address, adressController.address);
+    // Opened to pick an address (checkout, photo order): return the choice to
+    // that screen instead of jumping to the checkout page.
+    if (_picking) Navigator.of(context).pop(address);
   }
 
   Widget addressTile({required Address address, required int index}) {
-    return GetBuilder<AdressController>(
-      id: 'update-radiobtn',
-      builder: (controller) {
-        final bool isSelected =
-            adressController.selectedAdressId.value == address.addressId;
-        final String typeStr = address.type.trim().toLowerCase();
+    final isSelected = adressController.selectedAdressId.value == address.addressId;
+    final type = _AddressType.of(address.type);
+    final details = [address.landmark, address.address].where((s) => s.trim().isNotEmpty).join(', ');
 
-        IconData typeIcon = Icons.location_on_rounded;
-        if (typeStr == 'home') {
-          typeIcon = Icons.home_rounded;
-        } else if (typeStr == 'work') {
-          typeIcon = Icons.work_rounded;
-        }
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12.0),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () {
-                adressController.storeSelectedAdress(
-                    address.addressId, address.longitude, address.latitude);
-                homeController.storeLocation(
-                  address,
-                  adressController.address,
-                );
-                // Opened to pick an address (checkout, photo order): return the choice to
-                // that screen instead of jumping to the checkout page.
-                if (widget.isFromCartScreen == true) {
-                  Navigator.of(context).pop(address);
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected ? primary : cardBorder,
-                    width: isSelected ? 1.8 : 1,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => _select(address),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: isSelected ? primary : Colors.transparent, width: 1.6),
+              boxShadow: [
+                BoxShadow(
+                  color: (isSelected ? primary : _ink).withOpacity(isSelected ? 0.14 : 0.06),
+                  blurRadius: isSelected ? 16 : 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(color: type.color.withOpacity(0.12), borderRadius: BorderRadius.circular(14)),
+                    child: Icon(type.icon, color: type.color),
                   ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: primary.withOpacity(0.12),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                        Text(type.label, style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w700, color: _ink)),
+                        if (isSelected)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: primaryLight, borderRadius: BorderRadius.circular(20)),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              const Icon(Icons.check_circle_rounded, size: 13, color: primaryDark),
+                              const SizedBox(width: 4),
+                              Text('Delivering here',
+                                  style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: primaryDark)),
+                            ]),
                           ),
-                        ]
-                      : softCardShadow,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Radio indicator
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2, right: 12),
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? primary : const Color(0xFFCBD5E1),
-                            width: 2,
-                          ),
-                        ),
-                        child: isSelected
-                            ? Center(
-                                child: Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: primary,
-                                  ),
-                                ),
-                              )
-                            : null,
-                      ),
+                      ]),
+                      if (address.flatNo.trim().isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(address.flatNo,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: _ink)),
+                      ],
+                      if (details.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(details,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(fontSize: 12.5, color: _muted, height: 1.4)),
+                      ],
+                    ]),
+                  ),
+                  const SizedBox(width: 8),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                      key: ValueKey(isSelected),
+                      color: isSelected ? primary : const Color(0xFFCBD5E1),
                     ),
+                  ),
+                ]),
+              ),
+              Container(height: 1, color: const Color(0xFFF1F5F9)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Row(children: [
+                  _action(Icons.edit_outlined, 'Edit', primaryDark, () => checkLocation(context, index, address)),
+                  if (adressController.address.length > 1)
+                    _action(Icons.delete_outline_rounded, 'Delete', red, () async {
+                      final yes = await alertDialogue(address);
+                      if (yes == true && mounted) {
+                        adressController.deleteAdresses(context: context, adressId: address.addressId);
+                      }
+                    }),
+                  const Spacer(),
+                  if (!isSelected)
+                    TextButton(
+                      onPressed: () => _select(address),
+                      style: TextButton.styleFrom(foregroundColor: primaryDark),
+                      child: Text('Deliver here →', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    ),
+                ]),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
 
-                    // Address Information
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? primaryLight : const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      typeIcon,
-                                      size: 14,
-                                      color: isSelected ? primaryDark : const Color(0xFF475569),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      address.type.toUpperCase(),
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: isSelected ? primaryDark : const Color(0xFF475569),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              if (isSelected) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: primaryLight,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: primary.withOpacity(0.3), width: 1),
-                                  ),
-                                  child: Text(
-                                    "ACTIVE",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: primaryDark,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          if (address.flatNo.isNotEmpty)
-                            Text(
-                              address.flatNo,
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF0F172A),
-                              ),
-                            ),
-                          if (address.landmark.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2.0),
-                              child: Text(
-                                address.landmark,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: const Color(0xFF475569),
-                                ),
-                              ),
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2.0),
-                            child: Text(
-                              address.address,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              InkWell(
-                                onTap: () => checkLocation(context, index, address),
-                                borderRadius: BorderRadius.circular(6),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: cardBorder, width: 1),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.edit_outlined, size: 14, color: primary),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        "Edit",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w600,
-                                          color: primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              if (adressController.address.length > 1) ...[
-                                const SizedBox(width: 10),
-                                InkWell(
-                                  onTap: () {
-                                    alertDialogue().then((value) {
-                                      if (value == true) {
-                                        adressController.deleteAdresses(
-                                          context: context,
-                                          adressId: address.addressId,
-                                        );
-                                      }
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: redLight,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: red.withOpacity(0.3), width: 1),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.delete_outline_rounded, size: 14, color: red),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          "Delete",
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w600,
-                                            color: red,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+  Widget _action(IconData icon, String label, Color color, VoidCallback onTap) {
+    return TextButton.icon(
+      onPressed: onTap,
+      style: TextButton.styleFrom(foregroundColor: color, padding: const EdgeInsets.symmetric(horizontal: 10)),
+      icon: Icon(icon, size: 17),
+      label: Text(label, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+    );
+  }
+
+  Future<bool?> alertDialogue(Address address) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        contentPadding: const EdgeInsets.fromLTRB(22, 24, 22, 8),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: const BoxDecoration(color: redLight, shape: BoxShape.circle),
+            child: const Icon(Icons.delete_outline_rounded, color: red, size: 28),
+          ),
+          const SizedBox(height: 14),
+          Text('Delete this address?', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: _ink)),
+          const SizedBox(height: 6),
+          Text(_oneLine(address),
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(fontSize: 13, color: _muted)),
+        ]),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        actions: [
+          Row(children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _ink,
+                  side: const BorderSide(color: cardBorder),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
+                child: Text('Keep it', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
               ),
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future alertDialogue() {
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text('Delete Address',
-                    style: GoogleFonts.outfit(
-                        color: Color(0xff1C1C1C),
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w500)),
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 2.h),
-                  child: Text('Are You Sure, You Want To Delete Address ??',
-                      style: GoogleFonts.outfit(
-                          color: Color(0xff707070),
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w400)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: red,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(
-                      width: 1,
-                    ),
-                    SizedBox(
-                      width: 100, // Set your desired width here
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white, // No background color
-                          side: BorderSide(
-                              color: primary,
-                              width: 1.0), // Black border with width
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                5), // Rectangular shape with slight rounding
-                          ),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 12), // Padding for button height
-                        ),
-                        onPressed: () async {
-                          Navigator.pop(context, true);
-                        },
-                        child: Text(
-                          "Yes",
-                          style: GoogleFonts.poppins(
-                              color: primary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600), // White text color
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 1,
-                    ),
-                    SizedBox(
-                      width: 100, // Set your desired width here
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary, // No background color
-                          side: BorderSide(
-                              color: primary,
-                              width: 1.0), // Black border with width
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                5), // Rectangular shape with slight rounding
-                          ),
-                          padding: EdgeInsets.symmetric(
-                              vertical: 12), // Padding for button height
-                        ),
-                        onPressed: () async {
-                          Navigator.pop(context, false);
-                        },
-                        child: Text(
-                          "No",
-                          style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600), // White text color
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 1,
-                    ),
-                  ],
-                )
-
-                // Row(
-                //   children: [
-                //     Flexible(
-                //         child: buttonWidget(
-                //             onTap: () {
-                //               Navigator.pop(context, true);
-                //             },
-                //             context: context,
-                //             text: 'Yes')),
-                //     SizedBox(
-                //       width: 10,
-                //     ),
-                //     Flexible(
-                //         child: buttonWidget(
-                //             onTap: () {
-                //               Navigator.pop(context, false);
-                //             },
-                //             context: context,
-                //             text: 'No',
-                //             buttonColor: white,
-                //             borderColor: black,
-                //             textColor: black)),
-                //   ],
-                // )
-              ],
+                child: Text('Delete', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+              ),
             ),
-          );
-        });
-      },
+          ]),
+        ],
+      ),
     );
   }
 
-  Widget emptyWidget() {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            "Manage Address",
-            style: customTextstyle(fontWeight: FontWeight.w600, fontSize: 20),
+  Widget _emptyState() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 48),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Container(
+          width: 130,
+          height: 130,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(colors: [primaryLight, primary.withOpacity(0.25)]),
           ),
-          leading: IconButton(
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              icon: Image.asset(
-                backbutton,
-                height: 5.h,
-                width: 10.w,
-                fit: BoxFit.cover,
-              )),
-          backgroundColor: bg,
+          alignment: Alignment.center,
+          child: const Text('🏠', style: TextStyle(fontSize: 58)),
         ),
-        backgroundColor: bg,
-        body: SafeArea(
-          child: Container(
-            padding: EdgeInsets.all(5.w),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image(
-                  image: AssetImage(emptyAddressBanner),
-                  width: 80.w,
-                  height: 30.h,
-                  fit: BoxFit.contain,
-                ),
-                SizedBox(
-                  height: 2.h,
-                ),
-                customText(
-                  text: "Waiting for your address",
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w600,
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(
-                  height: 1.h,
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 3.w, right: 3.w),
-                  child: customText(
-                    text: "Let Us Pack Something Special For\nYou",
-                    textAlign: TextAlign.center,
-                    fontWeight: FontWeight.w500,
-                    color: ordersPrimaryColor.withOpacity(.6),
-                  ),
-                ),
-                SizedBox(
-                  height: 5.h,
-                ),
-                GetBuilder<AdressController>(
-                  id: 'update-address',
-                  builder: (controller) => isMapsOpened
-                      ? Center(
-                          child: CircularProgressIndicator.adaptive(),
-                        )
-                      : iconbuttonWidget(
-                          context: context,
-                          icon: Padding(
-                            padding: EdgeInsets.all(0.6.h),
-                            child: ImageIcon(AssetImage(plusSymbol)),
-                          ),
-                          text: "Add Address",
-                          onTap: () async {
-                            if (isMapsOpened == false) {
-                              isMapsOpened = true;
-                              controller.updateUI();
-                              await pickLocation(
-                                  context: context, iseditpage: 1);
-                              isMapsOpened = false;
-                              controller.updateUI();
-                            }
-                          },
-                        ),
-                ),
-                SizedBox(
-                  height: 10.h,
-                )
-              ],
+        const SizedBox(height: 22),
+        Text('No saved addresses yet',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(fontSize: 19, fontWeight: FontWeight.w700, color: _ink)),
+        const SizedBox(height: 6),
+        Text('Add your home, work or any place you order to.\nIt only takes a few seconds.',
+            textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13.5, color: _muted, height: 1.45)),
+        const SizedBox(height: 26),
+        GetBuilder<AdressController>(
+          id: 'update-address',
+          builder: (controller) => SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: isMapsOpened ? null : _addAddress,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                disabledBackgroundColor: primary.withOpacity(0.6),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              icon: isMapsOpened
+                  ? const SizedBox(
+                      width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white))
+                  : const Icon(Icons.my_location_rounded, color: Colors.white),
+              label: Text('Add your first address',
+                  style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
             ),
           ),
-        ));
+        ),
+      ]),
+    );
   }
 
   Future pickLocation(

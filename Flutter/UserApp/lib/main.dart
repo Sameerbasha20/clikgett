@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:fav_app/new/Constants/imageslist.dart';
 import 'package:fav_app/new/Dependancy_Injection/bindings.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
-import 'package:fav_app/new/NewScreens/Auth/LoginIntro.dart';
+import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/Auth/OnBoarding1.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Homepage.dart';
 import 'package:fav_app/new/Services/common/backend_discovery.dart';
@@ -109,7 +109,7 @@ class _MyAppState extends State<MyApp> {
         routes: {
           '/login': (_) => ChangeNotifierProvider(
                 create: (_) => LoginViewModel(),
-                child: LoginIntro(),
+                child: const Login(),
               ),
         },
         home: ResponsiveSizer(builder: (p0, p1, p2) => SplashScreen()),
