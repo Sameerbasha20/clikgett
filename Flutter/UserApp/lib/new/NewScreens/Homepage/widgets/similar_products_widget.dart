@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart' as fmt;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -247,7 +248,7 @@ class _SimilarProductCardState extends State<_SimilarProductCard> {
     final String packSize = (variant != null &&
             variant.metricvalue != null &&
             variant.metrictype != null)
-        ? '${variant.metricvalue} ${variant.metrictype}'
+        ? fmt.packSize(variant.metricvalue, variant.metrictype)
         : '';
 
     return InkWell(

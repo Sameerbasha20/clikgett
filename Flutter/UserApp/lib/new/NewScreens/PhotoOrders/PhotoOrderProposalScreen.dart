@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fav_app/constants.dart';
 import 'package:fav_app/new/Constants/colors.dart';
@@ -428,14 +429,14 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                                   ],
                                   SizedBox(height: 0.5.h),
                                   Text(
-                                    "Qty: ${item.quantity} × ₹${(item.unitPrice ?? 0).toStringAsFixed(2)}",
+                                    "Qty: ${item.quantity} × ${money(item.unitPrice ?? 0)}",
                                     style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey[700]),
                                   ),
                                 ],
                               ),
                             ),
                             Text(
-                              "₹${(item.lineTotal ?? 0).toStringAsFixed(2)}",
+                              "${money(item.lineTotal ?? 0)}",
                               style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 14.sp, color: black),
                             ),
                           ],
@@ -468,7 +469,7 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text("Subtotal", style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey[700])),
-                          Text("₹${(req.subTotal ?? 0).toStringAsFixed(2)}", style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                          Text("${money(req.subTotal ?? 0)}", style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w500)),
                         ],
                       ),
                       SizedBox(height: 1.h),
@@ -476,7 +477,7 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text("Delivery Charges", style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey[700])),
-                          Text("₹${(req.deliveryCharges ?? 0).toStringAsFixed(2)}", style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w500)),
+                          Text("${money(req.deliveryCharges ?? 0)}", style: GoogleFonts.poppins(fontSize: 13.sp, fontWeight: FontWeight.w500)),
                         ],
                       ),
                       if (req.discount != null && req.discount! > 0) ...[
@@ -485,7 +486,7 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text("Discounts Applied", style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.green)),
-                            Text("-₹${req.discount!.toStringAsFixed(2)}", style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.green, fontWeight: FontWeight.w600)),
+                            Text("-${money(req.discount)}", style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.green, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ],
@@ -496,7 +497,7 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text("Final Proposal Total", style: GoogleFonts.poppins(fontSize: 15.sp, fontWeight: FontWeight.w700)),
-                          Text("₹${(req.grandTotal ?? 0).toStringAsFixed(2)}", style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w700, color: primary)),
+                          Text("${money(req.grandTotal ?? 0)}", style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w700, color: primary)),
                         ],
                       ),
                     ],

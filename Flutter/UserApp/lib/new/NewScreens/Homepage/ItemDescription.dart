@@ -1,4 +1,5 @@
 // ignore_for_file: prefer_const_constructors
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/Constants.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/empty_data.dart';
@@ -358,15 +359,17 @@ class _ItemDescriptionState extends State<ItemDescription> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             constantText(
-              text: "${Constants.rupee}$price  ",
+              text: "${money(price)}  ",
               textStyle: robotocustomTextstyle(
                 fontSize: 18.sp,
                 color: tColor2,
                 fontWeight: FontWeight.w600,
               ),
               children: [
+                // Only strike through a higher MRP; "₹44 ₹44" says nothing.
+                if ((double.tryParse('$OriginalPrice') ?? 0) > (double.tryParse('$price') ?? 0))
                 TextSpan(
-                  text: "${Constants.rupee}$OriginalPrice",
+                  text: money(OriginalPrice),
                   style: robotocustomTextstyle(
                     fontSize: 14.sp,
                     color: tColor.withOpacity(0.5),
@@ -546,7 +549,7 @@ class _ItemDescriptionState extends State<ItemDescription> {
                   color: primary,
                   size: 2.w,
                 ),
-                Text("${Constants.rupee} $price",
+                Text(money(price),
                     style: robotocustomTextstyle(
                       fontSize: 18.sp,
                       color: primary,
@@ -726,7 +729,7 @@ class _ItemDescriptionState extends State<ItemDescription> {
                       // )
 
                       Text(
-                          "${Constants.rupee}${double.parse(totalPrice.value).toStringAsFixed(2)}",
+                          money(totalPrice.value),
                           // Convert RxString to double and format to 2 decimal places
 
                           // "${Constants.rupee}$totalPrice",
@@ -1085,7 +1088,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                                   },
                                 ),
                                 Text(
-                                  '${varients?.metricvalue} ${varients?.metrictype}',
+                                  packSize(varients?.metricvalue, varients?.metrictype),
                                   style: customTextstyle(
                                       fontSize: 17.sp,
                                       color: black,
@@ -1098,7 +1101,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                                       Padding(
                                         padding: EdgeInsets.only(right: 2.w),
                                         child: Text(
-                                          '₹${varients?.sellingPrice}',
+                                          money(varients?.sellingPrice),
                                           style: customTextstyle(
                                               fontSize: 16.sp,
                                               color: black,
@@ -1106,7 +1109,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                                         ),
                                       ),
                                       Text(
-                                        '₹${varients?.price}',
+                                        money(varients?.price),
                                         style: customTextstyle(
                                             fontSize: 16.sp,
                                             color: tColor.withOpacity(.5),
@@ -1156,7 +1159,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                       Padding(
                         padding: const EdgeInsets.only(top: 10),
                         child: Text(
-                          '${selectedvarients?.metricvalue} ${selectedvarients?.metrictype}',
+                          packSize(selectedvarients?.metricvalue, selectedvarients?.metrictype),
                           style: customTextstyle(
                               fontSize: 16.sp,
                               color: green,
@@ -1195,7 +1198,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                                 ),
                               ),
                               Text(
-                                '₹${selectedvarients?.sellingPrice}',
+                                money(selectedvarients?.sellingPrice),
                                 style: customTextstyle(
                                     fontSize: 16.sp,
                                     color: primary,

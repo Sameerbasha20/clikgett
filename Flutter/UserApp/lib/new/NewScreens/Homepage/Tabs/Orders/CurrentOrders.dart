@@ -1,3 +1,5 @@
+import 'package:fav_app/new/Constants/number_format.dart';
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Services/order_tracking_services.dart';
 // ignore_for_file: prefer_const_constructors
 import 'package:fav_app/new/Constants/Constants.dart';
@@ -93,7 +95,7 @@ class _CurrentOrdersState extends State<CurrentOrders> {
                   style: GoogleFonts.poppins(
                       fontSize: 13.sp, fontWeight: FontWeight.w500, color: needsAction ? primaryDark : Colors.orange.shade700)),
               if ((p.grandTotal ?? 0) > 0)
-                Text('₹${p.grandTotal!.toStringAsFixed(2)}', style: GoogleFonts.poppins(fontSize: 12.sp, color: tColor3)),
+                Text('${money(p.grandTotal)}', style: GoogleFonts.poppins(fontSize: 12.sp, color: tColor3)),
             ]),
           ),
           const Icon(Icons.chevron_right_rounded, color: grey70),
@@ -247,7 +249,7 @@ class _CurrentOrdersState extends State<CurrentOrders> {
               fontWeight: FontWeight.w600,
               color: black.withOpacity(0.70),
             ),
-            Text("${Constants.rupee} $total",
+            Text(money(total),
                 style: robotocustomTextstyle(
                   fontWeight: FontWeight.w600,
                 )),
@@ -360,7 +362,7 @@ Widget ordersBody(
                   ),
                 ),
                 Text(
-                  '₹${orders.grandTotal?.toStringAsFixed(2)}',
+                  '${money(orders.grandTotal)}',
                   style: GoogleFonts.poppins(
                     fontSize: 16.5.sp,
                     fontWeight: FontWeight.w700,

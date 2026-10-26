@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/NewModel/product_details_model.dart';
 import 'package:fav_app/new/NewModel/sub_category_model.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
@@ -443,7 +444,7 @@ class CategoryController extends GetxController {
 
   updateVariant(ProductVariant productVariant) {
     _selectedMetricTypeandValue(
-        '${productVariant.metricvalue} ${productVariant.metrictype}');
+        packSize(productVariant.metricvalue, productVariant.metrictype));
 
     _selectedExpire(productVariant.ExpiryDate);
 

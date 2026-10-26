@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/CurrentOrders.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -172,7 +173,7 @@ class _CancelledOrdersState extends State<CancelledOrders> {
               fontWeight: FontWeight.w600,
               color: black.withOpacity(0.70),
             ),
-            Text("${Constants.rupee} $total",
+            Text(money(total),
                 style: robotocustomTextstyle(
                   fontWeight: FontWeight.w600,
                 )),

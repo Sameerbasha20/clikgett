@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
@@ -188,7 +189,7 @@ class FlashSaleSection extends StatelessWidget {
     final String weight = primaryVariant != null &&
             primaryVariant.metricvalue != null &&
             primaryVariant.metrictype != null
-        ? '${primaryVariant.metricvalue} ${primaryVariant.metrictype}'
+        ? packSize(primaryVariant.metricvalue, primaryVariant.metrictype)
         : '';
 
     return GestureDetector(

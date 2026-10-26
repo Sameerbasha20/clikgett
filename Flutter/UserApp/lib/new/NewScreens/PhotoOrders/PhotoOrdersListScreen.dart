@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/imageslist.dart';
 import 'package:fav_app/new/Controllers/photo_orders_controller.dart';
@@ -235,7 +236,7 @@ class _PhotoOrdersListScreenState extends State<PhotoOrdersListScreen> {
                           ),
                           Text(
                             (item.grandTotal != null && item.grandTotal! > 0)
-                                ? "₹${item.grandTotal!.toStringAsFixed(2)}"
+                                ? "${money(item.grandTotal)}"
                                 : "Price Pending",
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w700,
