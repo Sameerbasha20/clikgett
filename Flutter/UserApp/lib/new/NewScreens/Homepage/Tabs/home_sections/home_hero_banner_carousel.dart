@@ -51,7 +51,9 @@ class _HomeHeroBannerCarouselState extends State<HomeHeroBannerCarousel> {
     } else if (type == 'bulk_deals') {
       screen = const BulkDealsScreen();
     } else {
-      screen = BannerDetailScreen(banner: banner);
+      // No link set: take the customer to the categories to shop.
+      widget.homeController.updateTabIndex(1);
+      return;
     }
     Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }

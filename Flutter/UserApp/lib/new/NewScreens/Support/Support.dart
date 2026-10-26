@@ -42,13 +42,6 @@ class _SupportState extends State<Support> {
               padding: const EdgeInsets.all(12),
               children: [
                 MenuGroup([
-                  if (c.supportPhone.isNotEmpty)
-                    MenuTile(
-                      icon: Icons.call_outlined,
-                      title: 'Call us',
-                      subtitle: c.supportPhone,
-                      onTap: () => _open(Uri(scheme: 'tel', path: c.supportPhone.replaceAll(' ', ''))),
-                    ),
                   if (c.supportEmail.isNotEmpty)
                     MenuTile(
                       icon: Icons.mail_outline_rounded,
