@@ -9,6 +9,7 @@ import 'package:fav_app/new/Controllers/home_controller.dart';
 import 'package:fav_app/new/Controllers/orders_controller.dart';
 import 'package:fav_app/new/Controllers/wallet.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Cart/Cart.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/order_progress_widgets.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/view_receipt.dart';
 import 'package:fav_app/new/NewScreens/Support/Support.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
@@ -42,6 +43,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
   Timer? _poll;
   Timer? _tick;
   int _cancelLeft = 0;
+  bool _showAllItems = false;
   bool _feedbackChecked = false;
 
   @override
@@ -237,13 +239,22 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                     children: [
-                      _statusCard(order),
-                      _paymentCard(order),
+                      if (OrderStatus.isCancelled(order.status)) _statusCard(order) else OrderHeroCard(order: order),
+                      if (!OrderStatus.isFinal(order.status)) DeliveryRouteCard(order: order),
                       if (order.status == OrderStatus.arrived && order.otp != null) _otpCard(order),
                       if (order.riderName != null && [OrderStatus.assigned, OrderStatus.outForDelivery, OrderStatus.arrived].contains(order.status))
                         _riderCard(order),
-                      if (_cancelLeft > 0) _cancelCard(order),
-                      _timelineCard(order),
+                      if (OrderStatus.isCancelled(order.status))
+                        _timelineCard(order)
+                      else
+                        _card(
+                          padding: const EdgeInsets.fromLTRB(8, 14, 8, 12),
+                          child: Column(children: [
+                            OrderStepper(order: order),
+                            if (_cancelLeft > 0) ...[const SizedBox(height: 14), _cancelCard(order)],
+                          ]),
+                        ),
+                      _paymentCard(order),
                       _itemsCard(order),
                       _billCard(order),
                       _addressCard(order),
@@ -405,40 +416,30 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
   Widget _cancelCard(TrackedOrder o) {
     final left = '${_cancelLeft ~/ 60}:${(_cancelLeft % 60).toString().padLeft(2, '0')}';
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
-      decoration: BoxDecoration(
-        color: white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(color: const Color(0xFFFEF2F2), borderRadius: BorderRadius.circular(14)),
       child: Row(children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(color: redLight, borderRadius: BorderRadius.circular(20)),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.timer_outlined, size: 14, color: red),
-            const SizedBox(width: 4),
-            Text(left, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: red)),
-          ]),
-        ),
+        const Icon(Icons.schedule_rounded, color: red, size: 22),
         const SizedBox(width: 10),
         Expanded(
-          child: Text('Free cancellation', style: GoogleFonts.poppins(fontSize: 12.5, color: tColor4)),
+          child: Text.rich(TextSpan(children: [
+            TextSpan(text: 'You can cancel for ', style: GoogleFonts.poppins(fontSize: 12.5, color: tColor4)),
+            TextSpan(text: left, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, color: red)),
+            TextSpan(text: ' more', style: GoogleFonts.poppins(fontSize: 12.5, color: tColor4)),
+          ])),
         ),
-        SizedBox(
-          height: 32,
-          child: OutlinedButton(
-            onPressed: _busy ? null : () => _cancel(o),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: red,
-              side: BorderSide(color: red.withOpacity(0.45)),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              shape: const StadiumBorder(),
-              visualDensity: VisualDensity.compact,
-            ),
-            child: Text('Cancel', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+        TextButton(
+          onPressed: _busy ? null : () => _cancel(o),
+          style: TextButton.styleFrom(
+            foregroundColor: red,
+            backgroundColor: const Color(0xFFFEE2E2),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
+          child: Text('Cancel order', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
         ),
       ]),
     );
@@ -581,12 +582,30 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
     );
   }
 
+  static const _itemsPreview = 3;
+
   Widget _itemsCard(TrackedOrder o) => _card(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _title([
-            if (o.items.isNotEmpty) '${o.items.length} item${o.items.length == 1 ? '' : 's'}',
-            if (o.printJobs.isNotEmpty) '${o.printJobs.length} print${o.printJobs.length == 1 ? '' : 's'}',
-          ].join(' · ')),
+          Row(children: [
+            Expanded(
+              child: _title([
+                if (o.items.isNotEmpty) '${o.items.length} item${o.items.length == 1 ? '' : 's'}',
+                if (o.printJobs.isNotEmpty) '${o.printJobs.length} print${o.printJobs.length == 1 ? '' : 's'}',
+              ].join(' · ')),
+            ),
+            if (o.items.length > _itemsPreview)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: InkWell(
+                  onTap: () => setState(() => _showAllItems = !_showAllItems),
+                  child: Row(children: [
+                    Text(_showAllItems ? 'Show less' : 'View all',
+                        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: primaryDark)),
+                    Icon(_showAllItems ? Icons.expand_less_rounded : Icons.chevron_right_rounded, size: 18, color: primaryDark),
+                  ]),
+                ),
+              ),
+          ]),
           for (final job in o.printJobs)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -611,7 +630,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
                 Text(_rs(job.lineTotal), style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor)),
               ]),
             ),
-          for (final item in o.items)
+          for (final item in (_showAllItems ? o.items : o.items.take(_itemsPreview)))
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(children: [
