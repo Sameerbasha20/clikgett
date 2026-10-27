@@ -67,11 +67,19 @@ const call = async (method, path, token, body) => {
     const guest = await call('GET', '/product-unlocks/deals');
     check('guests see deals, all locked', guest.data.Deals.every((d) => d.IsUnlocked === false) && guest.data.LoggedIn === false);
 
+    // ---- One cart value unlocks every deal (admin setting)
+    const before = (await call('GET', '/product-unlocks/admin/settings', admin)).data.ThresholdAmount;
+    check('unlock value is a shop-wide setting', before > 0, JSON.stringify(before));
+    check('unlock value must be positive', (await call('PUT', '/product-unlocks/admin/settings', admin, { ThresholdAmount: 0 })).status === 400);
+    const set = await call('PUT', '/product-unlocks/admin/settings', admin, { ThresholdAmount: 100 });
+    check('admin sets the unlock value', set.data.Status === 1 && (await call('GET', '/product-unlocks/deals', user)).data.ThresholdAmount === 100);
+
     // ---- Admin creates a ₹1 deal (limit 1 per order) and checkout honours it
     const [dealPack, otherPack] = await q(
         `SELECT V.ProductID, V.VariantID, COALESCE(NULLIF(V.OfferPrice, 0), V.Price) AS Selling
            FROM ProductVariants V JOIN Products P ON P.ProductID = V.ProductID
           WHERE P.Status = 1 AND V.Status = 1 AND V.AvailableQty > 10 AND COALESCE(NULLIF(V.OfferPrice, 0), V.Price) BETWEEN 20 AND 200
+            AND NOT EXISTS (SELECT 1 FROM product_unlocks pu WHERE pu.Status = 1 AND pu.ProductID = V.ProductID)
           ORDER BY V.VariantID LIMIT 2`);
     const tooHigh = await call('POST', '/product-unlocks/unlocks', admin, {
         ProductID: dealPack.ProductID, VariantID: dealPack.VariantID, UnlockPrice: dealPack.Selling, ThresholdAmount: 100 });
@@ -84,6 +92,9 @@ const call = async (method, path, token, body) => {
         MaxQtyPerOrder: 1, Message: 'Test deal' });
     check('admin creates a deal', created.data.Status === 1, JSON.stringify(created.data));
     const unlockId = created.data.UnlockID;
+    const again = await call('POST', '/product-unlocks/unlocks', admin, {
+        ProductID: dealPack.ProductID, VariantID: dealPack.VariantID, UnlockPrice: 0 });
+    check('a pack can only be in the deals once', again.status === 400, JSON.stringify(again.data));
     const listed = (await call('GET', '/product-unlocks/unlocks', admin)).data.Unlocks.find((u) => u.UnlockID === unlockId);
     check('deal lists its pack, limit and message', listed && listed.VariantID === dealPack.VariantID
         && listed.MaxQtyPerOrder === 1 && listed.UnlockMessage === 'Test deal', JSON.stringify(listed));
@@ -101,6 +112,7 @@ const call = async (method, path, token, body) => {
         `line ${deal && deal.LineTotal}, expected ${1 + dealPack.Selling}`);
 
     await call('DELETE', `/product-unlocks/unlocks/${unlockId}`, admin);
+    await call('PUT', '/product-unlocks/admin/settings', admin, { ThresholdAmount: before });
     const [cleanup] = await q('SELECT CartID FROM Carts WHERE UserID = ? AND IsOrderLinked = 1', [buyer.UserID]);
     if (cleanup) await call('DELETE', `/carts/deletecart/${cleanup.CartID}`, user);
 

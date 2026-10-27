@@ -416,7 +416,8 @@ const PricingEngine = {
             queryAsync("SELECT * FROM AdminShopToggleSettings LIMIT 1"),
             queryAsync("SELECT * FROM Settings"),
             queryAsync(`
-                SELECT pu.UnlockID, pu.ProductID, pv.VariantID, pu.ThresholdAmount, pu.UnlockPrice, pu.Message,
+                SELECT pu.UnlockID, pu.ProductID, pv.VariantID,
+                       COALESCE((SELECT UnlockDealsThreshold FROM AdminShopToggleSettings LIMIT 1), pu.ThresholdAmount) AS ThresholdAmount, pu.UnlockPrice, pu.Message,
                        pu.StartDate, pu.EndDate, pu.Status, COALESCE(pu.MaxQtyPerOrder, 1) AS MaxQtyPerOrder,
                        p.ProductName, p.ProductImages, pv.Price, pv.OfferPrice, pv.metrictype, pv.metricvalue
                 FROM product_unlocks pu
@@ -427,7 +428,7 @@ const PricingEngine = {
                 WHERE pu.Status = 1
                   AND (pu.StartDate IS NULL OR pu.StartDate <= NOW())
                   AND (pu.EndDate IS NULL OR pu.EndDate >= NOW())
-                ORDER BY pu.ThresholdAmount ASC
+                ORDER BY pu.UnlockPrice ASC
             `),
             queryAsync(`
                 SELECT PromoCode, MinOrderValue, OfferValue, MaxDiscount, Type, Description
@@ -647,11 +648,13 @@ const PricingEngine = {
         let didApplyUnlockPrice = false;
         (activeUnlocks || []).forEach(u => {
             const threshold = parseFloat(u.ThresholdAmount);
-            const isUnlocked = evalSubTotal > threshold;
+            // Unlocks when the rest of the cart reaches the value (₹499 cart -> ₹499 deals open).
+            const isUnlocked = evalSubTotal >= threshold;
             if (isUnlocked && u.UnlockPrice !== null && u.UnlockPrice !== undefined && parseFloat(u.UnlockPrice) >= 0) {
                 const uPrice = parseFloat(u.UnlockPrice);
                 processedItems.forEach(item => {
-                    if (item.ProductID == u.ProductID && item.VariantID == u.VariantID) {
+                    // One deal per item: a second rule for the same pack must not discount it again.
+                    if (item.ProductID == u.ProductID && item.VariantID == u.VariantID && !item.IsUnlockedProduct) {
                         if (uPrice < item.UnitPrice) {
                             // The deal price covers up to MaxQtyPerOrder units; the rest are at the normal price.
                             const qty = item.Quantity || 1;
@@ -679,8 +682,8 @@ const PricingEngine = {
 
         const productUnlocksEvaluated = (activeUnlocks || []).map(u => {
             const threshold = parseFloat(u.ThresholdAmount);
-            const isUnlocked = evalSubTotal > threshold;
-            const gap = isUnlocked ? 0 : parseFloat(((threshold - evalSubTotal) + 1).toFixed(2));
+            const isUnlocked = evalSubTotal >= threshold;
+            const gap = isUnlocked ? 0 : parseFloat((threshold - evalSubTotal).toFixed(2));
             const unlockPrice = (u.UnlockPrice !== null && u.UnlockPrice !== undefined) ? parseFloat(u.UnlockPrice) : parseFloat(u.OfferPrice || u.Price || 0);
             return {
                 UnlockID: u.UnlockID,
@@ -755,6 +758,8 @@ const PricingEngine = {
             ApplicableCoupons: applicableCoupons,
             SuggestedCoupons: suggestedCoupons,
             ProductUnlocks: productUnlocksEvaluated,
+            // Cart value that counts towards unlock deals (deal items excluded).
+            UnlockCartValue: parseFloat(evalSubTotal.toFixed(2)),
             AppliedCartOffer: appliedCartOffer ? {
                 OfferID: appliedCartOffer.OfferID,
                 OfferName: appliedCartOffer.OfferName,

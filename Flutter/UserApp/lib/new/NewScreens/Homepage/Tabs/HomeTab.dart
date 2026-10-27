@@ -1,3 +1,4 @@
+import 'package:fav_app/new/NewScreens/Deals/unlock_deals_banner.dart';
 import 'package:fav_app/Models/Home/TimingProvider.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/static_loader.dart';
@@ -110,6 +111,7 @@ class _HomeTabState extends State<Home> {
               SliverToBoxAdapter(child: StorefrontHeader(isLoggedIn: _isLoggedIn)),
               SliverPersistentHeader(pinned: true, delegate: StickySearchBarDelegate(hints: _searchHints)),
               SliverToBoxAdapter(child: _StoreClosedCard(timingController: timingController)),
+              const SliverToBoxAdapter(child: UnlockDealsBanner()),
               if (_previouslyBought.isNotEmpty)
                 SliverToBoxAdapter(
                   child: SectionProductRail(

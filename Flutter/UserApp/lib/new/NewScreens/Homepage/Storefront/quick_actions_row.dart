@@ -1,6 +1,5 @@
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
-import 'package:fav_app/new/NewScreens/Deals/UnlockDealsScreen.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/clikgett_product_card.dart';
 import 'package:fav_app/new/NewScreens/PhotoOrders/PhotoOrderUploadScreen.dart';
 import 'package:fav_app/new/NewScreens/Widgets/floating_cart_bar.dart';
@@ -35,25 +34,15 @@ class _QuickActionsRowState extends State<QuickActionsRow> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
       child: Row(children: [
+        // Unlock deals has its own banner at the top of home (UnlockDealsBanner).
         Expanded(
           child: _ActionCard(
             icon: Icons.photo_camera_rounded,
             iconBg: const Color(0xFFE0F2FE),
             iconColor: const Color(0xFF0369A1),
             title: 'Order with a photo',
-            subtitle: 'Snap your list, we pack it',
+            subtitle: 'Snap your shopping list, we pack it for you',
             onTap: _photoOrder,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _ActionCard(
-            icon: Icons.lock_open_rounded,
-            iconBg: const Color(0xFFDCFCE7),
-            iconColor: const Color(0xFF15803D),
-            title: 'Unlock deals',
-            subtitle: 'Special prices as your cart grows',
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UnlockDealsScreen())),
           ),
         ),
       ]),

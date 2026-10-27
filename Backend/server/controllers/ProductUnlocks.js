@@ -12,18 +12,26 @@ function queryAsync(sql, params = []) {
 
 const MAX_DEAL_QTY = 20;
 
+// Every deal unlocks at the same cart value (admin → Unlock deals → "Unlock at").
+const THRESHOLD_SQL = 'COALESCE((SELECT UnlockDealsThreshold FROM AdminShopToggleSettings LIMIT 1), pu.ThresholdAmount)';
+
+async function unlockThreshold() {
+    const [row] = await queryAsync('SELECT UnlockDealsThreshold AS v FROM AdminShopToggleSettings LIMIT 1');
+    return row ? parseFloat(row.v) || 0 : 0;
+}
+
 /**
  * Validates an unlock rule from the admin form. The deal price is required (₹0 = free),
  * the pack must belong to the product, and at most MaxQtyPerOrder units get the price.
  */
 async function readRule(body) {
-    const threshold = parseFloat(body.ThresholdAmount);
+    const threshold = await unlockThreshold();
     const productId = parseInt(body.ProductID, 10);
     const variantId = body.VariantID ? parseInt(body.VariantID, 10) : null;
     const unlockPrice = body.UnlockPrice === '' || body.UnlockPrice === null || body.UnlockPrice === undefined
         ? NaN : parseFloat(body.UnlockPrice);
     const maxQty = body.MaxQtyPerOrder === undefined || body.MaxQtyPerOrder === '' ? 1 : parseInt(body.MaxQtyPerOrder, 10);
-    if (!(threshold > 0)) return { error: 'Enter the cart value that unlocks the deal' };
+    if (!(threshold > 0)) return { error: 'Set the "Unlock at" cart value first' };
     if (!(productId > 0)) return { error: 'Choose a product' };
     if (Number.isNaN(unlockPrice) || unlockPrice < 0) return { error: 'Enter the deal price (0 for free)' };
     if (!(maxQty >= 1 && maxQty <= MAX_DEAL_QTY)) return { error: `Limit per order must be between 1 and ${MAX_DEAL_QTY}` };
@@ -57,7 +65,7 @@ const ProductUnlocksController = {
             // VariantID is the rule's pack, or the product's first active pack when none was chosen
             // (the same pack the pricing engine and the deals screen use).
             const sql = `
-                SELECT pu.UnlockID, pu.ProductID, pv.VariantID, pu.VariantID AS RuleVariantID, pu.ThresholdAmount,
+                SELECT pu.UnlockID, pu.ProductID, pv.VariantID, pu.VariantID AS RuleVariantID, ${THRESHOLD_SQL} AS ThresholdAmount,
                        pu.UnlockPrice, pu.Message, pu.Message AS UnlockMessage, pu.StartDate, pu.EndDate, pu.Status,
                        COALESCE(pu.MaxQtyPerOrder, 1) AS MaxQtyPerOrder,
                        p.ProductName, p.ProductImages,
@@ -67,11 +75,11 @@ const ProductUnlocksController = {
                 JOIN Products p ON pu.ProductID = p.ProductID
                 LEFT JOIN ProductVariants pv ON pv.VariantID = COALESCE(pu.VariantID,
                      (SELECT MIN(v2.VariantID) FROM ProductVariants v2 WHERE v2.ProductID = pu.ProductID AND v2.Status = 1))
-                ORDER BY pu.UnlockPrice ASC, pu.ThresholdAmount ASC
+                ORDER BY pu.UnlockPrice ASC, p.ProductName ASC
             `;
             const unlocks = await queryAsync(sql);
             const list = unlocks || [];
-            return res.json({ Status: 1, status: 1, Unlocks: list, data: list });
+            return res.json({ Status: 1, status: 1, Unlocks: list, data: list, ThresholdAmount: await unlockThreshold() });
         } catch (err) {
             console.error("Error fetching product unlocks:", err);
             return res.status(500).json({ Status: 0, status: 0, Message: "Error fetching product unlocks", message: "Error fetching product unlocks" });
@@ -83,6 +91,20 @@ const ProductUnlocksController = {
         try {
             const rule = await readRule(req.body || {});
             if (rule.error) return res.status(400).json({ Status: 0, status: 0, Message: rule.error, message: rule.error });
+            // One live deal per pack, so a product never shows twice.
+            // A rule without a pack applies to the product's first pack, so compare the real packs.
+            const firstPack = 'SELECT MIN(v.VariantID) FROM ProductVariants v WHERE v.ProductID = pu.ProductID AND v.Status = 1';
+            const [dupe] = await queryAsync(
+                `SELECT pu.UnlockID FROM product_unlocks pu
+                  WHERE pu.Status = 1 AND pu.ProductID = ?
+                    AND COALESCE(pu.VariantID, (${firstPack})) =
+                        COALESCE(?, (SELECT MIN(v.VariantID) FROM ProductVariants v WHERE v.ProductID = ? AND v.Status = 1))
+                  LIMIT 1`,
+                [rule.productId, rule.variantId, rule.productId]);
+            if (dupe) {
+                const msg = 'This product is already in the deals. Edit it under "Live deals".';
+                return res.status(400).json({ Status: 0, status: 0, Message: msg, message: msg });
+            }
             const result = await queryAsync(
                 `INSERT INTO product_unlocks
                  (ThresholdAmount, ProductID, VariantID, UnlockPrice, MaxQtyPerOrder, Message, StartDate, EndDate, Status, CreatedAt)
@@ -125,6 +147,31 @@ const ProductUnlocksController = {
         }
     },
 
+    // The one cart value that unlocks every deal.
+    getSettings: async (req, res) => {
+        try {
+            return res.json({ Status: 1, ThresholdAmount: await unlockThreshold() });
+        } catch (err) {
+            console.error('Error reading unlock settings:', err);
+            return res.status(500).json({ Status: 0, Message: 'Could not load the unlock value' });
+        }
+    },
+
+    updateSettings: async (req, res) => {
+        try {
+            const value = parseFloat((req.body || {}).ThresholdAmount);
+            if (!(value > 0 && value <= 100000)) {
+                return res.status(400).json({ Status: 0, Message: 'Enter the cart value that unlocks the deals' });
+            }
+            await queryAsync('UPDATE AdminShopToggleSettings SET UnlockDealsThreshold = ?', [value]);
+            await queryAsync('UPDATE product_unlocks SET ThresholdAmount = ?', [value]);
+            return res.json({ Status: 1, Message: `Deals now unlock at ₹${value}`, ThresholdAmount: value });
+        } catch (err) {
+            console.error('Error saving unlock settings:', err);
+            return res.status(500).json({ Status: 0, Message: 'Could not save the unlock value' });
+        }
+    },
+
     // Delete product unlock rule
     deleteUnlock: async (req, res) => {
         try {
@@ -142,7 +189,7 @@ const ProductUnlocksController = {
     deals: async (req, res) => {
         try {
             const rows = await queryAsync(`
-                SELECT pu.UnlockID, pu.ProductID, v.VariantID, pu.ThresholdAmount, pu.UnlockPrice, pu.Message,
+                SELECT pu.UnlockID, pu.ProductID, v.VariantID, ${THRESHOLD_SQL} AS ThresholdAmount, pu.UnlockPrice, pu.Message,
                        COALESCE(pu.MaxQtyPerOrder, 1) AS DealLimit,
                        p.ProductName, p.ImageUrl, p.ProductImages, p.CategoryID, p.SubCategoryID,
                        v.Price, v.OfferPrice, v.metricvalue, v.metrictype, v.AvailableQty, v.maxQty
@@ -150,15 +197,18 @@ const ProductUnlocksController = {
                   JOIN Products p ON p.ProductID = pu.ProductID AND p.Status = 1
                   JOIN ProductVariants v ON v.VariantID = COALESCE(pu.VariantID,
                        (SELECT MIN(v2.VariantID) FROM ProductVariants v2 WHERE v2.ProductID = pu.ProductID AND v2.Status = 1))
-                 WHERE pu.Status = 1
+                 WHERE pu.Status = 1 AND pu.UnlockPrice IS NOT NULL
                    AND (pu.StartDate IS NULL OR pu.StartDate <= NOW())
                    AND (pu.EndDate IS NULL OR pu.EndDate >= NOW())
-                 ORDER BY pu.UnlockPrice ASC, pu.ThresholdAmount ASC`);
+                 ORDER BY pu.UnlockPrice ASC, p.ProductName ASC`);
+            const threshold = await unlockThreshold();
+            let cartValue = 0;
             const progress = new Map();
             const cartQty = new Map();
             if (req.UserID) {
                 const bill = await require('../services/CheckoutBill').computeBill({ userId: req.UserID });
                 (bill.ProductUnlocks || []).forEach((u) => progress.set(u.UnlockID, u));
+                cartValue = parseFloat(bill.UnlockCartValue) || 0;
                 (bill.Items || []).forEach((i) => cartQty.set(`${i.ProductID}:${i.VariantID}`, parseInt(i.Quantity, 10) || 0));
             }
             const image = (r) => {
@@ -173,7 +223,6 @@ const ProductUnlocksController = {
             };
             const deals = rows.map((r) => {
                 const p = progress.get(r.UnlockID);
-                const threshold = parseFloat(r.ThresholdAmount) || 0;
                 return {
                     UnlockID: r.UnlockID,
                     ProductID: r.ProductID,
@@ -186,7 +235,7 @@ const ProductUnlocksController = {
                     UnlockPrice: parseFloat(r.UnlockPrice) || 0,
                     ThresholdAmount: threshold,
                     IsUnlocked: p ? p.IsUnlocked === true : false,
-                    AmountNeeded: p ? p.AmountNeeded : threshold + 1,
+                    AmountNeeded: p ? p.AmountNeeded : threshold,
                     InStock: (parseInt(r.AvailableQty, 10) || 0) > 0,
                     MaxQty: Math.min(parseInt(r.AvailableQty, 10) || 0, parseInt(r.maxQty, 10) || 99),
                     DealLimit: parseInt(r.DealLimit, 10) || 1,
@@ -197,9 +246,15 @@ const ProductUnlocksController = {
                 };
             });
             const locked = deals.filter((d) => !d.IsUnlocked && d.InStock).sort((a, b) => a.AmountNeeded - b.AmountNeeded);
+            const amountNeeded = Math.max(0, parseFloat((threshold - cartValue).toFixed(2)));
             return res.json({
                 Status: 1,
                 Deals: deals,
+                // One value for all deals: what the cart is at and what is still needed.
+                ThresholdAmount: threshold,
+                CartValue: cartValue,
+                AmountNeeded: amountNeeded,
+                Unlocked: req.UserID ? amountNeeded <= 0 : false,
                 NextUnlock: locked.length
                     ? { AmountNeeded: locked[0].AmountNeeded, ThresholdAmount: locked[0].ThresholdAmount, UnlockPrice: locked[0].UnlockPrice }
                     : null,

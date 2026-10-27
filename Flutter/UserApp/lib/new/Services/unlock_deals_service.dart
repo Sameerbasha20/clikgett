@@ -58,7 +58,7 @@ class UnlockDeal {
   /// How far the cart is towards this deal (0..1).
   double get progress {
     if (unlocked || threshold <= 0) return 1;
-    return ((threshold - amountNeeded + 1) / threshold).clamp(0.0, 1.0);
+    return ((threshold - amountNeeded) / threshold).clamp(0.0, 1.0);
   }
 
   /// The price struck through next to the deal price.
@@ -71,7 +71,27 @@ class UnlockDealsPage {
   final double? nextUnlockPrice;
   final bool loggedIn;
 
-  const UnlockDealsPage(this.deals, {this.nextAmountNeeded, this.nextUnlockPrice, this.loggedIn = false});
+  /// One cart value unlocks every deal (admin → Unlock deals).
+  final double threshold;
+
+  /// What the cart counts towards it (deal items excluded) and what is still needed.
+  final double cartValue;
+  final double amountNeeded;
+  final bool unlocked;
+
+  const UnlockDealsPage(this.deals,
+      {this.nextAmountNeeded,
+      this.nextUnlockPrice,
+      this.loggedIn = false,
+      this.threshold = 0,
+      this.cartValue = 0,
+      this.amountNeeded = 0,
+      this.unlocked = false});
+
+  double get progress => unlocked || threshold <= 0 ? 1 : (cartValue / threshold).clamp(0.0, 1.0);
+
+  /// Deals that can be bought right now (in stock).
+  List<UnlockDeal> get available => deals.where((d) => d.inStock).toList();
 }
 
 class UnlockDealsService {
@@ -90,6 +110,10 @@ class UnlockDealsService {
         nextAmountNeeded: next is Map ? _d(next['AmountNeeded']) : null,
         nextUnlockPrice: next is Map ? _d(next['UnlockPrice']) : null,
         loggedIn: data['LoggedIn'] == true,
+        threshold: _d(data['ThresholdAmount']),
+        cartValue: _d(data['CartValue']),
+        amountNeeded: _d(data['AmountNeeded']),
+        unlocked: data['Unlocked'] == true,
       );
     } catch (e) {
       debugPrint('unlock deals failed: $e');

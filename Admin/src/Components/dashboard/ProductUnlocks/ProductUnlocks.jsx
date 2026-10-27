@@ -24,8 +24,8 @@ const SORTS = {
 };
 
 /**
- * Unlock deals: pick any product and sell it at a special price (FREE, ₹1, ₹9...) once
- * the rest of the cart reaches a value. The app shows deals in tabs by their price.
+ * Unlock deals: pick any products and sell them at a special price (FREE, ₹1, ₹9...).
+ * Every deal opens at the same cart value ("Unlock at"), set once at the top.
  */
 function ProductUnlocks() {
     const [tab, setTab] = useState("products");
@@ -34,13 +34,41 @@ function ProductUnlocks() {
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("name-asc");
     const [limit, setLimit] = useState(PAGE);
-    const [defaults, setDefaults] = useState({ price: "1", cart: "499", maxQty: "1" });
+    const [defaults, setDefaults] = useState({ price: "1", maxQty: "1" });
+    const [threshold, setThreshold] = useState(null);
+    const [thresholdInput, setThresholdInput] = useState("");
+    const [savingThreshold, setSavingThreshold] = useState(false);
     const [rowEdits, setRowEdits] = useState({});
     const [busy, setBusy] = useState(null);
 
     const loadDeals = useCallback(() => {
         Services.getProductUnlocks("GET", null).then((res) => setDeals(ok(res) ? res.Unlocks || res.data || [] : []));
     }, []);
+
+    useEffect(() => {
+        Services.getUnlockSettings().then((res) => {
+            if (ok(res)) {
+                setThreshold(Number(res.ThresholdAmount));
+                setThresholdInput(String(Number(res.ThresholdAmount)));
+            }
+        });
+    }, []);
+
+    const saveThreshold = async (value) => {
+        const v = Number(value);
+        if (!(v > 0)) return toast.error("Enter the cart value, e.g. 499");
+        setSavingThreshold(true);
+        const res = await Services.updateUnlockSettings(JSON.stringify({ ThresholdAmount: v }));
+        setSavingThreshold(false);
+        if (ok(res)) {
+            setThreshold(v);
+            setThresholdInput(String(v));
+            toast.success(`All deals now unlock at ₹${v}`, { autoClose: 1800 });
+            loadDeals();
+        } else {
+            toast.error((res && res.Message) || "Could not save the unlock value");
+        }
+    };
 
     useEffect(() => {
         loadDeals();
@@ -60,7 +88,7 @@ function ProductUnlocks() {
         const q = search.trim().toLowerCase();
         return deals
             .filter((d) => !q || `${d.ProductID} ${d.ProductName}`.toLowerCase().includes(q))
-            .sort((a, b) => Number(a.UnlockPrice) - Number(b.UnlockPrice) || Number(a.ThresholdAmount) - Number(b.ThresholdAmount));
+            .sort((a, b) => Number(a.UnlockPrice) - Number(b.UnlockPrice) || a.ProductName.localeCompare(b.ProductName));
     }, [deals, search]);
 
     const edit = (key, patch) => setRowEdits((e) => ({ ...e, [key]: { ...(e[key] || {}), ...patch } }));
@@ -73,7 +101,7 @@ function ProductUnlocks() {
             : await Services.createProductUnlock("POST", JSON.stringify(body));
         setBusy(null);
         if (ok(res)) {
-            toast.success(id ? "Deal updated" : `Added to ${tabLabel(body.UnlockPrice)} deals`, { autoClose: 1500 });
+            toast.success(id ? "Deal updated" : `Added to deals at ${tabLabel(body.UnlockPrice)}`, { autoClose: 1500 });
             setRowEdits((e) => ({ ...e, [key]: undefined }));
             loadDeals();
             return true;
@@ -88,7 +116,6 @@ function ProductUnlocks() {
             ProductID: p.ProductID,
             VariantID: p.VariantID,
             UnlockPrice: valueOf(key, "price", defaults.price),
-            ThresholdAmount: valueOf(key, "cart", defaults.cart),
             MaxQtyPerOrder: defaults.maxQty,
             Status: 1,
         });
@@ -98,7 +125,6 @@ function ProductUnlocks() {
         ProductID: d.ProductID,
         VariantID: d.RuleVariantID || d.VariantID,
         UnlockPrice: d.UnlockPrice,
-        ThresholdAmount: d.ThresholdAmount,
         MaxQtyPerOrder: d.MaxQtyPerOrder,
         Message: d.UnlockMessage || d.Message || "",
         StartDate: d.StartDate,
@@ -139,9 +165,33 @@ function ProductUnlocks() {
                         <div>
                             <h2>Unlock deals</h2>
                             <span className={classes.muted}>
-                                Sell any product at a special price once the rest of the cart reaches a value. The app groups deals into tabs by price
-                                {tabCounts.length > 0 && <>: {tabCounts.map(([l, n]) => `${l} (${n})`).join(", ")}</>}.
+                                Pick any products and set a special price. They all unlock together once the customer's cart reaches the value below
+                                {tabCounts.length > 0 && <> · live: {tabCounts.map(([l, n]) => `${l} (${n})`).join(", ")}</>}.
                             </span>
+                        </div>
+                    </div>
+
+                    <div className={classes.card} style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center",
+                        background: "linear-gradient(135deg, #14532d, #16a34a)", color: "#fff" }}>
+                        <div style={{ minWidth: 220 }}>
+                            <div style={{ fontSize: 13, opacity: 0.85 }}>Deals unlock when the cart reaches</div>
+                            <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>{threshold ? `₹${threshold}` : "—"}</div>
+                            <div style={{ fontSize: 12, opacity: 0.8 }}>Deal items themselves don't count towards it.</div>
+                        </div>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                            {CART_CHIPS.map((v) => (
+                                <button key={v} type="button" disabled={savingThreshold}
+                                    className={`btn btn-sm ${threshold === v ? "btn-light" : "btn-outline-light"}`}
+                                    onClick={() => saveThreshold(v)}>₹{v}</button>
+                            ))}
+                            <div className="input-group input-group-sm" style={{ width: 170 }}>
+                                <span className="input-group-text">₹</span>
+                                <input type="number" min="1" className="form-control" value={thresholdInput}
+                                    onChange={(e) => setThresholdInput(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && saveThreshold(thresholdInput)} />
+                                <button type="button" className="btn btn-warning fw-bold" disabled={savingThreshold || Number(thresholdInput) === threshold}
+                                    onClick={() => saveThreshold(thresholdInput)}>{savingThreshold ? "…" : "Save"}</button>
+                            </div>
                         </div>
                     </div>
 
@@ -168,12 +218,6 @@ function ProductUnlocks() {
                                         onClick={() => setDefaults((d) => ({ ...d, price: String(p) }))}>{tabLabel(p)}</button>
                                 ))}
                             </span>
-                            <span>Unlocks at cart{" "}
-                                {CART_CHIPS.map((v) => (
-                                    <button key={v} type="button" className={`${chip(defaults.cart === String(v))} me-1`}
-                                        onClick={() => setDefaults((d) => ({ ...d, cart: String(v) }))}>₹{v}</button>
-                                ))}
-                            </span>
                             <span>Limit/order{" "}
                                 <input type="number" min="1" max="20" className="form-control form-control-sm d-inline-block" style={{ width: 64 }}
                                     value={defaults.maxQty} onChange={(e) => setDefaults((d) => ({ ...d, maxQty: e.target.value }))} />
@@ -187,7 +231,7 @@ function ProductUnlocks() {
                                 <>
                                     <table className={classes.table}>
                                         <thead>
-                                            <tr><th>Product</th><th>Pack</th><th>Price</th><th>Stock</th><th>Deal price ₹</th><th>Unlocks at ₹</th><th></th></tr>
+                                            <tr><th>Product</th><th>Pack</th><th>Price</th><th>Stock</th><th>Deal price ₹</th><th></th></tr>
                                         </thead>
                                         <tbody>
                                             {shown.slice(0, limit).map((p) => {
@@ -205,9 +249,9 @@ function ProductUnlocks() {
                                                         <td>₹{selling(p)}</td>
                                                         <td className={p.AvailableQty <= 0 ? classes.hot : ""}>{p.AvailableQty <= 0 ? "Out" : p.AvailableQty}</td>
                                                         {existing ? (
-                                                            <td colSpan={3}>
+                                                            <td colSpan={2}>
                                                                 <span style={{ background: "#dcfce7", color: "#166534", borderRadius: 12, padding: "3px 10px", fontWeight: 700 }}>
-                                                                    In {tabLabel(existing.UnlockPrice)} deals · unlocks at ₹{Number(existing.ThresholdAmount)}
+                                                                    In deals at {tabLabel(existing.UnlockPrice)}
                                                                 </span>
                                                                 <button type="button" className="btn btn-link btn-sm" onClick={() => { setTab("deals"); setSearch(p.ProductName.trim()); }}>Edit</button>
                                                             </td>
@@ -216,10 +260,6 @@ function ProductUnlocks() {
                                                                 <td>
                                                                     <input type="number" min="0" className="form-control form-control-sm" style={small}
                                                                         value={valueOf(key, "price", defaults.price)} onChange={(e) => edit(key, { price: e.target.value })} />
-                                                                </td>
-                                                                <td>
-                                                                    <input type="number" min="1" className="form-control form-control-sm" style={small}
-                                                                        value={valueOf(key, "cart", defaults.cart)} onChange={(e) => edit(key, { cart: e.target.value })} />
                                                                 </td>
                                                                 <td>
                                                                     <button type="button" className="btn btn-sm btn-success" disabled={busy === key} onClick={() => addDeal(p)}>
@@ -247,20 +287,18 @@ function ProductUnlocks() {
                         ) : (
                             <table className={classes.table}>
                                 <thead>
-                                    <tr><th>Product</th><th>Deal price ₹</th><th>Unlocks at ₹</th><th>Limit/order</th><th>Stock</th><th>Live</th><th></th></tr>
+                                    <tr><th>Product</th><th>Deal price ₹</th><th>Limit/order</th><th>Stock</th><th>Live</th><th></th></tr>
                                 </thead>
                                 <tbody>
                                     {shownDeals.map((d) => {
                                         const key = `d${d.UnlockID}`;
                                         const price = valueOf(key, "price", String(Number(d.UnlockPrice)));
-                                        const cart = valueOf(key, "cart", String(Number(d.ThresholdAmount)));
                                         const max = valueOf(key, "max", String(d.MaxQtyPerOrder || 1));
-                                        const changed = price !== String(Number(d.UnlockPrice)) || cart !== String(Number(d.ThresholdAmount)) || max !== String(d.MaxQtyPerOrder || 1);
+                                        const changed = price !== String(Number(d.UnlockPrice)) || max !== String(d.MaxQtyPerOrder || 1);
                                         return (
                                             <tr key={d.UnlockID}>
                                                 <td><strong>{d.ProductName}</strong><div className={classes.muted}>{unitOf(d)} · normally ₹{Number(d.OfferPrice || d.Price)}</div></td>
                                                 <td><input type="number" min="0" className="form-control form-control-sm" style={small} value={price} onChange={(e) => edit(key, { price: e.target.value })} /></td>
-                                                <td><input type="number" min="1" className="form-control form-control-sm" style={small} value={cart} onChange={(e) => edit(key, { cart: e.target.value })} /></td>
                                                 <td><input type="number" min="1" max="20" className="form-control form-control-sm" style={{ width: 64 }} value={max} onChange={(e) => edit(key, { max: e.target.value })} /></td>
                                                 <td className={Number(d.AvailableQty) <= 0 ? classes.hot : ""}>{Number(d.AvailableQty) <= 0 ? "Out" : d.AvailableQty}</td>
                                                 <td>
@@ -272,7 +310,7 @@ function ProductUnlocks() {
                                                 <td style={{ whiteSpace: "nowrap" }}>
                                                     {changed && (
                                                         <button type="button" className="btn btn-sm btn-success me-1" disabled={busy === key}
-                                                            onClick={() => updateDeal(d, { UnlockPrice: price, ThresholdAmount: cart, MaxQtyPerOrder: max })}>Save</button>
+                                                            onClick={() => updateDeal(d, { UnlockPrice: price, MaxQtyPerOrder: max })}>Save</button>
                                                     )}
                                                     <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => removeDeal(d)}><FaTrash /></button>
                                                 </td>

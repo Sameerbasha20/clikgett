@@ -626,6 +626,9 @@ export const Services = {
     createProductUnlock: (method = "POST", body, token) => httpcall("product-unlocks/unlocks", method, body, token),
     updateProductUnlock: (method = "PUT", body, token, id) => httpcall(`product-unlocks/unlocks/${id}`, method, body, token),
     deleteProductUnlock: (method = "DELETE", body = null, token, id) => httpcall(`product-unlocks/unlocks/${id}`, method, body, token),
+    // The one cart value that unlocks every deal.
+    getUnlockSettings: () => httpcall("product-unlocks/admin/settings", "GET", null),
+    updateUnlockSettings: (body) => httpcall("product-unlocks/admin/settings", "PUT", body),
     // Subcategory Reorder
     reorderSubcategories: (method = "POST", body, token) => httpcall("subcategories/reorder", method, body, token),
     // Cashback Review

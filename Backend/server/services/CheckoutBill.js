@@ -171,6 +171,7 @@ async function computeBill(opts) {
         ApplicableCoupons: calc.ApplicableCoupons || [],
         SuggestedCoupons: calc.SuggestedCoupons || [],
         ProductUnlocks: calc.ProductUnlocks || [],
+        UnlockCartValue: calc.UnlockCartValue || 0,
         EtaMinutes: eta.totalMinutes,
         Eta: eta,
         LargeCartNotice: eta.notes.length ? eta.notes.join(' · ') : null,
