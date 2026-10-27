@@ -35,14 +35,19 @@ async function generateReceiptPdf(orderId, res) {
                 const order = orderRows[0];
 
                 // 2. Fetch Order Items
-                // Products, then print-store jobs as one line each.
+                // Products, then print-store jobs as one line each. The two tables were
+                // created with different collations, so text columns are converted to one
+                // collation or MySQL rejects the UNION ("Illegal mix of collations").
                 const itemsQuery = `
-                    SELECT oi.ProductID, oi.ProductName, oi.Quantity, oi.Price, oi.OfferPrice, oi.metricvalue, oi.metrictype
+                    SELECT oi.ProductID, CONVERT(oi.ProductName USING utf8mb4) COLLATE utf8mb4_unicode_ci AS ProductName,
+                           oi.Quantity, oi.Price, oi.OfferPrice, oi.metricvalue,
+                           CONVERT(oi.metrictype USING utf8mb4) COLLATE utf8mb4_unicode_ci AS metrictype
                     FROM OrderItems oi
                     WHERE oi.OrderID = ?
                     UNION ALL
-                    SELECT 0, CONCAT('Print: ', pj.FileName, IF(pj.ColorMode = 'COLOR', ' (colour)', ' (B&W)')), 1, pj.LineTotal, pj.LineTotal,
-                           pj.Pages * pj.Copies, 'pages'
+                    SELECT 0, CONVERT(CONCAT('Print: ', pj.FileName, IF(pj.ColorMode = 'COLOR', ' (colour)', ' (B&W)')) USING utf8mb4) COLLATE utf8mb4_unicode_ci,
+                           1, pj.LineTotal, pj.LineTotal,
+                           pj.Pages * pj.Copies, CONVERT('pages' USING utf8mb4) COLLATE utf8mb4_unicode_ci
                     FROM PrintJobs pj
                     WHERE pj.OrderID = ?
                 `;
