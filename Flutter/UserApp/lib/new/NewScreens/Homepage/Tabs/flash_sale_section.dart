@@ -178,11 +178,7 @@ class FlashSaleSection extends StatelessWidget {
     final double salePrice =
         (primaryVariant?.salePrice ?? product.salePrice) ?? offerPrice;
 
-    final int discountPercent = primaryVariant?.discountPercent ??
-        product.discountPercent ??
-        (originalPrice > 0
-            ? (((originalPrice - salePrice) / originalPrice) * 100).round()
-            : 0);
+    final int discountPercent = shelfDiscountPercent(originalPrice, salePrice);
 
     final bool isOutOfStock = (primaryVariant?.availableQty ?? 0) <= 0;
 
@@ -313,17 +309,17 @@ class FlashSaleSection extends StatelessWidget {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              '₹${salePrice.toStringAsFixed(salePrice.truncateToDouble() == salePrice ? 0 : 2)}',
+                              shelfPrice(salePrice),
                               style: GoogleFonts.montserrat(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF2E7D32),
                               ),
                             ),
-                            if (originalPrice > salePrice) ...[
+                            if (discountPercent > 0) ...[
                               const SizedBox(width: 5),
                               Text(
-                                '₹${originalPrice.toStringAsFixed(originalPrice.truncateToDouble() == originalPrice ? 0 : 2)}',
+                                shelfPrice(originalPrice),
                                 style: GoogleFonts.montserrat(
                                   fontSize: 11.sp,
                                   fontWeight: FontWeight.w500,

@@ -233,9 +233,7 @@ class _SimilarProductCardState extends State<_SimilarProductCard> {
         ? variant.offerPrice!
         : price;
 
-    final double discountPercent = (price > 0 && offerPrice < price)
-        ? ((price - offerPrice) / price * 100)
-        : 0.0;
+    final double discountPercent = fmt.shelfDiscountPercent(price, offerPrice).toDouble();
 
     final int availableQty = variant?.availableQty ?? 0;
     final int maxQty = variant?.maxQty ?? 99;
@@ -411,7 +409,7 @@ class _SimilarProductCardState extends State<_SimilarProductCard> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              '${fmt.money(offerPrice)}',
+                              fmt.shelfPrice(offerPrice),
                               style: GoogleFonts.poppins(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
@@ -420,7 +418,7 @@ class _SimilarProductCardState extends State<_SimilarProductCard> {
                             ),
                             if (discountPercent > 0)
                               Text(
-                                '${fmt.money(price)}',
+                                fmt.shelfPrice(price),
                                 style: GoogleFonts.poppins(
                                   fontSize: 10,
                                   color: const Color(0xFF94A3B8),

@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
@@ -141,11 +142,11 @@ class PackOptions extends StatelessWidget {
                 style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
             const SizedBox(height: 4),
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(_rs(p.total), style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w800, color: tColor)),
+              Text(shelfPrice(p.total), style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w800, color: tColor)),
               const SizedBox(width: 6),
-              if (p.mrp > p.total)
+              if (shelfHasDiscount(p.mrp, p.total))
                 Flexible(
-                  child: Text('MRP ${_rs(p.mrp)}',
+                  child: Text('MRP ${shelfPrice(p.mrp)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(fontSize: 11, color: grey70, decoration: TextDecoration.lineThrough)),

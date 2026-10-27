@@ -118,8 +118,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
   double get _mrp => selectedVariant?.price ?? _sellingPrice;
 
   int get _discountPercent {
-    if (_mrp > 0 && _sellingPrice < _mrp) return (((_mrp - _sellingPrice) / _mrp) * 100).round();
-    return 0;
+    return shelfDiscountPercent(_mrp, _sellingPrice);
   }
 
   bool get _isOutOfStock {
@@ -253,12 +252,12 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                         if (out)
                           Text('Out of stock', style: GoogleFonts.poppins(fontSize: 12, color: red))
                         else ...[
-                          if (sell < mrp)
-                            Text("${money(mrp)}",
+                          if (shelfHasDiscount(mrp, sell))
+                            Text(shelfPrice(mrp),
                                 style: GoogleFonts.poppins(
                                     fontSize: 12, color: grey70, decoration: TextDecoration.lineThrough)),
                           const SizedBox(width: 6),
-                          Text("${money(sell)}",
+                          Text(shelfPrice(sell),
                               style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: tColor)),
                         ],
                       ],
@@ -436,10 +435,10 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text("${money(_sellingPrice)}",
+                              Text(shelfPrice(_sellingPrice),
                                   style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: tColor)),
-                              if (_sellingPrice < _mrp)
-                                Text("${money(_mrp)}",
+                              if (_discountPercent > 0)
+                                Text(shelfPrice(_mrp),
                                     style: GoogleFonts.poppins(
                                         fontSize: 10.5, color: grey70, decoration: TextDecoration.lineThrough)),
                             ],

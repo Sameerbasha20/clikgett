@@ -402,7 +402,7 @@ class _PurchaseOptionsSheetState extends State<_PurchaseOptionsSheet> {
                         ),
                         SizedBox(width: 1.5.w),
                         customText(
-                          text: '${money((v.offerPrice ?? 0))}',
+                          text: shelfPrice(v.offerPrice ?? 0),
                           fontSize: 12.sp,
                           fontWeight:
                               isSelected ? FontWeight.w700 : FontWeight.w600,
@@ -795,18 +795,18 @@ class _PriceBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasDiscount = originalPrice > offerPrice && originalPrice > 0;
+    final bool hasDiscount = shelfHasDiscount(originalPrice, offerPrice);
     return Column(
       children: [
         customText(
-          text: '${money(offerPrice)}',
+          text: shelfPrice(offerPrice),
           fontSize: 16.sp,
           fontWeight: FontWeight.w800,
           color: tColor,
         ),
         if (hasDiscount)
           Text(
-            '${money(originalPrice)}',
+            shelfPrice(originalPrice),
             style: TextStyle(
               fontSize: 12.sp,
               color: tColor3,

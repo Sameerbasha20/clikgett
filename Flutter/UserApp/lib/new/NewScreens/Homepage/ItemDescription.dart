@@ -359,7 +359,7 @@ class _ItemDescriptionState extends State<ItemDescription> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             constantText(
-              text: "${money(price)}  ",
+              text: "${shelfPrice(price)}  ",
               textStyle: robotocustomTextstyle(
                 fontSize: 18.sp,
                 color: tColor2,
@@ -367,9 +367,9 @@ class _ItemDescriptionState extends State<ItemDescription> {
               ),
               children: [
                 // Only strike through a higher MRP; "₹44 ₹44" says nothing.
-                if ((double.tryParse('$OriginalPrice') ?? 0) > (double.tryParse('$price') ?? 0))
+                if (shelfHasDiscount(OriginalPrice, price))
                 TextSpan(
-                  text: money(OriginalPrice),
+                  text: shelfPrice(OriginalPrice),
                   style: robotocustomTextstyle(
                     fontSize: 14.sp,
                     color: tColor.withOpacity(0.5),
@@ -549,7 +549,7 @@ class _ItemDescriptionState extends State<ItemDescription> {
                   color: primary,
                   size: 2.w,
                 ),
-                Text(money(price),
+                Text(shelfPrice(price),
                     style: robotocustomTextstyle(
                       fontSize: 18.sp,
                       color: primary,
@@ -1101,15 +1101,16 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                                       Padding(
                                         padding: EdgeInsets.only(right: 2.w),
                                         child: Text(
-                                          money(varients?.sellingPrice),
+                                          shelfPrice(varients?.sellingPrice),
                                           style: customTextstyle(
                                               fontSize: 16.sp,
                                               color: black,
                                               fontWeight: FontWeight.w600),
                                         ),
                                       ),
+                                      if (shelfHasDiscount(varients?.price, varients?.sellingPrice))
                                       Text(
-                                        money(varients?.price),
+                                        shelfPrice(varients?.price),
                                         style: customTextstyle(
                                             fontSize: 16.sp,
                                             color: tColor.withOpacity(.5),
@@ -1198,7 +1199,7 @@ Future bottomsheet(Products products, context, ProductVariant? selectedvarients,
                                 ),
                               ),
                               Text(
-                                money(selectedvarients?.sellingPrice),
+                                shelfPrice(selectedvarients?.sellingPrice),
                                 style: customTextstyle(
                                     fontSize: 16.sp,
                                     color: primary,
