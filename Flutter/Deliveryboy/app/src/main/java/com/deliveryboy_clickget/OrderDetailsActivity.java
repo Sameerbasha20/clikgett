@@ -34,7 +34,6 @@ import androidx.core.content.ContextCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.deliveryboy_clickget.Utils.Api;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -72,12 +71,12 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipe;
     private TextView titleTxt, subtitleTxt, chipTxt, bannerTxt, collectTxt, paymentLabelTxt, paymentDetailTxt,
             customerInitialTxt, customerNameTxt, customerPhoneTxt, addressTxt, instructionsTxt,
-            itemsTitleTxt, itemsHintTxt, itemsProgressTxt, stepHintTxt;
-    private LinearLayout itemsContainer, actionBar, problemRow, stepsContainer, instructionsBox;
+            itemsTitleTxt, itemsHintTxt, itemsProgressTxt, stepHintTxt, etaTxt, paymentModeTxt;
+    private LinearLayout itemsContainer, actionBar, problemRow, stepsContainer, instructionsBox, etaPill, paymentInner;
     private MaterialCardView paymentCard, itemsCard;
-    private ImageView paymentIcon;
+    private ImageView paymentIcon, etaIcon;
     private Button callBtn, navigateBtn;
-    private MaterialButton actionBtn;
+    private SlideToActView actionBtn;
     /** Items the rider has ticked while checking the bag, by OrderItemID; kept per order. */
     private final Set<String> checkedItems = new HashSet<>();
     private int itemLines = 0;
@@ -103,6 +102,11 @@ public class OrderDetailsActivity extends AppCompatActivity {
         stepsContainer = findViewById(R.id.steps_container);
         paymentCard = findViewById(R.id.payment_card);
         paymentIcon = findViewById(R.id.payment_icon);
+        paymentInner = findViewById(R.id.payment_inner);
+        paymentModeTxt = findViewById(R.id.payment_mode_txt);
+        etaPill = findViewById(R.id.eta_pill);
+        etaTxt = findViewById(R.id.eta_txt);
+        etaIcon = findViewById(R.id.eta_icon);
         paymentLabelTxt = findViewById(R.id.payment_label_txt);
         customerInitialTxt = findViewById(R.id.customer_initial_txt);
         customerPhoneTxt = findViewById(R.id.customer_phone_txt);
@@ -131,7 +135,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         swipe.setOnRefreshListener(this::load);
         callBtn.setOnClickListener(v -> callCustomer());
         navigateBtn.setOnClickListener(v -> navigate());
-        actionBtn.setOnClickListener(v -> onAction());
+        actionBtn.setOnSlideCompleteListener(this::onAction);
         findViewById(R.id.delay_btn).setOnClickListener(v -> reportDelay());
         findViewById(R.id.issue_btn).setOnClickListener(v -> reportIssue());
 
@@ -214,17 +218,21 @@ public class OrderDetailsActivity extends AppCompatActivity {
             bannerTxt.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.color_online_bg));
             bannerTxt.setTextColor(ContextCompat.getColor(this, R.color.clikgett_green_dark));
             bannerTxt.setText("Delivered. Thank you!");
-        } else if (!order.isNull("EtaMinutesLeft")) {
+        } else {
+            bannerTxt.setVisibility(View.GONE);
+        }
+        if (!finished && !order.isNull("EtaMinutesLeft")) {
             // The delivery time the customer sees on their tracking screen.
             int left = order.optInt("EtaMinutesLeft", 0);
             String by = order.optString("EstimateTimeText", "");
-            bannerTxt.setVisibility(View.VISIBLE);
-            bannerTxt.setBackgroundTintList(ContextCompat.getColorStateList(this, left <= 0 ? R.color.color_danger_bg : R.color.color_online_bg));
-            bannerTxt.setTextColor(ContextCompat.getColor(this, left <= 0 ? R.color.color_danger : R.color.clikgett_green_dark));
-            bannerTxt.setText((left <= 0 ? "Delivery is due now" : "Customer expects delivery in " + left + " min")
-                    + (by.isEmpty() || "null".equals(by) ? "" : " (by " + by + ")"));
+            int etaColor = ContextCompat.getColor(this, left <= 0 ? R.color.color_danger : R.color.clikgett_green_dark);
+            etaPill.setVisibility(View.VISIBLE);
+            etaTxt.setTextColor(etaColor);
+            etaIcon.setColorFilter(etaColor);
+            etaTxt.setText((left <= 0 ? "Due now" : "Deliver in " + left + " min")
+                    + (by.isEmpty() || "null".equals(by) ? "" : " · by " + by));
         } else {
-            bannerTxt.setVisibility(View.GONE);
+            etaPill.setVisibility(View.GONE);
         }
 
         // Payment: what the rider collects, or how it was paid.
@@ -235,13 +243,13 @@ public class OrderDetailsActivity extends AppCompatActivity {
         boolean cancelled = status == STATUS_CANCELLED_STORE || status == STATUS_CANCELLED_CUSTOMER || status == STATUS_RETURNED;
         boolean cashOrder = "COD".equals(method) && grandTotal > 0;
         boolean collectCash = cashOrder && !finished;
-        boolean amber = collectCash;
-        int accent = ContextCompat.getColor(this, cancelled ? R.color.color_offline : amber ? R.color.amber_text : R.color.clikgett_green_dark);
-        paymentCard.setCardBackgroundColor(ContextCompat.getColor(this, cancelled ? R.color.color_offline_bg : amber ? R.color.amber_bg : R.color.checked_row_bg));
-        paymentCard.setStrokeColor(ContextCompat.getColor(this, cancelled ? R.color.clikgett_card_stroke : amber ? R.color.amber_stroke : R.color.green_stroke));
-        paymentIcon.setBackgroundTintList(ColorStateList.valueOf(accent));
+        int[] gradient = cancelled ? new int[]{0xFF64748B, 0xFF475569}
+                : collectCash ? new int[]{0xFFF97316, 0xFFC2410C}
+                : new int[]{0xFF16A34A, 0xFF0F766E};
+        paymentInner.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR, gradient));
+        paymentCard.setCardBackgroundColor(gradient[1]);
         paymentIcon.setImageResource(cashOrder || cancelled ? R.drawable.ic_baseline_currency_rupee_24 : R.drawable.ic_check_small);
-        paymentLabelTxt.setTextColor(accent);
+        paymentModeTxt.setText(cancelled ? "CANCELLED" : cashOrder ? "COD" : "WALLET".equals(method) || grandTotal == 0 ? "WALLET" : "PREPAID");
         String tipText = tip > 0 ? " · includes " + rupees(tip) + " tip" : "";
         if (cancelled) {
             paymentLabelTxt.setText("ORDER CANCELLED");
@@ -267,6 +275,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
         if (name.isEmpty() || "null".equals(name)) name = "Customer";
         customerNameTxt.setText(name);
         customerInitialTxt.setText(name.substring(0, 1).toUpperCase(Locale.ROOT));
+        GradientDrawable avatar = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{0xFF22C55E, 0xFF0F766E});
+        avatar.setShape(GradientDrawable.OVAL);
+        customerInitialTxt.setBackground(avatar);
         String phone = order.optString("MobileNumber", "");
         customerPhoneTxt.setText(phone.length() >= 10
                 ? "+91 " + phone.substring(phone.length() - 10, phone.length() - 5) + " " + phone.substring(phone.length() - 5)
@@ -318,26 +329,25 @@ public class OrderDetailsActivity extends AppCompatActivity {
         actionBar.setVisibility(finished ? View.GONE : View.VISIBLE);
         if (status == STATUS_ASSIGNED) {
             stepHintTxt.setText("Collect the packed order from the store, then tap below.");
-            actionBtn.setText("Picked up · Start delivery");
-            actionBtn.setIconResource(R.drawable.ic_check_circle);
+            actionBtn.setText("Slide · Picked up, start delivery");
+            actionBtn.setIcon(R.drawable.ic_check_circle);
         } else if (status == STATUS_OUT) {
             stepHintTxt.setText("Tap when you reach the customer. They will get the delivery OTP.");
-            actionBtn.setText("I have arrived");
-            actionBtn.setIconResource(R.drawable.ic_location);
+            actionBtn.setText("Slide · I have arrived");
+            actionBtn.setIcon(R.drawable.ic_location);
         } else if (status == STATUS_ARRIVED) {
             stepHintTxt.setText(collectCash ? "Collect " + rupees(grandTotal) + ", then ask the customer for the OTP."
                     : "Ask the customer for the 4-digit OTP.");
-            actionBtn.setText("Enter OTP & deliver");
-            actionBtn.setIconResource(R.drawable.ic_lock);
+            actionBtn.setText("Slide · Enter OTP & deliver");
+            actionBtn.setIcon(R.drawable.ic_lock);
         } else if (!finished) {
             stepHintTxt.setText("The store is preparing this order.");
             actionBtn.setText("Waiting for the store");
-            actionBtn.setIcon(null);
+            actionBtn.setIcon(R.drawable.ic_delay_clock);
         }
         boolean canAct = status == STATUS_ASSIGNED || status == STATUS_OUT || status == STATUS_ARRIVED;
         actionBtn.setEnabled(canAct);
-        actionBtn.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this,
-                canAct ? R.color.clikgett_green_primary : R.color.clikgett_text_muted)));
+        actionBtn.reset();
     }
 
     private View itemRow(JSONObject item, boolean checkable) {
@@ -508,6 +518,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
         stepsContainer.removeAllViews();
         int white = ContextCompat.getColor(this, R.color.white);
         int faint = ContextCompat.getColor(this, R.color.white_40);
+        int green = ContextCompat.getColor(this, R.color.clikgett_green_dark);
+        final int[] icons = {R.drawable.ic_bag, R.drawable.ic_navigation_white, R.drawable.ic_location, R.drawable.ic_check_small};
         for (int i = 0; i < labels.length; i++) {
             boolean done = i < current;
             boolean now = i == current;
@@ -521,23 +533,28 @@ public class OrderDetailsActivity extends AppCompatActivity {
             track.setOrientation(LinearLayout.HORIZONTAL);
             track.setGravity(Gravity.CENTER_VERTICAL);
             track.addView(line(i == 0 ? 0 : (i <= current ? white : faint)));
-            View dot = new View(this);
-            int size = dp(now ? 16 : 12);
+            ImageView dot = new ImageView(this);
+            int size = dp(now ? 38 : 30);
+            int pad = dp(now ? 9 : 7);
             dot.setLayoutParams(new LinearLayout.LayoutParams(size, size));
+            dot.setPadding(pad, pad, pad, pad);
             GradientDrawable shape = new GradientDrawable();
             shape.setShape(GradientDrawable.OVAL);
-            shape.setColor(done || now ? white : faint);
-            if (now) shape.setStroke(dp(3), ContextCompat.getColor(this, R.color.white_40));
+            shape.setColor(done || now ? white : ContextCompat.getColor(this, R.color.white_20));
+            if (now) shape.setStroke(dp(4), faint);
             dot.setBackground(shape);
+            dot.setImageResource(done ? R.drawable.ic_check_small : icons[i]);
+            dot.setColorFilter(done || now ? green : ContextCompat.getColor(this, R.color.white_80));
+            dot.setContentDescription(labels[i] + (done ? ", done" : now ? ", current step" : ""));
             track.addView(dot);
             track.addView(line(i == labels.length - 1 ? 0 : (i < current ? white : faint)));
-            col.addView(track, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(20)));
+            col.addView(track, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(38)));
 
             TextView label = new TextView(this);
             label.setText(labels[i]);
             label.setTextSize(11.5f);
             label.setGravity(Gravity.CENTER);
-            label.setPadding(0, dp(4), 0, 0);
+            label.setPadding(0, dp(6), 0, 0);
             label.setTextColor(done || now ? white : faint);
             label.setTypeface(null, now ? Typeface.BOLD : Typeface.NORMAL);
             col.addView(label);
@@ -547,7 +564,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
     private View line(int color) {
         View v = new View(this);
-        v.setLayoutParams(new LinearLayout.LayoutParams(0, dp(2), 1));
+        v.setLayoutParams(new LinearLayout.LayoutParams(0, dp(3), 1));
         v.setBackgroundColor(color);
         return v;
     }
@@ -557,11 +574,13 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private void onAction() {
         if (status == STATUS_ASSIGNED) {
             int missing = itemLines - checkedCount();
-            String message = itemLines > 0 && missing > 0
-                    ? missing + (missing == 1 ? " item is" : " items are") + " not ticked yet. Make sure you have every item before leaving the store."
-                    : "Make sure you have every item before leaving the store.";
-            confirm("Picked up the order?", message, "Yes, start delivery",
-                    () -> updateStatus(STATUS_OUT, false, null));
+            if (itemLines > 0 && missing > 0) {
+                confirm("Picked up the order?",
+                        missing + (missing == 1 ? " item is" : " items are") + " not ticked yet. Make sure you have every item before leaving the store.",
+                        "Yes, start delivery", () -> updateStatus(STATUS_OUT, false, null));
+            } else {
+                updateStatus(STATUS_OUT, false, null);
+            }
         } else if (status == STATUS_OUT) {
             updateStatus(STATUS_ARRIVED, false, null);
         } else if (status == STATUS_ARRIVED) {

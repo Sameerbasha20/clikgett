@@ -7,36 +7,38 @@
     android:background="@color/clikgett_surface_bg"
     android:orientation="vertical">
 
-    <!-- Header: order number, status and the delivery steps -->
+    <!-- Header: order number, status, the delivery steps and the promised time -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_order_header"
+        android:elevation="4dp"
         android:orientation="vertical"
-        android:paddingBottom="16dp">
+        android:paddingBottom="18dp">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="64dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="4dp"
+            android:paddingStart="12dp"
             android:paddingEnd="16dp">
 
             <ImageView
                 android:id="@+id/back_img"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_header_icon_btn"
                 android:contentDescription="Back"
-                android:padding="12dp"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:padding="9dp"
                 android:src="@drawable/arrow_left"
                 app:tint="@color/white" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="12dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -46,7 +48,7 @@
                     android:layout_height="wrap_content"
                     android:text="Order"
                     android:textColor="@color/white"
-                    android:textSize="19sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -62,12 +64,12 @@
                 android:id="@+id/status_chip_txt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_chip_translucent"
+                android:background="@drawable/bg_pill"
                 android:paddingStart="12dp"
-                android:paddingTop="5dp"
+                android:paddingTop="6dp"
                 android:paddingEnd="12dp"
-                android:paddingBottom="5dp"
-                android:textColor="@color/white"
+                android:paddingBottom="6dp"
+                android:textColor="@color/clikgett_green_dark"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -80,6 +82,38 @@
             android:orientation="horizontal"
             android:paddingStart="8dp"
             android:paddingEnd="8dp" />
+
+        <!-- When the customer expects the order -->
+        <LinearLayout
+            android:id="@+id/eta_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_pill"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingTop="7dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="7dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/eta_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:contentDescription="Delivery time"
+                android:src="@drawable/ic_delay_clock" />
+
+            <TextView
+                android:id="@+id/eta_txt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="7dp"
+                android:textSize="13.5sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -97,17 +131,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingStart="14dp"
-                android:paddingTop="14dp"
-                android:paddingEnd="14dp"
-                android:paddingBottom="20dp">
+                android:paddingStart="16dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="24dp">
 
                 <!-- Cancelled / delivered -->
                 <TextView
                     android:id="@+id/banner_txt"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="14dp"
                     android:background="@drawable/bg_card_surface"
                     android:backgroundTint="@color/color_danger_bg"
                     android:padding="14dp"
@@ -121,28 +155,26 @@
                     android:id="@+id/payment_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    app:cardBackgroundColor="@color/amber_bg"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="@color/amber_stroke"
-                    app:strokeWidth="1dp">
+                    android:layout_marginBottom="14dp"
+                    app:cardCornerRadius="22dp"
+                    app:cardElevation="3dp"
+                    app:strokeWidth="0dp">
 
                     <LinearLayout
+                        android:id="@+id/payment_inner"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:padding="16dp">
+                        android:padding="18dp">
 
                         <ImageView
                             android:id="@+id/payment_icon"
-                            android:layout_width="46dp"
-                            android:layout_height="46dp"
-                            android:background="@drawable/bg_circle_soft"
-                            android:backgroundTint="@color/amber_text"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:background="@drawable/bg_header_icon_btn"
                             android:contentDescription="Payment"
-                            android:padding="11dp"
+                            android:padding="12dp"
                             android:src="@drawable/ic_baseline_currency_rupee_24"
                             app:tint="@color/white" />
 
@@ -157,9 +189,9 @@
                                 android:id="@+id/payment_label_txt"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:letterSpacing="0.08"
+                                android:letterSpacing="0.1"
                                 android:text="COLLECT ON DELIVERY"
-                                android:textColor="@color/amber_text"
+                                android:textColor="@color/white_80"
                                 android:textSize="11sp"
                                 android:textStyle="bold" />
 
@@ -167,17 +199,32 @@
                                 android:id="@+id/collect_txt"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@color/clikgett_text_primary"
-                                android:textSize="26sp"
+                                android:textColor="@color/white"
+                                android:textSize="30sp"
                                 android:textStyle="bold" />
 
                             <TextView
                                 android:id="@+id/payment_detail_txt"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@color/clikgett_text_secondary"
+                                android:textColor="@color/white_80"
                                 android:textSize="13sp" />
                         </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/payment_mode_txt"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="top"
+                            android:background="@drawable/bg_chip_translucent"
+                            android:letterSpacing="0.06"
+                            android:paddingStart="10dp"
+                            android:paddingTop="4dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="4dp"
+                            android:textColor="@color/white"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -185,9 +232,9 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="14dp"
                     app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="16dp"
+                    app:cardCornerRadius="22dp"
                     app:cardElevation="0dp"
                     app:strokeColor="@color/clikgett_card_stroke"
                     app:strokeWidth="1dp">
@@ -206,12 +253,10 @@
 
                             <TextView
                                 android:id="@+id/customer_initial_txt"
-                                android:layout_width="46dp"
-                                android:layout_height="46dp"
-                                android:background="@drawable/bg_circle_soft"
-                                android:backgroundTint="@color/clikgett_green_light"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
                                 android:gravity="center"
-                                android:textColor="@color/clikgett_green_dark"
+                                android:textColor="@color/white"
                                 android:textSize="19sp"
                                 android:textStyle="bold" />
 
@@ -221,6 +266,15 @@
                                 android:layout_marginStart="12dp"
                                 android:layout_weight="1"
                                 android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:letterSpacing="0.08"
+                                    android:text="CUSTOMER"
+                                    android:textColor="@color/clikgett_text_muted"
+                                    android:textSize="10.5sp"
+                                    android:textStyle="bold" />
 
                                 <TextView
                                     android:id="@+id/customer_name_txt"
@@ -243,49 +297,47 @@
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/call_btn"
-                                android:layout_width="wrap_content"
-                                android:layout_height="48dp"
+                                android:layout_width="52dp"
+                                android:layout_height="52dp"
+                                android:contentDescription="Call customer"
+                                android:insetLeft="0dp"
                                 android:insetTop="0dp"
+                                android:insetRight="0dp"
                                 android:insetBottom="0dp"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="18dp"
-                                android:text="Call"
-                                android:textAllCaps="false"
-                                android:textColor="@color/white"
-                                android:textSize="15sp"
-                                android:textStyle="bold"
+                                android:padding="0dp"
                                 app:backgroundTint="@color/clikgett_green_primary"
-                                app:cornerRadius="24dp"
+                                app:cornerRadius="26dp"
+                                app:elevation="0dp"
                                 app:icon="@drawable/ic_call_white"
-                                app:iconPadding="6dp"
-                                app:iconSize="18dp"
+                                app:iconGravity="textStart"
+                                app:iconPadding="0dp"
+                                app:iconSize="22dp"
                                 app:iconTint="@color/white" />
                         </LinearLayout>
 
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="14dp"
-                            android:layout_marginBottom="14dp"
-                            android:background="@color/clikgett_divider" />
-
+                        <!-- Address -->
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal">
+                            android:layout_marginTop="16dp"
+                            android:background="@drawable/bg_total_box"
+                            android:orientation="horizontal"
+                            android:padding="12dp">
 
                             <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:layout_marginTop="2dp"
+                                android:layout_width="38dp"
+                                android:layout_height="38dp"
+                                android:background="@drawable/bg_section_icon"
+                                android:backgroundTint="@color/color_danger_bg"
                                 android:contentDescription="Address"
+                                android:padding="9dp"
                                 android:src="@drawable/ic_location"
                                 app:tint="@color/color_danger" />
 
                             <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
+                                android:layout_marginStart="12dp"
                                 android:layout_weight="1"
                                 android:orientation="vertical">
 
@@ -295,7 +347,7 @@
                                     android:letterSpacing="0.08"
                                     android:text="DELIVER TO"
                                     android:textColor="@color/clikgett_text_muted"
-                                    android:textSize="11sp"
+                                    android:textSize="10.5sp"
                                     android:textStyle="bold" />
 
                                 <TextView
@@ -305,7 +357,7 @@
                                     android:layout_marginTop="2dp"
                                     android:lineSpacingExtra="2dp"
                                     android:textColor="@color/clikgett_text_primary"
-                                    android:textSize="15sp" />
+                                    android:textSize="14.5sp" />
                             </LinearLayout>
                         </LinearLayout>
 
@@ -313,7 +365,7 @@
                             android:id="@+id/instructions_box"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
+                            android:layout_marginTop="10dp"
                             android:background="@drawable/bg_note_callout"
                             android:gravity="center_vertical"
                             android:orientation="horizontal"
@@ -340,25 +392,25 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/navigate_btn"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="52dp"
-                            android:layout_marginTop="14dp"
+                            android:layout_marginTop="12dp"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
+                            android:letterSpacing="0.01"
                             android:text="Navigate in Google Maps"
                             android:textAllCaps="false"
-                            android:textColor="@color/clikgett_green_dark"
+                            android:textColor="@color/white"
                             android:textSize="15sp"
                             android:textStyle="bold"
-                            app:backgroundTint="@color/white"
-                            app:cornerRadius="14dp"
+                            app:backgroundTint="@color/clikgett_text_primary"
+                            app:cornerRadius="16dp"
+                            app:elevation="0dp"
                             app:icon="@drawable/ic_navigation_white"
                             app:iconGravity="textStart"
                             app:iconPadding="8dp"
-                            app:iconTint="@color/clikgett_green_dark"
-                            app:strokeColor="@color/clikgett_green_primary"
-                            app:strokeWidth="1.5dp" />
+                            app:iconSize="18dp"
+                            app:iconTint="@color/white" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -367,9 +419,9 @@
                     android:id="@+id/items_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="14dp"
                     app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="16dp"
+                    app:cardCornerRadius="22dp"
                     app:cardElevation="0dp"
                     app:strokeColor="@color/clikgett_card_stroke"
                     app:strokeWidth="1dp">
@@ -389,9 +441,20 @@
                             android:paddingStart="16dp"
                             android:paddingEnd="16dp">
 
+                            <ImageView
+                                android:layout_width="38dp"
+                                android:layout_height="38dp"
+                                android:background="@drawable/bg_section_icon"
+                                android:backgroundTint="@color/clikgett_green_light"
+                                android:contentDescription="Items"
+                                android:padding="9dp"
+                                android:src="@drawable/ic_bag"
+                                app:tint="@color/clikgett_green_dark" />
+
                             <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
                                 android:layout_weight="1"
                                 android:orientation="vertical">
 
@@ -442,10 +505,10 @@
                     android:id="@+id/bill_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="18dp"
                     android:visibility="gone"
                     app:cardBackgroundColor="@color/white"
-                    app:cardCornerRadius="16dp"
+                    app:cardCornerRadius="22dp"
                     app:cardElevation="0dp"
                     app:strokeColor="@color/clikgett_card_stroke"
                     app:strokeWidth="1dp">
@@ -456,14 +519,32 @@
                         android:orientation="vertical"
                         android:padding="16dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:text="Bill details"
-                            android:textColor="@color/clikgett_text_primary"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
+                            android:layout_marginBottom="10dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="38dp"
+                                android:layout_height="38dp"
+                                android:background="@drawable/bg_section_icon"
+                                android:backgroundTint="@color/color_delivery_bg"
+                                android:contentDescription="Bill"
+                                android:padding="9dp"
+                                android:src="@drawable/ic_receipt"
+                                app:tint="@color/color_delivery" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
+                                android:text="Bill details"
+                                android:textColor="@color/clikgett_text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
 
                         <LinearLayout
                             android:id="@+id/bill_rows"
@@ -471,18 +552,14 @@
                             android:layout_height="wrap_content"
                             android:orientation="vertical" />
 
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginTop="8dp"
-                            android:layout_marginBottom="10dp"
-                            android:background="@color/clikgett_divider" />
-
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/bg_total_box"
                             android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            android:orientation="horizontal"
+                            android:padding="14dp">
 
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -495,7 +572,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:textColor="@color/clikgett_text_primary"
-                                    android:textSize="16sp"
+                                    android:textSize="15.5sp"
                                     android:textStyle="bold" />
 
                                 <TextView
@@ -511,7 +588,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:textColor="@color/clikgett_text_primary"
-                                android:textSize="20sp"
+                                android:textSize="22sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </LinearLayout>
@@ -529,9 +606,10 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="4dp"
                         android:layout_marginBottom="8dp"
-                        android:text="Need help with this order?"
-                        android:textColor="@color/clikgett_text_secondary"
-                        android:textSize="13sp"
+                        android:letterSpacing="0.08"
+                        android:text="NEED HELP WITH THIS ORDER?"
+                        android:textColor="@color/clikgett_text_muted"
+                        android:textSize="11sp"
                         android:textStyle="bold" />
 
                     <LinearLayout
@@ -541,7 +619,6 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/delay_btn"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="50dp"
                             android:layout_marginEnd="6dp"
@@ -554,17 +631,16 @@
                             android:textSize="14sp"
                             android:textStyle="bold"
                             app:backgroundTint="@color/amber_bg"
-                            app:cornerRadius="14dp"
+                            app:cornerRadius="16dp"
+                            app:elevation="0dp"
                             app:icon="@drawable/ic_delay_clock"
                             app:iconGravity="textStart"
                             app:iconPadding="6dp"
                             app:iconSize="18dp"
-                            app:iconTint="@color/amber_text"
-                            app:strokeColor="@color/amber_stroke" />
+                            app:iconTint="@color/amber_text" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/issue_btn"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="50dp"
                             android:layout_marginStart="6dp"
@@ -577,56 +653,44 @@
                             android:textSize="14sp"
                             android:textStyle="bold"
                             app:backgroundTint="@color/color_danger_bg"
-                            app:cornerRadius="14dp"
+                            app:cornerRadius="16dp"
+                            app:elevation="0dp"
                             app:icon="@drawable/ic_alert_triangle"
                             app:iconGravity="textStart"
                             app:iconPadding="6dp"
                             app:iconSize="18dp"
-                            app:iconTint="@color/color_danger"
-                            app:strokeColor="#FECACA" />
+                            app:iconTint="@color/color_danger" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <!-- The one action for the current step -->
+    <!-- The one action for the current step: slide to confirm -->
     <LinearLayout
         android:id="@+id/action_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:elevation="12dp"
+        android:background="@drawable/bg_action_bar"
+        android:elevation="16dp"
         android:orientation="vertical"
         android:paddingStart="16dp"
-        android:paddingTop="12dp"
+        android:paddingTop="14dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="14dp">
+        android:paddingBottom="16dp">
 
         <TextView
             android:id="@+id/step_hint_txt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="12dp"
             android:gravity="center"
             android:textColor="@color/clikgett_text_secondary"
             android:textSize="13sp" />
 
-        <com.google.android.material.button.MaterialButton
+        <com.deliveryboy_clickget.SlideToActView
             android:id="@+id/action_btn"
             android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="17sp"
-            android:textStyle="bold"
-            app:backgroundTint="@color/clikgett_green_primary"
-            app:cornerRadius="16dp"
-            app:iconGravity="textStart"
-            app:iconPadding="10dp"
-            app:iconSize="22dp"
-            app:iconTint="@color/white" />
+            android:layout_height="60dp" />
     </LinearLayout>
 </LinearLayout>
