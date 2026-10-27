@@ -17,7 +17,7 @@ const adminproductcontroller={
     
 
     updateproduct_csv : async (req, resp, next) => {
-        let Body, OfferPrice, Price, result; // per-request (were implicit globals)
+        let Body, result; // per-request (were implicit globals)
         try {
             Body=req.body
             console.log(Body,'Body')
@@ -31,22 +31,19 @@ const adminproductcontroller={
             const json = await csv().fromStream(stream);
             console.log(json);
 
-            for (var j = 0; j < json.length; j++){
-                    console.log(json[j]['Price'],json[j]['OfferPrice'])
-                    if (json[j]['Price'] != null && json[j]['Price'] != undefined && json[j]['Price'] !== "" && json[j]['Price'] !== "null"){
-                        Price = "Price=" + json[j]['Price'] }
-                    else{
-                        Price = "Price = Price";}
-
-                    if (json[j]['OfferPrice'] != null && json[j]['OfferPrice'] != undefined && json[j]['OfferPrice'] !== "" && json[j]['OfferPrice'] !== "null"){
-                        OfferPrice = "OfferPrice=" + json[j]['OfferPrice']}
-                    else{
-                        OfferPrice = "OfferPrice = OfferPrice";}
-
-                    result = await updateexistingitem(json[j]['ProductID'],json[j]['VariantID'],Price,OfferPrice)
-                    console.log(result)
-            
-                    }
+            // Only numbers go into the query; a blank or bad cell leaves that price as it is.
+            const priceOrNull = (v) => {
+                const n = Number(String(v ?? '').trim());
+                return String(v ?? '').trim() !== '' && Number.isFinite(n) && n >= 0 ? n : null;
+            };
+            let skipped = 0;
+            for (const row of json) {
+                const productId = parseInt(row['ProductID'], 10);
+                const variantId = parseInt(row['VariantID'], 10);
+                if (!productId || !variantId) { skipped++; continue; }
+                result = await updateexistingitem(productId, variantId, priceOrNull(row['Price']), priceOrNull(row['OfferPrice']));
+            }
+            if (skipped) console.log(`CSV price update: skipped ${skipped} row(s) without a valid ProductID/VariantID`);
             return resp.json({ "Status": 1, "Message": "Products updated successfully" });
     }
         catch (err) {
@@ -262,25 +259,17 @@ const adminproductcontroller={
 
 
 
-function updateexistingitem(ProductID,VariantID,Price,OfferPrice) {
-    let query; // per-request (were implicit globals)
-
+function updateexistingitem(ProductID, VariantID, Price, OfferPrice) {
     return new Promise(function (resolve, reject) {
-            query="update ProductVariants set "+Price+","+OfferPrice+" where ProductID="+ProductID+" and VariantID="+VariantID+";"
-            console.log(query)
-            pool.query(query, function (err, results, fields) {
-                if (err) {               
-                    console.log("Error in checking CartId from DB :" + err);
-                    reject(-1);
+        pool.query(
+            "UPDATE ProductVariants SET Price = COALESCE(?, Price), OfferPrice = COALESCE(?, OfferPrice) WHERE ProductID = ? AND VariantID = ?",
+            [Price, OfferPrice, ProductID, VariantID],
+            function (err, results) {
+                if (err) {
+                    console.log("Error updating variant price:", err);
+                    return reject(-1);
                 }
-                else {  
-                    if (results.affectedRows === 1) {
-                        console.log("product updated: ");
-                        resolve(1);}
-                    else {                    
-                        console.log("product update failed");
-                        resolve(1);}
-                }
+                resolve(1);
             });
     });
 }

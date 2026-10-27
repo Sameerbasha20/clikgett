@@ -119,6 +119,11 @@ const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwA
     await q('UPDATE AdminShopToggleSettings SET CashbackMode = ?, CashbackEnabled = ?, CashbackPercentage = ?, CashbackMaxAmount = ? WHERE SettingID = ?',
         [shop.CashbackMode, shop.CashbackEnabled, shop.CashbackPercentage, shop.CashbackMaxAmount, shop.SettingID]);
 
+    // ---- Daily wallet check
+    const wallet = await call('GET', '/admin-wallet-check?days=7', admin);
+    check('wallet check runs for admins', wallet.status === 200 && wallet.data.Status === 1 && Array.isArray(wallet.data.DuplicateCashback));
+    check('wallet check needs an admin token', (await call('GET', '/admin-wallet-check', user)).status === 401);
+
     // ---- Clean up
     await q('DELETE FROM Categories WHERE CategoryName = ?', [catName]);
     if (prod.data.ProductID) {

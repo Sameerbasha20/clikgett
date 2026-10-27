@@ -43,7 +43,7 @@ const wrongCode = (code) => (code === '0000' ? '1111' : '0000');
         check('issue gives a 4-digit code by default', r.ok && /^\d{4}$/.test(r.code) && r.digits === 4, JSON.stringify(r));
         const first = r.code;
         const [row] = await q('SELECT CodeHash FROM LoginOtps WHERE Audience = ? AND MobileNumber = ?', ['customer', A]);
-        check('only a hash of the code is stored', row && row.CodeHash && row.CodeHash.length === 64 && !row.CodeHash.includes(first));
+        check('only a hash of the code is stored', row && /^[0-9a-f]{64}$/.test(row.CodeHash) && row.CodeHash !== first);
 
         r = await LoginOtp.issue('customer', A);
         check('a second code within 30 seconds is refused', !r.ok && /wait/i.test(r.message), r.message);

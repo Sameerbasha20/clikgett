@@ -337,6 +337,7 @@
     "dev": "nodemon server/server.js",
     "test": "node server/tests/test_security_regressions.js && node server/tests/test_login_security.js && node server/tests/test_product_actions.js && node server/tests/test_order_flow.js && node server/tests/test_checkout.js && node server/tests/test_account.js && node server/tests/test_admin.js && node server/tests/test_features.js && node server/tests/test_cashback_review.js && node server/tests/test_print_store.js && node server/tests/test_stock_and_deals.js && node server/tests/test_qa_bug_fixes.js",
     "test:qa": "node server/tests/test_qa_bug_fixes.js",
+    "wallet:check": "node server/services/WalletCheck.js",
     "test:security": "node server/tests/test_security_regressions.js",
     "test:login": "node server/tests/test_login_security.js",
     "test:product-actions": "node server/tests/test_product_actions.js",

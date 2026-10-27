@@ -9,6 +9,8 @@
 # debug key, which Play rejects, so this script stops instead.
 param(
     [Parameter(Mandatory = $true)][string]$ApiUrl,
+    # Address search key; defaults to GOOGLE_PLACES_KEY in ..\..\deploy\app-keys.env.
+    [string]$PlacesKey = "",
     [string]$Flutter = "C:\src\flutter\bin\flutter.bat"
 )
 $ErrorActionPreference = "Stop"
@@ -21,10 +23,19 @@ foreach ($keyFile in @("$root\UserApp\android\key.properties", "$root\Deliverybo
     if (-not (Test-Path $keyFile)) { throw "Missing $keyFile (upload key settings). See Deliveryboy\key.properties.example." }
 }
 
+if (-not $PlacesKey) {
+    $keysFile = Join-Path $root "..\..\deploy\app-keys.env"
+    if (Test-Path $keysFile) {
+        $line = Get-Content $keysFile | Where-Object { $_ -match '^GOOGLE_PLACES_KEY=' } | Select-Object -First 1
+        if ($line) { $PlacesKey = ($line -replace '^GOOGLE_PLACES_KEY=', '').Trim() }
+    }
+}
+if (-not $PlacesKey) { throw "No Places key: pass -PlacesKey or set GOOGLE_PLACES_KEY in deploy\app-keys.env (address search needs it)." }
+
 Write-Host "Customer app -> $ApiUrl"
 Push-Location "$root\UserApp"
 try {
-    & $Flutter build appbundle --release "--dart-define=API_BASE_URL=$ApiUrl"
+    & $Flutter build appbundle --release "--dart-define=API_BASE_URL=$ApiUrl" "--dart-define=GOOGLE_PLACES_KEY=$PlacesKey"
     if ($LASTEXITCODE -ne 0) { throw "Customer app build failed" }
 } finally { Pop-Location }
 

@@ -167,6 +167,7 @@ try {
     app.use('/api/admin/photo-orders', adminPhotoOrdersRouter);
     app.use('/api/print', printStoreRouter);
     app.use('/api/admin-stock', stockLevelsRouter);
+    app.use('/api/admin-wallet-check', require('./routes/WalletCheck'));
     app.use('/api/customer', customerRequestsRouter);
     app.use('/api/admin', adminCustomerRequestsRouter);
     app.use('/api/admin', adminRouter);
