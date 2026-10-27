@@ -200,9 +200,10 @@ class AuthController extends GetxController {
                                     //     builder: (context) => CreateProfile(
                                     //           number: body['MobileNumber'],
                                     //         )));
-                                    Navigator.of(context).pushReplacement(MaterialPageRoute(
+                                    // Logged in: drop Login / OTP so back can't return to them.
+                                    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
                                         builder: (context) =>
-                                        const GrantLocation()));
+                                        const GrantLocation()), (route) => false);
 
                                 }
                               })
@@ -212,16 +213,16 @@ class AuthController extends GetxController {
                                   .then((val) {
                                 if (val == true) {
                                   if (value.userData.firstName != 'NA') {
-                                    Navigator.of(context).push(MaterialPageRoute(
-                                        builder: (context) => const Homepage()));
+                                    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
+                                        builder: (context) => const Homepage()), (route) => false);
                                   } else {
                                     // Navigator.of(context).push(MaterialPageRoute(
                                     //     builder: (context) => CreateProfile(
                                     //           number: body['MobileNumber'],
                                     //         )));
-                                    Navigator.of(context).push(MaterialPageRoute(
+                                    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
                                         builder: (context) =>
-                                        const GrantLocation()));
+                                        const GrantLocation()), (route) => false);
                                   }
                                 }
                               })

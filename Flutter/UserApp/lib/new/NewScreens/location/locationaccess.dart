@@ -337,8 +337,9 @@ print("MMMMMMMMMMMMMMMMMMMMMM");
       var data = jsonDecode(response.body);
       int status = data['Status'];
       if (status == 1) {
+        // First address saved: home becomes the only screen (no way back to setup).
         Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => const Homepage()));
+            .pushAndRemoveUntil(MaterialPageRoute(builder: (context) => const Homepage()), (route) => false);
 
         print('Address added successfully');
       } else {

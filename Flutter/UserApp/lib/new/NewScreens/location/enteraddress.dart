@@ -163,10 +163,11 @@ class _ConfirmlocationState extends State<Confirmlocation> {
                       // Send userLocationData to backend (you can add your backend logic here)
 
                       // Navigate to a new screen (assuming a screen called `NewScreen` exists)
-                      Navigator.push(
+                      Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const Homepage()),
+                        (route) => false,
                       );
                     },
                     context: context,
