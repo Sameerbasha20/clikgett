@@ -10,8 +10,8 @@ import 'package:fav_app/new/Controllers/orders_controller.dart';
 import 'package:fav_app/new/Controllers/wallet.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Cart/Cart.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/view_receipt.dart';
+import 'package:fav_app/new/NewScreens/Support/Support.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
-import 'package:fav_app/new/Services/account_services.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:fav_app/new/Services/order_tracking_services.dart';
 import 'package:flutter/material.dart';
@@ -124,9 +124,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
     if (!await launchUrl(uri)) customToast(message: 'Could not open the dialer');
   }
 
-  Future<void> _callSupport() async {
-    final phone = (await AccountServices.config()).supportPhone;
-    _call(phone.isNotEmpty ? phone : Constants.customerSupport);
+  void _openHelp() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const Support()));
   }
 
   Future<void> _cancel(TrackedOrder order) async {
@@ -212,10 +211,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
             Text('Placed ${_dateTime(order!.createdAt)}', style: GoogleFonts.poppins(fontSize: 11.5, color: tColor3)),
         ]),
         actions: [
-          IconButton(
-            tooltip: 'Help',
-            icon: const Icon(Icons.support_agent_rounded),
-            onPressed: () => _callSupport(),
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: TextButton.icon(
+              onPressed: _openHelp,
+              style: TextButton.styleFrom(
+                foregroundColor: primaryDark,
+                backgroundColor: primaryGhost,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: const StadiumBorder(),
+              ),
+              icon: const Icon(Icons.support_agent_rounded, size: 18),
+              label: Text('Help', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
           ),
         ],
       ),
@@ -230,6 +238,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                     children: [
                       _statusCard(order),
+                      _paymentCard(order),
                       if (order.status == OrderStatus.arrived && order.otp != null) _otpCard(order),
                       if (order.riderName != null && [OrderStatus.assigned, OrderStatus.outForDelivery, OrderStatus.arrived].contains(order.status))
                         _riderCard(order),
@@ -393,18 +402,117 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
         ]),
       );
 
-  Widget _cancelCard(TrackedOrder o) => _card(
-        child: Row(children: [
-          Expanded(
-            child: Text('You can cancel for ${_cancelLeft ~/ 60}:${(_cancelLeft % 60).toString().padLeft(2, '0')} more',
-                style: GoogleFonts.poppins(fontSize: 13, color: tColor4)),
-          ),
-          TextButton(
+  Widget _cancelCard(TrackedOrder o) {
+    final left = '${_cancelLeft ~/ 60}:${(_cancelLeft % 60).toString().padLeft(2, '0')}';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(color: redLight, borderRadius: BorderRadius.circular(20)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.timer_outlined, size: 14, color: red),
+            const SizedBox(width: 4),
+            Text(left, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: red)),
+          ]),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text('Free cancellation', style: GoogleFonts.poppins(fontSize: 12.5, color: tColor4)),
+        ),
+        SizedBox(
+          height: 32,
+          child: OutlinedButton(
             onPressed: _busy ? null : () => _cancel(o),
-            child: Text('Cancel order', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: red)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: red,
+              side: BorderSide(color: red.withOpacity(0.45)),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              shape: const StadiumBorder(),
+              visualDensity: VisualDensity.compact,
+            ),
+            child: Text('Cancel', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
           ),
-        ]),
-      );
+        ),
+      ]),
+    );
+  }
+
+  /// How this order is paid, with what is still due.
+  Widget _paymentCard(TrackedOrder o) {
+    final delivered = o.status == OrderStatus.delivered;
+    final cancelled = OrderStatus.isCancelled(o.status);
+    IconData icon;
+    String title, note, badge;
+    Color accent;
+    if (o.paymentMethod == 'ONLINE') {
+      icon = Icons.credit_card_rounded;
+      if (o.paid) {
+        title = 'Paid ${_rs(o.grandTotal)} online';
+        note = 'Nothing to pay at delivery';
+        badge = 'PAID';
+        accent = primaryDark;
+      } else {
+        title = 'Online payment pending';
+        note = 'We will confirm once the payment goes through';
+        badge = 'PENDING';
+        accent = const Color(0xFFD97706);
+      }
+    } else if (o.paymentMethod == 'WALLET') {
+      icon = Icons.account_balance_wallet_rounded;
+      title = 'Paid ${_rs(o.walletUsed > 0 ? o.walletUsed : o.grandTotal)} from wallet';
+      note = 'Nothing to pay at delivery';
+      badge = 'PAID';
+      accent = primaryDark;
+    } else {
+      icon = Icons.payments_rounded;
+      title = delivered ? 'Paid ${_rs(o.grandTotal)} on delivery' : 'Pay ${_rs(o.grandTotal)} on delivery';
+      note = delivered ? 'Cash / UPI' : 'Cash or UPI to the delivery partner';
+      badge = delivered ? 'PAID' : 'PAY ON DELIVERY';
+      accent = delivered ? primaryDark : const Color(0xFF2563EB);
+    }
+    if (cancelled) {
+      note = 'Order cancelled';
+      badge = 'CANCELLED';
+      accent = tColor3;
+    }
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(color: accent.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, color: accent, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: tColor)),
+            Text(note, style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
+          ]),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(color: accent.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+          child: Text(badge, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: accent, letterSpacing: 0.3)),
+        ),
+      ]),
+    );
+  }
 
   Widget _timelineCard(TrackedOrder o) {
     final List<int> steps;
@@ -647,7 +755,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
         Expanded(
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(foregroundColor: tColor4, side: const BorderSide(color: cardBorder)),
-            onPressed: () => _callSupport(),
+            onPressed: _openHelp,
             icon: const Icon(Icons.support_agent_rounded, size: 18),
             label: const Text('Help'),
           ),

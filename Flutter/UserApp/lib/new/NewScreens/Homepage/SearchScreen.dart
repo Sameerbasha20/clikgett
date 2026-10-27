@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -250,7 +251,7 @@ class _SearchScreenState extends State<SearchScreen> {
           title: Text(s.name, maxLines: 1, overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w500, color: tColor)),
           subtitle: Text(s.category, style: GoogleFonts.poppins(fontSize: 11.5, color: grey70)),
-          trailing: Text('₹${s.price.toStringAsFixed(0)}',
+          trailing: Text('${money(s.price)}',
               style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor)),
           onTap: () {
             _remember(s.name);

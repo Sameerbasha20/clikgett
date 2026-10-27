@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
@@ -77,7 +78,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
   String? get _memberHint {
     final offer = widget.product.memberOffer;
     if (offer == null || _memberPrice != null || offer.price <= 0 || offer.price >= _sellingPrice) return null;
-    return '₹${offer.price.toStringAsFixed(0)} with ${offer.planName}';
+    return '${money(offer.price)} with ${offer.planName}';
   }
 
   /// Best bulk offer for the selected pack, e.g. "Buy 2 for ₹356" or "Buy 5+ @ ₹40 each".
@@ -92,11 +93,11 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     }
     if (best != null) {
       return best.isBundle
-          ? 'Buy ${best.minQuantity} for ₹${best.price.toStringAsFixed(0)}'
-          : 'Buy ${best.minQuantity}+ @ ₹${best.price.toStringAsFixed(0)} each';
+          ? 'Buy ${best.minQuantity} for ${money(best.price)}'
+          : 'Buy ${best.minQuantity}+ @ ${money(best.price)} each';
     }
     final buy2 = v.buy2Price;
-    if (buy2 != null && buy2 > 0 && buy2 < _sellingPrice) return 'Buy 2 @ ₹${buy2.toStringAsFixed(0)} each';
+    if (buy2 != null && buy2 > 0 && buy2 < _sellingPrice) return 'Buy 2 @ ${money(buy2)} each';
     return null;
   }
 
@@ -253,11 +254,11 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                           Text('Out of stock', style: GoogleFonts.poppins(fontSize: 12, color: red))
                         else ...[
                           if (sell < mrp)
-                            Text("₹${mrp.toStringAsFixed(0)}",
+                            Text("${money(mrp)}",
                                 style: GoogleFonts.poppins(
                                     fontSize: 12, color: grey70, decoration: TextDecoration.lineThrough)),
                           const SizedBox(width: 6),
-                          Text("₹${sell.toStringAsFixed(0)}",
+                          Text("${money(sell)}",
                               style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: tColor)),
                         ],
                       ],
@@ -435,10 +436,10 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text("₹${_sellingPrice.toStringAsFixed(0)}",
+                              Text("${money(_sellingPrice)}",
                                   style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: tColor)),
                               if (_sellingPrice < _mrp)
-                                Text("₹${_mrp.toStringAsFixed(0)}",
+                                Text("${money(_mrp)}",
                                     style: GoogleFonts.poppins(
                                         fontSize: 10.5, color: grey70, decoration: TextDecoration.lineThrough)),
                             ],
@@ -594,7 +595,7 @@ class _DealChip extends StatelessWidget {
           const Icon(Icons.bolt_rounded, size: 11, color: Colors.white),
           Flexible(
             child: Text(
-              '₹${price.toStringAsFixed(0)} · $ends',
+              '${money(price)} · $ends',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(fontSize: 9.5, height: 1.6, fontWeight: FontWeight.w700, color: Colors.white),

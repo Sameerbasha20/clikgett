@@ -8,8 +8,13 @@ String cleanNumber(dynamic value) {
   return n.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '');
 }
 
-/// "₹44", "₹167.24"
-String money(dynamic value) => '₹${cleanNumber(value)}';
+/// "₹44", "₹4.80", "₹167.24": whole rupees without decimals, paise always as two digits.
+String money(dynamic value) {
+  if (value == null) return '₹';
+  final n = value is num ? value.toDouble() : double.tryParse(value.toString().trim());
+  if (n == null) return '₹$value';
+  return '₹${n == n.roundToDouble() ? n.toStringAsFixed(0) : n.toStringAsFixed(2)}';
+}
 
 /// "50 gms", "1.5 kg"
 String packSize(dynamic value, dynamic type) => '${cleanNumber(value)} ${type ?? ''}'.trim();

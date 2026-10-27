@@ -1,15 +1,12 @@
 // ignore_for_file: prefer_const_constructors
 import 'package:fav_app/new/Constants/colors.dart';
-import 'package:fav_app/new/Constants/textStyles.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Homepage.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/PastOrders.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/CurrentOrders.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
 
-import '../../../../Constants/imageslist.dart';
 import '../../../../Controllers/home_controller.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/milestone_reward_card.dart';
 
@@ -42,76 +39,52 @@ class _OrdersState extends State<Orders> {
                 surfaceTintColor: Colors.transparent,
                 backgroundColor: white,
                 elevation: 0,
+                centerTitle: false,
+                titleSpacing: 0,
                 title: Text(
                   "My Orders",
-                  style: GoogleFonts.poppins(
-                    fontSize: 18.5.sp,
-                    fontWeight: FontWeight.w600,
-                    color: tColor,
-                  ),
+                  style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: tColor),
                 ),
                 leading: IconButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () {
-                    navigateToHome();
-                  },
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 20,
-                    color: tColor,
-                  ),
+                  onPressed: navigateToHome,
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: tColor),
                 ),
                 bottom: PreferredSize(
-                  preferredSize: Size.fromHeight(56),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: cardBorder, width: 1),
-                      ),
-                    ),
-                    padding: EdgeInsets.fromLTRB(4.w, 0, 4.w, 1.2.h),
+                  preferredSize: const Size.fromHeight(52),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
                     child: Container(
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(22),
                       ),
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(3),
                       child: TabBar(
                         indicatorSize: TabBarIndicatorSize.tab,
                         dividerColor: Colors.transparent,
-                        labelColor: white,
-                        unselectedLabelColor: tColor2,
-                        labelStyle: GoogleFonts.poppins(
-                          fontSize: 14.5.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        unselectedLabelStyle: GoogleFonts.poppins(
-                          fontSize: 14.5.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        physics: const BouncingScrollPhysics(),
+                        splashBorderRadius: BorderRadius.circular(20),
+                        labelColor: primaryDark,
+                        unselectedLabelColor: const Color(0xFF64748B),
+                        labelStyle: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600),
+                        unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w500),
                         indicator: BoxDecoration(
-                          borderRadius: BorderRadius.circular(9),
-                          color: primary,
+                          color: white,
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
-                            BoxShadow(
-                              color: primary.withOpacity(0.25),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
+                            BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 6, offset: const Offset(0, 2)),
                           ],
                         ),
-                        labelPadding: EdgeInsets.symmetric(vertical: 0.6.h),
                         tabs: const [
-                          Tab(text: "Current Orders"),
-                          Tab(text: "Past Orders"),
+                          Tab(text: "Current"),
+                          Tab(text: "Past"),
                         ],
                       ),
                     ),
                   ),
                 ),
               ),
-              backgroundColor: bg1,
+              backgroundColor: const Color(0xFFF7F9F8),
               body: Column(
                 children: [
                   const MilestoneRewardCard(),

@@ -1,5 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
 import 'package:fav_app/new/Constants/stock_helper.dart';
@@ -401,7 +402,7 @@ class _PurchaseOptionsSheetState extends State<_PurchaseOptionsSheet> {
                         ),
                         SizedBox(width: 1.5.w),
                         customText(
-                          text: '₹${(v.offerPrice ?? 0).toStringAsFixed(0)}',
+                          text: '${money((v.offerPrice ?? 0))}',
                           fontSize: 12.sp,
                           fontWeight:
                               isSelected ? FontWeight.w700 : FontWeight.w600,
@@ -798,14 +799,14 @@ class _PriceBlock extends StatelessWidget {
     return Column(
       children: [
         customText(
-          text: '₹${offerPrice.toStringAsFixed(0)}',
+          text: '${money(offerPrice)}',
           fontSize: 16.sp,
           fontWeight: FontWeight.w800,
           color: tColor,
         ),
         if (hasDiscount)
           Text(
-            '₹${originalPrice.toStringAsFixed(0)}',
+            '${money(originalPrice)}',
             style: TextStyle(
               fontSize: 12.sp,
               color: tColor3,
@@ -845,7 +846,7 @@ class _SavingsBadge extends StatelessWidget {
           Icon(Icons.local_offer_rounded, size: 1.5.h, color: primary),
           SizedBox(width: 1.w),
           customText(
-            text: 'Save ₹${savings.toStringAsFixed(0)}',
+            text: 'Save ${money(savings)}',
             fontSize: 11.sp,
             fontWeight: FontWeight.w700,
             color: primary,

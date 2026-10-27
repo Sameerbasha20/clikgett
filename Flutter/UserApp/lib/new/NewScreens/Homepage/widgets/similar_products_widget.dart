@@ -411,7 +411,7 @@ class _SimilarProductCardState extends State<_SimilarProductCard> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              '₹${offerPrice.toStringAsFixed(0)}',
+                              '${fmt.money(offerPrice)}',
                               style: GoogleFonts.poppins(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
@@ -420,7 +420,7 @@ class _SimilarProductCardState extends State<_SimilarProductCard> {
                             ),
                             if (discountPercent > 0)
                               Text(
-                                '₹${price.toStringAsFixed(0)}',
+                                '${fmt.money(price)}',
                                 style: GoogleFonts.poppins(
                                   fontSize: 10,
                                   color: const Color(0xFF94A3B8),

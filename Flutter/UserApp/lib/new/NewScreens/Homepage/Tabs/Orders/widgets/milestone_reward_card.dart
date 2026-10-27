@@ -194,123 +194,68 @@ class _MilestoneRewardCardState extends State<MilestoneRewardCard> {
     final milestoneName = _nextMilestone?['RewardName'] ?? 'Next Milestone';
     final rewardDesc = _nextMilestone?['Description'] ?? 'Complete orders to unlock rewards';
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    final progress = (progressPct / 100.0).clamp(0.0, 1.0);
+    const deep = Color(0xFF14532D);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Material(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: _showMilestonesSheet,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
+            ),
+            child: Row(children: [
+              // Progress ring with "8/10" in the middle.
+              SizedBox(
+                width: 52,
+                height: 52,
+                child: Stack(alignment: Alignment.center, children: [
+                  SizedBox.expand(
+                    child: CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 5,
+                      strokeCap: StrokeCap.round,
+                      backgroundColor: const Color(0xFFD1FAE5),
+                      valueColor: const AlwaysStoppedAnimation<Color>(primary),
+                    ),
+                  ),
+                  Text('$_totalOrders/$target',
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: deep)),
+                ]),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                    remaining > 0
+                        ? '$remaining more order${remaining == 1 ? '' : 's'} to unlock'
+                        : 'All rewards unlocked 🎉',
+                    style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF15803D), fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    remaining > 0 ? rewardDesc : 'Thanks for shopping with us',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: deep, height: 1.3),
+                  ),
+                  const SizedBox(height: 2),
+                  Text('$milestoneName · $_totalOrders orders completed',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF64748B))),
+                ]),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: deep),
+            ]),
+          ),
         ),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.amber.shade400,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.workspace_premium_rounded, size: 16, color: Colors.black87),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$_totalOrders Orders Completed',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: _showMilestonesSheet,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'View Rewards',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.amber.shade300,
-                      ),
-                    ),
-                    Icon(Icons.chevron_right_rounded, size: 18, color: Colors.amber.shade300),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            milestoneName,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            remaining > 0
-                ? '$remaining more order${remaining == 1 ? '' : 's'} to unlock $rewardDesc'
-                : 'All current milestones unlocked! 🎉',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.white70,
-            ),
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: (progressPct / 100.0).clamp(0.0, 1.0),
-              minHeight: 7,
-              backgroundColor: Colors.white.withOpacity(0.2),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '$_totalOrders / $target Orders',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white60,
-                ),
-              ),
-              Text(
-                '${progressPct.toInt()}% Unlocked',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.amber.shade300,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

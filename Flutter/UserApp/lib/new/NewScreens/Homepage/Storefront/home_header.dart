@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/adress_controller.dart';
@@ -93,7 +94,7 @@ class StorefrontHeader extends StatelessWidget {
                         children: [
                           const Icon(Icons.account_balance_wallet_outlined, size: 15, color: white),
                           const SizedBox(width: 4),
-                          Text('₹${wallet.walletAmount.value.toStringAsFixed(0)}',
+                          Text('${money(wallet.walletAmount.value)}',
                               style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: white)),
                         ],
                       )),
