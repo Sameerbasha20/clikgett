@@ -475,9 +475,13 @@ const ordercontroller = {
                 return resp.json({ "Status": 0, "Message": "Order does not exist" });
             }
 
-            const minutesSincePlaced = moment.duration(moment().diff(moment(ResultOrder[0].CreatedAt))).asMinutes();
-            if (minutesSincePlaced > 2) {
-                return resp.json({ "Status": 0, "Message": "You can only cancel the order within 2 minutes of placing it." });
+            const windowSeconds = await cancelWindowSeconds();
+            const secondsSincePlaced = moment().diff(moment(ResultOrder[0].CreatedAt), 'seconds');
+            if (secondsSincePlaced > windowSeconds) {
+                const mins = Math.max(1, Math.round(windowSeconds / 60));
+                return resp.json({ "Status": 0, "Message": windowSeconds > 0
+                    ? `You can only cancel the order within ${mins} minute${mins === 1 ? '' : 's'} of placing it.`
+                    : "Orders can't be cancelled once placed. Please contact support." });
             }
 
             await OrderLifecycle.transition(OrderID, ORDER_STATUS.CANCELLED_BY_CUSTOMER, { type: 'customer', id: req.UserID }, {
@@ -580,6 +584,17 @@ const ordercontroller = {
 
 
 
+// How long a customer may cancel after placing an order (admin → Settings). 0 = not allowed.
+async function cancelWindowSeconds() {
+    try {
+        const [row] = await CommonController.commonget('SELECT CancelWindowSeconds FROM AdminShopToggleSettings LIMIT 1');
+        const v = row ? parseInt(row.CancelWindowSeconds, 10) : NaN;
+        return Number.isFinite(v) && v >= 0 ? v : 120;
+    } catch (e) {
+        return 120;
+    }
+}
+
 // Tracking info for the customer: status label, timeline, rider details, and
 // the delivery OTP only once the rider has arrived.
 async function addTrackingDetails(order) {
@@ -589,7 +604,7 @@ async function addTrackingDetails(order) {
     const status = Number(order.OrderStatus);
     const secondsSincePlaced = moment().diff(moment(order.CreatedAt), 'seconds');
     order.CancelSecondsLeft = [ORDER_STATUS.RECEIVED, ORDER_STATUS.PACKING].includes(status)
-        ? Math.max(0, 120 - secondsSincePlaced) : 0;
+        ? Math.max(0, (await cancelWindowSeconds()) - secondsSincePlaced) : 0;
     order.EtaMinutesLeft = (!FINAL_STATUSES.includes(status) && order.EstimateDateTime && moment(order.EstimateDateTime).isValid())
         ? Math.max(0, Math.ceil(moment(order.EstimateDateTime).diff(moment(), 'seconds') / 60)) : null;
     try {

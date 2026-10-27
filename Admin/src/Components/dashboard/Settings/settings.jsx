@@ -45,6 +45,7 @@ function SettingsPage() {
     const [cashbackMode, setCashbackMode] = useState("automatic");
     const [cashbackPercent, setCashbackPercent] = useState("0");
     const [cashbackMax, setCashbackMax] = useState("0");
+    const [cancelMinutes, setCancelMinutes] = useState("2");
     const [longDistanceEnabled, setLongDistanceEnabled] = useState(false);
     const [longDistanceThreshold, setLongDistanceThreshold] = useState("8.00");
     const [longDistanceFee, setLongDistanceFee] = useState("40.00");
@@ -97,6 +98,7 @@ function SettingsPage() {
                     setCashbackMode(s.CashbackMode || "automatic");
                     setCashbackPercent(s.CashbackEnabled == 1 ? String(Number(s.CashbackPercentage || 0)) : "0");
                     setCashbackMax(String(Number(s.CashbackMaxAmount || 0)));
+                    setCancelMinutes(String(s.CancelWindowSeconds != null ? Number(s.CancelWindowSeconds) / 60 : 2));
                     setLongDistanceEnabled(Boolean(s.LongDistanceFeeEnabled));
                     setLongDistanceThreshold(s.LongDistanceThresholdKm ? String(s.LongDistanceThresholdKm) : "8.00");
                     setLongDistanceFee(s.LongDistanceFee ? String(s.LongDistanceFee) : "40.00");
@@ -129,6 +131,7 @@ function SettingsPage() {
             CashbackEnabled: parseFloat(cashbackPercent) > 0 ? 1 : 0,
             CashbackPercentage: Math.min(100, Math.max(0, parseFloat(cashbackPercent) || 0)),
             CashbackMaxAmount: Math.max(0, parseFloat(cashbackMax) || 0),
+            CancelWindowSeconds: Math.round(Math.min(60, Math.max(0, parseFloat(cancelMinutes) || 0)) * 60),
             BaseDeliveryCharge: parseFloat(baseDeliveryCharge) >= 0 ? parseFloat(baseDeliveryCharge) : 25,
             PricePerKm: parseFloat(pricePerKm) >= 0 ? parseFloat(pricePerKm) : 5,
             LongDistanceFeeEnabled: longDistanceEnabled ? 1 : 0,
@@ -323,6 +326,29 @@ function SettingsPage() {
                                                 <option value="manual">Manual (Admin must review in Cashback Review queue)</option>
                                                 <option value="disabled">Disabled</option>
                                             </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* How long customers can cancel an order themselves */}
+                                <div className="card p-3 mb-4" style={{ background: "#f8fafc" }}>
+                                    <h5 style={{ color: "#1e40af", marginBottom: "8px" }}>Order cancellation</h5>
+                                    <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: "12px" }}>
+                                        {Number(cancelMinutes) > 0
+                                            ? `Customers can cancel from the app for ${Number(cancelMinutes)} minute${Number(cancelMinutes) === 1 ? "" : "s"} after placing an order (while it is not yet out for delivery). The app shows a countdown.`
+                                            : "Customers cannot cancel from the app; they have to contact support."}
+                                    </p>
+                                    <div className="row">
+                                        <div className="col-md-4 form-group mb-0">
+                                            <label><strong>Cancel window (minutes, 0 = off):</strong></label>
+                                            <div className="d-flex gap-2 flex-wrap align-items-center">
+                                                <input type="number" min="0" max="60" step="0.5" className="form-control" style={{ maxWidth: 110 }}
+                                                    value={cancelMinutes} onChange={(e) => setCancelMinutes(e.target.value)} />
+                                                {[0, 1, 2, 5, 10].map((m) => (
+                                                    <button key={m} type="button" className={`btn btn-sm ${Number(cancelMinutes) === m ? "btn-primary" : "btn-outline-secondary"}`}
+                                                        onClick={() => setCancelMinutes(String(m))}>{m === 0 ? "Off" : `${m} min`}</button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

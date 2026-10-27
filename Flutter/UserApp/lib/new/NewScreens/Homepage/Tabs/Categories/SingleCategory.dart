@@ -117,6 +117,79 @@ class _SingleCategoryState extends State<SingleCategory> {
     }
   }
 
+  static const _sortIcons = {
+    '': Icons.auto_awesome_rounded,
+    'price_asc': Icons.trending_up_rounded,
+    'price_desc': Icons.trending_down_rounded,
+    'discount': Icons.local_offer_rounded,
+  };
+
+  /// Sort options as a bottom sheet (one tap picks and closes).
+  void _openSort() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(
+              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: cardBorder, borderRadius: BorderRadius.circular(2))),
+            ),
+            const SizedBox(height: 14),
+            Text('Sort by', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: tColor)),
+            const SizedBox(height: 8),
+            for (final e in _sortOptions.entries)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Material(
+                  color: e.key == _sort ? primaryLight : white,
+                  borderRadius: BorderRadius.circular(14),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      if (e.key == _sort) return;
+                      setState(() => _sort = e.key);
+                      _reload();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: e.key == _sort ? primary : cardBorder),
+                      ),
+                      child: Row(children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: e.key == _sort ? white : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(_sortIcons[e.key], size: 19, color: e.key == _sort ? primaryDark : tColor3),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(e.value,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: e.key == _sort ? FontWeight.w700 : FontWeight.w500,
+                                  color: e.key == _sort ? primaryDark : tColor)),
+                        ),
+                        if (e.key == _sort) const Icon(Icons.check_circle_rounded, color: primary, size: 22),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+          ]),
+        ),
+      ),
+    );
+  }
+
   void _select(SubCategoryItem? sub) {
     if (sub?.id == _selected?.id) return;
     setState(() => _selected = sub);
@@ -139,20 +212,25 @@ class _SingleCategoryState extends State<SingleCategory> {
             icon: const Icon(Icons.search_rounded),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SearchScreen())),
           ),
-          PopupMenuButton<String>(
-            tooltip: 'Sort',
-            icon: const Icon(Icons.sort_rounded),
-            initialValue: _sort,
-            onSelected: (v) {
-              setState(() => _sort = v);
-              _reload();
-            },
-            itemBuilder: (_) => _sortOptions.entries
-                .map((e) => PopupMenuItem(
-                      value: e.key,
-                      child: Text(e.value, style: GoogleFonts.poppins(fontSize: 13, fontWeight: e.key == _sort ? FontWeight.w700 : FontWeight.w400)),
-                    ))
-                .toList(),
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: TextButton.icon(
+              onPressed: _openSort,
+              style: TextButton.styleFrom(
+                foregroundColor: _sort.isEmpty ? tColor : primaryDark,
+                backgroundColor: _sort.isEmpty ? const Color(0xFFF1F5F9) : primaryLight,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: const StadiumBorder(),
+              ),
+              icon: const Icon(Icons.swap_vert_rounded, size: 18),
+              label: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('Sort', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
+                if (_sort.isNotEmpty) ...[
+                  const SizedBox(width: 5),
+                  Container(width: 7, height: 7, decoration: const BoxDecoration(color: primary, shape: BoxShape.circle)),
+                ],
+              ]),
+            ),
           ),
         ],
       ),

@@ -124,6 +124,46 @@ const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwA
     check('wallet check runs for admins', wallet.status === 200 && wallet.data.Status === 1 && Array.isArray(wallet.data.DuplicateCashback));
     check('wallet check needs an admin token', (await call('GET', '/admin-wallet-check', user)).status === 401);
 
+    // ---- Search finds categories ("snacks") as well as products ("bingo")
+    const [searchCat] = await q(`SELECT c.CategoryName FROM Categories c
+                            WHERE EXISTS (SELECT 1 FROM Products p WHERE p.CategoryID = c.CategoryID AND p.Status = 1) LIMIT 1`);
+    const byCategory = await call('GET', `/products/search/${encodeURIComponent(searchCat.CategoryName)}`, user);
+    check('searching a category name returns that category', (byCategory.data.Categories || []).some((c) => c.Name === searchCat.CategoryName));
+    check('searching a category name returns its products', (byCategory.data.Products || []).length > 0);
+    const typed = await call('GET', `/products/suggestions?q=${encodeURIComponent(searchCat.CategoryName.slice(0, 5))}`, user);
+    check('suggestions include matching categories', Array.isArray(typed.data.Categories));
+    const oddSearch = await call("GET", `/products/search/${encodeURIComponent("50%_'\\")}`, user);
+    check('search treats % _ quotes as text', oddSearch.status === 200 && oddSearch.data.Status === 1);
+
+    // ---- Notifications link to their order (only the customer's own)
+    const [ownOrder] = await q('SELECT OrderID FROM Orders WHERE UserID = ? ORDER BY OrderID DESC LIMIT 1', [buyer.UserID]);
+    const CommonController = require('../controllers/CommonController');
+    check('order id read from "Order #1249" text', CommonController.orderIdFromNotification({ Title: 'Rider assigned for #1249' }) === 1249
+        && CommonController.orderIdFromNotification({ Message: 'Order ID: 77 x' }) === null);
+    await q("INSERT INTO UserNotifications (UserID, Title, Message, Type) VALUES (?, 'QA note', ?, 1)",
+        [buyer.UserID, `Order #${ownOrder.OrderID} delivered`]);
+    await q("INSERT INTO UserNotifications (UserID, Title, Message, Type) VALUES (?, 'QA note', 'Order #1 is not yours', 1)", [buyer.UserID]);
+    const notes = (await call('GET', '/users/notifications', user)).data.Notifications || [];
+    const qaNotes = notes.filter((n) => n.Title === 'QA note');
+    check('notification opens the customer’s order', qaNotes.some((n) => n.OrderID === ownOrder.OrderID));
+    check('notification never links someone else’s order', !qaNotes.some((n) => n.OrderID === 1));
+    await q("DELETE FROM UserNotifications WHERE UserID = ? AND Title = 'QA note'", [buyer.UserID]);
+
+    // ---- Cancel window is an admin setting
+    const [cw] = await q('SELECT SettingID, CancelWindowSeconds FROM AdminShopToggleSettings LIMIT 1');
+    check('cancel window above 60 min is refused',
+        (await call('PUT', `/admintiming/updatesettings/${cw.SettingID}`, admin, { CancelWindowSeconds: 7200 })).status === 400);
+    await call('PUT', `/admintiming/updatesettings/${cw.SettingID}`, admin, { CancelWindowSeconds: 300 });
+    const [fresh] = await q("SELECT OrderID, CreatedAt FROM Orders WHERE UserID = ? AND OrderStatus IN (8, 9) ORDER BY OrderID DESC LIMIT 1", [buyer.UserID]);
+    if (fresh) {
+        await q('UPDATE Orders SET CreatedAt = NOW() - INTERVAL 100 SECOND WHERE OrderID = ?', [fresh.OrderID]);
+        const tracked = await call("GET", `/orders/myorder/${fresh.OrderID}`, user);
+        const left = tracked.data.Orders && tracked.data.Orders.CancelSecondsLeft;
+        check('countdown follows the admin cancel window', left > 150 && left <= 200, `left ${left}`);
+        await q('UPDATE Orders SET CreatedAt = ? WHERE OrderID = ?', [fresh.CreatedAt, fresh.OrderID]);
+    }
+    await call('PUT', `/admintiming/updatesettings/${cw.SettingID}`, admin, { CancelWindowSeconds: cw.CancelWindowSeconds });
+
     // ---- Clean up
     await q('DELETE FROM Categories WHERE CategoryName = ?', [catName]);
     if (prod.data.ProductID) {

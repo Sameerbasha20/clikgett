@@ -8,6 +8,38 @@ const pool = require('../utils/db');
 
 
 const Products_s3="http://clikgett-media.local/Products/"
+const Categories_s3 = "http://clikgett-media.local/Categories/"
+
+// LIKE pattern for a search term (%, _ and \ escaped). "snacks" also matches "snack".
+function searchLike(term) {
+    const t = String(term || '').trim().replace(/s$/i, '');
+    return `%${t.replace(/[\\%_]/g, (c) => '\\' + c)}%`;
+}
+
+// Categories and subcategories whose name matches the search, with an image to show.
+async function matchingCategories(term) {
+    if (String(term || '').trim().length < 2) return [];
+    const like = searchLike(term);
+    const rows = await CommonController.commonget(`
+        SELECT c.CategoryID, NULL AS SubCategoryID, c.CategoryName AS Name, c.CategoryName, c.ImageUrl AS Image, 0 AS Sub
+          FROM Categories c
+         WHERE c.CategoryName LIKE ? AND EXISTS (SELECT 1 FROM Products p WHERE p.CategoryID = c.CategoryID AND p.Status = 1)
+        UNION ALL
+        SELECT sc.CategoryID, sc.SubCategoryID, sc.SubCategoryName AS Name, c.CategoryName, sc.SubCategoryImage AS Image, 1 AS Sub
+          FROM SubCategories sc JOIN Categories c ON c.CategoryID = sc.CategoryID
+         WHERE COALESCE(sc.Status, 1) = 1 AND sc.SubCategoryName LIKE ?
+           AND EXISTS (SELECT 1 FROM Products p WHERE p.SubCategoryID = sc.SubCategoryID AND p.Status = 1)
+         ORDER BY Sub, Name
+         LIMIT 6`, [like, like]);
+    return rows.map((r) => ({
+        CategoryID: r.CategoryID,
+        SubCategoryID: r.SubCategoryID,
+        Name: r.Name,
+        CategoryName: r.CategoryName,
+        ImageUrl: r.Image && r.Image !== 'NA'
+            ? (String(r.Image).startsWith('http') ? r.Image : Categories_s3 + r.Image) : '',
+    }));
+}
 
 const productcontroller={
     // GET /products/previously-bought: what this customer ordered before, most recent first.
@@ -124,12 +156,19 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
         let query; // per-request (were implicit globals)
         try{                 
             // The search text is a bound parameter (quote-escaping alone let "\" break out of the string).
-            const like = `%${String(req.params.SearchString || '').replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-            query=`select * from Products p inner join ProductVariants PV on PV.ProductID=p.ProductID
-            WHERE p.status=1 and PV.Status=1 and p.ProductName LIKE ? group by p.ProductID order by
+            const term = String(req.params.SearchString || '').trim();
+            const like = searchLike(term);
+            // Product names first, then products in a matching category ("snacks" -> Snacks & Namkeen).
+            query=`select p.*, PV.* from Products p inner join ProductVariants PV on PV.ProductID=p.ProductID
+            LEFT JOIN Categories c ON c.CategoryID = p.CategoryID
+            LEFT JOIN SubCategories sc ON sc.SubCategoryID = p.SubCategoryID
+            WHERE p.status=1 and PV.Status=1 and (p.ProductName LIKE ? OR c.CategoryName LIKE ? OR sc.SubCategoryName LIKE ?)
+            group by p.ProductID order by
+             CASE WHEN p.ProductName LIKE ? THEN 0 ELSE 1 END,
              CASE WHEN PV.AvailableQty = 0 THEN 1 ELSE 0 END,
              CONCAT(p.ProductName, '', PV.AvailableQty) ASC`
-            let results = await CommonController.getproducts(query, [like]);
+            let results = await CommonController.getproducts(query, [like, like, like, like]);
+            const categories = await matchingCategories(term);
 
             // Log search query for analytics
             const searchKw = req.params.SearchString ? req.params.SearchString.trim() : '';
@@ -141,7 +180,7 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
                 });
             }
 
-            resp.json({"Status":1,"Products":results})
+            resp.json({"Status":1,"Products":results,"Categories":categories})
         }
         catch(e){
             console.log(e)
@@ -236,12 +275,15 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
                     ORDER BY COUNT(*) DESC
                     LIMIT 5
                 `;
-                pool.query(popularSql, [containsPattern], (popErr, popRows) => {
+                pool.query(popularSql, [containsPattern], async (popErr, popRows) => {
                     const popular = (popRows || []).map(r => r.Keyword);
+                    let categories = [];
+                    try { categories = await matchingCategories(rawQuery); } catch (catErr) { console.error('category suggestions failed', catErr.message); }
                     return resp.json({
                         Status: 1,
                         Query: rawQuery,
                         Suggestions: suggestions,
+                        Categories: categories,
                         PopularSearches: popular
                     });
                 });

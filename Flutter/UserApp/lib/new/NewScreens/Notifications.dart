@@ -11,6 +11,7 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:fav_app/old/Models/Home/notification_model.dart' as notif;
 import '../Constants/imageslist.dart';
 import '../Controllers/notification_controller.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/OrderDetails.dart';
 
 class Notifications extends StatefulWidget {
   const Notifications({super.key});
@@ -188,6 +189,11 @@ class _NotificationsState extends State<Notifications> {
           body: body,
           uid: notification.notificationID,
         );
+        // Order updates open that order.
+        final orderId = notification.orderId;
+        if (orderId != null && orderId > 0) {
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => OrderDetailsScreen(orderNo: orderId)));
+        }
       },
       child: Container(
         margin: EdgeInsets.symmetric(vertical: 1.h),
@@ -256,6 +262,15 @@ class _NotificationsState extends State<Notifications> {
                     fontWeight: FontWeight.w400,
                     color: tColor5,
                   ),
+                  if ((notification.orderId ?? 0) > 0)
+                    Padding(
+                      padding: EdgeInsets.only(top: 0.6.h),
+                      child: Row(children: [
+                        Text('View order #${notification.orderId}',
+                            style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: primaryDark)),
+                        const Icon(Icons.chevron_right_rounded, size: 18, color: primaryDark),
+                      ]),
+                    ),
 
                   // Unread indicator
                   // if (isUnread)

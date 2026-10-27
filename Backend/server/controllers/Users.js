@@ -1007,9 +1007,18 @@ const usercontroller = {
     notifications: async (req, resp, next) => {
         let query; // per-request (were implicit globals)
         try {
-            query = "SELECT NotificationID,UserID,Title,Status,Type,Message,CreatedAt,\
-            UpdatedAt,IsRead FROM UserNotifications where UserID="+ req.UserID + " order by CreatedAt desc"
-            let results = await CommonController.commonget(query);
+            query = "SELECT N.NotificationID,N.UserID,N.Title,N.Status,N.Type,N.Message,N.CreatedAt,\
+            N.UpdatedAt,N.IsRead,N.OrderID FROM UserNotifications N where N.UserID=? order by N.CreatedAt desc"
+            let results = await CommonController.commonget(query, [req.UserID]);
+            // Older notifications have no OrderID: read it from the text, and only keep
+            // ids of this customer's own orders.
+            const candidate = (r) => r.OrderID || CommonController.orderIdFromNotification(r);
+            const ids = [...new Set(results.map(candidate).filter(Boolean))];
+            const owned = ids.length
+                ? new Set((await CommonController.commonget('SELECT OrderID FROM Orders WHERE UserID = ? AND OrderID IN (?)', [req.UserID, ids]))
+                    .map((o) => o.OrderID))
+                : new Set();
+            results = results.map((r) => ({ ...r, OrderID: owned.has(candidate(r)) ? candidate(r) : null }));
 
             let NotificationLastSeen = `update Users set NotificationLastSeen=? where 
                 UserID=${req.UserID}`;

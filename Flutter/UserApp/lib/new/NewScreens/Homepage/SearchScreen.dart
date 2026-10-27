@@ -6,6 +6,7 @@ import 'package:fav_app/new/Constants/Constants.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
 import 'package:fav_app/new/NewScreens/Homepage/ItemDescription.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Tabs/Categories/SingleCategory.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/clikgett_product_card.dart';
 import 'package:fav_app/new/NewScreens/Support/widgets/search_product_request_card.dart';
 import 'package:fav_app/new/NewScreens/Widgets/floating_cart_bar.dart';
@@ -45,6 +46,28 @@ class _Suggestion {
         price = (j['OfferPrice'] as num?)?.toDouble() ?? 0;
 }
 
+/// A category or subcategory whose name matches the search ("snacks" -> Snacks).
+class _CategoryHit {
+  final int categoryId;
+  final int? subCategoryId;
+  final String name;
+  final String categoryName;
+  final String imageUrl;
+
+  _CategoryHit.fromJson(Map<String, dynamic> j)
+      : categoryId = (j['CategoryID'] as num?)?.toInt() ?? 0,
+        subCategoryId = (j['SubCategoryID'] as num?)?.toInt(),
+        name = '${j['Name'] ?? ''}'.trim(),
+        categoryName = '${j['CategoryName'] ?? ''}'.trim(),
+        imageUrl = '${j['ImageUrl'] ?? ''}';
+
+  static List<_CategoryHit> listFrom(dynamic v) => (v is List ? v : const [])
+      .whereType<Map>()
+      .map((e) => _CategoryHit.fromJson(Map<String, dynamic>.from(e)))
+      .where((c) => c.categoryId > 0)
+      .toList();
+}
+
 class _SearchScreenState extends State<SearchScreen> {
   static const _recentKey = 'recent_searches';
 
@@ -56,6 +79,7 @@ class _SearchScreenState extends State<SearchScreen> {
   List<String> _popular = [];
   List<BestItem> _recommended = [];
   List<_Suggestion> _suggestions = [];
+  List<_CategoryHit> _categoryHits = [];
   List<BestItem>? _results; // null = not searched yet
   String _resultsFor = '';
   bool _searching = false;
@@ -106,7 +130,10 @@ class _SearchScreenState extends State<SearchScreen> {
       if (text.trim() != _resultsFor) _results = null;
     });
     if (text.trim().length < 2) {
-      setState(() => _suggestions = []);
+      setState(() {
+        _suggestions = [];
+        _categoryHits = [];
+      });
       return;
     }
     _debounce = Timer(const Duration(milliseconds: 300), () async {
@@ -117,6 +144,7 @@ class _SearchScreenState extends State<SearchScreen> {
           _suggestions = ((data['Suggestions'] as List?) ?? [])
               .map((e) => _Suggestion.fromJson(Map<String, dynamic>.from(e)))
               .toList();
+          _categoryHits = _CategoryHit.listFrom(data['Categories']);
         });
       } catch (_) {}
     });
@@ -142,6 +170,7 @@ class _SearchScreenState extends State<SearchScreen> {
       if (!mounted) return;
       setState(() {
         _results = list;
+        _categoryHits = _CategoryHit.listFrom(data['Categories']);
         _resultsFor = q;
         _searching = false;
       });
@@ -220,17 +249,80 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _body() {
     if (_searching) return const Center(child: CircularProgressIndicator(color: primary));
-    if (_suggestions.isNotEmpty && _results == null) return _suggestionList();
+    if ((_suggestions.isNotEmpty || _categoryHits.isNotEmpty) && _results == null) return _suggestionList();
     if (_results != null) return _resultsView();
     return _emptyState();
+  }
+
+  void _openCategory(_CategoryHit c) {
+    _remember(_query.text.trim());
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => SingleCategory(
+        categories: SpecialCategory(categoryId: c.categoryId, categoryName: c.categoryName, imageUrl: c.imageUrl),
+        initialSubCategoryId: c.subCategoryId,
+      ),
+    ));
+  }
+
+  /// "Shop by category" tiles for matching categories, shown above products.
+  Widget _categoryStrip() {
+    if (_categoryHits.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Categories', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: tColor3, letterSpacing: 0.4)),
+        const SizedBox(height: 8),
+        for (final c in _categoryHits)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Material(
+              color: primaryGhost,
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => _openCategory(c),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFBBF7D0)),
+                  ),
+                  child: Row(children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(color: white, borderRadius: BorderRadius.circular(12)),
+                      child: c.imageUrl.isNotEmpty
+                          ? CustomNetworkImage(url: c.imageUrl, fit: BoxFit.contain)
+                          : const Icon(Icons.category_rounded, color: primaryDark),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(c.name, style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: tColor)),
+                        Text(c.subCategoryId != null ? 'In ${c.categoryName} · see all' : 'See all products',
+                            style: GoogleFonts.poppins(fontSize: 11.5, color: primaryDark, fontWeight: FontWeight.w500)),
+                      ]),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: primaryDark),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+      ]),
+    );
   }
 
   Widget _suggestionList() {
     return ListView.separated(
       padding: const EdgeInsets.only(bottom: 100),
-      itemCount: _suggestions.length + 1,
-      separatorBuilder: (_, __) => const Divider(height: 1, indent: 68),
-      itemBuilder: (_, i) {
+      itemCount: _suggestions.length + 2,
+      separatorBuilder: (_, i) => i == 0 ? const SizedBox.shrink() : const Divider(height: 1, indent: 68),
+      itemBuilder: (_, index) {
+        if (index == 0) return _categoryStrip();
+        final i = index - 1;
         if (i == _suggestions.length) {
           return ListTile(
             leading: const Icon(Icons.search_rounded, color: primaryDark),
@@ -266,6 +358,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _resultsView() {
     final results = _results!;
+    if (results.isEmpty && _categoryHits.isNotEmpty) {
+      return ListView(padding: const EdgeInsets.only(bottom: 100), children: [_categoryStrip()]);
+    }
     if (results.isEmpty) {
       return ListView(
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
@@ -285,6 +380,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
     return CustomScrollView(
       slivers: [
+        SliverToBoxAdapter(child: _categoryStrip()),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),

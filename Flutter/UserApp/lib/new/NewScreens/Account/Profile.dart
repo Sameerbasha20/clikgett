@@ -205,25 +205,44 @@ class _ProfileState extends State<Profile> {
         },
       );
 
-  Widget _quickActions() => Row(children: [
-        Obx(() => _quick(Icons.account_balance_wallet_outlined, 'Wallet', rupees(walletController.walletAmount.value), () => _push(const WalletScreen()))),
-        const SizedBox(width: 8),
-        _quick(Icons.support_agent_rounded, 'Help', null, () => _push(const Support())),
-      ]);
+  // Wallet and Help side by side, same size: icon, main line, small line.
+  Widget _quickActions() => IntrinsicHeight(
+        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(
+            child: Obx(() => _quick(Icons.account_balance_wallet_outlined, rupees(walletController.walletAmount.value), 'Wallet balance',
+                () => _push(const WalletScreen()))),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: _quick(Icons.support_agent_rounded, 'Help', 'Chat, call or FAQs', () => _push(const Support()))),
+        ]),
+      );
 
-  Widget _quick(IconData icon, String label, String? value, VoidCallback onTap) => Expanded(
+  Widget _quick(IconData icon, String title, String subtitle, VoidCallback onTap) => Material(
+        color: white,
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           child: Container(
-            margin: const EdgeInsets.only(bottom: 4),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(color: white, borderRadius: BorderRadius.circular(14), border: Border.all(color: cardBorder)),
-            child: Column(children: [
-              Icon(icon, color: primaryDark),
-              const SizedBox(height: 4),
-              Text(value ?? label, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: tColor)),
-              if (value != null) Text(label, style: GoogleFonts.poppins(fontSize: 10.5, color: tColor3)),
+            constraints: const BoxConstraints(minHeight: 96),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: cardBorder)),
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(color: primaryGhost, borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, color: primaryDark, size: 20),
+              ),
+              const SizedBox(height: 6),
+              Text(title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: tColor)),
+              Text(subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(fontSize: 11, color: tColor3)),
             ]),
           ),
         ),

@@ -257,7 +257,7 @@ updateBanner : async (req, resp, next) => {
 
       const allowedFields = [
           'PricePerKm', 'BaseDeliveryCharge', 'Longitude', 'Latitude',
-          'CashbackMode', 'CashbackEnabled', 'CashbackPercentage', 'CashbackMaxAmount', 'LongDistanceFeeEnabled', 'LongDistanceThresholdKm', 'LongDistanceFee',
+          'CashbackMode', 'CashbackEnabled', 'CashbackPercentage', 'CashbackMaxAmount', 'CancelWindowSeconds', 'LongDistanceFeeEnabled', 'LongDistanceThresholdKm', 'LongDistanceFee',
           'LargeCartThreshold1Items', 'LargeCartThreshold1Minutes',
           'LargeCartThreshold2Items', 'LargeCartThreshold2Minutes',
           'DeliveryAddressVisibility', 'DeliveryProductListVisibility'
@@ -265,6 +265,9 @@ updateBanner : async (req, resp, next) => {
 
       if (Body.CashbackPercentage !== undefined && !(Number(Body.CashbackPercentage) >= 0 && Number(Body.CashbackPercentage) <= 100)) {
           return resp.status(400).json({ status: 0, Message: "Cashback % must be between 0 and 100" });
+      }
+      if (Body.CancelWindowSeconds !== undefined && !(Number(Body.CancelWindowSeconds) >= 0 && Number(Body.CancelWindowSeconds) <= 3600)) {
+          return resp.status(400).json({ status: 0, Message: "Cancel window must be between 0 and 60 minutes" });
       }
       if (Body.CashbackMaxAmount !== undefined && !(Number(Body.CashbackMaxAmount) >= 0)) {
           return resp.status(400).json({ status: 0, Message: "Maximum cashback cannot be negative" });

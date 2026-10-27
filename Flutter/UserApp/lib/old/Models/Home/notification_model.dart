@@ -87,6 +87,7 @@ class Notification {
     this.updatedAt,
     this.isRead,
     this.imageUrl,
+    this.orderId,
   });
 
   int? notificationID;
@@ -99,6 +100,9 @@ class Notification {
   DateTime? createdAt;
   DateTime? updatedAt;
   String? imageUrl;
+
+  /// The order this notification is about (tap opens it), when there is one.
+  int? orderId;
 
   factory Notification.fromJson(Map<String, dynamic> json) => Notification(
         notificationID: json["NotificationID"],
@@ -115,6 +119,7 @@ class Notification {
             ? null
             : serverDate(json["UpdatedAt"])!,
         imageUrl: json["ImageUrl"],
+        orderId: json["OrderID"] is num ? (json["OrderID"] as num).toInt() : int.tryParse('${json["OrderID"] ?? ''}'),
       );
 
   Map<String, dynamic> toJson() => {

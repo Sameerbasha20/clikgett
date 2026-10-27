@@ -12,6 +12,7 @@ const MIGRATIONS = [
     require('./notification_preferences_migration'),
     require('./cashback_mode_migration'),
     require('./unlock_deals_threshold_migration'),
+    require('./order_settings_migration'),
 ];
 
 (async () => {

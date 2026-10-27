@@ -85,6 +85,15 @@ CommonController.currentdate = () => {
     }
 }
 
+// The order a notification is about: Body.OrderID, or "Order #1249" / "#1249" in the text.
+CommonController.orderIdFromNotification = (Body) => {
+    const explicit = parseInt(Body && Body.OrderID, 10);
+    if (explicit > 0) return explicit;
+    const text = `${(Body && Body.Title) || ''} ${(Body && Body.Message) || ''}`;
+    const m = text.match(/order\s*(?:id)?\s*[:#]?\s*#?\s*(\d{3,})/i) || text.match(/#(\d{3,})\b/);
+    return m ? parseInt(m[1], 10) : null;
+};
+
 CommonController.Send_Notification = (Body, UserID, Type) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -97,7 +106,8 @@ CommonController.Send_Notification = (Body, UserID, Type) => {
                 Message: Body.Message,
                 UserID: UserID,
                 Type: 1,
-
+                // Lets the app open the order when the notification is tapped.
+                OrderID: CommonController.orderIdFromNotification(Body),
             }
 
             console.log('Insert_Notifications', Insert_Notifications)
