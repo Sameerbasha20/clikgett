@@ -21,7 +21,9 @@ class PhotoOrderProposalScreen extends StatefulWidget {
 
 class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
   String _token = '';
-  final PhotoOrdersController controller = Get.find<PhotoOrdersController>();
+  // Opened from My Orders too, where the photo-orders screens haven't created it yet.
+  final PhotoOrdersController controller =
+      Get.isRegistered<PhotoOrdersController>() ? Get.find<PhotoOrdersController>() : Get.put(PhotoOrdersController());
 
   String selectedPaymentMethod = 'COD';
   bool isImageExpanded = false;

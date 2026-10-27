@@ -114,6 +114,8 @@ class PhotoOrdersController extends GetxController {
   Future<void> fetchDetail(int requestId) async {
     try {
       isLoadingDetail.value = true;
+      // Don't show the previously opened request if this one fails to load.
+      if (currentDetail.value?.requestID != requestId) currentDetail.value = null;
       final detail = await PhotoOrdersService.getPhotoOrderDetail(requestId);
       currentDetail.value = detail;
       isLoadingDetail.value = false;
