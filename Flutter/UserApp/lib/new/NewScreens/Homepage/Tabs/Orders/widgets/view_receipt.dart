@@ -8,10 +8,12 @@ import 'package:pdfx/pdfx.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:fav_app/new/Constants/colors.dart';
+import 'package:fav_app/new/Services/common/common_services.dart';
 
 /// Invoice preview: the PDF is downloaded once and drawn by the phone's own
-/// PDF renderer, so it works without a web viewer and the customer's token
-/// never leaves our server. Download saves the same file.
+/// PDF renderer. The login token goes only in the Authorization header, never in
+/// a URL. "Open in browser" uses a 5-minute link for this one invoice instead.
+/// [pdfUrl] is the invoice address without any token.
 class InAppPdfViewerPage extends StatefulWidget {
   final String pdfUrl;
   final int? orderId;
@@ -53,7 +55,9 @@ class _InAppPdfViewerPageState extends State<InAppPdfViewerPage> {
       _failed = false;
     });
     try {
-      final res = await Dio().get<List<int>>(widget.pdfUrl, options: Options(responseType: ResponseType.bytes));
+      final token = await CommonServices.getToken();
+      final res = await Dio().get<List<int>>(widget.pdfUrl,
+          options: Options(responseType: ResponseType.bytes, headers: {'Authorization': 'bearer $token'}));
       final data = Uint8List.fromList(res.data ?? const []);
       // A JSON error (expired login, missing order) is not a PDF.
       final isPdf = data.length > 4 && String.fromCharCodes(data.sublist(0, 4)) == '%PDF';
@@ -109,7 +113,13 @@ class _InAppPdfViewerPageState extends State<InAppPdfViewerPage> {
 
   Future<void> _openInBrowser() async {
     try {
-      await launchUrl(Uri.parse(widget.pdfUrl), mode: LaunchMode.externalApplication);
+      final token = await CommonServices.getToken();
+      final res = await Dio().get('${widget.pdfUrl}/link', options: Options(headers: {'Authorization': 'bearer $token'}));
+      final path = res.data is Map ? '${res.data['Path'] ?? ''}' : '';
+      if (path.isEmpty) throw Exception('No link');
+      // Path is "/api/orders/invoice/<id>?key=..."; the host comes from the invoice URL.
+      final link = Uri.parse(widget.pdfUrl).resolve(path);
+      await launchUrl(link, mode: LaunchMode.externalApplication);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open the receipt')));

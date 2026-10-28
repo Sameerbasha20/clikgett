@@ -10,7 +10,7 @@ import paginationFactory from "react-bootstrap-table2-paginator";
 import "../../../App.css";
 import { css } from "@emotion/react";
 import ScaleLoader from "react-spinners/ScaleLoader";
-import { Services } from "../../../Services";
+import { Services, openInvoice } from "../../../Services";
 import { toast } from "react-toastify";
 import Moment from "react-moment";
 import { useNavigate } from "react-router-dom";
@@ -165,7 +165,6 @@ function Products() {
         Navigate(`/orders/${id}`);
     };
     const ActionFormatter = (cell, cellcontent) => {
-        const invoiceUrl = `${process.env.REACT_APP_BASE_URL || '/api'}/adminorders/invoice/${cellcontent?.OrderID}?token=${encodeURIComponent(sessionStorage.getItem("token") || "")}`;
         const isCompleted = cellcontent?.OrderStatus == 1; // Delivered
         const isPastOrdersTab = Navactive === "2";
         const canCancel = cellcontent?.OrderStatus != 1 && cellcontent?.OrderStatus != 4 && cellcontent?.OrderStatus != 3;
@@ -177,7 +176,9 @@ function Products() {
                         title="Download Transaction Receipt"
                         onClick={(e) => {
                             e.stopPropagation();
-                            window.open(invoiceUrl, "_blank");
+                            openInvoice(cellcontent?.OrderID).then((ok) => {
+                                if (!ok) toast.error("Could not open the receipt. Please try again.");
+                            });
                         }}
                         style={{
                             marginRight: canCancel ? "8px" : "0",

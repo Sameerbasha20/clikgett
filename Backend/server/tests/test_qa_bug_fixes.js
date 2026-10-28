@@ -164,6 +164,27 @@ const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwA
     }
     await call('PUT', `/admintiming/updatesettings/${cw.SettingID}`, admin, { CancelWindowSeconds: cw.CancelWindowSeconds });
 
+    // ---- Invoices: PDF builds, and login tokens never work in a URL
+    if (ownOrder) {
+        const raw = async (path, token) => {
+            const res = await fetch(BASE + path, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+            const buf = Buffer.from(await res.arrayBuffer());
+            return { status: res.status, pdf: buf.slice(0, 4).toString() === '%PDF', text: buf.toString() };
+        };
+        const inv = `/orders/invoice/${ownOrder.OrderID}`;
+        check('invoice PDF is generated (header login)', (await raw(inv, user)).pdf);
+        check('login token in the URL is refused', (await raw(`${inv}?token=${user}`)).status === 401);
+        const link = await call('GET', `${inv}/link`, user);
+        const key = String(link.data.Path || '').split('key=')[1] || '';
+        check('invoice link is issued', link.data.Status === 1 && key.length > 20);
+        check('invoice link opens the PDF without login', (await raw(`${inv}?key=${key}`)).pdf);
+        check('invoice key does not open another order', (await raw(`/orders/invoice/${ownOrder.OrderID + 1}?key=${key}`)).status === 403);
+        check('invoice key cannot be used as a login', (await call('GET', '/orders/currentorders', key)).status === 401);
+        check('invoice key cannot make another link', (await raw(`${inv}/link?key=${key}`)).status === 401);
+        check('login token is not accepted as an invoice key', (await raw(`${inv}?key=${user}`)).status === 401);
+        check('someone else cannot get the invoice link', (await call('GET', `${inv}/link`, other)).status === 403);
+    }
+
     // ---- Clean up
     await q('DELETE FROM Categories WHERE CategoryName = ?', [catName]);
     if (prod.data.ProductID) {

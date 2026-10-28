@@ -69,8 +69,13 @@ const checks = [
     },
     {
         name: 'invoice of another user -> 403',
-        run: () => request('GET', `/orders/invoice/999999999?token=${user}`),
+        run: () => request('GET', '/orders/invoice/999999999', { auth: `Bearer ${user}` }),
         expect: (r) => r.status === 403,
+    },
+    {
+        name: 'login token in an invoice URL -> 401 (tokens only in the header)',
+        run: () => request('GET', `/orders/invoice/999999999?token=${user}`),
+        expect: (r) => r.status === 401,
     },
     {
         name: 'signup requires a user token',

@@ -7,7 +7,7 @@ import dashboardclasses from "../dashboard.module.css";
 import "../../../App.css";
 import { css } from "@emotion/react";
 import ScaleLoader from "react-spinners/ScaleLoader";
-import { Services } from "../../../Services";
+import { Services, openInvoice } from "../../../Services";
 import { toast } from "react-toastify";
 import Moment from "react-moment";
 import { useNavigate, useParams } from "react-router-dom";
@@ -1125,11 +1125,13 @@ function Products() {
                                                         }>
                                                         <h5>Invoice / Receipt</h5>
                                                         <h4>:</h4>
-                                                        <a
-                                                            href={`${process.env.REACT_APP_BASE_URL || '/api'}/adminorders/invoice/${orders.OrderID}?token=${encodeURIComponent(sessionStorage.getItem("token") || "")}`}
-                                                            target="_blank"
-                                                            rel="noreferrer"
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openInvoice(orders.OrderID).then((ok) => {
+                                                                if (!ok) toast.error("Could not open the receipt. Please try again.");
+                                                            })}
                                                             style={{
+                                                                cursor: 'pointer',
                                                                 display: 'inline-flex',
                                                                 alignItems: 'center',
                                                                 gap: '6px',
@@ -1142,7 +1144,7 @@ function Products() {
                                                                 border: '1px solid rgba(124, 58, 237, 0.25)'
                                                             }}>
                                                             <FaDownload size={12} /> Download Receipt
-                                                        </a>
+                                                        </button>
                                                     </div>
                                                 )}
                                                 {/* <div

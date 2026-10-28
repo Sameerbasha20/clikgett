@@ -13,6 +13,7 @@ router
     .get('/pastorders', util.authenticate.adminAuthenticate, adminordercontroller.pastorders)
     .get('/orderdetail', util.authenticate.adminAuthenticate, adminordercontroller.myorder)
     .get('/invoice/:OrderID', util.authenticate.invoiceAuthenticate, adminordercontroller.downloadInvoice)
+    .get('/invoice/:OrderID/link', util.authenticate.invoiceAuthenticate, util.authenticate.invoiceLink)
 
     .get('/eligible-drivers', util.authenticate.adminAuthenticate, deliveryOperations.getEligibleDrivers)
     .put('/assigndeliverboy/:OrderID', util.authenticate.adminAuthenticate, deliveryOperations.assignDeliveryBoy)

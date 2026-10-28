@@ -119,6 +119,10 @@ app.use('/api', limiter(1, parseInt(process.env.API_RATE_LIMIT_PER_MINUTE, 10) |
 const PaymentRecovery = require('./services/PaymentRecovery');
 app.post('/api/payments/razorpay-webhook', express.raw({ type: 'application/json', limit: '1mb' }), PaymentRecovery.webhook);
 
+// Request log: hide anything secret-looking in query strings (invoice keys, any
+// token an old app version still puts in a URL).
+morgan.token('url', (req) => String(req.originalUrl || req.url || '')
+    .replace(/([?&](?:token|key|access_token|otp|password)=)[^&#]*/gi, '$1[hidden]'));
 app.use(morgan('dev'));
 
 const PORT = process.env.PORT || '5000';

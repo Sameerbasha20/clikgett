@@ -144,6 +144,27 @@ const httpcall = (url, method, body, token) => {
 
 const SESSION_ENDED_MESSAGES = ["Token expired", "Invalid Token", "unauthorized admin user"];
 
+// Opens an order's invoice PDF in a new tab. The admin's login token never goes in
+// a URL (it would land in logs and browser history): the backend hands out a
+// 5-minute link for this one invoice instead. Resolves false if that fails.
+export const openInvoice = (orderId) => {
+    // Open the tab inside the click so pop-up blockers allow it, then point it at the link.
+    const win = window.open("", "_blank");
+    if (win) win.opener = null;
+    return httpcall(`adminorders/invoice/${orderId}/link`, "GET", null)
+        .then((res) => {
+            if (!res || res.Status !== 1 || !res.Path) throw new Error("no link");
+            const url = normalizeUrl(res.Path);
+            if (win) win.location.href = url;
+            else window.location.href = url;
+            return true;
+        })
+        .catch(() => {
+            if (win) win.close();
+            return false;
+        });
+};
+
 
 const login = (method, body) => {
     return httpcall("adminuser/login", method, body);

@@ -16,7 +16,8 @@ router
 .post('/reorder',util.authenticate.userAuthenticate,ordercontroller.reorder)
 .get('/checktiming',TimingController.checkOrderTiming)
 .get('/orderstatus/:OrderID', util.authenticate.userAuthenticate, ordercontroller.getOrderStatus)
-.get('/invoice/:OrderID', util.authenticate.invoiceAuthenticate, ordercontroller.downloadInvoice);
+.get('/invoice/:OrderID', util.authenticate.invoiceAuthenticate, ordercontroller.downloadInvoice)
+.get('/invoice/:OrderID/link', util.authenticate.invoiceAuthenticate, util.authenticate.invoiceLink);
 
 
 

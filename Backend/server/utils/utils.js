@@ -6,24 +6,25 @@ require('dotenv').config();
 const user_jwtExpirySeconds = 31536000;        // mobile apps have no refresh flow
 const deliveryboy_jwtExpirySeconds = 31536000;
 
-// Accepts "Authorization: <scheme> <token>" or a bare token. Invoice/PDF links
-// opened in a browser or PDF viewer cannot send headers, so routes that opt in
-// via allowQueryToken also accept ?token=<jwt>.
-const extractToken = (req, allowQueryToken = false) => {
+// Accepts "Authorization: <scheme> <token>" or a bare token. Login tokens are only
+// ever read from the header: in a URL they would end up in server and proxy logs,
+// browser history and anything the link is shared with. Links that open in a
+// browser (invoices) use a short-lived invoice key instead (see invoiceLink).
+const extractToken = (req) => {
     const header = req.headers['authorization'];
-    if (header) {
-        const parts = header.trim().split(/\s+/);
-        return parts.length > 1 ? parts[1] : parts[0];
-    }
-    if (allowQueryToken && req.query && typeof req.query.token === 'string') {
-        return req.query.token;
-    }
-    return null;
+    if (!header) return null;
+    const parts = header.trim().split(/\s+/);
+    return parts.length > 1 ? parts[1] : parts[0];
 };
 
 const verifyToken = (Token) => new Promise((resolve, reject) => {
     jwt.verify(Token, process.env.SECRET_KEY, (err, decoded) => (err ? reject(err) : resolve(decoded)));
 });
+
+// Invoice keys: one order, 5 minutes, signed with a different secret so a key can
+// never be used as a login token (and a login token never works as a key).
+const INVOICE_KEY_SECONDS = 300;
+const invoiceKeySecret = () => `${process.env.SECRET_KEY}:invoice-link`;
 
 const query = (sql, params) => new Promise((resolve, reject) => {
     pool.query(sql, params, (err, results) => (err ? reject(err) : resolve(results)));
@@ -36,8 +37,8 @@ const tokenErrorResponse = (resp, err) => {
     return resp.status(401).json({ "Status": 0, "Message": "Invalid Token" });
 };
 
-const userAuth = (allowQueryToken) => async (req, resp, next) => {
-    const Token = extractToken(req, allowQueryToken);
+const userAuth = () => async (req, resp, next) => {
+    const Token = extractToken(req);
     if (!Token) {
         return resp.status(401).json({ "Status": 0, "Message": "Token empty" });
     }
@@ -66,8 +67,8 @@ const userAuth = (allowQueryToken) => async (req, resp, next) => {
     }
 };
 
-const adminAuth = (allowQueryToken) => async (req, resp, next) => {
-    const Token = extractToken(req, allowQueryToken);
+const adminAuth = () => async (req, resp, next) => {
+    const Token = extractToken(req);
     if (!Token) {
         return resp.status(401).json({ "Status": 0, "Message": "Token empty" });
     }
@@ -97,8 +98,7 @@ const adminAuth = (allowQueryToken) => async (req, resp, next) => {
 };
 
 const authenticate = {
-    userAuthenticate: userAuth(false),
-    userAuthenticateAllowQueryToken: userAuth(true),
+    userAuthenticate: userAuth(),
 
     optionalUserAuthenticate: async (req, resp, next) => {
         req.UserID = null;
@@ -129,13 +129,28 @@ const authenticate = {
         }
     },
 
-    adminAuthenticate: adminAuth(false),
-    adminAuthenticateAllowQueryToken: adminAuth(true),
+    adminAuthenticate: adminAuth(),
 
-    // Accepts either an admin token or a user token that owns :OrderID.
-    // Used for invoice downloads, which both the admin panel and the user app open as links.
+    // Invoice PDF access: a login token in the header (admin, or the customer who
+    // owns :OrderID), or ?key= from invoiceLink for links opened in a browser.
     invoiceAuthenticate: async (req, resp, next) => {
-        const Token = extractToken(req, true);
+        // Never cached or passed on as a referrer: the PDF holds personal details.
+        resp.setHeader('Cache-Control', 'no-store');
+        resp.setHeader('Referrer-Policy', 'no-referrer');
+        const key = req.query && typeof req.query.key === 'string' ? req.query.key : null;
+        const Token = extractToken(req);
+        if (!Token && key) {
+            try {
+                const k = jwt.verify(key, invoiceKeySecret(), { algorithms: ['HS256'] });
+                if (k.scope === 'invoice' && String(k.inv) === String(req.params.OrderID)) {
+                    req.InvoiceKey = true;
+                    return next();
+                }
+            } catch (err) {
+                return resp.status(401).json({ "Status": 0, "Message": "This invoice link has expired. Open the invoice again from the app." });
+            }
+            return resp.status(403).json({ "Status": 0, "Message": "Not allowed to access this invoice" });
+        }
         if (!Token) {
             return resp.status(401).json({ "Status": 0, "Message": "Token empty" });
         }
@@ -165,6 +180,23 @@ const authenticate = {
             console.log("error authorizing invoice access: ", err.message);
             return resp.status(401).json({ "Status": 0, "Message": "unauthorized" });
         }
+    },
+
+    // After invoiceAuthenticate with a login token: a 5-minute link for one invoice,
+    // for opening it in a browser. A key cannot be used to create another key.
+    invoiceLink: (req, resp) => {
+        if (req.InvoiceKey) {
+            return resp.status(401).json({ "Status": 0, "Message": "Sign in to get an invoice link" });
+        }
+        const key = jwt.sign({ scope: 'invoice', inv: Number(req.params.OrderID) }, invoiceKeySecret(), {
+            algorithm: 'HS256',
+            expiresIn: INVOICE_KEY_SECONDS
+        });
+        return resp.json({
+            "Status": 1,
+            "Path": `${req.baseUrl}/invoice/${encodeURIComponent(req.params.OrderID)}?key=${key}`,
+            "ExpiresInSeconds": INVOICE_KEY_SECONDS
+        });
     },
 
     // For scheduled jobs (abandoned-cart, win-back). Allows an admin token, or

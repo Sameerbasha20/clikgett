@@ -13,7 +13,6 @@ import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/order_progre
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/view_receipt.dart';
 import 'package:fav_app/new/NewScreens/Support/Support.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
-import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:fav_app/new/Services/order_tracking_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -182,16 +181,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const Cart(isFromHomeScreen: false)));
   }
 
-  Future<void> _openInvoice(TrackedOrder order) async {
-    String base = Constants.baseUrl;
-    if (base.endsWith('/api')) base = base.substring(0, base.length - 4);
-    // The PDF viewer cannot send headers, so the owner's token goes in the query.
-    final token = await CommonServices.getToken();
-    final url = Uri.parse('$base/api/orders/invoice/${order.orderId}')
-        .replace(queryParameters: token.isNotEmpty ? {'token': token} : null)
-        .toString();
-    if (!mounted) return;
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => InAppPdfViewerPage(pdfUrl: url, orderId: order.orderId)));
+  void _openInvoice(TrackedOrder order) {
+    // The viewer sends the login token as a header; it never goes in the URL.
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => InAppPdfViewerPage(pdfUrl: '${Constants.baseUrl}/orders/invoice/${order.orderId}', orderId: order.orderId)));
   }
 
   // ---------------------------------------------------------------- build
