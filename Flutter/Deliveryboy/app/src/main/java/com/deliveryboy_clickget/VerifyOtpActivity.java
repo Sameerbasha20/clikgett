@@ -24,6 +24,7 @@ import android.widget.Toast;
 import com.deliveryboy_clickget.Model.SendotpDeo;
 import com.deliveryboy_clickget.Model.Verifyotp;
 import com.deliveryboy_clickget.Utils.APIService;
+import com.deliveryboy_clickget.Utils.Auth;
 import com.deliveryboy_clickget.Utils.CommonUtilities;
 import com.deliveryboy_clickget.Utils.RetrofitClient;
 
@@ -337,8 +338,8 @@ public class VerifyOtpActivity extends AppCompatActivity {
                             if (loginDeo.getStatus() != null && loginDeo.getStatus() == 1) {
                                 sharedPreferences.edit().putBoolean(CommonUtilities.USER_LOGIN_STATUS, true).apply();
                                 SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+                                Auth.saveSession(getApplicationContext(), loginDeo.getToken(), loginDeo.getRefreshToken(), loginDeo.getExpiresIn());
                                 SharedPreferences.Editor editor = pref.edit();
-                                editor.putString("token", loginDeo.getToken() != null ? loginDeo.getToken() : "");
                                 editor.putString("MobileNumber", finalMobileNumber);
 
                                 if (loginDeo.getUserDetails() != null) {

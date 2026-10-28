@@ -16,6 +16,21 @@ public class Verifyotp {
     @SerializedName("token")
     @Expose
     private String token;
+    // Short login token + refresh token (the app asks with X-Auth-Refresh).
+    @SerializedName("RefreshToken")
+    @Expose
+    private String refreshToken;
+    @SerializedName("ExpiresIn")
+    @Expose
+    private Integer expiresIn;
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public Integer getExpiresIn() {
+        return expiresIn;
+    }
 
     public Integer getStatus() {
         return status;

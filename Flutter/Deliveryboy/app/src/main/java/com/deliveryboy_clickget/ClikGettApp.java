@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.deliveryboy_clickget.Utils.Auth;
 import com.deliveryboy_clickget.Utils.BackendDiscovery;
 
 public class ClikGettApp extends Application {
@@ -26,6 +27,7 @@ public class ClikGettApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        Auth.init(this);
         // Last backend address found on the Wi-Fi, also used by services started without the splash screen.
         BackendDiscovery.loadSaved(this);
         createOrdersChannel();

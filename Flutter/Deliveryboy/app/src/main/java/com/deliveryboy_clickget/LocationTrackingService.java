@@ -20,6 +20,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.deliveryboy_clickget.Utils.Auth;
 import com.deliveryboy_clickget.Utils.CommonUtilities;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -190,8 +191,7 @@ public class LocationTrackingService extends Service {
     }
 
     private void sendLocationPing(JSONObject payload) {
-        SharedPreferences pref = getSharedPreferences("MyPref", MODE_PRIVATE);
-        String token = pref.getString("token", "");
+        String token = Auth.freshToken(this);
         if (token.isEmpty()) {
             queueLocationOffline(payload);
             return;

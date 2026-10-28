@@ -51,6 +51,19 @@ drive too. If the dev laptop is lost, they cannot be recovered from git.
 After rotating a key: update Render (it redeploys), the backup file, and rebuild the
 app if it is an app key.
 
+## Login sessions
+
+- Customer and rider apps get a **1-hour login token** plus a **60-day refresh token**
+  (renewed on every use; the apps renew in the background, users stay logged in).
+  Change with `ACCESS_TOKEN_SECONDS` / `REFRESH_TOKEN_DAYS` on Render.
+- Refresh tokens are stored only as hashes (`AuthRefreshTokens`). Reusing an old one
+  ends that login everywhere. Logout and account deletion end it on the server.
+- App versions before Oct 2026 don't ask for refresh tokens and still get one-year tokens.
+- Login tokens are only accepted in the `Authorization` header, never in a URL. Invoice
+  links opened in a browser use a 5-minute key for that one invoice.
+- To log **everyone** out (e.g. after a leak): change `SECRET_KEY` on Render and run
+  `UPDATE AuthRefreshTokens SET RevokedAt = NOW(), RevokeReason = 'reset' WHERE RevokedAt IS NULL;`
+
 ## Build the apps
 
 Test APK (Render backend), from `Flutter/UserApp`:

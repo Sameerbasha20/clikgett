@@ -191,7 +191,7 @@ class AuthController extends GetxController {
                           {
                             if(body['isScreenFromSignup']!=null){
 
-                              await CommonServices.setToken(value.token)
+                              await CommonServices.saveSession(token: value.token, refreshToken: value.refreshToken, expiresIn: value.expiresIn)
                                   .then((val) {
                                 if (val == true) {
 
@@ -209,7 +209,7 @@ class AuthController extends GetxController {
                               })
 
                             }else{
-                              await CommonServices.setToken(value.token)
+                              await CommonServices.saveSession(token: value.token, refreshToken: value.refreshToken, expiresIn: value.expiresIn)
                                   .then((val) {
                                 if (val == true) {
                                   if (value.userData.firstName != 'NA') {

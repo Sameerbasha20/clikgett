@@ -26,6 +26,7 @@ process.on('uncaughtException', (err) => {
 });
 
 const userRouter = require('./routes/Users');
+const authRouter = require('./routes/Auth');
 const customerAccountRouter = require('./routes/CustomerAccount');
 const categoryRouter = require('./routes/Categories');
 const productRouter = require('./routes/Products');
@@ -135,6 +136,7 @@ try {
     app.use(parser.json());
     
     app.use('/api/users', userRouter);
+    app.use('/api/auth', authRouter);
     app.use('/api/account', customerAccountRouter);
     app.use('/api/categories', categoryRouter);
     app.use('/api/products', productRouter);

@@ -36,6 +36,8 @@ class LoginServices {
   static Future verifyOtp(body) {
     return client
         .post(Uri.parse('${Constants.baseUrl}/users/login/verifyotp'),
+            // Asks for a short login token + refresh token (see CommonServices.getToken).
+            headers: {'X-Auth-Refresh': '1'},
             body: json.encode(body))
         .then((response) {
       return LoginModel.fromJson(jsonDecode(response.body));
@@ -47,6 +49,7 @@ class LoginServices {
 
     return client
         .post(Uri.parse('${Constants.baseUrl}/users/signup'),
+        headers: {'X-Auth-Refresh': '1'},
         body: json.encode(body))
         .then((response) {
       return LoginModel.fromJson(jsonDecode(response.body));

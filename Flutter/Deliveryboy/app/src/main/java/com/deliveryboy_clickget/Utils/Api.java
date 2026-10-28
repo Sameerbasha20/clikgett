@@ -52,8 +52,9 @@ public final class Api {
     }
 
     private static void request(Context context, String method, String path, JSONObject body, Callback callback) {
-        final String token = token(context);
         EXECUTOR.execute(() -> {
+            // Renewed here, off the main thread, when it is about to run out.
+            final String token = Auth.freshToken(context);
             JSONObject result;
             HttpURLConnection conn = null;
             try {
@@ -82,8 +83,13 @@ public final class Api {
                 result = sb.length() > 0 ? new JSONObject(sb.toString()) : new JSONObject();
                 if (!result.has("Status")) result.put("Status", code >= 200 && code < 300 ? 1 : 0);
                 if (code == 401) {
-                    if (!result.has("Message")) result.put("Message", "Please log in again");
-                    Session.expire(context);
+                    if (Auth.recoverFromExpired(context, result)) {
+                        // Only the hour-long token ran out; it is renewed, so stay logged in.
+                        result.put("Message", "Please try again");
+                    } else {
+                        if (!result.has("Message")) result.put("Message", "Please log in again");
+                        Session.expire(context);
+                    }
                 }
                 result.put("HttpStatus", code);
             } catch (Exception e) {

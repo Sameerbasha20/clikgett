@@ -1,10 +1,9 @@
 const jwt = require('jsonwebtoken');
 const pool = require('./db');
 const requestContext = require('./requestContext');
+const authTokens = require('./authTokens');
 require('dotenv').config();
 
-const user_jwtExpirySeconds = 31536000;        // mobile apps have no refresh flow
-const deliveryboy_jwtExpirySeconds = 31536000;
 
 // Accepts "Authorization: <scheme> <token>" or a bare token. Login tokens are only
 // ever read from the header: in a URL they would end up in server and proxy logs,
@@ -115,13 +114,11 @@ const authenticate = {
         next();
     },
 
-    generateUserAuthToken: (req, resp) => {
+    // Short login token + refresh token for apps that ask for it (utils/authTokens.js).
+    generateUserAuthToken: async (req, resp) => {
         try {
-            const Token = jwt.sign({ "UserID": req.userData.UserID }, process.env.SECRET_KEY, {
-                algorithm: "HS256",
-                expiresIn: user_jwtExpirySeconds
-            });
-            return resp.status(200).json({ "Status": 1, "userData": req.userData, "token": Token, "UserID": req.userData.UserID });
+            const tokens = await authTokens.issue(req, 'USER', { UserID: req.userData.UserID });
+            return resp.status(200).json({ "Status": 1, "userData": req.userData, ...tokens, "UserID": req.userData.UserID });
         }
         catch (err) {
             console.log("error generating user token", err.message);
@@ -248,13 +245,10 @@ const authenticate = {
         }
     },
 
-    generatedeliveryboyAuthToken: (req, resp) => {
+    generatedeliveryboyAuthToken: async (req, resp) => {
         try {
-            const Token = jwt.sign({ "AdminID": req.userData.AdminID, "Role": req.userData.Role }, process.env.SECRET_KEY, {
-                algorithm: "HS256",
-                expiresIn: deliveryboy_jwtExpirySeconds
-            });
-            return resp.status(200).json({ "Status": 1, "userDetails": req.userData, "Message": "Admin Login successful", "token": Token });
+            const tokens = await authTokens.issue(req, 'RIDER', { AdminID: req.userData.AdminID, Role: req.userData.Role });
+            return resp.status(200).json({ "Status": 1, "userDetails": req.userData, "Message": "Admin Login successful", ...tokens });
         }
         catch (err) {
             console.log("error generating delivery boy token", err.message);

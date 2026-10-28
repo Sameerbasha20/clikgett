@@ -37,6 +37,8 @@ class ApiInterceptor implements InterceptorContract {
       Future.error('Unexpected error 😢');
       return data;
     } else if (data.statusCode == 401) {
+      // Only the hour-long login token ran out: it has been renewed, no re-login.
+      if (await CommonServices.recoverFromExpired(errorData)) return data;
       if (!ToastGuard.blockAllToasts) {
         ToastGuard.blockAllToasts = true;
 

@@ -1098,6 +1098,8 @@ const usercontroller = {
                         MobileNumber = CONCAT('DEL', UserID), FCMToken = 'NA', OTP = NULL, profilePic = NULL
                   WHERE UserID = ?`, [req.UserID]);
             await CommonController.commonget('DELETE FROM Address WHERE UserID = ?', [req.UserID]).catch(() => {});
+            // End the session on every phone, not just this one.
+            await require('../utils/authTokens').revokeAllFor('USER', req.UserID).catch(() => {});
 
             resp.json({ "Status": 1, "Message": "Your account has been deleted" })
         }

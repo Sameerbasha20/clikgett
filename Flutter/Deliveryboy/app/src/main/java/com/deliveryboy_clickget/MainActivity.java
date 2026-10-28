@@ -32,6 +32,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentManager;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.deliveryboy_clickget.Utils.Auth;
 import com.deliveryboy_clickget.Utils.CommonUtilities;
 import com.deliveryboy_clickget.Utils.DepthPageTransformer;
 import com.deliveryboy_clickget.Utils.Session;
@@ -256,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
                 URL url = new URL(CommonUtilities.URL + "deliveryboy/duty-status");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                conn.setRequestProperty("Authorization", "Bearer " + token);
+                conn.setRequestProperty("Authorization", "Bearer " + Auth.freshToken(MainActivity.this));
                 conn.setConnectTimeout(4000);
                 conn.setReadTimeout(4000);
 
@@ -304,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("PUT");
                 conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                conn.setRequestProperty("Authorization", "Bearer " + token);
+                conn.setRequestProperty("Authorization", "Bearer " + Auth.freshToken(MainActivity.this));
                 conn.setConnectTimeout(4000);
                 conn.setReadTimeout(4000);
                 conn.setDoOutput(true);
@@ -427,15 +428,22 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("Yes", (dialog, which) -> {
                     stopLocationService();
                     updateDutyStatusOnServer("OFFLINE", true);
-                    SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
-                    pref.edit().clear().apply();
-                    PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().clear().apply();
-                    pref.edit().putBoolean(CommonUtilities.USER_LOGIN_STATUS, false).apply();
+                    // Same single-thread executor: runs after the OFFLINE update, then ends
+                    // the login on the server before the saved login is cleared.
+                    backgroundExecutor.execute(() -> {
+                        Auth.logoutOnServer(MainActivity.this);
+                        runOnUiThread(() -> {
+                            SharedPreferences pref = getApplicationContext().getSharedPreferences("MyPref", MODE_PRIVATE);
+                            pref.edit().clear().apply();
+                            PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().clear().apply();
+                            pref.edit().putBoolean(CommonUtilities.USER_LOGIN_STATUS, false).apply();
 
-                    Intent intent1 = new Intent(getApplicationContext(), SentotpActivity.class);
-                    intent1.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent1);
-                    finish();
+                            Intent intent1 = new Intent(getApplicationContext(), SentotpActivity.class);
+                            intent1.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent1);
+                            finish();
+                        });
+                    });
                 })
                 .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
                 .show();

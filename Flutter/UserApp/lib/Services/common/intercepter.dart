@@ -16,7 +16,6 @@ class ApiInterceptor implements InterceptorContract {
     await CommonServices.getToken().then((onValue) {
       token = onValue;
     });
-    print(token);
 
     try {
       // print('bearer $token');
@@ -39,7 +38,8 @@ class ApiInterceptor implements InterceptorContract {
       Future.error('Unexpected error 😢');
       return data;
     } else if (data.statusCode == 401) {
-      // await Common.setToken(null);
+      // Only the hour-long login token ran out: it has been renewed, no re-login.
+      if (await CommonServices.recoverFromExpired(errorData)) return data;
 
       var msg = errorData['Message'];
       // customToast(message: msg);

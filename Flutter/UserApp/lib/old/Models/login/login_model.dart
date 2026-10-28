@@ -3,8 +3,11 @@ class LoginModel {
   UserData? userData;
   String? message;
   String? token;
+  // Short login token + refresh token (sent when the app asks with X-Auth-Refresh).
+  String? refreshToken;
+  int? expiresIn;
 
-  LoginModel({this.status, this.userData, this.message, this.token});
+  LoginModel({this.status, this.userData, this.message, this.token, this.refreshToken, this.expiresIn});
 
   LoginModel.fromJson(Map<String, dynamic> json) {
     status = json['Status'];
@@ -12,6 +15,8 @@ class LoginModel {
         json['userData'] != null ? UserData.fromJson(json['userData']) : null;
     message = json['Message'];
     token = json['token'];
+    refreshToken = json['RefreshToken'];
+    expiresIn = (json['ExpiresIn'] as num?)?.toInt();
   }
 
   Map<String, dynamic> toJson() {

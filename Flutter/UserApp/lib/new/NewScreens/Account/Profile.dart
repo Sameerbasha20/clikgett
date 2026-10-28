@@ -67,6 +67,7 @@ class _ProfileState extends State<Profile> {
     );
     if (ok != true) return;
     if (Get.isRegistered<CartController>()) Get.find<CartController>().clearCart();
+    await CommonServices.logoutOnServer();
     final pref = await SharedPreferences.getInstance();
     await pref.clear();
     if (!mounted) return;
