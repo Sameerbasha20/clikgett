@@ -34,6 +34,22 @@ class _CategoriesState extends State<Categories> {
   final TextEditingController searchController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
   String searchQuery = '';
+  // Search is a small icon in the top bar; tapping it opens the search field.
+  bool _searching = false;
+
+  void _openSearch() {
+    setState(() => _searching = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) => searchFocusNode.requestFocus());
+  }
+
+  void _closeSearch() {
+    searchController.clear();
+    searchFocusNode.unfocus();
+    setState(() {
+      _searching = false;
+      searchQuery = '';
+    });
+  }
 
   @override
   void initState() {
@@ -92,14 +108,52 @@ class _CategoriesState extends State<Categories> {
               height: 1,
             ),
           ),
-          title: Text(
-            "Categories",
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 18.5.sp,
-              color: tColor,
+          titleSpacing: 0,
+          title: _searching
+              ? Container(
+                  height: 40,
+                  margin: const EdgeInsets.only(right: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    controller: searchController,
+                    focusNode: searchFocusNode,
+                    textInputAction: TextInputAction.search,
+                    onChanged: (val) => setState(() => searchQuery = val),
+                    style: GoogleFonts.poppins(fontSize: 13.5.sp, color: Colors.black87, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      hintText: "Search categories",
+                      hintStyle: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13.5.sp),
+                      prefixIcon: const Icon(Icons.search_rounded, color: Appprimary, size: 20),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    ),
+                  ),
+                )
+              : Text(
+                  "Categories",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18.5.sp,
+                    color: tColor,
+                  ),
+                ),
+          actions: [
+            IconButton(
+              tooltip: _searching ? 'Close search' : 'Search categories',
+              onPressed: _searching ? _closeSearch : _openSearch,
+              icon: Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(color: _searching ? const Color(0xFFF3F4F6) : primaryGhost, shape: BoxShape.circle),
+                child: Icon(_searching ? Icons.close_rounded : Icons.search_rounded,
+                    size: 20, color: _searching ? tColor : primaryDark),
+              ),
             ),
-          ),
+            const SizedBox(width: 6),
+          ],
           leading: IconButton(
             padding: EdgeInsets.zero,
             onPressed: () {
@@ -118,72 +172,6 @@ class _CategoriesState extends State<Categories> {
         ),
         body: Column(
           children: [
-            // Modern Search Bar
-            Container(
-              color: Colors.white,
-              padding: EdgeInsets.fromLTRB(4.w, 0.5.h, 4.w, 1.5.h),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: searchQuery.isNotEmpty
-                        ? Appprimary.withOpacity(0.6)
-                        : Colors.transparent,
-                    width: 1.2,
-                  ),
-                ),
-                child: TextField(
-                  controller: searchController,
-                  focusNode: searchFocusNode,
-                  onChanged: (val) {
-                    setState(() {
-                      searchQuery = val;
-                    });
-                  },
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.5.sp,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: "Search categories...",
-                    hintStyle: GoogleFonts.poppins(
-                      color: Colors.grey.shade500,
-                      fontSize: 13.5.sp,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: Appprimary,
-                      size: 22,
-                    ),
-                    suffixIcon: searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(
-                              Icons.cancel_rounded,
-                              color: Colors.grey,
-                              size: 20,
-                            ),
-                            onPressed: () {
-                              searchController.clear();
-                              setState(() {
-                                searchQuery = '';
-                              });
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 11,
-                      horizontal: 8,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
             // Category Count & Active Filter Indicator (if searching)
             if (searchQuery.trim().isNotEmpty)
               Container(

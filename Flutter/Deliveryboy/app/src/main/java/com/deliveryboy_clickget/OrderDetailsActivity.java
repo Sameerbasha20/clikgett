@@ -75,7 +75,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private LinearLayout itemsContainer, actionBar, problemRow, stepsContainer, instructionsBox, etaPill, paymentInner;
     private MaterialCardView paymentCard, itemsCard;
     private ImageView paymentIcon, etaIcon;
-    private Button callBtn, navigateBtn;
+    private Button callBtn, navigateBtn, upiBtn;
     private SlideToActView actionBtn;
     /** Items the rider has ticked while checking the bag, by OrderItemID; kept per order. */
     private final Set<String> checkedItems = new HashSet<>();
@@ -128,6 +128,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
         stepHintTxt = findViewById(R.id.step_hint_txt);
         callBtn = findViewById(R.id.call_btn);
         navigateBtn = findViewById(R.id.navigate_btn);
+        upiBtn = findViewById(R.id.upi_btn);
+        upiBtn.setOnClickListener(v -> showUpiQr());
         actionBtn = findViewById(R.id.action_btn);
 
         findViewById(R.id.back_img).setOnClickListener(v -> finish());
@@ -242,19 +244,26 @@ public class OrderDetailsActivity extends AppCompatActivity {
         double tip = order.optDouble("TipAmount", 0);
         boolean cancelled = status == STATUS_CANCELLED_STORE || status == STATUS_CANCELLED_CUSTOMER || status == STATUS_RETURNED;
         boolean cashOrder = "COD".equals(method) && grandTotal > 0;
-        boolean collectCash = cashOrder && !finished;
+        // Paid by UPI at the door (Razorpay QR): nothing left to collect.
+        boolean paidUpi = cashOrder && "UPI".equals(order.optString("DoorstepPaidVia"));
+        boolean collectCash = cashOrder && !finished && !paidUpi;
+        upiBtn.setVisibility(collectCash && (status == STATUS_OUT || status == STATUS_ARRIVED) ? View.VISIBLE : View.GONE);
         int[] gradient = cancelled ? new int[]{0xFF64748B, 0xFF475569}
                 : collectCash ? new int[]{0xFFF97316, 0xFFC2410C}
                 : new int[]{0xFF16A34A, 0xFF0F766E};
         paymentInner.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR, gradient));
         paymentCard.setCardBackgroundColor(gradient[1]);
         paymentIcon.setImageResource(cashOrder || cancelled ? R.drawable.ic_baseline_currency_rupee_24 : R.drawable.ic_check_small);
-        paymentModeTxt.setText(cancelled ? "CANCELLED" : cashOrder ? "COD" : "WALLET".equals(method) || grandTotal == 0 ? "WALLET" : "PREPAID");
+        paymentModeTxt.setText(cancelled ? "CANCELLED" : paidUpi ? "UPI" : cashOrder ? "COD" : "WALLET".equals(method) || grandTotal == 0 ? "WALLET" : "PREPAID");
         String tipText = tip > 0 ? " · includes " + rupees(tip) + " tip" : "";
         if (cancelled) {
             paymentLabelTxt.setText("ORDER CANCELLED");
             collectTxt.setText("Nothing to collect");
             paymentDetailTxt.setText("Order total was " + rupees(grandTotal));
+        } else if (paidUpi) {
+            paymentLabelTxt.setText("PAID BY UPI");
+            collectTxt.setText(rupees(grandTotal));
+            paymentDetailTxt.setText(finished ? "Paid at the door" + tipText : "Received · nothing to collect");
         } else if (collectCash) {
             paymentLabelTxt.setText("COLLECT ON DELIVERY");
             collectTxt.setText(rupees(grandTotal));
@@ -268,7 +277,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             collectTxt.setText(rupees(grandTotal > 0 ? grandTotal : order.optDouble("WalletAmount", 0)));
             paymentDetailTxt.setText(finished ? "Paid before delivery" + tipText : "Nothing to collect · just hand over the order");
         }
-        renderBill(method, cashOrder, collectCash, cancelled);
+        renderBill(method, cashOrder, collectCash, cancelled, paidUpi);
 
         // Customer & address
         String name = order.optString("UserName", "").trim();
@@ -336,7 +345,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             actionBtn.setText("Slide · I have arrived");
             actionBtn.setIcon(R.drawable.ic_location);
         } else if (status == STATUS_ARRIVED) {
-            stepHintTxt.setText(collectCash ? "Collect " + rupees(grandTotal) + ", then ask the customer for the OTP."
+            stepHintTxt.setText(collectCash ? "Collect " + rupees(grandTotal) + " (cash or UPI QR), then ask the customer for the OTP."
                     : "Ask the customer for the 4-digit OTP.");
             actionBtn.setText("Slide · Enter OTP & deliver");
             actionBtn.setIcon(R.drawable.ic_lock);
@@ -400,7 +409,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     }
 
     /** Items, discounts, delivery fee, tip and wallet, adding up to the order total. */
-    private void renderBill(String method, boolean cashOrder, boolean collectCash, boolean cancelled) {
+    private void renderBill(String method, boolean cashOrder, boolean collectCash, boolean cancelled, boolean paidUpi) {
         LinearLayout rows = findViewById(R.id.bill_rows);
         rows.removeAllViews();
         double items = order.optDouble("SubTotal", 0);
@@ -431,6 +440,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
         } else if (collectCash) {
             label.setText("To collect");
             hint.setText("Cash or UPI from the customer");
+        } else if (paidUpi) {
+            label.setText("Total paid");
+            hint.setText("Paid by UPI at the door");
         } else if (cashOrder) {
             label.setText("Total paid");
             hint.setText("Collected in cash / UPI");
@@ -728,6 +740,74 @@ public class OrderDetailsActivity extends AppCompatActivity {
         } catch (Exception ignored) {
             // Tracking service is not running (rider offline).
         }
+    }
+
+    /**
+     * Customer pays a cash order by UPI: show a Razorpay QR for the exact amount and
+     * check every few seconds until Razorpay confirms it (the server also hears it
+     * from Razorpay's webhook). Then the order shows as paid here and for the customer.
+     */
+    private void showUpiQr() {
+        ProgressDialog progress = progress("Creating UPI QR...");
+        Api.post(this, "deliveryboy/orders/" + orderId + "/upi-qr", new JSONObject(), response -> {
+            progress.dismiss();
+            if (response.optInt("Status") != 1) {
+                Toast.makeText(this, response.optString("Message", "Could not create the UPI QR. Please collect cash."), Toast.LENGTH_LONG).show();
+                return;
+            }
+            LinearLayout box = new LinearLayout(this);
+            box.setOrientation(LinearLayout.VERTICAL);
+            box.setGravity(Gravity.CENTER_HORIZONTAL);
+            box.setPadding(dp(20), dp(8), dp(20), 0);
+
+            TextView amount = new TextView(this);
+            amount.setText(rupees(response.optDouble("Amount", 0)));
+            amount.setTextSize(28);
+            amount.setTypeface(null, Typeface.BOLD);
+            amount.setTextColor(ContextCompat.getColor(this, R.color.clikgett_text_primary));
+            amount.setGravity(Gravity.CENTER);
+            box.addView(amount);
+
+            ImageView qr = new ImageView(this);
+            qr.setAdjustViewBounds(true);
+            LinearLayout.LayoutParams qrLp = new LinearLayout.LayoutParams(dp(260), dp(260));
+            qrLp.topMargin = dp(8);
+            box.addView(qr, qrLp);
+            Picasso.get().load(response.optString("ImageUrl")).placeholder(R.drawable.ic_baseline_crop_original_24).into(qr);
+
+            TextView waiting = new TextView(this);
+            waiting.setText("Ask the customer to scan with any UPI app.\nWaiting for payment…");
+            waiting.setGravity(Gravity.CENTER);
+            waiting.setTextSize(14);
+            waiting.setPadding(0, dp(10), 0, 0);
+            waiting.setTextColor(ContextCompat.getColor(this, R.color.clikgett_text_secondary));
+            box.addView(waiting);
+
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setTitle("Scan to pay by UPI")
+                    .setView(box)
+                    .setNegativeButton("Close", null)
+                    .create();
+            final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+            final Runnable[] poll = new Runnable[1];
+            poll[0] = () -> Api.get(this, "deliveryboy/orders/" + orderId + "/upi-status", r -> {
+                if (!dialog.isShowing()) return;
+                if (r.optBoolean("Paid", false)) {
+                    dialog.dismiss();
+                    new AlertDialog.Builder(this)
+                            .setTitle("Payment received")
+                            .setMessage(rupees(r.optDouble("Amount", 0)) + " paid by UPI. Nothing to collect. Hand over the order after the OTP.")
+                            .setPositiveButton("OK", null)
+                            .show();
+                    load();
+                } else {
+                    handler.postDelayed(poll[0], 3000);
+                }
+            });
+            dialog.setOnDismissListener(d -> handler.removeCallbacksAndMessages(null));
+            dialog.show();
+            handler.postDelayed(poll[0], 3000);
+        });
     }
 
     private void reportDelay() {

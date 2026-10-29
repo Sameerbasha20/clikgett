@@ -43,7 +43,10 @@ async function webhook(req, res) {
     try {
         const event = JSON.parse(req.body.toString('utf8'));
         const payment = event && event.payload && event.payload.payment && event.payload.payment.entity;
-        if (event.event === 'payment.captured' && payment && payment.order_id) {
+        if (event.event === 'qr_code.credited') {
+            // UPI paid at the door for a cash-on-delivery order.
+            await require('./DoorstepUpi').handleWebhookEvent(event);
+        } else if (event.event === 'payment.captured' && payment && payment.order_id) {
             await query(
                 `UPDATE OrderPayments SET CapturedAt = COALESCE(CapturedAt, NOW()), PaymentID = COALESCE(PaymentID, ?)
                   WHERE RazorpayOrderID = ? AND ConsumedAt IS NULL`,

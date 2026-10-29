@@ -23,6 +23,9 @@ router
     .post('/sendotp_order', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.Sendotp_Orders)
     .post('/verifyotp_order', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.Orders_VerifyOTP)
     .post('/deliver/:OrderID', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.deliverOrder)
+    // Cash-on-delivery paid by UPI at the door: Razorpay QR + payment status
+    .post('/orders/:OrderID/upi-qr', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.doorstepUpiQr)
+    .get('/orders/:OrderID/upi-status', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.doorstepUpiStatus)
     .post('/fcmtoken', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.updateFcmToken)
     .get('/summary', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.riderSummary)
 

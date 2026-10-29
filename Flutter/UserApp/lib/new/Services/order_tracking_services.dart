@@ -156,6 +156,8 @@ class TrackedOrder {
   final String? promoCode;
   final String paymentMethod;
   final bool paid;
+  /// 'UPI' when a cash-on-delivery order was paid by UPI at the door.
+  final String? paidVia;
   final String? refundStatus;
   final String? cancellationReason;
   final String address;
@@ -201,6 +203,7 @@ class TrackedOrder {
         promoCode = _text(j['PromoCode']),
         paymentMethod = '${j['PaymentMethod'] ?? 'COD'}'.toUpperCase(),
         paid = '${j['PaymentStatus']}' == '1',
+        paidVia = _text(j['DoorstepPaidVia']),
         refundStatus = _text(j['RefundStatus']),
         cancellationReason = _text(j['CancellationReason']),
         address = [j['FlatNo'], j['Address'], j['LandMark']].map(_text).whereType<String>().join(', '),
@@ -208,6 +211,15 @@ class TrackedOrder {
             .map((e) => '$e')
             .where((e) => e.isNotEmpty)
             .toList();
+
+  /// Saved on this order: offer prices below MRP plus the coupon discount.
+  double get savings {
+    var s = discount;
+    for (final i in items) {
+      if (i.price > i.offerPrice) s += (i.price - i.offerPrice) * i.quantity;
+    }
+    return (s * 100).roundToDouble() / 100;
+  }
 
   /// When each status was first reached.
   DateTime? reachedAt(int s) {

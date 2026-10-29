@@ -249,6 +249,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
                         ),
                       _paymentCard(order),
                       _itemsCard(order),
+                      if (order.savings > 0 && !OrderStatus.isCancelled(order.status)) _savingsCard(order),
                       _billCard(order),
                       _addressCard(order),
                       _actions(order),
@@ -360,19 +361,71 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
   }
 
   Widget _otpCard(TrackedOrder o) => _card(
-        child: Row(children: [
-          const Icon(Icons.lock_outline_rounded, color: primaryDark),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text('Share this OTP with your delivery partner to receive the order',
-                style: GoogleFonts.poppins(fontSize: 12.5, color: tColor4)),
-          ),
-          const SizedBox(width: 10),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.lock_outline_rounded, color: primaryDark),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text('Delivery OTP', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: tColor)),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(10)),
+              child: Text(o.otp!,
+                  style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w800, color: white, letterSpacing: 3)),
+            ),
+          ]),
+          const SizedBox(height: 10),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(10)),
-            child: Text(o.otp!,
-                style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w800, color: white, letterSpacing: 3)),
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFFB45309)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Share this OTP with the delivery partner only after checking that you have received all your items.',
+                    style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF92400E), height: 1.35)),
+              ),
+            ]),
+          ),
+        ]),
+      );
+
+  Widget _savingsCard(TrackedOrder o) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFFECFDF5), Color(0xFFD1FAE5)]),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFA7F3D0)),
+        ),
+        child: Row(children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: const BoxDecoration(color: white, shape: BoxShape.circle),
+            child: const Icon(Icons.savings_rounded, color: primaryDark, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text.rich(TextSpan(children: [
+                TextSpan(text: 'You saved ', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
+                TextSpan(text: _rs(o.savings), style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w800, color: primaryDark)),
+                TextSpan(text: ' on this order', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
+              ])),
+              Text(
+                  [
+                    if (o.savings - o.discount > 0) 'Offer prices',
+                    if (o.discount > 0) o.promoCode != null ? 'Coupon ${o.promoCode}' : 'Coupon',
+                  ].join(' + '),
+                  style: GoogleFonts.poppins(fontSize: 11.5, color: tColor3)),
+            ]),
           ),
         ]),
       );
@@ -462,6 +515,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
       icon = Icons.account_balance_wallet_rounded;
       title = 'Paid ${_rs(o.walletUsed > 0 ? o.walletUsed : o.grandTotal)} from wallet';
       note = 'Nothing to pay at delivery';
+      badge = 'PAID';
+      accent = primaryDark;
+    } else if (o.paid && o.paidVia == 'UPI') {
+      icon = Icons.qr_code_2_rounded;
+      title = 'Paid ${_rs(o.grandTotal)} via UPI';
+      note = delivered ? 'Paid at the door' : 'Payment received · nothing to pay now';
       badge = 'PAID';
       accent = primaryDark;
     } else {
@@ -668,6 +727,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
       paymentLine = o.paid ? 'Paid online' : 'Online payment pending';
     } else if (o.paymentMethod == 'WALLET') {
       paymentLine = 'Paid from wallet';
+    } else if (o.paid && o.paidVia == 'UPI') {
+      paymentLine = 'Paid via UPI at the door';
     } else {
       paymentLine = o.status == OrderStatus.delivered ? 'Paid on delivery' : 'Pay on delivery (cash / UPI)';
     }
@@ -680,7 +741,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
         if (o.tip > 0) _row('Delivery partner tip', _rs(o.tip)),
         if (o.walletUsed > 0) _row('Paid from wallet', '-${_rs(o.walletUsed)}', green: true),
         const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1, color: cardBorder)),
-        _row(o.paymentMethod == 'COD' && o.status != OrderStatus.delivered ? 'To pay' : 'Total', _rs(o.grandTotal), bold: true),
+        _row(o.paymentMethod == 'COD' && !o.paid && o.status != OrderStatus.delivered ? 'To pay' : 'Total', _rs(o.grandTotal), bold: true),
         const SizedBox(height: 6),
         Row(children: [
           const Icon(Icons.payments_outlined, size: 16, color: tColor3),

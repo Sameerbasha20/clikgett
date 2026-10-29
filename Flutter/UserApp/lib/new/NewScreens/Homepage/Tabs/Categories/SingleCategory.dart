@@ -307,12 +307,12 @@ class _SingleCategoryState extends State<SingleCategory> {
   /// Subcategory rail: tinted tiles, the selected one lifted onto white with a green bar.
   Widget _rail() {
     if (_loadingSubs) {
-      return const SizedBox(width: 88, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: primary)));
+      return const SizedBox(width: 74, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: primary)));
     }
     final items = <SubCategoryItem?>[null, ..._subcategories];
     final categoryImage = widget.categories.imageUrl;
     return Container(
-      width: 88,
+      width: 74,
       color: bg1,
       child: ListView.builder(
         padding: const EdgeInsets.only(top: 6, bottom: 100),
@@ -328,8 +328,8 @@ class _SingleCategoryState extends State<SingleCategory> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOut,
-              margin: const EdgeInsets.only(bottom: 4, right: 6),
-              padding: const EdgeInsets.fromLTRB(8, 10, 6, 10),
+              margin: const EdgeInsets.only(bottom: 2, right: 5),
+              padding: const EdgeInsets.fromLTRB(6, 8, 4, 8),
               decoration: BoxDecoration(
                 color: selected ? white : Colors.transparent,
                 borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
@@ -338,36 +338,36 @@ class _SingleCategoryState extends State<SingleCategory> {
               child: Stack(clipBehavior: Clip.none, children: [
                 Column(children: [
                   AnimatedScale(
-                    scale: selected ? 1.08 : 1,
+                    scale: selected ? 1.06 : 1,
                     duration: const Duration(milliseconds: 220),
                     child: Container(
-                      width: 54,
-                      height: 54,
+                      width: 42,
+                      height: 42,
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
                         color: selected ? primaryGhost : tint,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
                       ),
                       child: image != null && image.isNotEmpty
-                          ? Padding(padding: const EdgeInsets.all(4), child: CustomNetworkImage(url: image, fit: BoxFit.contain))
+                          ? Padding(padding: const EdgeInsets.all(3), child: CustomNetworkImage(url: image, fit: BoxFit.contain))
                           : Icon(sub == null ? Icons.grid_view_rounded : _railIcon(label),
-                              color: selected ? primaryDark : tColor4, size: 26),
+                              color: selected ? primaryDark : tColor4, size: 20),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(label,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
-                          fontSize: 10.5,
+                          fontSize: 10,
                           height: 1.2,
                           fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                           color: selected ? primaryDark : tColor3)),
                 ]),
                 Positioned(
-                  left: -8,
+                  left: -6,
                   top: 6,
                   bottom: 6,
                   child: AnimatedContainer(

@@ -1136,26 +1136,47 @@ class _CartState extends State<Cart> {
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
               child: Row(children: [
-                if (bill.toPay > 0)
-                  InkWell(
-                    onTap: _choosePayment,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                        Row(children: [
-                          Text('PAY USING', style: GoogleFonts.poppins(fontSize: 10.5, color: tColor3, fontWeight: FontWeight.w600)),
-                          const Icon(Icons.arrow_drop_up_rounded, size: 18, color: tColor3),
-                        ]),
-                        Text(_payment == 'ONLINE' ? 'UPI / Card' : 'Cash on delivery',
-                            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor)),
-                      ]),
-                    ),
-                  ),
+                if (bill.toPay > 0) ...[_payUsingButton(), const SizedBox(width: 10)],
                 Expanded(child: _placeButton(bill, address, storeClosed)),
               ]),
             ),
           ]);
         }),
+      ),
+    );
+  }
+
+  /// "Pay using" pill: the chosen method with its icon; opens the method picker.
+  Widget _payUsingButton() {
+    final online = _payment == 'ONLINE';
+    return Material(
+      color: const Color(0xFFF8FAFC),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: cardBorder)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: _choosePayment,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 7, 6, 7),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: online ? const Color(0xFFEFF6FF) : primaryGhost,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(online ? Icons.qr_code_2_rounded : Icons.payments_rounded,
+                  size: 18, color: online ? const Color(0xFF2563EB) : primaryDark),
+            ),
+            const SizedBox(width: 8),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+              Text('PAY USING', style: GoogleFonts.poppins(fontSize: 9.5, color: tColor3, fontWeight: FontWeight.w600, letterSpacing: 0.4)),
+              Text(online ? 'UPI / Card' : 'Cash / UPI',
+                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor, height: 1.2)),
+            ]),
+            const Icon(Icons.keyboard_arrow_up_rounded, size: 20, color: tColor3),
+          ]),
+        ),
       ),
     );
   }
@@ -1180,35 +1201,60 @@ class _CartState extends State<Cart> {
       onTap = _placeOrder;
     }
     final ready = onTap != null && onTap == _placeOrder;
-    return SizedBox(
-      height: 50,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: white,
-          disabledBackgroundColor: bg2,
-          disabledForegroundColor: tColor3,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    final enabled = onTap != null && !_placing && !_refreshing;
+    final radius = BorderRadius.circular(16);
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        gradient: enabled || _placing
+            ? const LinearGradient(colors: [Color(0xFF22C55E), Color(0xFF15803D)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+            : null,
+        color: enabled || _placing ? null : bg2,
+        boxShadow: enabled
+            ? [BoxShadow(color: const Color(0xFF16A34A).withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 6))]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: radius,
+          onTap: enabled ? onTap : null,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 8, 0),
+            child: _placing
+                ? const Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: white)))
+                : ready
+                    ? Row(children: [
+                        Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Text(bill.toPay <= 0 ? 'Paid by wallet' : _rs(bill.toPay),
+                              style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w800, height: 1.1, color: white)),
+                          Text('TOTAL',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 9.5, fontWeight: FontWeight.w600, letterSpacing: 0.6, color: white.withOpacity(0.85))),
+                        ]),
+                        const Spacer(),
+                        Text(label, style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w700, color: white)),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(color: white.withOpacity(0.22), shape: BoxShape.circle),
+                          child: const Icon(Icons.arrow_forward_rounded, size: 20, color: white),
+                        ),
+                      ])
+                    : Center(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(label,
+                              maxLines: 1,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 15, fontWeight: FontWeight.w700, color: onTap != null ? white : tColor3)),
+                        ),
+                      ),
+          ),
         ),
-        onPressed: _placing || _refreshing ? null : onTap,
-        child: _placing
-            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: white))
-            : ready
-                ? Row(children: [
-                    Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                      Text(bill.toPay <= 0 ? 'Paid by wallet' : _rs(bill.toPay),
-                          style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800, height: 1.1)),
-                      Text('TOTAL', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, height: 1.2, letterSpacing: 0.4)),
-                    ]),
-                    const Spacer(),
-                    Text(label, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
-                    const Icon(Icons.chevron_right_rounded, size: 22),
-                  ])
-                : FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(label, maxLines: 1, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700)),
-                  ),
       ),
     );
   }
@@ -1230,32 +1276,87 @@ class _CartState extends State<Cart> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('Choose payment method', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: tColor)),
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: cardBorder, borderRadius: BorderRadius.circular(2)),
+            ),
           ),
-          _paymentTile(ctx, 'COD', Icons.payments_outlined, 'Cash on delivery', 'Pay cash or UPI to the delivery partner'),
-          _paymentTile(ctx, 'ONLINE', Icons.account_balance_outlined, 'Pay online',
-              _onlineAvailable ? 'UPI, cards, net banking (Razorpay)' : 'Not available right now',
-              enabled: _onlineAvailable),
-          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+            child: Text('How would you like to pay?', style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w700, color: tColor)),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Text('You can change this before placing the order.', style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
+          ),
+          _paymentTile(ctx, 'ONLINE', Icons.qr_code_2_rounded, 'Pay online now',
+              _onlineAvailable ? 'UPI, cards, net banking · secured by Razorpay' : 'Not available right now',
+              enabled: _onlineAvailable, accent: const Color(0xFF2563EB)),
+          _paymentTile(ctx, 'COD', Icons.payments_rounded, 'Pay on delivery', 'Cash or UPI to the delivery partner'),
+          const SizedBox(height: 12),
         ]),
       ),
     );
   }
 
-  Widget _paymentTile(BuildContext ctx, String value, IconData icon, String title, String subtitle, {bool enabled = true}) => ListTile(
-        enabled: enabled,
-        leading: Icon(icon, color: enabled ? primaryDark : grey70),
-        title: Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
-        subtitle: Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
-        trailing: Icon(_payment == value ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-            color: _payment == value ? primary : grey70),
-        onTap: () {
-          setState(() => _payment = value);
-          Navigator.pop(ctx);
-        },
-      );
+  Widget _paymentTile(BuildContext ctx, String value, IconData icon, String title, String subtitle,
+      {bool enabled = true, Color accent = primaryDark}) {
+    final selected = _payment == value && enabled;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Opacity(
+        opacity: enabled ? 1 : 0.5,
+        child: Material(
+          color: selected ? accent.withOpacity(0.06) : white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: selected ? accent : cardBorder, width: selected ? 1.6 : 1),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: enabled
+                ? () {
+                    setState(() => _payment = value);
+                    Navigator.pop(ctx);
+                  }
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(color: accent.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: Icon(icon, color: enabled ? accent : grey70, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(title, style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: tColor)),
+                    Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
+                  ]),
+                ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: selected ? accent : white,
+                    border: Border.all(color: selected ? accent : grey70, width: 2),
+                  ),
+                  child: selected ? const Icon(Icons.check_rounded, size: 16, color: white) : null,
+                ),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   // ---------------------------------------------------------------- place order
 

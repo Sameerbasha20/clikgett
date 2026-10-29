@@ -10,6 +10,7 @@ const LoginOtp = require('../services/LoginOtp');
 
 const pool = require('../utils/db');
 const OrderLifecycle = require('../services/OrderLifecycle');
+const DoorstepUpi = require('../services/DoorstepUpi');
 const { ORDER_STATUS } = require('../utils/orderStatus');
 
 // Returns the order if it is assigned to this rider, otherwise null.
@@ -205,12 +206,36 @@ const deliveryboycontroller = {
         }
     },
 
+    // POST /deliveryboy/orders/:OrderID/upi-qr -> { ImageUrl, Amount, QrID, ExpiresAt }
+    doorstepUpiQr: async (req, resp) => {
+        try {
+            const qr = await DoorstepUpi.createQr(parseInt(req.params.OrderID, 10), req.AdminID);
+            return resp.json({ Status: 1, ...qr });
+        } catch (err) {
+            if (err instanceof DoorstepUpi.DoorstepError) return resp.status(err.httpStatus).json({ Status: 0, Message: err.message });
+            console.error('doorstep UPI QR failed:', err && (err.error || err.message));
+            return resp.status(502).json({ Status: 0, Message: 'Could not create the UPI QR. Please collect cash.' });
+        }
+    },
+
+    // GET /deliveryboy/orders/:OrderID/upi-status -> { Paid, PaidVia, Amount }
+    doorstepUpiStatus: async (req, resp) => {
+        try {
+            const s = await DoorstepUpi.status(parseInt(req.params.OrderID, 10), req.AdminID);
+            return resp.json({ Status: 1, ...s });
+        } catch (err) {
+            if (err instanceof DoorstepUpi.DoorstepError) return resp.status(err.httpStatus).json({ Status: 0, Message: err.message });
+            console.error('doorstep UPI status failed:', err.message);
+            return resp.status(500).json({ Status: 0, Message: 'Could not check the payment' });
+        }
+    },
+
     // GET /deliveryboy/summary: deliveries, cash collected and tips for today / this week / all time.
     riderSummary: async (req, resp) => {
         try {
             const sql = `SELECT
                     COUNT(*) AS Delivered,
-                    COALESCE(SUM(CASE WHEN PaymentMethod = 'COD' THEN GrandTotal ELSE 0 END), 0) AS CashCollected,
+                    COALESCE(SUM(CASE WHEN PaymentMethod = 'COD' AND DoorstepPaidVia IS NULL THEN GrandTotal ELSE 0 END), 0) AS CashCollected,
                     COALESCE(SUM(TipAmount), 0) AS Tips,
                     COALESCE(SUM(DeliveryPoints), 0) AS Points
                  FROM Orders WHERE DeliveryBoyID = ? AND OrderStatus = 1 AND Delivered_Cancelled_datetime >= ?`;

@@ -40,7 +40,8 @@ const addTimeline = (orderId, status, note) =>
 
 const notifyCustomer = async (order, title, message) => {
     try {
-        await CommonController.Send_Notification({ Title: title, Message: message }, order.UserID);
+        // OrderID links the notification to the order (tapping it opens tracking).
+        await CommonController.Send_Notification({ Title: title, Message: message, OrderID: order.OrderID }, order.UserID);
     } catch (err) {
         console.error('customer push failed', err && err.message);
     }
@@ -228,15 +229,16 @@ const transition = async (orderId, to, actor, options = {}) => {
         await notifyCustomer(order, `📦 Packing your order ${label}`, 'Your items are being packed.');
     }
     if (to === S.OUT_FOR_DELIVERY) {
-        await notifyCustomer(order, `🛵 Order ${label} is on the way`, 'Your rider has picked up your order.');
+        await notifyCustomer(order, '🛵 Your order is on the way', 'Your delivery partner has picked up your order.');
     }
     if (to === S.ARRIVED) {
-        await notifyCustomer(order, `📍 Rider has arrived`, `Share OTP ${otp} with the rider to receive order ${label}.`);
+        await notifyCustomer(order, '📍 Your delivery partner has arrived',
+            `Your OTP is ${otp}. Share it with the delivery partner only after checking that you received all items.`);
     }
     if (to === S.DELIVERED) {
         await runDeliveredRewards(order);
         await refreshRiderLoad(order.DeliveryBoyID);
-        await notifyCustomer(order, `✅ Order ${label} delivered`, 'Thank you for shopping with ClikGett!');
+        await notifyCustomer(order, '✅ Order delivered', 'Thank you for shopping with ClikGett!');
     }
     if (to === S.CANCELLED_BY_STORE || to === S.CANCELLED_BY_CUSTOMER || to === S.RETURNED) {
         if (to !== S.RETURNED) await restock(orderId);
