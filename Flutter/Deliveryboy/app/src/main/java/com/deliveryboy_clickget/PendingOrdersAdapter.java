@@ -99,13 +99,19 @@ public class PendingOrdersAdapter extends RecyclerView.Adapter<PendingOrdersAdap
         // Money: what the rider collects, or that it is prepaid. A cash order is
         // marked paid once delivered, so the payment method decides, not the status.
         boolean prepaid = !"COD".equalsIgnoreCase(String.valueOf(order.getPaymentMethod()));
+        boolean paidUpi = !prepaid && "UPI".equalsIgnoreCase(String.valueOf(order.getDoorstepPaidVia()));
         String amount = rupees(order.getGrandTotal());
-        if (prepaid) {
-            holder.orderamount.setText(finished ? "Prepaid · " + amount : "Prepaid · nothing to collect");
+        String tip = tipText(order.getTipAmount());
+        if (paidUpi) {
+            holder.orderamount.setText("Paid by UPI · " + amount + tip);
+            holder.orderamount.setTextColor(ContextCompat.getColor(context, R.color.clikgett_green_dark));
+            holder.orderamount.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(context, R.color.checked_row_bg)));
+        } else if (prepaid) {
+            holder.orderamount.setText((finished ? "Prepaid · " + amount : "Prepaid · nothing to collect") + tip);
             holder.orderamount.setTextColor(ContextCompat.getColor(context, R.color.clikgett_green_dark));
             holder.orderamount.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(context, R.color.checked_row_bg)));
         } else {
-            holder.orderamount.setText(finished ? "Cash · " + amount : "Collect " + amount);
+            holder.orderamount.setText((finished ? "Cash · " + amount : "Collect " + amount) + tip);
             holder.orderamount.setTextColor(ContextCompat.getColor(context, R.color.amber_text));
             holder.orderamount.setBackgroundTintList(null);
         }
@@ -164,6 +170,15 @@ public class PendingOrdersAdapter extends RecyclerView.Adapter<PendingOrdersAdap
             sb.append(p);
         }
         return sb.toString();
+    }
+
+    private static String tipText(String value) {
+        try {
+            double v = Double.parseDouble(value);
+            return v > 0 ? " · " + rupees(value) + " tip" : "";
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private static String rupees(String value) {

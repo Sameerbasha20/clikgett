@@ -4,6 +4,22 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 public class OrderList {
+    // Cash order paid by UPI at the door ("UPI"), and the customer's tip.
+    @SerializedName("DoorstepPaidVia")
+    @Expose
+    private String doorstepPaidVia;
+    @SerializedName("TipAmount")
+    @Expose
+    private String tipAmount;
+
+    public String getDoorstepPaidVia() {
+        return doorstepPaidVia;
+    }
+
+    public String getTipAmount() {
+        return tipAmount;
+    }
+
     @SerializedName("OrderID")
     @Expose
     private Integer orderID;

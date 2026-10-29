@@ -257,6 +257,22 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- Tip the customer added for the rider -->
+                <TextView
+                    android:id="@+id/tip_banner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:background="@drawable/bg_note_callout"
+                    android:backgroundTint="@color/color_warning_bg"
+                    android:drawablePadding="10dp"
+                    android:gravity="center_vertical"
+                    android:padding="14dp"
+                    android:textColor="@color/clikgett_text_primary"
+                    android:textSize="14.5sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
                 <!-- Customer and address -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"

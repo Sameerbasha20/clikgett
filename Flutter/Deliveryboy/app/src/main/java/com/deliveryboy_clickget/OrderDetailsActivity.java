@@ -7,7 +7,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
@@ -43,9 +42,7 @@ import org.json.JSONObject;
 
 import com.squareup.picasso.Picasso;
 
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 
 /**
  * One order for the rider: who and where, what to collect, the items, and a
@@ -77,8 +74,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private ImageView paymentIcon, etaIcon;
     private Button callBtn, navigateBtn, upiBtn;
     private SlideToActView actionBtn;
-    /** Items the rider has ticked while checking the bag, by OrderItemID; kept per order. */
-    private final Set<String> checkedItems = new HashSet<>();
     private int itemLines = 0;
     private FusedLocationProviderClient locationClient;
 
@@ -142,20 +137,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         findViewById(R.id.issue_btn).setOnClickListener(v -> reportIssue());
 
         titleTxt.setText(orderId != null ? "Order #" + pad(orderId) : "Order");
-        checkedItems.addAll(checksPref().getStringSet(checksKey(), new HashSet<>()));
         renderSteps(-1);
-    }
-
-    private SharedPreferences checksPref() {
-        return getSharedPreferences("ItemChecks", MODE_PRIVATE);
-    }
-
-    private String checksKey() {
-        return "order_" + orderId;
-    }
-
-    private void saveChecks() {
-        checksPref().edit().putStringSet(checksKey(), new HashSet<>(checkedItems)).apply();
     }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
@@ -278,6 +260,10 @@ public class OrderDetailsActivity extends AppCompatActivity {
             paymentDetailTxt.setText(finished ? "Paid before delivery" + tipText : "Nothing to collect · just hand over the order");
         }
         renderBill(method, cashOrder, collectCash, cancelled, paidUpi);
+        TextView tipBanner = findViewById(R.id.tip_banner);
+        tipBanner.setVisibility(tip > 0 && !cancelled ? View.VISIBLE : View.GONE);
+        tipBanner.setText("\uD83C\uDF89  The customer added a " + rupees(tip) + " tip for you"
+                + (collectCash ? " (included in the amount to collect)" : ""));
 
         // Customer & address
         String name = order.optString("UserName", "").trim();
@@ -322,13 +308,12 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 count += item.optInt("Quantity", 1);
                 itemLines++;
                 if (itemLines > 1) itemsContainer.addView(divider());
-                itemsContainer.addView(itemRow(item, status == STATUS_ASSIGNED));
+                itemsContainer.addView(itemRow(item));
             }
             itemsTitleTxt.setText(status == STATUS_ASSIGNED ? "Items to pick up" : "Items in this order");
-            itemsHintTxt.setText(status == STATUS_ASSIGNED ? "Tap each item as you check it in the bag"
-                    : count + (count == 1 ? " item" : " items"));
+            itemsHintTxt.setText(count + (count == 1 ? " item" : " items")
+                    + (status == STATUS_ASSIGNED ? " · check the bag before you leave" : ""));
         }
-        updateItemsProgress();
         subtitleTxt.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
         subtitleTxt.setText(count + (count == 1 ? " item" : " items") + " · " + itemLines + (itemLines == 1 ? " product" : " products"));
         renderSteps(status);
@@ -337,7 +322,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         problemRow.setVisibility(finished ? View.GONE : View.VISIBLE);
         actionBar.setVisibility(finished ? View.GONE : View.VISIBLE);
         if (status == STATUS_ASSIGNED) {
-            stepHintTxt.setText("Collect the packed order from the store, then tap below.");
+            stepHintTxt.setText("Check the bag has every item, then slide below.");
             actionBtn.setText("Slide · Picked up, start delivery");
             actionBtn.setIcon(R.drawable.ic_check_circle);
         } else if (status == STATUS_OUT) {
@@ -359,13 +344,13 @@ public class OrderDetailsActivity extends AppCompatActivity {
         actionBtn.reset();
     }
 
-    private View itemRow(JSONObject item, boolean checkable) {
+    private View itemRow(JSONObject item) {
         View row = LayoutInflater.from(this).inflate(R.layout.item_order_product, itemsContainer, false);
         ImageView img = row.findViewById(R.id.item_img);
-        ImageView check = row.findViewById(R.id.item_check);
         TextView name = row.findViewById(R.id.item_name_txt);
         TextView unitTxt = row.findViewById(R.id.item_unit_txt);
         TextView qty = row.findViewById(R.id.item_qty_txt);
+        TextView priceTxt = row.findViewById(R.id.item_price_txt);
 
         name.setText(item.optString("ProductName", "").trim());
         String unit = unit(item);
@@ -373,6 +358,23 @@ public class OrderDetailsActivity extends AppCompatActivity {
         unitTxt.setVisibility(unit.isEmpty() ? View.GONE : View.VISIBLE);
         int quantity = item.optInt("Quantity", 1);
         qty.setText("× " + quantity);
+        // Price the customer pays (offer price), with MRP struck through when higher.
+        double mrp = item.optDouble("Price", 0);
+        double price = item.optDouble("OfferPrice", 0);
+        if (price <= 0) price = mrp;
+        if (price > 0) {
+            String each = rupees(price) + (quantity > 1 ? " × " + quantity + " = " + rupees(price * quantity) : "");
+            android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder(each);
+            sb.setSpan(new android.text.style.StyleSpan(Typeface.BOLD), 0, each.length(), 0);
+            if (mrp > price) {
+                int start = sb.length() + 2;
+                sb.append("  ").append(rupees(mrp));
+                sb.setSpan(new android.text.style.StrikethroughSpan(), start, sb.length(), 0);
+                sb.setSpan(new android.text.style.ForegroundColorSpan(ContextCompat.getColor(this, R.color.clikgett_text_muted)), start, sb.length(), 0);
+            }
+            priceTxt.setText(sb);
+            priceTxt.setVisibility(View.VISIBLE);
+        }
         if (quantity > 1) {
             // Easy to miss when checking the bag, so multiples stand out.
             qty.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.clikgett_green_primary)));
@@ -387,24 +389,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             img.setImageResource(R.drawable.ic_baseline_crop_original_24);
         }
 
-        String key = itemKey(item);
-        Runnable paint = () -> {
-            boolean on = checkable && checkedItems.contains(key);
-            check.setVisibility(on ? View.VISIBLE : View.GONE);
-            row.setBackgroundColor(on ? ContextCompat.getColor(this, R.color.checked_row_bg) : 0);
-            name.setTypeface(null, on ? Typeface.BOLD : Typeface.NORMAL);
-        };
-        paint.run();
-        if (checkable) {
-            row.setOnClickListener(v -> {
-                if (!checkedItems.remove(key)) checkedItems.add(key);
-                saveChecks();
-                paint.run();
-                updateItemsProgress();
-            });
-        } else {
-            row.setClickable(false);
-        }
+        row.setClickable(false);
         return row;
     }
 
@@ -472,9 +457,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
         return row;
     }
 
-    private static String itemKey(JSONObject item) {
-        return item.optString("OrderItemID", item.optString("VariantID", item.optString("ProductName", "").trim()));
-    }
 
     private View divider() {
         View line = new View(this);
@@ -485,26 +467,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         return line;
     }
 
-    private int checkedCount() {
-        JSONArray items = order != null ? order.optJSONArray("orderitems") : null;
-        if (items == null) return 0;
-        int n = 0;
-        for (int i = 0; i < items.length(); i++) {
-            JSONObject item = items.optJSONObject(i);
-            if (item != null && checkedItems.contains(itemKey(item))) n++;
-        }
-        return n;
-    }
 
-    private void updateItemsProgress() {
-        if (status != STATUS_ASSIGNED || itemLines == 0) {
-            itemsProgressTxt.setVisibility(View.GONE);
-            return;
-        }
-        int done = checkedCount();
-        itemsProgressTxt.setVisibility(View.VISIBLE);
-        itemsProgressTxt.setText(done == itemLines ? "All checked" : done + " / " + itemLines + " checked");
-    }
 
     /** Product photo: the one saved on the order line, else the product's first image. */
     private static String imageUrl(JSONObject item) {
@@ -585,14 +548,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
     private void onAction() {
         if (status == STATUS_ASSIGNED) {
-            int missing = itemLines - checkedCount();
-            if (itemLines > 0 && missing > 0) {
-                confirm("Picked up the order?",
-                        missing + (missing == 1 ? " item is" : " items are") + " not ticked yet. Make sure you have every item before leaving the store.",
-                        "Yes, start delivery", () -> updateStatus(STATUS_OUT, false, null));
-            } else {
-                updateStatus(STATUS_OUT, false, null);
-            }
+            updateStatus(STATUS_OUT, false, null);
         } else if (status == STATUS_OUT) {
             updateStatus(STATUS_ARRIVED, false, null);
         } else if (status == STATUS_ARRIVED) {
@@ -684,7 +640,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     if (response.optInt("Status") == 1) {
                         dialog.dismiss();
                         trackOrder(null);
-                        checksPref().edit().remove(checksKey()).apply();
                         Toast.makeText(this, "Order delivered", Toast.LENGTH_LONG).show();
                         load();
                     } else {
