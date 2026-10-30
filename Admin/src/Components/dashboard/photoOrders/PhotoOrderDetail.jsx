@@ -29,12 +29,17 @@ function PhotoOrderDetail() {
     const [searching, setSearching] = useState(false);
     const [saving, setSaving] = useState(false);
     const [imageSrc, setImageSrc] = useState(null);
-    const [imageState, setImageState] = useState("loading"); // loading | ready | error
+    const [imageState, setImageState] = useState("loading"); // loading | ready | error | none
 
     // The image endpoint requires the admin Authorization header, which an <img src>
     // cannot send, so download it with fetch and show it from a local blob URL.
     useEffect(() => {
         if (!request?.RequestID) return undefined;
+        // Typed-only request: the customer sent no photo.
+        if (!request.ImageStoragePath) {
+            setImageState("none");
+            return undefined;
+        }
         let objectUrl = null;
         let cancelled = false;
         setImageState("loading");
@@ -368,12 +373,27 @@ function PhotoOrderDetail() {
                                     {imageState === "loading" && (
                                         <span style={{ color: "#cbd5e1" }}>Loading photo...</span>
                                     )}
+                                    {imageState === "none" && (
+                                        <span style={{ color: "#94a3b8", padding: 16, textAlign: "center" }}>
+                                            No photo. The customer typed their list (below).
+                                        </span>
+                                    )}
                                     {imageState === "error" && (
                                         <span style={{ color: "#fca5a5", padding: 16, textAlign: "center" }}>
                                             Photo could not be loaded. It may have been removed from the server.
                                         </span>
                                     )}
                                 </div>
+                                {request.TypedItems && (
+                                    <div style={{ marginTop: 16 }}>
+                                        <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                                            Typed Items:
+                                        </h4>
+                                        <p style={{ background: "#fffbeb", border: "1px solid #fde68a", padding: 12, borderRadius: 8, fontSize: "0.9rem", color: "#334155", whiteSpace: "pre-wrap" }}>
+                                            {request.TypedItems}
+                                        </p>
+                                    </div>
+                                )}
                                 <div style={{ marginTop: 16 }}>
                                     <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
                                         Customer Instructions:

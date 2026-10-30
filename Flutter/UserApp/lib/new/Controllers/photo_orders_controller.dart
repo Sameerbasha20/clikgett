@@ -20,6 +20,9 @@ class PhotoOrdersController extends GetxController {
   var currentDetail = Rx<PhotoOrderModel?>(null);
 
   final TextEditingController notesController = TextEditingController();
+  /// The shopping list typed in instead of (or as well as) a photo.
+  final TextEditingController typedItemsController = TextEditingController();
+  var typedItems = ''.obs;
 
   /// Pick image from camera or gallery
   Future<void> pickImage(ImageSource source) async {
@@ -50,28 +53,32 @@ class PhotoOrdersController extends GetxController {
     int? deliveryAddressID,
     Map<String, dynamic>? deliveryAddressSnapshot,
   }) async {
-    if (pickedImage.value == null) {
-      customToast(message: 'Please select or take a photo first');
+    final typed = typedItemsController.text.trim();
+    if (pickedImage.value == null && typed.isEmpty) {
+      customToast(message: 'Add a photo of your list or type your items');
       return null;
     }
 
     try {
       isUploading.value = true;
 
-      final File file = File(pickedImage.value!.path);
-      final List<int> bytes = await file.readAsBytes();
-      final String base64Image = base64Encode(bytes);
-
+      String? base64Image;
       String mimeType = 'image/jpeg';
-      if (pickedImage.value!.path.toLowerCase().endsWith('.png')) {
-        mimeType = 'image/png';
-      } else if (pickedImage.value!.path.toLowerCase().endsWith('.webp')) {
-        mimeType = 'image/webp';
+      if (pickedImage.value != null) {
+        final File file = File(pickedImage.value!.path);
+        final List<int> bytes = await file.readAsBytes();
+        base64Image = base64Encode(bytes);
+        if (pickedImage.value!.path.toLowerCase().endsWith('.png')) {
+          mimeType = 'image/png';
+        } else if (pickedImage.value!.path.toLowerCase().endsWith('.webp')) {
+          mimeType = 'image/webp';
+        }
       }
 
       final res = await PhotoOrdersService.submitPhotoOrder(
         imageBase64: base64Image,
         mimeType: mimeType,
+        typedItems: typed,
         customerNotes: notesController.text.trim(),
         deliveryAddressID: deliveryAddressID,
         deliveryAddressSnapshot: deliveryAddressSnapshot,
@@ -83,6 +90,8 @@ class PhotoOrdersController extends GetxController {
         customToast(message: 'Photo order submitted successfully!');
         clearImage();
         notesController.clear();
+        typedItemsController.clear();
+        typedItems.value = '';
         fetchMyPhotoOrders();
         return res;
       } else {
@@ -92,7 +101,7 @@ class PhotoOrdersController extends GetxController {
     } catch (e) {
       isUploading.value = false;
       debugPrint('Error uploading photo order: $e');
-      customToast(message: 'Error uploading photo. Please try again.');
+      customToast(message: 'Could not send your order. Please try again.');
       return null;
     }
   }
@@ -204,6 +213,7 @@ class PhotoOrdersController extends GetxController {
   @override
   void onClose() {
     notesController.dispose();
+    typedItemsController.dispose();
     super.onClose();
   }
 }

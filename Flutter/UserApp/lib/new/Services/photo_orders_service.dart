@@ -16,8 +16,9 @@ class PhotoOrdersService {
 
   /// Submit a photo order request
   static Future<Map<String, dynamic>> submitPhotoOrder({
-    required String imageBase64,
+    String? imageBase64,
     required String mimeType,
+    String? typedItems,
     String? customerNotes,
     int? deliveryAddressID,
     Map<String, dynamic>? deliveryAddressSnapshot,
@@ -26,8 +27,9 @@ class PhotoOrdersService {
     final url = Uri.parse('${Constants.baseUrl}/photo-orders/submit');
 
     final body = json.encode({
-      'imageBase64': imageBase64,
+      if (imageBase64 != null) 'imageBase64': imageBase64,
       'mimeType': mimeType,
+      if (typedItems != null && typedItems.isNotEmpty) 'typedItems': typedItems,
       'customerNotes': customerNotes,
       'deliveryAddressID': deliveryAddressID,
       'deliveryAddressSnapshot': deliveryAddressSnapshot,

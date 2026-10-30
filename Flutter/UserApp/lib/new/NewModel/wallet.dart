@@ -52,6 +52,9 @@ class Wallet {
   // int? creditDebitType;
   DateTime? createdAt;
   DateTime? updatedAt;
+  /// Reward money (comeback, birthday) is taken back after this if unused.
+  DateTime? expiryDate;
+  bool isExpired;
 
   Wallet({
     this.walletId,
@@ -63,6 +66,8 @@ class Wallet {
     // this.creditDebitType,
     this.createdAt,
     this.updatedAt,
+    this.expiryDate,
+    this.isExpired = false,
   });
 
   factory Wallet.fromJson(Map<String, dynamic> json) => Wallet(
@@ -79,6 +84,8 @@ class Wallet {
         updatedAt: json["UpdatedAt"] == null
             ? null
             : serverDate(json["UpdatedAt"])!,
+        expiryDate: json["ExpiryDate"] == null ? null : serverDate(json["ExpiryDate"]),
+        isExpired: '${json["IsExpired"]}' == '1',
       );
 
   Map<String, dynamic> toJson() => {

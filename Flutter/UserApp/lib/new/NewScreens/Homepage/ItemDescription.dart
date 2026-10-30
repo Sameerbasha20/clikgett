@@ -153,6 +153,9 @@ class _ItemDescriptionState extends State<ItemDescription> {
                                   itemName(
                                       name: categoryController
                                           .productsDetails?.productName),
+                                  _otherNames(categoryController
+                                          .productsDetails?.keywords ??
+                                      const []),
                                   itemWeight(
                                       isMultiVarients: categoryController
                                                   .productsDetails!
@@ -271,6 +274,22 @@ class _ItemDescriptionState extends State<ItemDescription> {
       fontSize: 20.sp,
       color: tColor,
       fontWeight: FontWeight.w600,
+    );
+  }
+
+  /// Up to three other names (admin keywords), e.g. "Also known as: Neyyi · Nei".
+  Widget _otherNames(List<String> names) {
+    if (names.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 2),
+      child: Text.rich(
+        TextSpan(children: [
+          TextSpan(text: 'Also known as: ', style: GoogleFonts.poppins(fontSize: 12.5, color: grey70)),
+          TextSpan(
+              text: names.join(' · '),
+              style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: tColor3)),
+        ]),
+      ),
     );
   }
 

@@ -162,12 +162,12 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
             query=`select p.*, PV.* from Products p inner join ProductVariants PV on PV.ProductID=p.ProductID
             LEFT JOIN Categories c ON c.CategoryID = p.CategoryID
             LEFT JOIN SubCategories sc ON sc.SubCategoryID = p.SubCategoryID
-            WHERE p.status=1 and PV.Status=1 and (p.ProductName LIKE ? OR c.CategoryName LIKE ? OR sc.SubCategoryName LIKE ?)
+            WHERE p.status=1 and PV.Status=1 and (p.ProductName LIKE ? OR p.SearchKeywords LIKE ? OR c.CategoryName LIKE ? OR sc.SubCategoryName LIKE ?)
             group by p.ProductID order by
-             CASE WHEN p.ProductName LIKE ? THEN 0 ELSE 1 END,
+             CASE WHEN p.ProductName LIKE ? THEN 0 WHEN p.SearchKeywords LIKE ? THEN 1 ELSE 2 END,
              CASE WHEN PV.AvailableQty = 0 THEN 1 ELSE 0 END,
              CONCAT(p.ProductName, '', PV.AvailableQty) ASC`
-            let results = await CommonController.getproducts(query, [like, like, like, like]);
+            let results = await CommonController.getproducts(query, [like, like, like, like, like, like]);
             const categories = await matchingCategories(term);
 
             // Log search query for analytics
@@ -219,7 +219,7 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
             const containsPattern = `%${likeText}%`;
             const prefixPattern = `${likeText}%`;
             const sql = `
-                SELECT p.ProductID, p.ProductName, p.CategoryID, p.SubCategoryID, p.ProductImages,
+                SELECT p.ProductID, p.ProductName, p.CategoryID, p.SubCategoryID, p.ProductImages, p.SearchKeywords,
                        c.CategoryName, sc.SubCategoryName,
                        MIN(pv.Price) as Price, MIN(pv.OfferPrice) as OfferPrice,
                        MAX(pv.AvailableQty) as AvailableQty
@@ -228,18 +228,19 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
                 LEFT JOIN Categories c ON c.CategoryID = p.CategoryID
                 LEFT JOIN SubCategories sc ON sc.SubCategoryID = p.SubCategoryID
                 WHERE p.Status = 1
-                  AND (p.ProductName LIKE ? OR c.CategoryName LIKE ? OR sc.SubCategoryName LIKE ?)
+                  AND (p.ProductName LIKE ? OR p.SearchKeywords LIKE ? OR c.CategoryName LIKE ? OR sc.SubCategoryName LIKE ?)
                 GROUP BY p.ProductID
                 ORDER BY 
                     CASE WHEN p.ProductName LIKE ? THEN 0 
                          WHEN p.ProductName LIKE ? THEN 1 
-                         ELSE 2 END ASC,
+                         WHEN p.SearchKeywords LIKE ? THEN 2
+                         ELSE 3 END ASC,
                     CASE WHEN MAX(pv.AvailableQty) > 0 THEN 0 ELSE 1 END ASC,
                     p.ProductName ASC
                 LIMIT ${limit}
             `;
 
-            pool.query(sql, [containsPattern, containsPattern, containsPattern, prefixPattern, containsPattern], (err, rows) => {
+            pool.query(sql, [containsPattern, containsPattern, containsPattern, containsPattern, prefixPattern, containsPattern, containsPattern], (err, rows) => {
                 if (err) {
                     console.error("Error in searchSuggestions:", err);
                     return resp.status(500).json({ Status: 0, Message: "Error fetching suggestions", Suggestions: [] });
@@ -261,6 +262,8 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
                         SubCategoryID: item.SubCategoryID,
                         SubCategoryName: item.SubCategoryName || '',
                         ImageUrl: primaryImage,
+                        // The app shows at most three other names.
+                        Keywords: String(item.SearchKeywords || '').split(',').map((k) => k.trim()).filter(Boolean).slice(0, 3),
                         Price: parseFloat(item.Price || 0),
                         OfferPrice: parseFloat(item.OfferPrice || item.Price || 0),
                         InStock: (item.AvailableQty || 0) > 0

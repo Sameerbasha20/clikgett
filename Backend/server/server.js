@@ -198,6 +198,7 @@ try {
             console.log('[Jobs] Background jobs are off (BACKGROUND_JOBS=off)');
         } else {
             PaymentRecovery.start();
+            require('./services/CustomerRewards').start();
         }
         // Say in the logs why the database is unreachable (hosts hide /health until it passes).
         require('./utils/db').query('SELECT 1', (err) => {

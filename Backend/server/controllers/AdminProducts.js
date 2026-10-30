@@ -220,7 +220,8 @@ const adminproductcontroller={
             else
             Status = "Status = Status";
 
-            queryString = "UPDATE Products SET " +ProductName+Description+ProductImages+CategoryID+SubCategoryID+Status+" WHERE ProductID=" + pool.escape(req.params.ProductID) + ";";
+            const Keywords = Body.SearchKeywords !== undefined ? "SearchKeywords=" + pool.escape(cleanKeywords(Body.SearchKeywords)) + "," : "";
+            queryString = "UPDATE Products SET " +ProductName+Description+ProductImages+CategoryID+SubCategoryID+Keywords+Status+" WHERE ProductID=" + pool.escape(req.params.ProductID) + ";";
             console.log(queryString)
             return new Promise(function(resolve, reject) {
             pool.query(queryString, function(err, result, fields) {
@@ -1183,6 +1184,20 @@ function getkits() {
     }
 }
 
+// Other names a product is searched by ("neyyi, nei"), from text or a list: trimmed,
+// without duplicates, at most 30. Stored comma-separated; null when empty.
+function cleanKeywords(value) {
+    const list = Array.isArray(value) ? value : String(value || '').split(',');
+    const seen = new Set();
+    const out = [];
+    for (const k of list.map((x) => String(x).trim().replace(/\s+/g, ' ')).filter(Boolean)) {
+        if (k.length > 40 || seen.has(k.toLowerCase())) continue;
+        seen.add(k.toLowerCase());
+        out.push(k);
+    }
+    return out.length ? out.slice(0, 30).join(', ') : null;
+}
+
 function createproduct(body) {
     let subcategorycheck; // per-request (were implicit globals)
     try {
@@ -1205,7 +1220,7 @@ function createproduct(body) {
             }
 
             // Parameterised insert: values go in as they are (no manual quote escaping).
-            let InsertProducts = {ProductImages:JSON.stringify(body.ProductImages),SubCategoryID:body.SubCategoryID,ProductName: String(body.ProductName).trim(), Description: body.Description,ImageUrl: "NA",status:1,CategoryID:body.CategoryID,Type:body.Type}
+            let InsertProducts = {ProductImages:JSON.stringify(body.ProductImages),SubCategoryID:body.SubCategoryID,ProductName: String(body.ProductName).trim(), Description: body.Description,ImageUrl: "NA",status:1,CategoryID:body.CategoryID,Type:body.Type,SearchKeywords:cleanKeywords(body.SearchKeywords)}
             let sql = "INSERT INTO Products set ?";
             pool.query(sql, InsertProducts, (err, results) => {
                     console.log('add product')

@@ -37,13 +37,15 @@ class _Suggestion {
   final String category;
   final String imageUrl;
   final double price;
+  final List<String> keywords;
 
   _Suggestion.fromJson(Map<String, dynamic> j)
       : productId = (j['ProductID'] as num?)?.toInt() ?? 0,
         name = '${j['ProductName'] ?? ''}'.trim(),
         category = '${j['CategoryName'] ?? ''}'.trim(),
         imageUrl = '${j['ImageUrl'] ?? ''}',
-        price = (j['OfferPrice'] as num?)?.toDouble() ?? 0;
+        price = (j['OfferPrice'] as num?)?.toDouble() ?? 0,
+        keywords = ((j['Keywords'] as List?) ?? const []).map((k) => '$k').take(3).toList();
 }
 
 /// A category or subcategory whose name matches the search ("snacks" -> Snacks).
@@ -342,7 +344,11 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           title: Text(s.name, maxLines: 1, overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w500, color: tColor)),
-          subtitle: Text(s.category, style: GoogleFonts.poppins(fontSize: 11.5, color: grey70)),
+          subtitle: Text(
+              s.keywords.isEmpty ? s.category : 'Also: ${s.keywords.join(', ')}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(fontSize: 11.5, color: grey70)),
           trailing: Text(shelfPrice(s.price),
               style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor)),
           onTap: () {

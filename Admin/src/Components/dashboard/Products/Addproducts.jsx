@@ -34,6 +34,7 @@ function AddCategory(props) {
     const [categoryItems, setCategoryItems] = useState([]);
     const [subCategoryItems, setSubCategoryItems] = useState([]);
     const [descriptionValue, setDescriptionValue] = useState("");
+    const [keywordsValue, setKeywordsValue] = useState("");
     const [basicError, setBasicError] = useState("");
     const [paths, setPaths] = useState([]);
     const [uploadSpinner, setUploadSpinner] = useState(false);
@@ -144,6 +145,7 @@ function AddCategory(props) {
                     const p = res.Products;
                     setProductDetails(p);
                     setDescriptionValue(p.Description || "");
+                    setKeywordsValue(p.SearchKeywords || "");
                     
                     // Populate Form
                     reset({
@@ -433,6 +435,7 @@ function AddCategory(props) {
                 SubCategoryID: data.SubCategoryID,
                 ProductName: data.ProductName,
                 Description: descriptionValue || "NA",
+                SearchKeywords: keywordsValue,
                 Type: 1,
                 Status: 1,
                 ProductVariants: [
@@ -479,6 +482,7 @@ function AddCategory(props) {
                 SubCategoryID: data.SubCategoryID,
                 ProductName: data.ProductName,
                 Description: descriptionValue || "NA",
+                SearchKeywords: keywordsValue,
                 Status: data.Status !== undefined ? data.Status : 1,
                 Type: 1,
                 ProductImages: paths.map((item) => item.path)
@@ -1311,6 +1315,37 @@ function AddCategory(props) {
                                     </div>
                                 </div>
                             )}
+
+                            {/* OTHER NAMES (search keywords) */}
+                            <div style={{ marginBottom: "20px" }}>
+                                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                                    Other names / search keywords
+                                </label>
+                                <input
+                                    type="text"
+                                    value={keywordsValue}
+                                    onChange={(e) => setKeywordsValue(e.target.value)}
+                                    placeholder="e.g. neyyi, nei, desi ghee, cow ghee"
+                                    maxLength={1000}
+                                    style={{ width: "100%", padding: "8px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "0.9rem" }}
+                                />
+                                <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "4px" }}>
+                                    Separate with commas. Customers find the product by any of these names; the app shows the first three.
+                                </div>
+                                {keywordsValue.split(",").map((k) => k.trim()).filter(Boolean).length > 0 && (
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
+                                        {keywordsValue.split(",").map((k) => k.trim()).filter(Boolean).map((k, i) => (
+                                            <span key={`${k}-${i}`} style={{
+                                                fontSize: "0.75rem", padding: "2px 10px", borderRadius: "999px",
+                                                background: i < 3 ? "#dcfce7" : "#f1f5f9", color: i < 3 ? "#166534" : "#64748b",
+                                                border: `1px solid ${i < 3 ? "#bbf7d0" : "#e2e8f0"}`
+                                            }}>
+                                                {k}{i < 3 ? " · shown in app" : ""}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* DESCRIPTION */}
                             <div style={{ marginBottom: "20px" }}>

@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import AddCategory from "./addsettings";
 import DeliveryETASettingsTab from "./DeliveryETASettingsTab";
 import ReferralSettingsTab from "./ReferralSettingsTab";
+import RewardsSettingsTab from "./RewardsSettingsTab";
 import { css } from "@emotion/react";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -22,11 +23,11 @@ function SettingsPage() {
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const initialTab = queryParams.get("tab") || "operational";
-    const [activeTab, setActiveTab] = useState(initialTab); // 'operational' | 'delivery-eta' | 'referrals' | 'system'
+    const [activeTab, setActiveTab] = useState(initialTab); // 'operational' | 'delivery-eta' | 'referrals' | 'rewards' | 'system'
 
     useEffect(() => {
         const tab = new URLSearchParams(location.search).get("tab");
-        if (tab && ["operational", "delivery-eta", "referrals", "system"].includes(tab)) {
+        if (tab && ["operational", "delivery-eta", "referrals", "rewards", "system"].includes(tab)) {
             setActiveTab(tab);
         }
     }, [location.search]);
@@ -256,6 +257,12 @@ function SettingsPage() {
                                     onClick={() => setActiveTab("referrals")}
                                 >
                                     <FaGift className="mr-1" /> Refer & Earn Rewards
+                                </button>
+                                <button
+                                    className={`btn ${activeTab === "rewards" ? "btn-primary" : "btn-outline-primary"}`}
+                                    onClick={() => setActiveTab("rewards")}
+                                >
+                                    <FaGift className="mr-1" /> Comeback & Birthday Rewards
                                 </button>
                                 <button
                                     className={`btn ${activeTab === "system" ? "btn-primary" : "btn-outline-primary"}`}
@@ -536,6 +543,8 @@ function SettingsPage() {
                             <DeliveryETASettingsTab />
                         ) : activeTab === "referrals" ? (
                             <ReferralSettingsTab />
+                        ) : activeTab === "rewards" ? (
+                            <RewardsSettingsTab />
                         ) : (
                             <>
                                 <div className={dashboardclasses["customer-form"]} style={{ marginBottom: "15px" }}>

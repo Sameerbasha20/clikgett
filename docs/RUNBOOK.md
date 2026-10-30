@@ -128,7 +128,13 @@ Cashback rate, cap and mode are in admin → **Settings → Cashback**.
 ## Background jobs
 
 Cart reminders (hourly), win-back coupons (6-hourly) and payment recovery run inside
-the backend process. On a plan that sleeps when idle they do not run; keep the
+the backend process.
+
+Customer rewards (hourly, `services/CustomerRewards.js`): comeback wallet cash for
+customers who stopped ordering, the birthday gift, and taking back unused reward money
+when it expires. Both are off until switched on in admin → **Settings → Comeback &
+Birthday Rewards** (amount, days, expiry; "Run now" runs it at once). Wallet rows:
+ContentType 6 = comeback, 7 = birthday. On a plan that sleeps when idle they do not run; keep the
 backend on an always-on plan. They can also be triggered by a scheduler:
 `POST /api/carts/abandoned/trigger-notifications`, `POST /api/promocodes/winback/trigger`
 with the `x-cron-secret` header.

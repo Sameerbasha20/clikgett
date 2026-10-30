@@ -51,6 +51,8 @@ class Products {
   DateTime? updatedAt;
   List<ProductVariant>? productVariants;
   List<String> productImages;
+  /// Other names the product is known by (admin keywords); the app shows up to three.
+  List<String> keywords;
 
   Products({
     this.productId,
@@ -65,6 +67,7 @@ class Products {
     this.updatedAt,
     this.productVariants,
     required this.productImages,
+    this.keywords = const [],
     this.bulkTiers = const [],
   });
 
@@ -87,6 +90,12 @@ class Products {
             ? null
             : serverDate(json["UpdatedAt"])!,
         productImages: List<String>.from(json['ProductImages']),
+        keywords: '${json['SearchKeywords'] ?? ''}'
+            .split(',')
+            .map((k) => k.trim())
+            .where((k) => k.isNotEmpty)
+            .take(3)
+            .toList(),
         productVariants: json["ProductVariants"] == null
             ? []
             : List<ProductVariant>.from(json["ProductVariants"]!

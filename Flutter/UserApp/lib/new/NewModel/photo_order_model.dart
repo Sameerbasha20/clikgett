@@ -6,6 +6,8 @@ class PhotoOrderModel {
   int? userID;
   String? imageStoragePath;
   String? customerNotes;
+  /// The list the customer typed (with or without a photo).
+  String? typedItems;
   String? requestStatus;
   int? adminReviewerID;
   String? adminNotes;
@@ -30,6 +32,7 @@ class PhotoOrderModel {
     this.userID,
     this.imageStoragePath,
     this.customerNotes,
+    this.typedItems,
     this.requestStatus,
     this.adminReviewerID,
     this.adminNotes,
@@ -69,6 +72,7 @@ class PhotoOrderModel {
       userID: json['UserID'] ?? json['userID'],
       imageStoragePath: json['ImageStoragePath'] ?? json['imageStoragePath'] ?? '',
       customerNotes: json['CustomerNotes'] ?? json['customerNotes'] ?? '',
+      typedItems: json['TypedItems'] ?? '',
       requestStatus: json['RequestStatus'] ?? json['requestStatus'] ?? 'PENDING',
       adminReviewerID: json['AdminReviewerID'] ?? json['adminReviewerID'],
       adminNotes: json['AdminNotes'] ?? json['adminNotes'] ?? '',

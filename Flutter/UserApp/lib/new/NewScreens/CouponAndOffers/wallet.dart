@@ -225,6 +225,9 @@ class _WalletScreenState extends State<WalletScreen> {
                 style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: tColor)),
             if (w.createdAt != null)
               Text(DateFormat('d MMM yyyy, h:mm a').format(w.createdAt!), style: GoogleFonts.poppins(fontSize: 11.5, color: tColor3)),
+            if (_expiresSoon(w))
+              Text('Use by ${DateFormat('d MMM, h:mm a').format(w.expiryDate!)}',
+                  style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: amberWarning)),
           ]),
         ),
         Text('${credit ? '+' : '-'}${rupees(w.amount ?? 0)}',
@@ -232,6 +235,14 @@ class _WalletScreenState extends State<WalletScreen> {
       ]),
     );
   }
+
+  /// Unexpired reward money (comeback cash, birthday gift) shows when it runs out.
+  bool _expiresSoon(Wallet w) =>
+      w.creditedDebited == 1 &&
+      (w.contentType == 6 || w.contentType == 7) &&
+      !w.isExpired &&
+      w.expiryDate != null &&
+      w.expiryDate!.isAfter(DateTime.now());
 
   /// Many older entries have no description; fall back to the entry type.
   String _label(Wallet w) {
@@ -247,6 +258,10 @@ class _WalletScreenState extends State<WalletScreen> {
         return credit ? 'Money added' : 'Paid for an order';
       case 4:
         return credit ? 'Cashback / refund' : 'Cashback reversed';
+      case 6:
+        return credit ? 'Comeback reward' : 'Comeback reward expired';
+      case 7:
+        return credit ? 'Birthday gift' : 'Birthday gift expired';
       default:
         return credit ? 'Credited' : 'Debited';
     }

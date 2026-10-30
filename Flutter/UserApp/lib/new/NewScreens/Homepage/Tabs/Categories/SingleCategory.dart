@@ -336,7 +336,10 @@ class _SingleCategoryState extends State<SingleCategory> {
                 boxShadow: selected ? softCardShadow : null,
               ),
               child: Stack(clipBehavior: Clip.none, children: [
-                Column(children: [
+                // Full width, so tiles with short labels ("All", "Ghee") stay centred like the rest.
+                SizedBox(
+                  width: double.infinity,
+                  child: Column(children: [
                   AnimatedScale(
                     scale: selected ? 1.06 : 1,
                     duration: const Duration(milliseconds: 220),
@@ -365,7 +368,8 @@ class _SingleCategoryState extends State<SingleCategory> {
                           height: 1.2,
                           fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                           color: selected ? primaryDark : tColor3)),
-                ]),
+                  ]),
+                ),
                 Positioned(
                   left: -6,
                   top: 6,

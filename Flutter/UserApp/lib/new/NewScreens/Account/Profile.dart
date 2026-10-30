@@ -25,6 +25,7 @@ import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Profile tab: account details and every account screen.
@@ -40,6 +41,7 @@ class _ProfileState extends State<Profile> {
   final HomeController homeController = Get.find();
   final WalletController walletController = Get.find();
   ActiveMembership? _membership;
+  AccountSummary? _summary;
 
   @override
   void initState() {
@@ -49,6 +51,57 @@ class _ProfileState extends State<Profile> {
     AccountServices.membershipPlans().then((page) {
       if (mounted) setState(() => _membership = page?.current);
     });
+    _loadSummary();
+  }
+
+  Future<void> _loadSummary() async {
+    final s = await AccountServices.summary();
+    if (mounted && s != null) setState(() => _summary = s);
+  }
+
+  /// The birthday is set once: pick, confirm, save. After that it only shows.
+  Future<void> _birthday() async {
+    final saved = _summary?.dateOfBirth;
+    if (saved != null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Your birthday is saved and cannot be changed. Contact support if it is wrong.')));
+      return;
+    }
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(now.year - 25, now.month, now.day),
+      firstDate: DateTime(now.year - 100),
+      lastDate: DateTime(now.year - 5, now.month, now.day),
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+      helpText: 'SELECT YOUR BIRTHDAY',
+    );
+    if (picked == null || !mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Save your birthday?'),
+        content: Text('${DateFormat('d MMMM yyyy').format(picked)}\n\nYou cannot change it later, so please check it is correct.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Change')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirm')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final result = await AccountServices.setBirthday(DateFormat('yyyy-MM-dd').format(picked));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.ok ? 'Birthday saved 🎂' : result.message)));
+    _loadSummary();
+  }
+
+  String get _birthdaySubtitle {
+    final dob = _summary?.dateOfBirth;
+    final reward = _summary?.birthdayReward ?? 0;
+    if (dob != null) {
+      return '${DateFormat('d MMMM').format(dob)}${reward > 0 ? ' · ${rupees(reward)} gift on your birthday' : ''}';
+    }
+    return reward > 0 ? 'Add it and get ${rupees(reward)} on your birthday' : 'Add your birthday for a birthday surprise';
   }
 
   void _push(Widget screen) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
@@ -126,15 +179,18 @@ class _ProfileState extends State<Profile> {
           onRefresh: () async {
             await profileController.getuserDetails(context: context);
             walletController.getWallet(context: context);
+            await _loadSummary();
           },
           child: ListView(
             padding: const EdgeInsets.all(12),
             children: [
               _header(),
+              _savings(),
               _quickActions(),
               const SectionTitle('Your account'),
               MenuGroup([
                 MenuTile(icon: Icons.location_on_outlined, title: 'Saved addresses', onTap: () => _push(ManageAddress())),
+                MenuTile(icon: Icons.cake_outlined, title: 'Birthday', subtitle: _birthdaySubtitle, onTap: _birthday),
                 MenuTile(icon: Icons.photo_camera_outlined, title: 'Photo orders', subtitle: 'Orders you sent as a photo of your list', onTap: () => _push(const PhotoOrdersListScreen())),
                 MenuTile(icon: Icons.forum_outlined, title: 'My requests', subtitle: 'Product requests and messages to us', onTap: () => _push(const MyRequestsScreen())),
                 MenuTile(icon: Icons.notifications_none_rounded, title: 'Notifications', onTap: () => _push(const Notifications())),
@@ -205,6 +261,40 @@ class _ProfileState extends State<Profile> {
           );
         },
       );
+
+  /// Total saved on all delivered orders (offer prices + coupons).
+  Widget _savings() {
+    final s = _summary;
+    if (s == null || s.deliveredOrders == 0 || s.totalSaved <= 0) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFFECFDF5), Color(0xFFD1FAE5)]),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFA7F3D0)),
+      ),
+      child: Row(children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(color: white, shape: BoxShape.circle),
+          child: const Icon(Icons.savings_rounded, color: primaryDark, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text.rich(TextSpan(children: [
+              TextSpan(text: 'You have saved ', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
+              TextSpan(text: rupees(s.totalSaved), style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800, color: primaryDark)),
+            ])),
+            Text('on ${s.deliveredOrders} order${s.deliveredOrders == 1 ? '' : 's'} with ClikGett',
+                style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
+          ]),
+        ),
+      ]),
+    );
+  }
 
   // Wallet and Help side by side, same size: icon, main line, small line.
   Widget _quickActions() => IntrinsicHeight(

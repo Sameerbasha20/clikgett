@@ -230,8 +230,8 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
 
               SizedBox(height: 2.h),
 
-              // Expandable Photo Preview Card
-              Container(
+              // Expandable Photo Preview Card (typed-only requests have no photo)
+              if ((req.imageStoragePath ?? '').isNotEmpty) Container(
                 decoration: BoxDecoration(
                   color: white,
                   borderRadius: BorderRadius.circular(12),
@@ -283,6 +283,30 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                   ],
                 ),
               ),
+
+              if ((req.typedItems ?? '').isNotEmpty) ...[
+                SizedBox(height: 1.5.h),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(3.w),
+                  decoration: BoxDecoration(
+                    color: white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Your Typed Items:",
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12.sp, color: Colors.grey[700]),
+                      ),
+                      SizedBox(height: 0.5.h),
+                      Text(req.typedItems!, style: GoogleFonts.poppins(fontSize: 13.sp, color: black)),
+                    ],
+                  ),
+                ),
+              ],
 
               if (req.customerNotes != null && req.customerNotes!.isNotEmpty) ...[
                 SizedBox(height: 1.5.h),

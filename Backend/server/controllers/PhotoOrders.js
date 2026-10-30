@@ -53,35 +53,46 @@ const PhotoOrdersController = {
             }
 
             const { imageBase64, mimeType, customerNotes, deliveryAddressID, deliveryAddressSnapshot } = req.body;
+            // A photo of the list, the items typed in, or both.
+            const typedItems = String(req.body.typedItems || '').trim();
 
-            if (!imageBase64) {
-                return resp.status(400).json({ Status: 0, Message: 'Image is required' });
+            if (!imageBase64 && !typedItems) {
+                return resp.status(400).json({ Status: 0, Message: 'Add a photo of your list or type your items' });
+            }
+            if (typedItems.length > 2000) {
+                return resp.status(400).json({ Status: 0, Message: 'Your typed list is too long (max 2000 characters)' });
+            }
+            if (customerNotes && String(customerNotes).length > 500) {
+                return resp.status(400).json({ Status: 0, Message: 'Instructions can be up to 500 characters' });
             }
 
-            // Validate MIME type
-            const cleanMime = (mimeType || 'image/jpeg').toLowerCase();
-            const extension = ALLOWED_MIME_TYPES[cleanMime];
-            if (!extension) {
-                return resp.status(400).json({ Status: 0, Message: 'Invalid image format. Allowed: JPG, PNG, WEBP' });
-            }
+            let storagePath = null;
+            if (imageBase64) {
+                // Validate MIME type
+                const cleanMime = (mimeType || 'image/jpeg').toLowerCase();
+                const extension = ALLOWED_MIME_TYPES[cleanMime];
+                if (!extension) {
+                    return resp.status(400).json({ Status: 0, Message: 'Invalid image format. Allowed: JPG, PNG, WEBP' });
+                }
 
-            // Clean base64 string
-            const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-            const buffer = Buffer.from(base64Data, 'base64');
+                // Clean base64 string
+                const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+                const buffer = Buffer.from(base64Data, 'base64');
 
-            // Size check: Max 10MB
-            if (buffer.length > 10 * 1024 * 1024) {
-                return resp.status(400).json({ Status: 0, Message: 'Image size exceeds maximum limit of 10MB' });
-            }
-            if (buffer.length < 10) {
-                return resp.status(400).json({ Status: 0, Message: 'Invalid or corrupt image content' });
-            }
+                // Size check: Max 10MB
+                if (buffer.length > 10 * 1024 * 1024) {
+                    return resp.status(400).json({ Status: 0, Message: 'Image size exceeds maximum limit of 10MB' });
+                }
+                if (buffer.length < 10) {
+                    return resp.status(400).json({ Status: 0, Message: 'Invalid or corrupt image content' });
+                }
 
-            // Generate safe filename & storage path
-            const uniqueId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
-            const fileName = `photo_order_${Date.now()}_${uniqueId}${extension}`;
-            // Object storage, not the server's disk (wiped on every deploy).
-            const storagePath = await customerPhotos.save(buffer, 'photo_orders', fileName, cleanMime);
+                // Generate safe filename & storage path
+                const uniqueId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
+                const fileName = `photo_order_${Date.now()}_${uniqueId}${extension}`;
+                // Object storage, not the server's disk (wiped on every deploy).
+                storagePath = await customerPhotos.save(buffer, 'photo_orders', fileName, cleanMime);
+            }
 
             // Generate unique reference code: POR-YYYYMMDD-XXXX
             const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -91,14 +102,15 @@ const PhotoOrdersController = {
             // Insert into PhotoOrderRequests
             const insertSql = `
                 INSERT INTO PhotoOrderRequests (
-                    RequestCode, UserID, ImageStoragePath, CustomerNotes,
+                    RequestCode, UserID, ImageStoragePath, TypedItems, CustomerNotes,
                     DeliveryAddressID, DeliveryAddressSnapshot, RequestStatus, CreatedAt
-                ) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', NOW())
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', NOW())
             `;
             const result = await queryAsync(insertSql, [
                 requestCode,
                 userId,
                 storagePath,
+                typedItems || null,
                 customerNotes || null,
                 deliveryAddressID || null,
                 typeof deliveryAddressSnapshot === 'object' ? JSON.stringify(deliveryAddressSnapshot) : (deliveryAddressSnapshot || null)
@@ -232,7 +244,7 @@ const PhotoOrdersController = {
             const adminId = req.AdminID;
 
             const rows = await queryAsync("SELECT UserID, ImageStoragePath FROM PhotoOrderRequests WHERE RequestID = ?", [requestId]);
-            if (!rows || rows.length === 0) {
+            if (!rows || rows.length === 0 || !rows[0].ImageStoragePath) {
                 return resp.status(404).send('Image not found');
             }
 
@@ -355,7 +367,8 @@ const PhotoOrdersController = {
                 PromoAmount: 0,
                 SubTotal: pricingResult.SubTotal,
                 DeliverCharges: pricingResult.DeliveryCharges,
-                Discount: pricingResult.TotalSavings || 0,
+                // Coupon/cart-offer part only, as on normal orders (offer prices are in the items).
+                Discount: Math.round(((pricingResult.CouponDiscount || 0) + (pricingResult.CartOfferDiscount || 0)) * 100) / 100,
                 TaxAmount: 0,
                 GrandTotal: pricingResult.GrandTotal,
                 PaymentMethod: chosenPayment,

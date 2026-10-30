@@ -15,6 +15,7 @@ const MIGRATIONS = [
     require('./order_settings_migration'),
     require('./auth_refresh_tokens_migration'),
     require('./doorstep_upi_migration'),
+    require('./customer_rewards_migration'),
 ];
 
 (async () => {

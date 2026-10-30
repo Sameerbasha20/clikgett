@@ -212,6 +212,112 @@ const CustomerAccount = {
             return resp.status(500).json({ Status: 0, Message: 'Could not activate the membership. Contact support if money was deducted.' });
         }
     },
+
+    // Profile header: total saved on delivered orders and the birthday.
+    // Saved per order = offer prices below MRP + coupon/cart-offer discount (as on the order screen).
+    summary: async (req, resp) => {
+        try {
+            const [orders] = await queryAsync(
+                'SELECT COUNT(*) AS n, COALESCE(SUM(Discount), 0) AS discount FROM Orders WHERE UserID = ? AND OrderStatus = 1',
+                [req.UserID]);
+            const [items] = await queryAsync(
+                `SELECT COALESCE(SUM(GREATEST(oi.Price - oi.OfferPrice, 0) * oi.Quantity), 0) AS saved
+                   FROM OrderItems oi JOIN Orders o ON o.OrderID = oi.OrderID
+                  WHERE o.UserID = ? AND o.OrderStatus = 1 AND oi.OfferPrice > 0`,
+                [req.UserID]);
+            const [user] = await queryAsync("SELECT DATE_FORMAT(DateOfBirth, '%Y-%m-%d') AS dob FROM Users WHERE UserID = ?", [req.UserID]);
+            const [rewards] = await queryAsync('SELECT BirthdayEnabled, BirthdayAmount FROM CustomerRewardSettings WHERE ID = 1').catch(() => []);
+            return resp.json({
+                Status: 1,
+                TotalSaved: Math.round((Number(orders.discount) + Number(items.saved)) * 100) / 100,
+                DeliveredOrders: Number(orders.n) || 0,
+                DateOfBirth: (user && user.dob) || null,
+                BirthdayReward: rewards && rewards.BirthdayEnabled ? Number(rewards.BirthdayAmount) : 0,
+            });
+        } catch (err) {
+            console.log('account summary failed', err.message);
+            return resp.status(500).json({ Status: 0, Message: 'Could not load your account summary' });
+        }
+    },
+
+    // The customer sets their birthday once; it cannot be changed afterwards.
+    setBirthday: async (req, resp) => {
+        try {
+            const value = String((req.body && req.body.DateOfBirth) || '').trim();
+            const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            const date = m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
+            const valid = date && date.getUTCMonth() === +m[2] - 1 && date.getUTCDate() === +m[3];
+            const age = valid ? (Date.now() - date.getTime()) / (365.25 * 24 * 3600 * 1000) : -1;
+            if (!valid || age < 5 || age > 120) {
+                return resp.status(400).json({ Status: 0, Message: 'Please choose a valid date of birth' });
+            }
+            const result = await queryAsync('UPDATE Users SET DateOfBirth = ? WHERE UserID = ? AND DateOfBirth IS NULL', [value, req.UserID]);
+            if (!result.affectedRows) {
+                return resp.status(409).json({ Status: 0, Message: 'Your birthday is already saved and cannot be changed' });
+            }
+            return resp.json({ Status: 1, Message: 'Birthday saved', DateOfBirth: value });
+        } catch (err) {
+            console.log('setBirthday failed', err.message);
+            return resp.status(500).json({ Status: 0, Message: 'Could not save your birthday' });
+        }
+    },
+
+    // Admin → Settings → Rewards
+    rewardSettings: async (req, resp) => {
+        try {
+            const [settings] = await queryAsync('SELECT * FROM CustomerRewardSettings WHERE ID = 1');
+            const [stats] = await queryAsync(
+                `SELECT
+                   SUM(ContentType = 6 AND Credited_Debited = 1) AS ComebackCount,
+                   COALESCE(SUM(CASE WHEN ContentType = 6 AND Credited_Debited = 1 THEN Amount END), 0) AS ComebackGiven,
+                   SUM(ContentType = 7 AND Credited_Debited = 1) AS BirthdayCount,
+                   COALESCE(SUM(CASE WHEN ContentType = 7 AND Credited_Debited = 1 THEN Amount END), 0) AS BirthdayGiven,
+                   COALESCE(SUM(CASE WHEN ContentType IN (6, 7) AND Credited_Debited = 2 THEN Amount END), 0) AS Expired
+                 FROM Wallets WHERE ContentType IN (6, 7) AND CreatedAt > NOW() - INTERVAL 30 DAY`);
+            const [birthdays] = await queryAsync('SELECT COUNT(*) AS n FROM Users WHERE DateOfBirth IS NOT NULL');
+            return resp.json({ Status: 1, Settings: settings || null, Last30Days: stats, CustomersWithBirthday: birthdays.n });
+        } catch (err) {
+            console.log('rewardSettings failed', err.message);
+            return resp.status(500).json({ Status: 0, Message: 'Could not load reward settings' });
+        }
+    },
+
+    updateRewardSettings: async (req, resp) => {
+        try {
+            const b = req.body || {};
+            const num = (v) => Number(v);
+            const checks = [
+                [num(b.ComebackInactiveDays), 1, 365, 'Inactive days must be between 1 and 365'],
+                [num(b.ComebackAmount), 0, 1000, 'Comeback amount must be between ₹0 and ₹1000'],
+                [num(b.ComebackValidHours), 1, 720, 'Comeback validity must be between 1 and 720 hours'],
+                [num(b.BirthdayAmount), 0, 1000, 'Birthday amount must be between ₹0 and ₹1000'],
+                [num(b.BirthdayValidDays), 1, 60, 'Birthday validity must be between 1 and 60 days'],
+            ];
+            for (const [v, min, max, message] of checks) {
+                if (!(v >= min && v <= max)) return resp.status(400).json({ Status: 0, Message: message });
+            }
+            await queryAsync(
+                `UPDATE CustomerRewardSettings SET ComebackEnabled = ?, ComebackInactiveDays = ?, ComebackAmount = ?, ComebackValidHours = ?,
+                        BirthdayEnabled = ?, BirthdayAmount = ?, BirthdayValidDays = ? WHERE ID = 1`,
+                [b.ComebackEnabled ? 1 : 0, Math.round(num(b.ComebackInactiveDays)), num(b.ComebackAmount), Math.round(num(b.ComebackValidHours)),
+                    b.BirthdayEnabled ? 1 : 0, num(b.BirthdayAmount), Math.round(num(b.BirthdayValidDays))]);
+            return resp.json({ Status: 1, Message: 'Reward settings saved' });
+        } catch (err) {
+            console.log('updateRewardSettings failed', err.message);
+            return resp.status(500).json({ Status: 0, Message: 'Could not save reward settings' });
+        }
+    },
+
+    // Runs the hourly rewards job now (admin "Run now").
+    runRewards: async (req, resp) => {
+        try {
+            const result = await require('../services/CustomerRewards').runOnce();
+            return resp.json({ Status: 1, ...result });
+        } catch (err) {
+            console.log('runRewards failed', err.message);
+            return resp.status(500).json({ Status: 0, Message: 'Could not run rewards' });
+        }
+    },
 };
 
 module.exports = CustomerAccount;

@@ -145,6 +145,21 @@ class CustomerRequest {
   const CustomerRequest(this.id, this.title, this.details, this.status, this.adminReply, this.createdAt);
 }
 
+/// Profile summary: total saved on delivered orders and the birthday (set once).
+class AccountSummary {
+  final double totalSaved;
+  final int deliveredOrders;
+  final DateTime? dateOfBirth;
+  final double birthdayReward;
+
+  AccountSummary.fromJson(Map<String, dynamic> j)
+      : totalSaved = _d(j['TotalSaved']),
+        deliveredOrders = _i(j['DeliveredOrders']),
+        // A calendar date ("1995-06-15"), not a moment in time: no timezone conversion.
+        dateOfBirth = DateTime.tryParse('${j['DateOfBirth'] ?? ''}'),
+        birthdayReward = _d(j['BirthdayReward']);
+}
+
 class ApiResult {
   final bool ok;
   final String message;
@@ -204,6 +219,14 @@ class AccountServices {
     }
     return const ApiResult(false, 'Could not reach the store. Please try again.');
   }
+
+  static Future<AccountSummary?> summary() async {
+    final data = await _get('/account/summary');
+    return data != null ? AccountSummary.fromJson(data) : null;
+  }
+
+  /// Saves the birthday ("yyyy-MM-dd"); the server refuses a second change.
+  static Future<ApiResult> setBirthday(String date) => _post('/account/birthday', {'DateOfBirth': date});
 
   static Future<ReferralInfo?> referral() async {
     final data = await _get('/account/referral');

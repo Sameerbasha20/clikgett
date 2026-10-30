@@ -702,6 +702,10 @@ export const Services = {
     updateReferralConfig: (method = "PUT", body, token) => httpcall("adminuser/referrals/config", method, body, token),
     getReferralAuditHistory: (method = "GET", body = null, token) => httpcall("adminuser/referrals/audit-history", method, body, token),
     getReferralClaims: (method = "GET", body = null, token) => httpcall("adminuser/referrals/claims", method, body, token),
+    // Comeback cash and birthday rewards (Settings → Rewards)
+    getRewardSettings: (method = "GET", body = null, token) => httpcall("account/rewards/settings", method, body, token),
+    updateRewardSettings: (method = "PUT", body, token) => httpcall("account/rewards/settings", method, body, token),
+    runRewards: (method = "POST", body = {}, token) => httpcall("account/rewards/run", method, body, token),
     // Distance-Based Delivery ETA
     getETARules: (method = "GET", body = null, token) => httpcall("adminuser/delivery-eta/rules", method, body, token),
     updateETARules: (method = "PUT", body, token) => httpcall("adminuser/delivery-eta/rules", method, body, token),
