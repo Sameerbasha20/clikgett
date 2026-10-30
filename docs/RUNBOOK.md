@@ -35,6 +35,35 @@ No secret values are written here; it only says where each one lives.
 - **In git:** `git revert <commit>` then deploy as above.
 - Migrations only add tables/columns, so rolling back the code is safe.
 
+## First release to the live AWS server
+
+Live: one EC2 server (old backend, pm2 `server`, port 3000, Node 18) and RDS `clikgett`.
+The new backend sits beside it in `/home/ubuntu/clikgett-v2` (pm2 `server-v2`, port 3001,
+Node 22 in `/opt/node22`), so switching back is one nginx change. Every step below was
+run first on `clikgett-rehearsal`, a copy restored from snapshot `before-release-2026-10-29`.
+
+1. RDS snapshot of `clikgett` (console: Actions → Take snapshot) and wait for *Available*.
+2. Copy the release build into `clikgett-v2` (`git archive HEAD:Backend`), keep its `.env`.
+3. In `clikgett-v2/.env`: delete the `DB_HOST=` line (then `HOST`, the live database, is
+   used) and `ADMIN_ALERT_MOBILE=none`; keep `BACKGROUND_JOBS=off` and
+   `DB_SQL_MODE=NO_ENGINE_SUBSTITUTION` (live's mode; strict mode breaks old-style writes
+   such as adding to the cart).
+4. Database, from `clikgett-v2` with `/opt/node22/bin/node`; look at each dry run first:
+   - `server/tools/schema_sync.js diff schema_ref.json`, then add `--apply`
+     (`schema_ref.json` is exported from the local Docker database).
+   - `server/migrations/run_on_start.js`
+   - `server/migrations/production_hardening_migration.js` (clears old plain-text OTPs)
+   - `server/migrations/timestamps_utc_migration.js` (once; shifts old order times to UTC)
+   - `server/tools/release_setup.js apply setup.json`, then add `--apply` (`setup.json` is
+     exported from Aiven with `release_setup.js export`)
+5. `pm2 restart server-v2 --update-env`; check `/api/health/db` on port 3001 names
+   `clikgett`, and that the old app's calls give the same answers on 3000 and 3001.
+6. Switch: in nginx `sites-enabled/default`, api.clikgett.com `proxy_pass` → `127.0.0.1:3001`,
+   `nginx -t && systemctl reload nginx`. Then set `BACKGROUND_JOBS=on` and restart `server-v2`.
+   Only one backend may run the jobs: the payment sweep issues real Razorpay refunds.
+7. Roll back: point nginx back to `127.0.0.1:3000` and reload. The database changes only
+   add tables, columns and rows, so the old backend keeps working.
+
 ## Secrets: where each one lives
 
 | Secret | Live copy | Backup copy |
