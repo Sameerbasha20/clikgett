@@ -191,7 +191,14 @@ try {
         console.log(`API Health: http://localhost:${PORT}/api/health`);
         console.log(`DB Health:  http://localhost:${PORT}/api/health/db`);
         console.log('==================================================');
-        PaymentRecovery.start();
+        // BACKGROUND_JOBS=off for a copy that must not act on its own (a rehearsal on
+        // restored data, or a second instance during a switch-over): the sweep refunds
+        // real Razorpay payments.
+        if (process.env.BACKGROUND_JOBS === 'off') {
+            console.log('[Jobs] Background jobs are off (BACKGROUND_JOBS=off)');
+        } else {
+            PaymentRecovery.start();
+        }
         // Say in the logs why the database is unreachable (hosts hide /health until it passes).
         require('./utils/db').query('SELECT 1', (err) => {
             if (err) {

@@ -119,7 +119,7 @@ async function sectionProducts(section, userId, limit, related = {}) {
     if (type === 'promotional_banner' || type === 'shop_by_category') return [];
     // 'selected_products': products the admin picked for this section
     return CommonController.getproducts(
-        `select p.* from HomeSectionProducts hp inner join Products p on p.ProductID=hp.ProductID where p.Status=1 and hp.HomeSectionID = ${parseInt(section.HomeSectionID, 10) || 0} order by hp.DisplayOrder asc, hp.id asc limit 0,${lim}`);
+        `select p.* from HomeSectionProducts hp inner join Products p on p.ProductID=hp.ProductID where p.Status=1 and hp.HomeSectionID = ${parseInt(section.HomeSectionID, 10) || 0} order by hp.DisplayOrder asc, hp.created_at asc limit 0,${lim}`);
 }
 
 async function fetchDynamicHomeSections(userId) {

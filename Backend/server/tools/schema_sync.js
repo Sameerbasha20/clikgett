@@ -7,7 +7,8 @@
 //   node server/tools/schema_sync.js diff schema.json --apply
 //
 // It only ever adds: missing tables (reference CREATE TABLE), missing columns and missing
-// indexes. It never drops or changes anything. Columns whose definition differs, and
+// indexes. The one change it makes is replacing invalid '0000-00-00' column defaults with
+// NULL. It never drops or alters column types. Columns whose definition differs, and
 // foreign keys, are listed for a person to review. Connection settings come from .env
 // (utils/db.js).
 const fs = require('fs');
@@ -58,6 +59,8 @@ async function diff(refFile, apply) {
     const ref = JSON.parse(fs.readFileSync(refFile, 'utf8'));
     const cur = await readSchema();
     const statements = [];
+    const defaultFixes = []; // run first: they unblock ALTERs on the same tables
+    const uniqueKeys = []; // run last, and allowed to fail
     const review = [];
 
     for (const [name, table] of Object.entries(ref)) {
@@ -72,35 +75,74 @@ async function diff(refFile, apply) {
             for (const fk of table.foreignKeys) review.push(`${name}: foreign key not created: ${fk}`);
             continue;
         }
+        // Column and index names are case-insensitive in MySQL.
+        const lower = (obj) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k.toLowerCase(), v]));
+        const liveColumns = lower(have.columns);
+        const liveIndexes = lower(have.indexes);
+        const hasAuto = Object.values(have.columns).some((d) => /AUTO_INCREMENT/.test(d));
+        const skipped = new Set();
         table.order.forEach((col, i) => {
-            if (!have.columns[col]) {
+            const live = liveColumns[col.toLowerCase()];
+            if (!live && hasAuto && /AUTO_INCREMENT/.test(table.columns[col])) {
+                skipped.add(col);
+                review.push(`${name}.${col}: not added, the table already has its own auto-increment key`);
+            } else if (!live) {
                 // The previous column exists or was added by an earlier statement.
-                const after = i === 0 ? ' FIRST' : ` AFTER \`${table.order[i - 1]}\``;
+                const prev = table.order.slice(0, i).reverse().find((c) => !skipped.has(c));
+                const after = prev ? ` AFTER \`${prev}\`` : ' FIRST';
                 statements.push(`ALTER TABLE \`${name}\` ADD COLUMN \`${col}\` ${table.columns[col]}${after};`);
-            } else if (norm(have.columns[col]) !== norm(table.columns[col])) {
-                review.push(`${name}.${col}: live "${have.columns[col]}" vs code "${table.columns[col]}"`);
+            } else if (/DEFAULT '0000-00-00/.test(live) && !/NOT NULL/.test(live)) {
+                // Zero-date defaults are invalid under the server's sql_mode, so any later
+                // ALTER of the table fails. Only the default changes; stored rows are kept.
+                defaultFixes.push(`ALTER TABLE \`${name}\` ALTER COLUMN \`${col}\` SET DEFAULT NULL;`);
+            } else if (norm(live) !== norm(table.columns[col])) {
+                review.push(`${name}.${col}: live "${live}" vs code "${table.columns[col]}"`);
             }
         });
         for (const [idx, def] of Object.entries(table.indexes)) {
-            if (!have.indexes[idx]) statements.push(`ALTER TABLE \`${name}\` ADD ${def};`);
+            if (liveIndexes[idx.toLowerCase()]) continue;
+            if ([...skipped].some((c) => def.includes(`\`${c}\``))) {
+                review.push(`${name}: index ${idx} not added, it uses a column that was not added`);
+            } else if (def.startsWith('UNIQUE')) {
+                // Existing rows may already break it; tried last, and a failure is reported.
+                uniqueKeys.push(`ALTER TABLE \`${name}\` ADD ${def};`);
+            } else {
+                statements.push(`ALTER TABLE \`${name}\` ADD ${def};`);
+            }
         }
         for (const fk of table.foreignKeys) {
             if (!have.foreignKeys.includes(fk)) review.push(`${name}: foreign key missing: ${fk}`);
         }
     }
+    statements.unshift(...defaultFixes);
     const extra = Object.keys(cur).filter((t) => !ref[t]);
 
     console.log(`-- ${statements.length} additive statements`);
     statements.forEach((s) => console.log(s));
+    console.log(`\n-- ${uniqueKeys.length} unique keys on existing tables (skipped if current rows break them):`);
+    uniqueKeys.forEach((s) => console.log(s));
     console.log(`\n-- ${review.length} items to review (not changed):`);
     review.forEach((r) => console.log(`--   ${r}`));
     if (extra.length) console.log(`\n-- Tables only on this database (kept): ${extra.join(', ')}`);
 
     if (apply) {
         for (const s of statements) {
-            await q(s);
+            try {
+                await q(s);
+            } catch (err) {
+                throw new Error(`${err.message}\n   in: ${s}`);
+            }
         }
-        console.log(`\n-- Applied ${statements.length} statements.`);
+        let added = 0;
+        for (const s of uniqueKeys) {
+            try {
+                await q(s);
+                added++;
+            } catch (err) {
+                console.log(`-- Not added (${err.message}): ${s}`);
+            }
+        }
+        console.log(`\n-- Applied ${statements.length} statements and ${added} of ${uniqueKeys.length} unique keys.`);
     }
 }
 

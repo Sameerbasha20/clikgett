@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
             database: {
                 type: 'mysql',
                 status: db.connected ? 'connected' : 'disconnected',
-                host: process.env.HOST || 'unknown',
+                host: process.env.DB_HOST || process.env.HOST || 'unknown',
                 error: db.error || null
             },
             redis: {
@@ -68,9 +68,9 @@ router.get('/db', async (req, res) => {
             status: 'healthy',
             database: 'connected',
             service: 'clikgett-backend',
-            host: process.env.HOST || 'unknown',
+            host: process.env.DB_HOST || process.env.HOST || 'unknown',
             port: process.env.DB_PORT || 3306,
-            dbName: process.env.db || 'unknown',
+            dbName: process.env.DB_NAME || process.env.db || 'unknown',
             timestamp
         });
     } else {
@@ -78,7 +78,7 @@ router.get('/db', async (req, res) => {
             status: 'unhealthy',
             database: 'disconnected',
             service: 'clikgett-backend',
-            host: process.env.HOST || 'unknown',
+            host: process.env.DB_HOST || process.env.HOST || 'unknown',
             error: db.error || 'Connection failed',
             timestamp
         });
