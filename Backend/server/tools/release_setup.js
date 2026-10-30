@@ -9,11 +9,12 @@
 //
 // What it copies (rows are only added; existing ids are never overwritten):
 //   - home screen: HomepageSections, HomeSectionCategories
-//   - deals: buy_more_config, product_unlocks, product_restrictions (for products that exist)
 //   - SubCategories missing on the target
 //   - Settings keys missing on the target (by key; never OrderTimesStoredUtc, which the
 //     one-off timestamps_utc_migration writes after converting order times)
-//   - DeliveryETARules row values, UnlockDealsThreshold (and the matching unlock thresholds)
+//   - DeliveryETARules row values, UnlockDealsThreshold
+// Deals (buy_more_config, product_unlocks, product_restrictions) are emptied instead: the
+// launch starts with none and the admin adds them.
 // Before the data it widens a few live columns the new code needs wider (see WIDEN).
 // And one data step: the old shop switch (ShopStatus 0 = closed) becomes StoreMode CLOSED,
 // so the new code does not open a store the old code keeps closed.
@@ -35,8 +36,10 @@ const WIDEN = [
         "ENUM('automatic','manual','disabled') DEFAULT 'automatic'"]
 ];
 
-const ADD_ROWS = ['HomepageSections', 'HomeSectionCategories', 'SubCategories', 'buy_more_config',
-    'product_unlocks', 'product_restrictions'];
+const ADD_ROWS = ['HomepageSections', 'HomeSectionCategories', 'SubCategories'];
+// Deals start empty at launch (client's decision): the admin adds products and prices.
+// Rows already in these tables were made while testing; the old app never used them.
+const START_EMPTY = ['buy_more_config', 'product_unlocks', 'product_restrictions'];
 const NEVER_COPY_SETTINGS = ['OrderTimesStoredUtc'];
 
 async function primaryKey(table) {
@@ -123,11 +126,14 @@ async function applySetup(file, apply) {
         steps.push([`DeliveryETARules #${rule.RuleID}`, 'UPDATE DeliveryETARules SET ? WHERE RuleID = ?', [data, rule.RuleID]]);
     }
 
+    for (const t of START_EMPTY) {
+        const [{ n }] = await q(`SELECT COUNT(*) n FROM \`${t}\``);
+        if (n) steps.push([`${t}: remove ${n} test rows`, `DELETE FROM \`${t}\``, []]);
+    }
+
     if (src.unlockDealsThreshold != null) {
         steps.push([`UnlockDealsThreshold ${src.unlockDealsThreshold}`,
             'UPDATE AdminShopToggleSettings SET UnlockDealsThreshold = ?', [src.unlockDealsThreshold]]);
-        steps.push(['product_unlocks thresholds follow it',
-            'UPDATE product_unlocks SET ThresholdAmount = ?', [src.unlockDealsThreshold]]);
     }
 
     steps.push(['StoreMode CLOSED where the old shop switch is off',
