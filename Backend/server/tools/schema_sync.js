@@ -51,6 +51,10 @@ async function readSchema() {
     return out;
 }
 
+// Added tables and columns take the target database's own character set and collation:
+// mixing collations across tables makes MySQL reject UNIONs and joins on text columns.
+const plain = (def) => def.replace(/ CHARACTER SET \w+/g, '').replace(/ COLLATE \w+/g, '');
+
 // Definitions compare equal when they differ only in display details MySQL adds itself.
 const norm = (def) => def.replace(/\s+COMMENT\s+'.*'$/, '').replace(/\bint\(\d+\)/g, 'int')
     .replace(/ COLLATE \w+/g, '').replace(/ CHARACTER SET \w+/g, '').trim();
@@ -67,10 +71,11 @@ async function diff(refFile, apply) {
         const have = cur[name];
         if (!have) {
             // Foreign keys are left out so tables can be created in any order.
-            const create = table.create
+            const create = plain(table.create
                 .split('\n').filter((l) => !/^\s*CONSTRAINT\s.*FOREIGN KEY/.test(l)).join('\n')
                 .replace(/,\n\)/, '\n)')
-                .replace(/^CREATE TABLE/, 'CREATE TABLE IF NOT EXISTS');
+                .replace(/^CREATE TABLE/, 'CREATE TABLE IF NOT EXISTS'))
+                .replace(/ DEFAULT CHARSET=\w+/, '').replace(/ COLLATE=\w+/, '');
             statements.push(create + ';');
             for (const fk of table.foreignKeys) review.push(`${name}: foreign key not created: ${fk}`);
             continue;
@@ -90,7 +95,7 @@ async function diff(refFile, apply) {
                 // The previous column exists or was added by an earlier statement.
                 const prev = table.order.slice(0, i).reverse().find((c) => !skipped.has(c));
                 const after = prev ? ` AFTER \`${prev}\`` : ' FIRST';
-                statements.push(`ALTER TABLE \`${name}\` ADD COLUMN \`${col}\` ${table.columns[col]}${after};`);
+                statements.push(`ALTER TABLE \`${name}\` ADD COLUMN \`${col}\` ${plain(table.columns[col])}${after};`);
             } else if (/DEFAULT '0000-00-00/.test(live) && !/NOT NULL/.test(live)) {
                 // Zero-date defaults are invalid under the server's sql_mode, so any later
                 // ALTER of the table fails. Only the default changes; stored rows are kept.

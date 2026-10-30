@@ -9,11 +9,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../utils/db');
 
 const BASE = (process.env.API_URL || 'http://127.0.0.1:5001/api').replace(/\/$/, '');
-const dbHost = String(process.env.DB_HOST || process.env.HOST || '');
-if (!/^(127\.0\.0\.1|localhost|mysql)$/.test(dbHost.replace(/"/g, ''))) {
-    console.error(`Refusing to run: DB host "${dbHost}" is not local.`);
-    process.exit(1);
-}
+require('./testDatabaseGuard')();
 
 const q = (sql, params = []) => new Promise((res, rej) => pool.query(sql, params, (e, r) => (e ? rej(e) : res(r))));
 const sign = (p) => jwt.sign(p, process.env.SECRET_KEY, { expiresIn: 600 });

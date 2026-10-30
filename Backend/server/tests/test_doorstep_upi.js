@@ -6,11 +6,7 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
-const dbHost = String(process.env.DB_HOST || process.env.HOST || '');
-if (/rds\.amazonaws\.com/i.test(dbHost)) {
-    console.error('Refusing to run against RDS.');
-    process.exit(1);
-}
+require('./testDatabaseGuard')();
 
 const pool = require('../utils/db');
 const DoorstepUpi = require('../services/DoorstepUpi');
