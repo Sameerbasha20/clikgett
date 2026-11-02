@@ -1,7 +1,7 @@
 # ClikGett test report
 
 **Date:** 2 November 2026
-**Code tested:** branch `dev`, commit `2209878`
+**Code tested:** branch `dev`, commit `dedaee5`
 **Where:** local Docker system (backend on Node 22, MySQL) and the AWS copy of live data; nothing on live
 
 ## Result
