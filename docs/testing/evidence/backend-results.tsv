@@ -10,7 +10,7 @@ test_eta_sync_e2e	regular	PASS			fixed; no check count printed
 test_features	regular	PASS	16	16	
 test_login_security	regular	PASS	21	21	
 test_order_flow	regular	PASS	23	23	
-test_order_safety	regular	PASS	17	17	new
+test_order_safety	regular	PASS	24	24	new
 test_print_store	regular	PASS	20	20	
 test_product_actions	regular	PASS	26	26	
 test_qa_bug_fixes	regular	PASS	45	45	

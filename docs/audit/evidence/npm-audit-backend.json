@@ -1,35 +1,6 @@
 {
   "auditReportVersion": 2,
   "vulnerabilities": {
-    "body-parser": {
-      "name": "body-parser",
-      "severity": "high",
-      "isDirect": true,
-      "via": [
-        {
-          "source": 1243073,
-          "name": "body-parser",
-          "dependency": "body-parser",
-          "title": "body-parser vulnerable to Denial of Service via trailing bytes after a compressed request body",
-          "url": "https://github.com/advisories/GHSA-27r3-jxmh-p828",
-          "severity": "high",
-          "cwe": [
-            "CWE-248"
-          ],
-          "cvss": {
-            "score": 7.5,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
-          },
-          "range": "<1.20.9"
-        }
-      ],
-      "effects": [],
-      "range": "<1.20.9",
-      "nodes": [
-        "node_modules/body-parser"
-      ],
-      "fixAvailable": true
-    },
     "cookie": {
       "name": "cookie",
       "severity": "low",
@@ -151,82 +122,6 @@
         "isSemVerMajor": true
       }
     },
-    "follow-redirects": {
-      "name": "follow-redirects",
-      "severity": "high",
-      "isDirect": false,
-      "via": [
-        {
-          "source": 1244003,
-          "name": "follow-redirects",
-          "dependency": "follow-redirects",
-          "title": "follow-redirects: Cross-realm sensitiveHeaders arrays are discarded and custom credentials can follow redirects",
-          "url": "https://github.com/advisories/GHSA-mrwp-f3q8-3g9p",
-          "severity": "high",
-          "cwe": [
-            "CWE-201"
-          ],
-          "cvss": {
-            "score": 5.9,
-            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
-          },
-          "range": ">=1.16.0 <=1.16.1"
-        }
-      ],
-      "effects": [],
-      "range": "1.16.0 - 1.16.1",
-      "nodes": [
-        "node_modules/follow-redirects"
-      ],
-      "fixAvailable": true
-    },
-    "form-data": {
-      "name": "form-data",
-      "severity": "critical",
-      "isDirect": false,
-      "via": [
-        {
-          "source": 1109540,
-          "name": "form-data",
-          "dependency": "form-data",
-          "title": "form-data uses unsafe random function in form-data for choosing boundary",
-          "url": "https://github.com/advisories/GHSA-fjxv-7rqg-78g4",
-          "severity": "critical",
-          "cwe": [
-            "CWE-330"
-          ],
-          "cvss": {
-            "score": 0,
-            "vectorString": null
-          },
-          "range": "<2.5.4"
-        },
-        {
-          "source": 1120745,
-          "name": "form-data",
-          "dependency": "form-data",
-          "title": "form-data: CRLF injection in form-data via unescaped multipart field names and filenames",
-          "url": "https://github.com/advisories/GHSA-hmw2-7cc7-3qxx",
-          "severity": "high",
-          "cwe": [
-            "CWE-93"
-          ],
-          "cvss": {
-            "score": 7.5,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
-          },
-          "range": "<2.5.6"
-        }
-      ],
-      "effects": [
-        "request"
-      ],
-      "range": "<=2.5.5",
-      "nodes": [
-        "node_modules/request/node_modules/form-data"
-      ],
-      "fixAvailable": false
-    },
     "gaxios": {
       "name": "gaxios",
       "severity": "moderate",
@@ -294,8 +189,8 @@
         "node_modules/glob"
       ],
       "fixAvailable": {
-        "name": "gaxios",
-        "version": "8.3.2",
+        "name": "google-gax",
+        "version": "6.14.0",
         "isSemVerMajor": true
       }
     },
@@ -381,39 +276,6 @@
       "isDirect": true,
       "via": [
         {
-          "source": 1113719,
-          "name": "qs",
-          "dependency": "qs",
-          "title": "qs's arrayLimit bypass in its bracket notation allows DoS via memory exhaustion",
-          "url": "https://github.com/advisories/GHSA-6rw7-vpxm-498p",
-          "severity": "moderate",
-          "cwe": [
-            "CWE-20"
-          ],
-          "cvss": {
-            "score": 3.7,
-            "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:L"
-          },
-          "range": "<6.14.1"
-        },
-        {
-          "source": 1158507,
-          "name": "qs",
-          "dependency": "qs",
-          "title": "qs: Denial of Service via Attacker Controlled isBuffer",
-          "url": "https://github.com/advisories/GHSA-4mjr-xmp4-gh2g",
-          "severity": "moderate",
-          "cwe": [
-            "CWE-248",
-            "CWE-703"
-          ],
-          "cvss": {
-            "score": 5.3,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
-          },
-          "range": ">=2.2.5 <6.16.0"
-        },
-        {
           "source": 1243687,
           "name": "qs",
           "dependency": "qs",
@@ -431,15 +293,12 @@
           "range": ">=6.7.0 <=6.16.0"
         }
       ],
-      "effects": [
-        "request"
-      ],
-      "range": "<=6.16.0",
+      "effects": [],
+      "range": "6.7.0 - 6.16.0",
       "nodes": [
-        "node_modules/qs",
-        "node_modules/request/node_modules/qs"
+        "node_modules/qs"
       ],
-      "fixAvailable": false
+      "fixAvailable": true
     },
     "query-string": {
       "name": "query-string",
@@ -460,55 +319,6 @@
         "version": "7.1.3",
         "isSemVerMajor": true
       }
-    },
-    "request": {
-      "name": "request",
-      "severity": "critical",
-      "isDirect": false,
-      "via": [
-        {
-          "source": 1096727,
-          "name": "request",
-          "dependency": "request",
-          "title": "Server-Side Request Forgery in Request",
-          "url": "https://github.com/advisories/GHSA-p8p7-x288-28g6",
-          "severity": "moderate",
-          "cwe": [
-            "CWE-918"
-          ],
-          "cvss": {
-            "score": 6.1,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
-          },
-          "range": "<=2.88.2"
-        },
-        "form-data",
-        "qs",
-        "tough-cookie",
-        "uuid"
-      ],
-      "effects": [
-        "request-promise-core"
-      ],
-      "range": "*",
-      "nodes": [
-        "node_modules/request"
-      ],
-      "fixAvailable": false
-    },
-    "request-promise-core": {
-      "name": "request-promise-core",
-      "severity": "moderate",
-      "isDirect": true,
-      "via": [
-        "request"
-      ],
-      "effects": [],
-      "range": "*",
-      "nodes": [
-        "node_modules/request-promise-core"
-      ],
-      "fixAvailable": false
     },
     "retry-request": {
       "name": "retry-request",
@@ -546,8 +356,8 @@
         "node_modules/rimraf"
       ],
       "fixAvailable": {
-        "name": "gaxios",
-        "version": "8.3.2",
+        "name": "google-gax",
+        "version": "6.14.0",
         "isSemVerMajor": true
       }
     },
@@ -660,14 +470,16 @@
           "range": "<4.1.3"
         }
       ],
-      "effects": [
-        "request"
-      ],
+      "effects": [],
       "range": "<4.1.3",
       "nodes": [
         "node_modules/tough-cookie"
       ],
-      "fixAvailable": false
+      "fixAvailable": {
+        "name": "tough-cookie",
+        "version": "6.0.2",
+        "isSemVerMajor": true
+      }
     },
     "uuid": {
       "name": "uuid",
@@ -695,7 +507,6 @@
       "effects": [
         "gaxios",
         "google-gax",
-        "request",
         "teeny-request"
       ],
       "range": "<11.1.1",
@@ -706,8 +517,8 @@
         "node_modules/uuid"
       ],
       "fixAvailable": {
-        "name": "gaxios",
-        "version": "8.3.2",
+        "name": "uuid",
+        "version": "14.0.3",
         "isSemVerMajor": true
       }
     },
@@ -749,18 +560,18 @@
     "vulnerabilities": {
       "info": 0,
       "low": 1,
-      "moderate": 15,
-      "high": 5,
-      "critical": 2,
-      "total": 23
+      "moderate": 14,
+      "high": 3,
+      "critical": 0,
+      "total": 18
     },
     "dependencies": {
-      "prod": 517,
+      "prod": 516,
       "dev": 6,
       "optional": 82,
-      "peer": 4,
+      "peer": 0,
       "peerOptional": 0,
-      "total": 607
+      "total": 602
     }
   }
 }

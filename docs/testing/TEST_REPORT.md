@@ -1,21 +1,21 @@
 # ClikGett test report
 
 **Date:** 2 November 2026
-**Code tested:** branch `dev`, commit `98a83b8`
+**Code tested:** branch `dev`, commit `58537c6`
 **Where:** local Docker system (backend on Node 22, MySQL) and the AWS copy of live data; nothing on live
 
 ## Result
 
-**All 18 regular backend suites pass, along with the admin (2 of 2) and customer app (34 of
-34) tests. The 4 defects found on 2 November are fixed and proven by new or repaired tests.**
+**All 18 regular backend suites pass, along with the admin (5 of 5) and customer app (34 of
+34) tests. The defects found on 2 November are fixed and proven by new or repaired tests.**
 That does not make the system release-ready on its own: real-phone testing, live Razorpay
 and iOS are not done.
 
 | Test set | Files | Result |
 |---|---:|---|
-| Backend, regular (`npm test`) | 18 | 18 pass, 389 counted checks plus the ETA suite |
+| Backend, regular (`npm test`) | 18 | 18 pass, 396 counted checks plus the ETA suite |
 | Backend, older suites | 13 | 3 pass, 10 could not give a result |
-| Admin website | 2 | 2 of 2 pass |
+| Admin website | 3 | 5 of 5 pass |
 | Customer app (Flutter) | 6 | 34 of 34 pass |
 | Delivery app | 2 | Not run; default template tests only |
 
@@ -27,9 +27,10 @@ and iOS are not done.
 | 2 | High | The same cart created duplicate orders, and stock could be oversold | Audit test | **Fixed** | One order per cart; the last units sell once, and the customer who misses out keeps their wallet and cart |
 | 3 | High | Deactivated admins and riders could still use the API, and admins could log in | Audit test | **Fixed** | Refused at login and on every request; active staff unaffected |
 | 4 | Medium | A rider's delay report overwrote the admin's ETA change: admin +10 then rider +15 gave +15, not +25 | `test_eta_sync_e2e` | **Fixed** | Gives +25. A rider's newer estimate still replaces their own earlier one, by design |
-| 5 | None | Not a defect. The reassignment note says "rider"; the old test looked for "driver". The audit trail was correct. | Older suite | Test corrected | 20 of 20 |
+| 5 | Medium | A double-tap on a photo-order proposal could create 2 orders, and stock was not protected. Admins could change a request after its order existed. | Audit, code | **Fixed** | Accepted 3 times at once: 1 order, stock taken once; closed requests refuse admin changes; no stock leaves the proposal open |
+| 6 | None | Not a defect. The reassignment note says "rider"; the old test looked for "driver". The audit trail was correct. | Older suite | Test corrected | 20 of 20 |
 
-Defects 1–4 are C1, H1, H2 and M11 in `docs/audit/AUDIT_REPORT.md`.
+Defects 1–5 are C1, H1, H2, M11 and M1 in `docs/audit/AUDIT_REPORT.md`.
 
 ## Backend: regular suites
 
@@ -52,10 +53,10 @@ Run with `npm test`. All must pass before deploying.
 | `test_qa_bug_fixes` | 45 | Bugs fixed during QA, including photo uploads |
 | `test_doorstep_upi` | 15 | UPI at the door, with a stand-in for Razorpay |
 | `test_customer_rewards` | 27 | Comeback and birthday rewards, savings, typed photo orders, keywords |
-| `test_order_safety` | 17 | Orders at the same moment, wallet, stock, deactivated staff |
+| `test_order_safety` | 24 | Orders and photo orders at the same moment, wallet, stock, deactivated staff |
 | `test_delivery_assignment_workflow` | 20 | Assigning and reassigning riders |
 | `test_eta_sync_e2e` | Passes | Admin and rider ETA changes combine |
-| **Total** | **389 + ETA suite** | |
+| **Total** | **396 + ETA suite** | |
 
 ## Backend: older suites
 
@@ -94,7 +95,7 @@ the latest changes:
 - Database upgrade steps ran cleanly, and were repeated with timings on 2 November.
 
 Re-run there on 2 November with the fixes, against a temporary test server:
-`test_order_safety` 17 of 17, `test_eta_sync_e2e` pass, `test_checkout` 34 of 34,
+`test_order_safety` 17 of 17 (before the photo-order checks were added), `test_eta_sync_e2e` pass, `test_checkout` 34 of 34,
 `test_order_flow` 23 of 23, `test_customer_rewards` 27 of 27, `test_doorstep_upi` 15 of 15.
 This matters because live stores wallet balances in a different number format from local.
 
@@ -106,7 +107,7 @@ This matters because live stores wallet balances in a different number format fr
 | Live Razorpay: payment, failure, refund, doorstep QR | Only stand-ins and test keys so far |
 | iOS app | Not built or run |
 | Delivery app | No automated tests |
-| Admin website screens | Only 2 basic tests |
+| Admin website screens | Only basic tests, plus the new shared pager; pages were built but not clicked through in a browser |
 | Load | Behaviour under many customers at once on the small server is unknown |
 | Push notifications and SMS on real devices | Stand-ins in tests |
 

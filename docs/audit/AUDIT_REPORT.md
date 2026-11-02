@@ -1,7 +1,7 @@
 # ClikGett audit report
 
 **Date:** 2 November 2026
-**Code audited:** branch `dev`, commit `054f116`. Fixes re-tested at `98a83b8`.
+**Code audited:** branch `dev`, commit `054f116`. Fixes re-tested at `58537c6`.
 **Covers:** backend API, admin website, customer app, delivery app, database, AWS setup
 
 ## Result
@@ -14,8 +14,8 @@ duplicate orders and deactivated staff keeping access) are fixed and re-tested.
 | Severity | Count | Meaning |
 |---|---:|---|
 | Critical | 1 (fixed) | Direct money loss; fix before release |
-| High | 7 (2 fixed) | Serious risk; fix before or right after release, as marked |
-| Medium | 11 (1 fixed) | Fix in the first weeks after release |
+| High | 7 (2 fixed, 1 partly) | Serious risk; fix before or right after release, as marked |
+| Medium | 11 (2 fixed) | Fix in the first weeks after release |
 | Low | 6 | Clean-up |
 
 Each finding says how it was checked:
@@ -33,7 +33,7 @@ Each finding says how it was checked:
 | 1 | Make wallet spending safe against simultaneous orders | C1 | Development | Done |
 | 2 | Stop duplicate orders and overselling | H1 | Development | Done |
 | 3 | Block deactivated admins and riders at login and on every request | H2 | Development | Done |
-| 4 | Remove or update the risky packages | H3 | Development | Open |
+| 4 | Remove or update the risky packages | H3 | Development | Done, except `minio` |
 | 5 | Add the webhook secret and test Razorpay with live keys | H4 | Client + Development | Open |
 | 6 | Set up alarms | H5 | Development (needs an alert email) | Open |
 
@@ -80,16 +80,18 @@ including changing wallets and prices.
 **Fixed:** login and every request now require `Status = 1`. The live copy has only status
 0 and 1, so no active account is affected. Proven by `test_order_safety`.
 
-### H3. Vulnerable packages (Scan)
+### H3. Vulnerable packages (Scan) — PARTLY FIXED
 
-Backend: 2 critical, 5 high, 15 moderate, 1 low. Admin: 5 moderate.
+At the audit, backend: 2 critical, 5 high, 15 moderate, 1 low. Admin: 5 moderate.
+
+**Now, backend: 0 critical, 3 high, 14 moderate, 1 low.** The 3 high are all inside `minio`.
 
 | Package | Severity | Action |
 |---|---|---|
-| `request`, `form-data` | Critical | Come through `request-promise-core`, which the server code does not import. Remove it. |
-| `body-parser` | High | Update to 1.20.9 or later |
-| `follow-redirects` | High | Update |
-| `minio`, with `query-string` and `decode-uri-component` | High | npm's only offer is a downgrade to 7.1.3. Review before changing; S3 storage depends on it. |
+| `request`, `form-data` | Critical | **Fixed:** unused `request-promise-core` and `form-data` removed |
+| `body-parser` | High | **Fixed:** updated to 1.20.9 |
+| `follow-redirects` | High | **Fixed:** updated to 1.16.2 |
+| `minio`, with `query-string` and `decode-uri-component` | High | **Open.** npm's only offer is a downgrade to 7.1.3, which risks image storage. Replace or upgrade `minio` when a fixed version exists. |
 
 ### H4. Live payments are untested (Code, Seen)
 
@@ -123,7 +125,7 @@ once the new backend's database access is confirmed, and limit 22 to known addre
 
 | # | Finding | Checked by | Fix |
 |---|---|---|---|
-| M1 | **Photo orders are not atomic.** The H1 fix does not cover them. Accepting a proposal checks the status, then writes in separate steps, so a double-tap can create 2 orders, and stock is not protected. Admins can claim, edit or cancel a request after its order exists (`controllers/PhotoOrders.js`). | Code | Claim the status change atomically; limit admin actions by status |
+| M1 | **Photo orders were not atomic.** A double-tap on a proposal could create 2 orders, stock was not protected, and admins could change a request after its order existed (`controllers/PhotoOrders.js`). | Code, Tested | **Fixed:** one request claims the proposal, stock is claimed only if enough is left, and closed requests refuse admin changes |
 | M2 | **Admin wallet edits overwrite the balance.** `creditDebitWallet` reads then writes an absolute value, so a customer order at the same moment is lost (`controllers/AdminUsers.js`). The ledger does not record which admin did it. | Code | Use a relative update; store the admin ID |
 | M3 | **Cashback expiry is manual and can take spent money.** It runs only when an admin triggers it, and it deducts the full credit even if spent, without matching the ledger (`expireCashback`). The new comeback and birthday rewards do not have this flaw. | Code | Use the same logic as `services/CustomerRewards.js`; run it on a schedule |
 | M4 | **Customer data in logs.** 815 `console.log` calls in server code, 16 of which print whole order or payment bodies. The old log reached 1.8 GB on a 16 GB disk with no rotation. | Code, Seen | Remove body logging; rotate logs |
