@@ -44,8 +44,9 @@ run first on `clikgett-rehearsal`, a copy restored from snapshot `before-release
 
 1. RDS snapshot of `clikgett` (console: Actions → Take snapshot) and wait for *Available*.
 2. Copy the release build into `clikgett-v2` (`git archive HEAD:Backend`), keep its `.env`,
-   then `npm ci --omit=dev` there with `/opt/node22/bin` first on the PATH (new packages,
-   e.g. the QR reader for doorstep UPI).
+   then `npm ci --omit=dev --legacy-peer-deps` there with `/opt/node22/bin` first on the
+   PATH (as the Dockerfile does; without the flag npm refuses an optional peer of
+   `request-promise-core`).
 3. In `clikgett-v2/.env`: delete the `DB_HOST=` line (then `HOST`, the live database, is
    used) and `ADMIN_ALERT_MOBILE=none`; keep `BACKGROUND_JOBS=off` and
    `DB_SQL_MODE=NO_ENGINE_SUBSTITUTION` (live's mode; strict mode breaks old-style writes
@@ -65,6 +66,17 @@ run first on `clikgett-rehearsal`, a copy restored from snapshot `before-release
    Only one backend may run the jobs: the payment sweep issues real Razorpay refunds.
 7. Roll back: point nginx back to `127.0.0.1:3000` and reload. The database changes only
    add tables, columns and rows, so the old backend keeps working.
+   If live data had to be restored from the snapshot instead, first export everything
+   written since then: `node server/tools/export_since.js "<snapshot time, UTC>" <folder>`
+   (orders, items, payments, wallet rows, memberships, photo orders as CSV) and
+   reconcile it after the restore.
+
+Measured on the copy (2 Nov 2026): `npm ci` 10 s; each database step under 2 s
+(the database is small: about 440 delivered orders); restart until `/api/health/db`
+answers 3 s. With checks between steps, plan a 30-minute window plus 30 minutes in
+reserve, and decide on rollback by minute 45. A snapshot restore is NOT a quick rollback:
+creating a new RDS instance from a snapshot takes tens of minutes, then the server must be
+pointed at it.
 
 ## Secrets: where each one lives
 
