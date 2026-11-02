@@ -42,6 +42,19 @@ class BillItem {
         originalTotal = _d(j['OriginalTotal']),
         appliedRule = j['AppliedRule'] is String && '${j['AppliedRule']}'.isNotEmpty ? j['AppliedRule'] : null;
 
+  /// The price label shown under the item, in customer words. The server's rule text
+  /// is technical ("Buy More Slab (2-5 @ ...)"); the plain offer price needs no label,
+  /// except on multi-packs ("1 Ltr x 2"), which are Max Saver packs.
+  String? get priceLabel {
+    final rule = appliedRule ?? '';
+    if (rule.startsWith('Buy More') || rule.startsWith('Buy 2')) return 'Max Saver price';
+    if (rule.startsWith('Flash Sale')) return 'Flash sale price';
+    if (rule.startsWith('Membership')) return 'Member price';
+    if (rule.contains('Unlock')) return 'Unlocked deal price';
+    if (RegExp(r'(^|\s)[x×]\s*[2-9]\d*(\s|$)', caseSensitive: false).hasMatch('$unit $name')) return 'Max Saver pack';
+    return null;
+  }
+
   /// Most a customer can order of this item (stock and per-order limit).
   int get limit => maxQty > 0 && maxQty < availableQty ? maxQty : availableQty;
 

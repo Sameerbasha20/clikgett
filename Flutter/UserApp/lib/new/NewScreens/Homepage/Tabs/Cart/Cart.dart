@@ -525,10 +525,10 @@ class _CartState extends State<Cart> {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: tColor, height: 1.25)),
             if (item.unit.isNotEmpty) Text(item.unit, style: GoogleFonts.poppins(fontSize: 11.5, color: tColor3)),
-            if (item.appliedRule != null && !problem)
+            if (item.priceLabel != null && !problem)
               Padding(
                 padding: const EdgeInsets.only(top: 2),
-                child: Text(item.appliedRule!,
+                child: Text(item.priceLabel!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: primaryDark)),

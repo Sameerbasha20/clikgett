@@ -251,7 +251,9 @@ class StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
         color: white,
         elevation: overlapsContent || shrinkOffset > 0 ? 0 : 2,
         borderRadius: BorderRadius.circular(12),
+        // Fixed height: the rotating hint is taller mid-animation and made the box jump.
         child: Container(
+          height: _height - 18,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: cardBorder),
@@ -275,7 +277,8 @@ class StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                           // IgnorePointer: the animation has its own tap handler, which swallowed
                           // taps on the search bar while the hint was moving.
                           child: IgnorePointer(
-                            child: AnimatedTextKit(
+                            child: ClipRect(
+                              child: AnimatedTextKit(
                               key: ValueKey(shownHints.join('|')),
                               repeatForever: true,
                               pause: const Duration(milliseconds: 1400),
@@ -285,6 +288,7 @@ class StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                                       alignment: Alignment.centerLeft,
                                       textStyle: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: tColor4)))
                                   .toList(),
+                              ),
                             ),
                           ),
                         ),
