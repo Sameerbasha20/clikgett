@@ -18,8 +18,8 @@ No secret values are written here; it only says where each one lives.
 
 ## Deploy
 
-1. Commit and push to the team repo: `git push origin dev/local-docker-updates`
-2. Push to the deploy repo: `git push personal dev/local-docker-updates:main`
+1. Commit and push to the team repo: `git push origin dev`
+2. Push to the deploy repo: `git push personal dev:main`
 3. Render and Vercel build from `personal/main` by themselves (Render takes ~5 min).
 4. Database changes run automatically when the backend starts
    (`Backend/server/migrations/run_on_start.js`). If one fails, the new version does
