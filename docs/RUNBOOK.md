@@ -43,7 +43,9 @@ Node 22 in `/opt/node22`), so switching back is one nginx change. Every step bel
 run first on `clikgett-rehearsal`, a copy restored from snapshot `before-release-2026-10-29`.
 
 1. RDS snapshot of `clikgett` (console: Actions → Take snapshot) and wait for *Available*.
-2. Copy the release build into `clikgett-v2` (`git archive HEAD:Backend`), keep its `.env`.
+2. Copy the release build into `clikgett-v2` (`git archive HEAD:Backend`), keep its `.env`,
+   then `npm ci --omit=dev` there with `/opt/node22/bin` first on the PATH (new packages,
+   e.g. the QR reader for doorstep UPI).
 3. In `clikgett-v2/.env`: delete the `DB_HOST=` line (then `HOST`, the live database, is
    used) and `ADMIN_ALERT_MOBILE=none`; keep `BACKGROUND_JOBS=off` and
    `DB_SQL_MODE=NO_ENGINE_SUBSTITUTION` (live's mode; strict mode breaks old-style writes
