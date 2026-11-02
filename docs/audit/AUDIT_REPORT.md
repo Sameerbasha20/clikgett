@@ -1,7 +1,7 @@
 # ClikGett audit report
 
 **Date:** 2 November 2026
-**Code audited:** branch `dev`, commit `054f116`. Fixes re-tested at `58537c6`.
+**Code audited:** branch `dev`, commit `7142a79`. Fixes re-tested at `2209878`.
 **Covers:** backend API, admin website, customer app, delivery app, database, AWS setup
 
 ## Result
