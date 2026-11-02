@@ -105,7 +105,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 Container(
                   decoration: BoxDecoration(color: white, borderRadius: BorderRadius.circular(12)),
                   child: Column(children: [
-                    _tile('Order updates', 'Order confirmed, out for delivery, delivered, refunds and wallet credits',
+                    _tile('Order updates', 'Order confirmed, out for delivery, delivered, refunds and ClikGett Cash credits',
                         _orderUpdates, (v) => _save(orderUpdates: v)),
                     const Divider(height: 1),
                     _tile('Offers & reminders', 'Deals, new arrivals and items left in your cart', _offers,

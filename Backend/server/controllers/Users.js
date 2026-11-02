@@ -607,12 +607,12 @@ const usercontroller = {
             const paidAmount = Math.round(parseFloat(paymentdetails.amount) || 0) / 100;
             const consumed = await require('./Orders').consumePayment(RazorpayOrderID, body.razorpay_payment_id, req.UserID);
             if (!consumed)
-                return resp.status(400).json({ Status: 0, Message: "This payment has already been added to your wallet." });
+                return resp.status(400).json({ Status: 0, Message: "This payment has already been added to your ClikGett Cash." });
 
             await CommonController.Add_To_Wallet(req.UserID, 3, req.UserID, paidAmount)
             await CommonController.save_to_users_wallets(req.UserID, paidAmount)
 
-            return resp.status(200).json({ "Status": 1, "Message": "Money added to wallet successfully" });
+            return resp.status(200).json({ "Status": 1, "Message": "Money added to ClikGett Cash successfully" });
 
         }
         catch (err) {
@@ -995,7 +995,7 @@ const usercontroller = {
                     "amount": rewardAmount,
                     "terms": alreadyRewarded
                         ? "Feedback cashback is a one-time reward, and you've already used yours. We'd still love to hear from you!"
-                        : `Submit honest feedback on your delivered order for a chance to receive ₹${rewardAmount.toFixed(2)} cashback in your ClikGett wallet upon admin review. One-time reward per customer.`
+                        : `Submit honest feedback on your delivered order for a chance to receive ₹${rewardAmount.toFixed(2)} cashback in your ClikGett Cash upon admin review. One-time reward per customer.`
                 }
             });
         } catch (err) {

@@ -243,7 +243,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         paymentInner.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR, gradient));
         paymentCard.setCardBackgroundColor(gradient[1]);
         paymentIcon.setImageResource(cashOrder || cancelled ? R.drawable.ic_baseline_currency_rupee_24 : R.drawable.ic_check_small);
-        paymentModeTxt.setText(cancelled ? "CANCELLED" : paidUpi ? "UPI" : cashOrder ? "COD" : "WALLET".equals(method) || grandTotal == 0 ? "WALLET" : "PREPAID");
+        paymentModeTxt.setText(cancelled ? "CANCELLED" : paidUpi ? "UPI" : cashOrder ? "COD" : "WALLET".equals(method) || grandTotal == 0 ? "CLIKGETT CASH" : "PREPAID");
         String tipText = tip > 0 ? " · includes " + rupees(tip) + " tip" : "";
         if (cancelled) {
             paymentLabelTxt.setText("ORDER CANCELLED");
@@ -262,7 +262,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             collectTxt.setText(rupees(grandTotal));
             paymentDetailTxt.setText("Paid on delivery" + tipText);
         } else {
-            paymentLabelTxt.setText("WALLET".equals(method) || grandTotal == 0 ? "PAID FROM WALLET" : "PAID ONLINE");
+            paymentLabelTxt.setText("WALLET".equals(method) || grandTotal == 0 ? "PAID FROM CLIKGETT CASH" : "PAID ONLINE");
             collectTxt.setText(rupees(grandTotal > 0 ? grandTotal : order.optDouble("WalletAmount", 0)));
             paymentDetailTxt.setText(finished ? "Paid before delivery" + tipText : "Nothing to collect · just hand over the order");
         }

@@ -168,7 +168,7 @@ function ReferralSettingsTab() {
                 </div>
                 <div className="col-md-3">
                     <div className="card p-3 shadow-sm border-0" style={{ background: "#fdf2f8", borderLeft: "4px solid #ec4899" }}>
-                        <span style={{ fontSize: "0.8rem", color: "#9d174d", fontWeight: 600 }}>Total Wallet Rewards Given</span>
+                        <span style={{ fontSize: "0.8rem", color: "#9d174d", fontWeight: 600 }}>Total ClikGett Cash Rewards Given</span>
                         <h4 style={{ margin: "4px 0 0 0", color: "#be185d", fontWeight: 700 }}>₹{parseFloat(stats.totalRewardsDistributed || 0).toFixed(2)}</h4>
                     </div>
                 </div>
@@ -259,7 +259,7 @@ function ReferralSettingsTab() {
                                     Referred Customer Reward Amount (₹)
                                 </label>
                                 <p style={{ fontSize: "0.8rem", color: "#64748b", marginBottom: "8px" }}>
-                                    Welcome bonus amount credited to the newly joined customer's wallet.
+                                    Welcome bonus amount credited to the newly joined customer's ClikGett Cash.
                                 </p>
                                 <div className="input-group">
                                     <div className="input-group-prepend"><span className="input-group-text">₹</span></div>
@@ -282,7 +282,7 @@ function ReferralSettingsTab() {
                                     Reward Trigger Event
                                 </label>
                                 <p style={{ fontSize: "0.8rem", color: "#64748b", marginBottom: "8px" }}>
-                                    When the wallet rewards should be officially credited.
+                                    When the ClikGett Cash rewards should be officially credited.
                                 </p>
                                 <select
                                     className="form-control"

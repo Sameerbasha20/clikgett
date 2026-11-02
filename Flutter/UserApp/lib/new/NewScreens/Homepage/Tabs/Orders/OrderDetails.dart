@@ -297,9 +297,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
     if (delivered) {
       subtitle = 'Delivered ${_dateTime(o.deliveredAt ?? o.reachedAt(OrderStatus.delivered))}';
     } else if (cancelled) {
-      subtitle = o.status == OrderStatus.cancelledByStore
-          ? 'The store could not complete this order.${o.cancellationReason != null ? ' Reason: ${o.cancellationReason}' : ''}'
-          : 'You cancelled this order.';
+      subtitle = o.status == OrderStatus.cancelledByStore ? 'Sorry, the store had to cancel this order.' : 'You cancelled this order.';
     } else if (o.scheduled && o.scheduledAt != null && o.status == OrderStatus.received) {
       subtitle = 'Scheduled for ${DateFormat('EEE, d MMM').format(o.scheduledAt!)}';
     } else if (o.etaMinutesLeft != null && o.etaMinutesLeft! > 0) {
@@ -336,6 +334,23 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
             Text(OrderStatus.title(o.status), style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w800, color: tColor)),
             const SizedBox(height: 2),
             Text(subtitle, style: GoogleFonts.poppins(fontSize: 12.5, color: tColor4)),
+            if (o.status == OrderStatus.cancelledByStore)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: red.withOpacity(0.3)),
+                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Reason for cancellation', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: red)),
+                  const SizedBox(height: 2),
+                  Text(o.cancellationReason ?? 'The store could not complete this order.',
+                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
+                ]),
+              ),
             if (refund != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
@@ -349,7 +364,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
 
   String _refundText(TrackedOrder o) {
     final parts = <String>[];
-    if (o.walletUsed > 0) parts.add('${_rs(o.walletUsed)} returned to your wallet');
+    if (o.walletUsed > 0) parts.add('${_rs(o.walletUsed)} returned to your ClikGett Cash');
     if (o.paid && o.paymentMethod == 'ONLINE') {
       final online = o.grandTotal;
       final s = (o.refundStatus ?? '').toUpperCase();
@@ -513,7 +528,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
       }
     } else if (o.paymentMethod == 'WALLET') {
       icon = Icons.account_balance_wallet_rounded;
-      title = 'Paid ${_rs(o.walletUsed > 0 ? o.walletUsed : o.grandTotal)} from wallet';
+      title = 'Paid ${_rs(o.walletUsed > 0 ? o.walletUsed : o.grandTotal)} from ClikGett Cash';
       note = 'Nothing to pay at delivery';
       badge = 'PAID';
       accent = primaryDark;
@@ -726,7 +741,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
     if (o.paymentMethod == 'ONLINE') {
       paymentLine = o.paid ? 'Paid online' : 'Online payment pending';
     } else if (o.paymentMethod == 'WALLET') {
-      paymentLine = 'Paid from wallet';
+      paymentLine = 'Paid from ClikGett Cash';
     } else if (o.paid && o.paidVia == 'UPI') {
       paymentLine = 'Paid via UPI at the door';
     } else {
@@ -739,7 +754,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
         if (o.discount > 0) _row('Discount${o.promoCode != null ? ' (${o.promoCode})' : ''}', '-${_rs(o.discount)}', green: true),
         _row('Delivery fee', o.deliveryFee <= 0 ? 'FREE' : _rs(o.deliveryFee), green: o.deliveryFee <= 0),
         if (o.tip > 0) _row('Delivery partner tip', _rs(o.tip)),
-        if (o.walletUsed > 0) _row('Paid from wallet', '-${_rs(o.walletUsed)}', green: true),
+        if (o.walletUsed > 0) _row('Paid from ClikGett Cash', '-${_rs(o.walletUsed)}', green: true),
         const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1, color: cardBorder)),
         _row(o.paymentMethod == 'COD' && !o.paid && o.status != OrderStatus.delivered ? 'To pay' : 'Total', _rs(o.grandTotal), bold: true),
         const SizedBox(height: 6),

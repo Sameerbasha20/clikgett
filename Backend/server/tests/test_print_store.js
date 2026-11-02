@@ -94,6 +94,25 @@ async function api(token, method, path, body) {
     bill = (await api(token, 'POST', '/carts/bill', loc)).data.Bill;
     check('copies change re-prices', patch.data.Status === 1 && bill.PrintTotal === 3 * cfg.data.Config.PriceColor, String(bill.PrintTotal));
 
+    // Admin switches printing off (Settings -> Print Service).
+    const orderBody = { ...loc, Address: user.Address, PaymentMethod: 'COD', TipAmount: 0, WalletAmount: 0, OrderType: 'Delivery', ScheduleStatus: 'Immediate' };
+    const [shop] = await q('SELECT SettingID, ShopStatus, StoreMode FROM AdminShopToggleSettings LIMIT 1');
+    await q("UPDATE AdminShopToggleSettings SET ShopStatus = 1, StoreMode = 'OPEN' WHERE SettingID = ?", [shop.SettingID]);
+    await q("UPDATE Settings SET SettingValue = '0' WHERE SettingKey = 'PrintStoreEnabled'");
+    try {
+        const off = await api(token, 'GET', '/print/config');
+        check('the app is told printing is off', off.data.Config && off.data.Config.Enabled === false, JSON.stringify(off.data.Config));
+        const noUpload = await api(token, 'POST', '/print/upload-url', { ContentType: 'application/pdf', FileName: 'x.pdf' });
+        check('no new uploads while off', noUpload.status === 400, noUpload.status);
+        const noAdd = await api(token, 'POST', '/print/cart', { Jobs: [{ PrintJobID: jobId, Copies: 1 }] });
+        check('nothing can be added to the cart while off', noAdd.status === 400, noAdd.status);
+        const refused = await api(token, 'POST', '/orders/createorder', orderBody);
+        check('an order with prints is refused while off', refused.data.Status === 0 && /Printing is turned off/.test(refused.data.Message || ''), JSON.stringify(refused.data).slice(0, 120));
+    } finally {
+        await q("UPDATE Settings SET SettingValue = '1' WHERE SettingKey = 'PrintStoreEnabled'");
+        await q('UPDATE AdminShopToggleSettings SET ShopStatus = ?, StoreMode = ? WHERE SettingID = ?', [shop.ShopStatus, shop.StoreMode, shop.SettingID]);
+    }
+
     const order = await api(token, 'POST', '/orders/createorder', {
         ...loc, Address: user.Address, PaymentMethod: 'COD', TipAmount: 0, WalletAmount: 0, OrderType: 'Delivery', ScheduleStatus: 'Immediate',
     });

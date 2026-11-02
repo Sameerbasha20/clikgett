@@ -1263,7 +1263,7 @@ function Products() {
                                                             "order-date"
                                                         ]
                                                     }>
-                                                    <h5>Wallet</h5>
+                                                    <h5>ClikGett Cash</h5>
                                                     <h4>:</h4>
                                                     <p>
                                                         {" "}
@@ -1566,7 +1566,7 @@ function Products() {
                                                                     onChange={(e) => setAdjustForm({ ...adjustForm, resolution: e.target.value })}
                                                                     style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #d1d5db" }}
                                                                 >
-                                                                    <option value="Wallet Credit">Wallet Credit (Refund difference to customer wallet)</option>
+                                                                    <option value="Wallet Credit">ClikGett Cash Credit (Refund difference to customer ClikGett Cash)</option>
                                                                     <option value="Manual Correction">Manual Correction (Bill adjustment only)</option>
                                                                 </select>
                                                             </div>
@@ -1681,11 +1681,11 @@ function Products() {
                                                                         onChange={(e) => setRemovalForm({ ...removalForm, resolution: e.target.value })}
                                                                         style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #d1d5db", fontSize: "0.9rem" }}
                                                                     >
-                                                                        <option value="Wallet Credit">Wallet Credit (Instant refund to customer wallet)</option>
+                                                                        <option value="Wallet Credit">ClikGett Cash Credit (Instant refund to customer ClikGett Cash)</option>
                                                                         <option value="Pending Manual Refund">Pending Manual Refund (Record for manual payment gateway refund)</option>
                                                                     </select>
                                                                     <small style={{ color: "#6b7280", marginTop: "2px", display: "block" }}>
-                                                                        Prepaid order: Amount will be credited to wallet or tracked as a pending manual refund.
+                                                                        Prepaid order: Amount will be credited to ClikGett Cash or tracked as a pending manual refund.
                                                                     </small>
                                                                 </div>
                                                             ) : (

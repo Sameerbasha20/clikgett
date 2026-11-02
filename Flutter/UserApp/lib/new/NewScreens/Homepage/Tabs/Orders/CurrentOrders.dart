@@ -369,6 +369,17 @@ Widget ordersBody(
                 ),
               ],
             ),
+            if (orders.orderStatus == OrderStatus.cancelledByStore)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(color: redLight, borderRadius: BorderRadius.circular(10)),
+                child: Text(
+                  'Cancelled by store: ${(orders.cancellationReason ?? '').trim().isEmpty || orders.cancellationReason == 'NA' ? 'The store could not complete this order.' : orders.cancellationReason!.trim()}',
+                  style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: red),
+                ),
+              ),
             const SizedBox(height: 14),
 
             // Thumbnail | Status Text | Status Icon / Animation

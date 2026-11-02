@@ -970,7 +970,7 @@ const usercontroller = {
             try {
                 const note = {
                     Title: "Feedback Cashback Credited!",
-                    Message: `Congratulations! ₹${amount.toFixed(2)} cashback has been credited to your ClikGett wallet for your review of Order #${item.OrderID}.`
+                    Message: `Congratulations! ₹${amount.toFixed(2)} cashback has been credited to your ClikGett Cash for your review of Order #${item.OrderID}.`
                 };
                 await CommonController.Send_Notification(note, item.UserID);
             } catch (notiErr) {

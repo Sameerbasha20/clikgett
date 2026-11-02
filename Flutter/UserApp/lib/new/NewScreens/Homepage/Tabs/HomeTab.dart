@@ -11,6 +11,7 @@ import 'package:fav_app/new/Controllers/wallet.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/category_grid.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/home_header.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/quick_actions_row.dart';
+import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/milestone_reward_card.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/section_product_rail.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/flash_sale_section.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/home_hero_banner_carousel.dart';
@@ -110,6 +111,8 @@ class _HomeTabState extends State<Home> {
             slivers: [
               SliverToBoxAdapter(child: StorefrontHeader(isLoggedIn: _isLoggedIn)),
               SliverPersistentHeader(pinned: true, delegate: StickySearchBarDelegate(hints: _searchHints)),
+              const SliverToBoxAdapter(child: QuickActionsRow()),
+              if (_isLoggedIn) const SliverToBoxAdapter(child: HomeMilestoneCard()),
               SliverToBoxAdapter(child: _StoreClosedCard(timingController: timingController)),
               const SliverToBoxAdapter(child: UnlockDealsBanner()),
               if (_previouslyBought.isNotEmpty)
@@ -120,7 +123,6 @@ class _HomeTabState extends State<Home> {
                     products: _previouslyBought,
                   ),
                 ),
-              const SliverToBoxAdapter(child: QuickActionsRow()),
               SliverList(delegate: SliverChildListDelegate(_sections())),
               const SliverToBoxAdapter(child: SizedBox(height: 120)), // room for the floating cart bar
             ],

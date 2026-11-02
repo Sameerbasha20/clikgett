@@ -218,7 +218,7 @@ const cartcontroller = {
             if (WalletAmount.length > 0) {
                 let UserWalletAmount = WalletAmount[0]['WalletAmount']
                 if (body.WalletAmount && UserWalletAmount < body.WalletAmount) {
-                    return resp.json({ "Status": 0, "Message": "Insufficient Wallet balance" })
+                    return resp.json({ "Status": 0, "Message": "Insufficient ClikGett Cash balance" })
                 }
 
                 for (let iterator of body.OrderItems) {

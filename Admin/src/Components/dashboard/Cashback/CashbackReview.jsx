@@ -117,7 +117,7 @@ function CashbackReview() {
                     <div className={classes.header}>
                         <div>
                             <h1>Cashback review</h1>
-                            <p>Approve or reject order cashback before it reaches the customer's wallet.</p>
+                            <p>Approve or reject order cashback before it reaches the customer's ClikGett Cash.</p>
                         </div>
                     </div>
 

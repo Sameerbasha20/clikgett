@@ -43,6 +43,7 @@ function SettingsPage() {
     // Operational business & delivery settings
     const [shopSettingId, setShopSettingId] = useState(1);
     const [minWalletOrderValue, setMinWalletOrderValue] = useState("399");
+    const [printEnabled, setPrintEnabled] = useState(true);
     const [cashbackMode, setCashbackMode] = useState("automatic");
     const [cashbackPercent, setCashbackPercent] = useState("0");
     const [cashbackMax, setCashbackMax] = useState("0");
@@ -85,6 +86,8 @@ function SettingsPage() {
                     if (walletSetting) {
                         setMinWalletOrderValue(walletSetting.SettingValue || "399");
                     }
+                    const printSetting = (res.Settings || []).find((s) => s.SettingKey === "PrintStoreEnabled");
+                    if (printSetting) setPrintEnabled(String(printSetting.SettingValue) !== "0");
                 }
             })
             .catch((err) => console.error(err));
@@ -153,6 +156,11 @@ function SettingsPage() {
                 const freeSetting = categoryItems.find((x) => x.SettingKey === "FreeDelivery_CartAmount");
                 if (freeSetting && freeDeliveryAbove !== "" && String(freeSetting.SettingValue) !== String(freeDeliveryAbove)) {
                     Services.updatesettings("PUT", JSON.stringify({ SettingValue: String(freeDeliveryAbove) }), token, freeSetting.ID);
+                }
+                // Print on/off lives in the Settings table.
+                const printSetting = categoryItems.find((x) => x.SettingKey === "PrintStoreEnabled");
+                if (printSetting && String(printSetting.SettingValue) !== (printEnabled ? "1" : "0")) {
+                    Services.updatesettings("PUT", JSON.stringify({ SettingValue: printEnabled ? "1" : "0" }), token, printSetting.ID);
                 }
                 // 2. Also update Minordervalue_wallet in Settings table if changed
                 const walletSetting = categoryItems.find((s) => s.SettingKey === "Minordervalue_wallet");
@@ -285,9 +293,9 @@ function SettingsPage() {
 
                                 {/* 1. Wallet Minimum Order */}
                                 <div className="card p-3 mb-4" style={{ background: "#f8fafc" }}>
-                                    <h5 style={{ color: "#1e40af", marginBottom: "8px" }}>Wallet Usage Minimum Order Threshold</h5>
+                                    <h5 style={{ color: "#1e40af", marginBottom: "8px" }}>ClikGett Cash Usage Minimum Order Threshold</h5>
                                     <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: "12px" }}>
-                                        Customers can apply their wallet balance only when their cart total is at or above this threshold. (Requirement: ₹399)
+                                        Customers can apply their ClikGett Cash balance only when their cart total is at or above this threshold. (Requirement: ₹399)
                                     </p>
                                     <div className="row align-items-center">
                                         <div className="col-md-6 form-group mb-0">
@@ -492,6 +500,24 @@ function SettingsPage() {
 
                                 {/* 5. Delivery App Visibility Controls */}
                                 <div className="card p-3 mb-4" style={{ background: "#f8fafc" }}>
+                                    <h5 style={{ color: "#1e40af", marginBottom: "8px" }}>Print Service</h5>
+                                    <div className="form-check form-switch" style={{ marginBottom: "6px" }}>
+                                        <input
+                                            type="checkbox"
+                                            role="switch"
+                                            className="form-check-input"
+                                            id="printEnabledSwitch"
+                                            checked={printEnabled}
+                                            onChange={(e) => setPrintEnabled(e.target.checked)}
+                                        />
+                                        <label className="form-check-label font-weight-bold" htmlFor="printEnabledSwitch">
+                                            Print service is {printEnabled ? "ON" : "OFF"}
+                                        </label>
+                                    </div>
+                                    <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: "16px" }}>
+                                        When off, the Print tab disappears from the customer app, new prints are refused, and orders
+                                        with prints in the cart cannot be placed. Press Save below to apply.
+                                    </p>
                                     <h5 style={{ color: "#1e40af", marginBottom: "8px" }}>Delivery App Data Visibility Controls</h5>
                                     <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: "12px" }}>
                                         Control whether delivery personnel can view sensitive customer address and full item lists. Enforced server-side.

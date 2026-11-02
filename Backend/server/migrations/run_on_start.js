@@ -16,6 +16,7 @@ const MIGRATIONS = [
     require('./auth_refresh_tokens_migration'),
     require('./doorstep_upi_migration'),
     require('./customer_rewards_migration'),
+    require('./clikgett_cash_wording_migration'),
 ];
 
 (async () => {

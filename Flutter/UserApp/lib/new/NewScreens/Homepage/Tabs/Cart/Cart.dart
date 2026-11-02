@@ -852,7 +852,7 @@ class _CartState extends State<Cart> {
         const SizedBox(width: 10),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Use wallet balance', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
+            Text('Use ClikGett Cash', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
             Text(
               !canUse
                   ? 'Balance ${_rs(bill.walletBalance)} · not usable on this order'
@@ -1050,14 +1050,14 @@ class _CartState extends State<Cart> {
               green: bill.deliveryFee <= 0,
               strike: bill.freeDeliverySavings > 0 ? _rs(bill.freeDeliverySavings + bill.deliveryFee) : null),
           if (bill.tip > 0) _billRow('Delivery partner tip', _rs(bill.tip.toDouble())),
-          if (bill.walletApplied > 0) _billRow('Paid from wallet', '-${_rs(bill.walletApplied)}', green: true),
+          if (bill.walletApplied > 0) _billRow('Paid from ClikGett Cash', '-${_rs(bill.walletApplied)}', green: true),
           const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1, color: cardBorder)),
           _billRow('To pay', _rs(bill.toPay), bold: true,
               strike: bill.totalSavings > 0 ? _rs(bill.toPay + bill.totalSavings) : null),
           if (bill.cashbackEarned > 0)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text('You will get ${_rs(bill.cashbackEarned)} cashback in your wallet after delivery.',
+              child: Text('You will get ${_rs(bill.cashbackEarned)} cashback in your ClikGett Cash after delivery.',
                   style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
             ),
         ]),
@@ -1228,7 +1228,7 @@ class _CartState extends State<Cart> {
                 : ready
                     ? Row(children: [
                         Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                          Text(bill.toPay <= 0 ? 'Paid by wallet' : _rs(bill.toPay),
+                          Text(bill.toPay <= 0 ? 'Paid by ClikGett Cash' : _rs(bill.toPay),
                               style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w800, height: 1.1, color: white)),
                           Text('TOTAL',
                               style: GoogleFonts.poppins(

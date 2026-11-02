@@ -78,8 +78,8 @@ async function giveComeback(s) {
          LIMIT ${BATCH}`, [days]);
     for (const u of users) {
         await credit(u.UserID, amount, COMEBACK, `Comeback reward (use within ${hours} hours)`, 'INTERVAL ? HOUR', hours);
-        await notify(u.UserID, `🎁 ${rupees(amount)} added to your wallet`,
-            `We miss you${u.FirstName ? `, ${u.FirstName}` : ''}! ${rupees(amount)} is in your ClikGett wallet. Use it within ${hours} hours before it expires.`);
+        await notify(u.UserID, `🎁 ${rupees(amount)} added to your ClikGett Cash`,
+            `We miss you${u.FirstName ? `, ${u.FirstName}` : ''}! ${rupees(amount)} is in your ClikGett Cash. Use it within ${hours} hours before it expires.`);
     }
     return users.length;
 }
@@ -109,7 +109,7 @@ async function giveBirthday(s, now) {
     for (const u of users) {
         await credit(u.UserID, amount, BIRTHDAY, `Birthday reward (use within ${days} days)`, 'INTERVAL ? DAY', days);
         await notify(u.UserID, `🎂 Happy birthday${u.FirstName ? `, ${u.FirstName}` : ''}!`,
-            `${rupees(amount)} birthday gift is in your ClikGett wallet. Use it within ${days} day${days === 1 ? '' : 's'}.`);
+            `${rupees(amount)} birthday gift is in your ClikGett Cash. Use it within ${days} day${days === 1 ? '' : 's'}.`);
     }
     return users.length;
 }

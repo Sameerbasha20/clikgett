@@ -103,7 +103,7 @@ function Transactions() {
                 <div className={dashboardclasses.CategoryWrapper} style={{ padding: "2rem" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                         <div>
-                            <h2 style={{ fontWeight: "700", color: "#1f2937", margin: 0 }}>Wallet Management & Transactions</h2>
+                            <h2 style={{ fontWeight: "700", color: "#1f2937", margin: 0 }}>ClikGett Cash Management & Transactions</h2>
                             <p style={{ color: "#6b7280", margin: "4px 0 0 0" }}>User ID: #{id} | Current Wallet Balance: <strong style={{ color: "#059669", fontSize: "1.1rem" }}>₹{balance.toFixed(2)}</strong></p>
                         </div>
                         <div style={{ display: "flex", gap: "10px" }}>

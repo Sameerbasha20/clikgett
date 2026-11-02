@@ -40,7 +40,7 @@ const ordercontroller = {
         try {
             // let query = "select * from Orders where OrderStatus in (1,3,4,6) and UserID="+req.UserID+" order by CreatedAt desc;"
             let getPastOrders = "select LPAD(O.OrderID, 4, '0') as OrderSequence,O.OrderID,O.CartID,O.UserID,O.GrandTotal,OI.ImageUrl,\
-            O.CreatedAt,O.OrderStatus,O.Delivered_Cancelled_datetime,p.productId,p.ProductImages,\
+            O.CreatedAt,O.OrderStatus,O.CancellationReason,O.Delivered_Cancelled_datetime,p.productId,p.ProductImages,\
             EXISTS(SELECT 1 FROM PhotoOrderRequests por WHERE por.CreatedOrderID = O.OrderID) AS IsPhotoOrder,\
             EXISTS(SELECT 1 FROM PrintJobs pj WHERE pj.OrderID = O.OrderID) AS HasPrints from Orders O \
             left join OrderItems OI on O.OrderID=OI.OrderID \
@@ -303,6 +303,8 @@ const ordercontroller = {
                     ? `${name}: only ${item.AvailableQty} left in stock.`
                     : `${name} is out of stock. Remove it from your cart to place the order.`);
             }
+            if (bill.PrintItems.length && !(await PrintStore.config()).Enabled)
+                return fail(400, "Printing is turned off right now. Remove the print items from your cart to place the order.");
             if (!bill.MinOrderMet)
                 return fail(400, `Minimum order value is Rs.${bill.MinOrderValue}. Add Rs.${bill.AmountForMinOrder} more to place the order.`);
 
@@ -311,7 +313,7 @@ const ordercontroller = {
             if (!['COD', 'ONLINE', 'WALLET'].includes(paymentMethod))
                 return fail(400, "Please choose a payment method.");
             if (paymentMethod === 'WALLET' && bill.ToPay > 0)
-                return fail(400, "Your wallet balance does not cover this order. Choose cash or online payment for the rest.");
+                return fail(400, "Your ClikGett Cash balance does not cover this order. Choose cash or online payment for the rest.");
 
             body.PaymentMethod = paymentMethod;
             body.CartID = bill.CartID;
@@ -411,7 +413,7 @@ const ordercontroller = {
                 const paid = await CommonController.commonget(
                     "UPDATE Users SET WalletAmount = WalletAmount - ? WHERE UserID = ? AND ROUND(WalletAmount, 2) >= ?",
                     [requestedWallet, req.UserID, requestedWallet]);
-                if (!paid.affectedRows) return fail(400, "Your wallet balance has changed. Please check your order and try again.");
+                if (!paid.affectedRows) return fail(400, "Your ClikGett Cash balance has changed. Please check your order and try again.");
                 held.wallet = requestedWallet;
             }
 
@@ -1412,7 +1414,7 @@ function ordersummary(doc, line2, orderresult, string, itemsqty, TotalGst) {
     // Add other fields with vertical alignment
     doc.fill('black').fontSize(3).font('Helvetica').text('Discount', 5, discountY);
     doc.fill('black').fontSize(3).font('Helvetica').text('Delivery charges', 5, deliveryChargesY);
-    doc.fill('black').fontSize(3).font('Helvetica').text('Wallet', 5, walletY);
+    doc.fill('black').fontSize(3).font('Helvetica').text('ClikGett Cash', 5, walletY);
     doc.fill('black').fontSize(3).font('Helvetica').text('Tip', 5, tipY);
 
     doc.fill('black').fontSize(2).font('Helvetica').text(string, mainTopicX, line2 + 26);
@@ -1469,7 +1471,7 @@ function newpage_ordersummary(doc, orderresult, string, itemsqty, TotalGst) {
 
     doc.fill('black').fontSize(3).font('Helvetica').text('Discount', 5, discountY);
     doc.fill('black').fontSize(3).font('Helvetica').text('Delivery charges', 5, deliveryChargesY);
-    doc.fill('black').fontSize(3).font('Helvetica').text('Wallet', 5, walletY);
+    doc.fill('black').fontSize(3).font('Helvetica').text('ClikGett Cash', 5, walletY);
     doc.fill('black').fontSize(3).font('Helvetica').text('Tip', 5, tipY);
 
     doc.fill('black').fontSize(3).font('Helvetica').text(string, 2, 26);

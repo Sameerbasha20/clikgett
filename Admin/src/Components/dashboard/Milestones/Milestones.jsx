@@ -164,7 +164,7 @@ function Milestones() {
                                             </div>
                                             <p className="card-text text-muted">Threshold: <strong>10 Completed Orders</strong></p>
                                             <div className="alert alert-light border mb-0">
-                                                Reward: <strong>₹50 Wallet Credit</strong> on reaching 10 orders
+                                                Reward: <strong>₹50 ClikGett Cash Credit</strong> on reaching 10 orders
                                             </div>
                                         </div>
                                     </div>
@@ -178,7 +178,7 @@ function Milestones() {
                                             </div>
                                             <p className="card-text text-muted">Threshold: <strong>50 Completed Orders</strong></p>
                                             <div className="alert alert-light border mb-0">
-                                                Reward: <strong>₹250 Wallet Credit</strong> on reaching 50 orders
+                                                Reward: <strong>₹250 ClikGett Cash Credit</strong> on reaching 50 orders
                                             </div>
                                         </div>
                                     </div>
@@ -192,7 +192,7 @@ function Milestones() {
                                             </div>
                                             <p className="card-text text-muted">Threshold: <strong>100 Completed Orders</strong></p>
                                             <div className="alert alert-light border mb-0">
-                                                Reward: <strong>₹500 Wallet Credit</strong> on reaching 100 orders
+                                                Reward: <strong>₹500 ClikGett Cash Credit</strong> on reaching 100 orders
                                             </div>
                                         </div>
                                     </div>
@@ -325,7 +325,7 @@ function Milestones() {
                                             value={rewardType} 
                                             onChange={(e) => setRewardType(e.target.value)}
                                         >
-                                            <option value="wallet_credit">Wallet Credit (₹)</option>
+                                            <option value="wallet_credit">ClikGett Cash Credit (₹)</option>
                                             <option value="coupon">Discount Coupon</option>
                                             <option value="badge">Loyalty Badge</option>
                                         </select>

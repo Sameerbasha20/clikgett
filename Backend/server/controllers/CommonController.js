@@ -1323,7 +1323,7 @@ CommonController.ProcessOrderCashback = async (OrderID, UserID) => {
             // Notify user
             const note = {
                 Title: "Cashback Credited!",
-                Message: `Congratulations! ₹${earnedCashback.toFixed(2)} cashback has been credited to your wallet for Order #${OrderID}.`
+                Message: `Congratulations! ₹${earnedCashback.toFixed(2)} cashback has been credited to your ClikGett Cash for Order #${OrderID}.`
             };
             await CommonController.Send_Notification(note, UserID);
             console.log(`Successfully credited ₹${earnedCashback} cashback for Order #${OrderID}`);

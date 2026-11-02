@@ -250,7 +250,7 @@ function UserDetails() {
                             </div>
                         </div>
                         <div className="card p-2 px-3 shadow-sm" style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}>
-                            <div style={{ fontSize: "0.8rem", color: "#1e40af" }}>Wallet Balance</div>
+                            <div style={{ fontSize: "0.8rem", color: "#1e40af" }}>ClikGett Cash Balance</div>
                             <div style={{ fontSize: "1.4rem", fontWeight: "bold", color: "#1e3a8a" }}>
                                 ₹{customerData?.wallet?.Balance || "0.00"}
                             </div>
@@ -275,7 +275,7 @@ function UserDetails() {
                             className={`btn ${activeTab === "wallet" ? "btn-primary" : "btn-outline-primary"}`}
                             onClick={() => setActiveTab("wallet")}
                         >
-                            <FaWallet className="mr-1" /> Detailed Wallet Ledger
+                            <FaWallet className="mr-1" /> Detailed ClikGett Cash Ledger
                         </button>
                         <button
                             className={`btn ${activeTab === "rewards" ? "btn-primary" : "btn-outline-primary"}`}
@@ -423,7 +423,7 @@ function UserDetails() {
                                     <div className="card p-3 shadow-sm mb-4" style={{ background: "#f8fafc" }}>
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                             <div>
-                                                <h5 className="mb-1">Authoritative Wallet Ledger</h5>
+                                                <h5 className="mb-1">Authoritative ClikGett Cash Ledger</h5>
                                                 <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
                                                     Includes credits, debits, cashbacks, manual adjustments, reversals, and real-time running balance.
                                                 </p>
@@ -513,7 +513,7 @@ function UserDetails() {
                                         <div>
                                             <h5 className="mb-1">Customer Referral Campaign</h5>
                                             <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
-                                                Referred users, qualification status, and wallet credits awarded.
+                                                Referred users, qualification status, and ClikGett Cash credits awarded.
                                             </p>
                                         </div>
                                         <div>

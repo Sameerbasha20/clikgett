@@ -94,7 +94,7 @@ const ledgerMatches = async (userId) => {
         await call('POST', '/account/rewards/run', ADMIN);
         credits = await q('SELECT * FROM Wallets WHERE UserID = ? AND ContentType = 6 AND Credited_Debited = 1', [quiet.id]);
         check('comeback cash is given once per quiet spell', credits.length === 1);
-        const [notice] = await q("SELECT COUNT(*) AS n FROM UserNotifications WHERE UserID = ? AND Title LIKE '%wallet%'", [quiet.id]);
+        const [notice] = await q("SELECT COUNT(*) AS n FROM UserNotifications WHERE UserID = ? AND Title LIKE '%ClikGett Cash%'", [quiet.id]);
         check('customer is notified', notice.n === 1);
 
         // Spend ₹10 of it, then let it expire: only the ₹15 left is taken back.

@@ -204,7 +204,7 @@ class _ProfileState extends State<Profile> {
                   subtitle: _membership != null ? '${_membership!.planName} · active' : 'Free delivery and extra cashback',
                   onTap: () => _push(const MembershipScreen()),
                 ),
-                MenuTile(icon: Icons.card_giftcard_rounded, title: 'Refer & earn', subtitle: 'Invite friends, both of you get wallet money', onTap: () => _push(const ReferralScreen())),
+                MenuTile(icon: Icons.card_giftcard_rounded, title: 'Refer & earn', subtitle: 'Invite friends, both of you get ClikGett Cash', onTap: () => _push(const ReferralScreen())),
                 MenuTile(icon: Icons.local_offer_outlined, title: 'Offers & coupons', onTap: () => _push(const Offers())),
               ]),
               const SectionTitle('Help'),
@@ -300,7 +300,7 @@ class _ProfileState extends State<Profile> {
   Widget _quickActions() => IntrinsicHeight(
         child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Expanded(
-            child: Obx(() => _quick(Icons.account_balance_wallet_outlined, rupees(walletController.walletAmount.value), 'Wallet balance',
+            child: Obx(() => _quick(Icons.account_balance_wallet_outlined, rupees(walletController.walletAmount.value), 'ClikGett Cash',
                 () => _push(const WalletScreen()))),
           ),
           const SizedBox(width: 10),

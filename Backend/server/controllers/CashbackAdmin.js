@@ -97,7 +97,7 @@ const CashbackAdminController = {
                 const CommonController = require('./CommonController');
                 await CommonController.Send_Notification({
                     Title: 'Cashback credited!',
-                    Message: `₹${amount.toFixed(2)} cashback for Order #${item.OrderID} is now in your wallet. Use it within ${expiryDays} days.`,
+                    Message: `₹${amount.toFixed(2)} cashback for Order #${item.OrderID} is now in your ClikGett Cash. Use it within ${expiryDays} days.`,
                 }, item.UserID);
             } catch (e) {
                 console.error('Cashback approved but the notification failed:', e.message);

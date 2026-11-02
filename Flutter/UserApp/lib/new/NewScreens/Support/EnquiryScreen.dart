@@ -50,7 +50,7 @@ class _EnquiryScreenState extends State<EnquiryScreen> {
     'Delivery Related',
     'Payment Related',
     'Offer & Voucher Related',
-    'Wallet Related',
+    'ClikGett Cash Related',
   ];
 
   @override

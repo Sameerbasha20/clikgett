@@ -79,7 +79,7 @@ class _WalletScreenState extends State<WalletScreen> {
         'amount': amount * 100,
         'order_id': orderId,
         'name': 'ClikGett',
-        'description': 'Add money to wallet',
+        'description': 'Add money to ClikGett Cash',
         'prefill': {'contact': profile?.mobileNumber, 'email': profile?.emailId},
       });
     } catch (e) {
@@ -96,7 +96,7 @@ class _WalletScreenState extends State<WalletScreen> {
     });
     if (!mounted) return;
     setState(() => _busy = false);
-    customToast(message: result.ok ? 'Money added to your wallet' : result.message);
+    customToast(message: result.ok ? 'Money added to your ClikGett Cash' : result.message);
     if (result.ok) {
       _amount.clear();
       wallet.getWallet(context: context);
@@ -112,7 +112,7 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     return AccountScaffold(
-      title: 'Wallet',
+      title: 'ClikGett Cash',
       body: RefreshIndicator(
         color: primary,
         onRefresh: () async => wallet.getWallet(context: context),
@@ -126,7 +126,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Wallet balance', style: GoogleFonts.poppins(fontSize: 12.5, color: tColor3)),
+                        Text('ClikGett Cash balance', style: GoogleFonts.poppins(fontSize: 12.5, color: tColor3)),
                         Text(rupees(wallet.walletAmount.value),
                             style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.w800, color: tColor)),
                       ]),
@@ -174,7 +174,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text('Wallet money can be used at checkout. Cashback, refunds and referral rewards are added here too.',
+                Text('ClikGett Cash can be used at checkout. Cashback, refunds and referral rewards are added here too.',
                     style: GoogleFonts.poppins(fontSize: 11.5, color: tColor3)),
               ]),
             ),

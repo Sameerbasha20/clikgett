@@ -245,7 +245,7 @@ const transition = async (orderId, to, actor, options = {}) => {
         const walletBack = await refundWallet(order);
         const onlineBack = await refundOnline(order);
         await refreshRiderLoad(order.DeliveryBoyID);
-        const refundText = [walletBack ? `Rs.${walletBack.toFixed(2)} returned to your wallet.` : '', onlineBack ? `Rs.${onlineBack.toFixed(2)} refund initiated to your payment method.` : ''].filter(Boolean).join(' ');
+        const refundText = [walletBack ? `Rs.${walletBack.toFixed(2)} returned to your ClikGett Cash.` : '', onlineBack ? `Rs.${onlineBack.toFixed(2)} refund initiated to your payment method.` : ''].filter(Boolean).join(' ');
         if (to === S.CANCELLED_BY_CUSTOMER) {
             await notifyCustomer(order, `Order ${label} cancelled`, `Your order has been cancelled as requested. ${refundText}`.trim());
         } else {

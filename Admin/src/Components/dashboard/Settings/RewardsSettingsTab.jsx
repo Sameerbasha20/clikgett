@@ -124,7 +124,7 @@ function RewardsSettingsTab() {
                         <input type="number" min="1" max="365" style={input} value={form.ComebackInactiveDays} onChange={set("ComebackInactiveDays")} />
                     </div>
                     <div>
-                        <label style={label}>Wallet cash (₹)</label>
+                        <label style={label}>ClikGett Cash (₹)</label>
                         <input type="number" min="0" max="1000" step="1" style={input} value={form.ComebackAmount} onChange={set("ComebackAmount")} />
                     </div>
                     <div>
@@ -147,7 +147,7 @@ function RewardsSettingsTab() {
                 </label>
                 <div style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
                     <div>
-                        <label style={label}>Wallet cash (₹)</label>
+                        <label style={label}>ClikGett Cash (₹)</label>
                         <input type="number" min="0" max="1000" step="1" style={input} value={form.BirthdayAmount} onChange={set("BirthdayAmount")} />
                     </div>
                     <div>

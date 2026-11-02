@@ -45,6 +45,7 @@ class Order {
   int? cartId;
   int? userId;
   int? orderStatus;
+  String? cancellationReason;
   double? grandTotal;
   String? imageUrl;
   DateTime? createdAt;
@@ -69,6 +70,7 @@ class Order {
     this.userId,
     this.grandTotal,
     this.orderStatus,
+    this.cancellationReason,
     this.imageUrl,
     this.deliveredCancelleddatetime,
     this.estimateDateTime,
@@ -88,6 +90,7 @@ class Order {
         cartId: json["CartID"],
         userId: json["UserID"],
         orderStatus: json["OrderStatus"],
+        cancellationReason: json["CancellationReason"],
         grandTotal: _toDouble(json["GrandTotal"]),
         productImages: List<String>.from(json['ProductImages'] ?? []),
         imageUrl: json["ImageUrl"],

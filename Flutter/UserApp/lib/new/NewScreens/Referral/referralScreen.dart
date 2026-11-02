@@ -40,7 +40,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   String _shareText(ReferralInfo i) =>
       'Get groceries delivered fast with ClikGett! Sign up with my code ${i.code} and get ${rupees(i.friendReward)} '
-      'in your wallet after your first order.\n\nAndroid: $_playStoreLink\niPhone: $_appStoreLink';
+      'in your ClikGett Cash after your first order.\n\nAndroid: $_playStoreLink\niPhone: $_appStoreLink';
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +123,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         const SizedBox(height: 8),
                         _step('1', 'Share your code with friends and family.'),
                         _step('2', 'They sign up on ClikGett using your code.'),
-                        _step('3', 'When their first order is delivered, you both get wallet money.'),
+                        _step('3', 'When their first order is delivered, you both get ClikGett Cash.'),
                       ]),
                     ),
                   ],

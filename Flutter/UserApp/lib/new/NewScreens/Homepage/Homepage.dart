@@ -15,6 +15,7 @@ import 'package:fav_app/new/NewScreens/Homepage/widgets/homeDeliveryDetails.dart
 import 'package:fav_app/new/NewScreens/PrintStore/PrintStoreScreen.dart';
 import 'package:fav_app/new/NewScreens/Widgets/floating_cart_bar.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
+import 'package:fav_app/new/Services/print_store_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,7 +30,7 @@ class Homepage extends StatefulWidget {
   State<Homepage> createState() => _HomepageState();
 }
 
-class _HomepageState extends State<Homepage> {
+class _HomepageState extends State<Homepage> with WidgetsBindingObserver {
   final HomeController controller = Get.find();
   final ProfileController profileController = Get.find();
   final OrdersController ordersController = Get.find();
@@ -37,6 +38,8 @@ class _HomepageState extends State<Homepage> {
 
   String token = '';
   Timer? _ordersRefresh;
+  // Admin can switch printing off (Settings -> Print Service).
+  final RxBool _printOn = true.obs;
 
   final List<Widget> screens = [
     const Home(),
@@ -50,7 +53,21 @@ class _HomepageState extends State<Homepage> {
   void initState() {
     super.initState();
     controller.updateTabIndex(0);
+    WidgetsBinding.instance.addObserver(this);
+    _checkPrint();
     _init();
+  }
+
+  Future<void> _checkPrint() async {
+    final config = await PrintStoreService.config(refresh: true);
+    if (!mounted) return;
+    _printOn(config.enabled);
+    if (!config.enabled && controller.tabIndex.value == 3) controller.updateTabIndex(0);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _checkPrint();
   }
 
   Future<void> _init() async {
@@ -72,6 +89,7 @@ class _HomepageState extends State<Homepage> {
   @override
   void dispose() {
     _ordersRefresh?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -84,6 +102,7 @@ class _HomepageState extends State<Homepage> {
       Navigator.push(context, MaterialPageRoute(builder: (_) => Login()));
       return;
     }
+    if (index == 3) _checkPrint();
     controller.updateTabIndex(index);
   }
 
@@ -108,6 +127,8 @@ class _HomepageState extends State<Homepage> {
   }
 
   Widget _bottomBar(int index) {
+    // Without the Print tab the bar has 4 items, so Profile sits at position 3.
+    final printOn = _printOn.value;
     return Container(
       decoration: const BoxDecoration(
         color: white,
@@ -140,15 +161,15 @@ class _HomepageState extends State<Homepage> {
                 type: BottomNavigationBarType.fixed,
                 unselectedItemColor: grey70,
                 selectedItemColor: primary,
-                currentIndex: index,
-                onTap: _onTab,
+                currentIndex: printOn || index < 3 ? index : (index == 3 ? 0 : 3),
+                onTap: (i) => _onTab(printOn || i < 3 ? i : i + 1),
                 selectedLabelStyle: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600),
                 unselectedLabelStyle: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w500),
                 items: [
                   _item(bottombarHomeIcon, 'Home'),
                   _item(bottombarCategoryIcon, 'Categories'),
                   _item(myorders, 'My Orders'),
-                  _printItem(index == 3),
+                  if (printOn) _printItem(index == 3),
                   _item(userIcon, 'Profile'),
                 ],
               ),

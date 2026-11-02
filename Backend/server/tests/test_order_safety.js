@@ -145,6 +145,22 @@ const ledgerOf = async (id) => Number((await q(
         check('and keeps their cart', cart.isOrderLinked === 1, cart.isOrderLinked);
         await q('UPDATE ProductVariants SET AvailableQty = ? WHERE VariantID = ?', [before, variant.VariantID]);
 
+        // ---- A store cancellation shows its reason to the customer
+        const cancelled = await newCustomer();
+        await fillCart(cancelled.id, variant, quantity);
+        const toCancel = await placeOrder(cancelled, {});
+        const reason = 'Item damaged in the store';
+        r = await call('PUT', `/adminorders/updatestatus/${toCancel.json.OrderID}`, `token ${sign({ AdminID: activeAdmin })}`, { OrderStatus: 4, CancellationReason: reason });
+        check('admin cancels the order', r.json && r.json.Status === 1, JSON.stringify(r.json));
+        r = await call('GET', `/orders/myorder/${toCancel.json.OrderID}`, cancelled.token);
+        check('order page has the reason', r.json && r.json.Orders && r.json.Orders.CancellationReason === reason && r.json.Orders.OrderStatus === 3,
+            r.json && r.json.Orders && `${r.json.Orders.OrderStatus} ${r.json.Orders.CancellationReason}`);
+        r = await call('GET', '/orders/pastorders', cancelled.token);
+        const past = ((r.json && (r.json.Orders || r.json.PastOrders)) || []).find((o) => o.OrderID === toCancel.json.OrderID);
+        check('past orders list has the reason', past && past.CancellationReason === reason, JSON.stringify(r.json).slice(0, 140));
+        const [notice] = await q('SELECT Message FROM UserNotifications WHERE UserID = ? ORDER BY NotificationID DESC LIMIT 1', [cancelled.id]);
+        check('the notification has the reason', notice && notice.Message.includes(reason), notice && notice.Message);
+
         // ---- Photo orders
         const newProposal = async (customer) => {
             const code = `SAFE${stamp}${photoRequests.length}`;
