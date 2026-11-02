@@ -117,7 +117,7 @@ const AdminAuth2FA = {
 
             const cleanEmail = String(EmailID).trim();
             const users = await queryAsync(
-                "SELECT * FROM AdminUsers WHERE EmailID = ? AND Role = 1",
+                "SELECT * FROM AdminUsers WHERE EmailID = ? AND Role = 1 AND Status = 1",
                 [cleanEmail]
             );
 

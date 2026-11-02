@@ -84,7 +84,7 @@ const adminAuth = () => async (req, resp, next) => {
         return resp.status(401).json({ "Status": 0, "Message": "Unauthorized: Admin privileges required" });
     }
     try {
-        const results = await query("select AdminID from AdminUsers where Role=1 and AdminID = ?", [decoded.AdminID]);
+        const results = await query("select AdminID from AdminUsers where Role=1 and Status=1 and AdminID = ?", [decoded.AdminID]);
         if (!results.length) {
             return resp.status(401).json({ "Status": 0, "Message": "unauthorized admin user" });
         }
@@ -233,7 +233,7 @@ const authenticate = {
             return tokenErrorResponse(resp, err);
         }
         try {
-            const results = await query("select AdminID from AdminUsers where Role=2 and AdminID = ?", [decoded.AdminID]);
+            const results = await query("select AdminID from AdminUsers where Role=2 and Status=1 and AdminID = ?", [decoded.AdminID]);
             if (!results.length) {
                 return resp.status(401).json({ "Status": 0, "Message": "unauthorized admin user" });
             }

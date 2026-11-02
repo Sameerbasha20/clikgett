@@ -336,7 +336,7 @@ const DeliveryOperations = {
             // Anti-duplicate / Idempotent retry check:
             // If the same delay was reported recently with the same reason and minutes, avoid adding it again
             const recentDelays = await queryAsync(
-                "SELECT DelayID, Reason, RequestedMinutes, CreatedAt FROM OrderDelays WHERE OrderID = ? ORDER BY CreatedAt DESC LIMIT 1",
+                "SELECT DelayID, Reason, RequestedMinutes, ApprovedMinutes, Status, CreatedAt FROM OrderDelays WHERE OrderID = ? ORDER BY CreatedAt DESC LIMIT 1",
                 [OrderID]
             );
 
@@ -355,13 +355,16 @@ const DeliveryOperations = {
                 }
             }
 
-            // Authoritative baseline calculation:
-            // If order already had delays, baseline is the ETA before delays were added
+            // A rider's report replaces their own previous estimate (30 mins after 15 means 30,
+            // not 45), but what an admin added to the ETA stays.
             const existingDelayMins = parseInt(order.TotalDelayMinutes || 0, 10);
+            const lastDelay = recentDelays[0];
+            const previousRiderMins = lastDelay && lastDelay.Status !== 'REJECTED'
+                ? parseInt(lastDelay.ApprovedMinutes ?? lastDelay.RequestedMinutes, 10) || 0 : 0;
             let baselineDate;
             if (order.EstimateDateTime) {
                 const currentEtaTime = new Date(order.EstimateDateTime).getTime();
-                baselineDate = new Date(currentEtaTime - (existingDelayMins * 60000));
+                baselineDate = new Date(currentEtaTime - (previousRiderMins * 60000));
             } else if (order.CreatedAt) {
                 baselineDate = new Date(new Date(order.CreatedAt).getTime() + (25 * 60000));
             } else {
@@ -389,7 +392,7 @@ const DeliveryOperations = {
                      TotalDelayMinutes = ?, 
                      UpdatedAt = NOW() 
                  WHERE OrderID = ?`,
-                [formattedNewETA, minutes, OrderID]
+                [formattedNewETA, Math.max(0, existingDelayMins - previousRiderMins + minutes), OrderID]
             );
 
             // Record in authoritative OrderETAAdjustments audit ledger

@@ -16,7 +16,7 @@ const pool = mysql.createPool({
 
 const queryAsync = (sql, params = []) => new Promise((res, rej) => pool.query(sql, params, (err, rows) => err ? rej(err) : res(rows)));
 
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = process.env.API_URL || 'http://localhost:5001/api';
 const SECRET_KEY = process.env.SECRET_KEY || 'defaultsecret';
 
 // Auth tokens
@@ -341,7 +341,7 @@ async function runTestSuite() {
         // -------------------------------------------------------------------------
         try {
             const timelineRows = await queryAsync("SELECT * FROM OrderStatusTimeline WHERE OrderID = ? ORDER BY CreatedAt DESC", [testOrderId]);
-            const reassignEntry = timelineRows.find(t => t.Notes.includes("reassigned from driver") || t.Notes.includes(`driver #${testDriverId}`));
+            const reassignEntry = timelineRows.find(t => t.Notes.toLowerCase().includes("reassigned from rider") || t.Notes.includes(`driver #${testDriverId}`));
             const auditable = Boolean(reassignEntry && timelineRows.length >= 2);
             record(17, "Previous assignment remains auditable", auditable ? "PASS" : "FAIL", `Found audit note: "${reassignEntry?.Notes}"`);
         } catch (err) {

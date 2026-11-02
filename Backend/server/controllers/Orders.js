@@ -235,7 +235,23 @@ const ordercontroller = {
     },
 
     addorder: async (req, resp, next) => {
-        let OrderID, createorder, createorderitems, decreasevariantsQuantity, decreasewalletAmount, expecteddate, result; // per-request (were implicit globals)
+        let OrderID, createorder, createorderitems, expecteddate, result; // per-request (were implicit globals)
+        // What this request has taken so far. Two requests can arrive together (a double tap
+        // or a retry), so the cart, stock and wallet are each claimed with one conditional
+        // UPDATE, and handed back if the order does not go through.
+        const held = { cartId: null, wallet: 0, stock: [] };
+        const releaseHeld = async () => {
+            const { cartId, wallet, stock } = held;
+            held.cartId = null;
+            held.wallet = 0;
+            held.stock = [];
+            for (const item of stock) {
+                await CommonController.commonget("UPDATE ProductVariants SET AvailableQty = AvailableQty + ? WHERE ProductID = ? AND VariantID = ?",
+                    [item.Quantity, item.ProductID, item.VariantID]);
+            }
+            if (wallet > 0) await CommonController.commonget("UPDATE Users SET WalletAmount = WalletAmount + ? WHERE UserID = ?", [wallet, req.UserID]);
+            if (cartId) await CommonController.commonget("UPDATE Carts SET isOrderLinked = 1 WHERE CartID = ?", [cartId]);
+        };
         try {
 
             console.log('Order Body', req.body)
@@ -244,6 +260,7 @@ const ordercontroller = {
             // Online payments that cannot become an order are refunded right away.
             const isOnline = String(body.PaymentMethod || '').toUpperCase() === 'ONLINE';
             const fail = async (status, message, extra = {}) => {
+                await releaseHeld();
                 if (isOnline && body.razorpay_payment_id) {
                     const refunded = await refundUnusedPayment(body.RazorpayOrderID, body.razorpay_payment_id, body.razorpay_signature, req.UserID);
                     if (refunded) message += ' Your payment will be refunded.';
@@ -315,12 +332,18 @@ const ordercontroller = {
             }));
             const requestedWallet = bill.WalletApplied;
 
+            // Only one request can turn this cart into an order.
+            const claimed = await CommonController.commonget("UPDATE Carts SET isOrderLinked = 0 WHERE CartID = ? AND isOrderLinked = 1", [bill.CartID]);
+            if (!claimed.affectedRows) return resp.status(409).json({ Status: 0, Message: "This order is already being placed." });
+            held.cartId = bill.CartID;
+
             console.log(body.PaymentMethod, 'PaymentMethod')
             if (paymentMethod == "ONLINE") {
                 var RazorpayOrderID = body.RazorpayOrderID;
                 let signaturebody = RazorpayOrderID + "|" + body.razorpay_payment_id;
                 var expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAYSECRET).update(signaturebody.toString()).digest('hex');
                 if (expectedSignature != body.razorpay_signature) {
+                    await releaseHeld();
                     return resp.json({ 'Status': 0, "Message": "invalid signature" })
                 }
                 let paymentdetails = await getpaymentdetails(body.razorpay_payment_id)
@@ -329,8 +352,10 @@ const ordercontroller = {
                     return fail(400, `Payment of Rs.${paidAmount.toFixed(2)} does not match the order total of Rs.${bill.ToPay.toFixed(2)}.`);
                 // A payment can be used for one order only.
                 const consumed = await consumePayment(RazorpayOrderID, body.razorpay_payment_id, req.UserID);
-                if (!consumed)
+                if (!consumed) {
+                    await releaseHeld();
                     return resp.status(400).json({ Status: 0, Message: "This payment has already been used." });
+                }
                 body.PaymentTransactionID = paymentdetails.id;
                 body.PaymentStatus = 1
             }
@@ -373,15 +398,35 @@ const ordercontroller = {
             body.DistanceETABand = eta.band;
             body.ETACalculationDetails = JSON.stringify(eta);
 
+            for (const item of body.OrderItems) {
+                const Quantity = parseInt(item.Quantity, 10) || 0;
+                const taken = await CommonController.commonget(
+                    "UPDATE ProductVariants SET AvailableQty = AvailableQty - ? WHERE ProductID = ? AND VariantID = ? AND AvailableQty >= ?",
+                    [Quantity, item.ProductID, item.VariantID, Quantity]);
+                if (!taken.affectedRows) return fail(400, `${String(item.ProductName || 'An item').trim()} just went out of stock.`);
+                held.stock.push({ Quantity, ProductID: item.ProductID, VariantID: item.VariantID });
+            }
+            if (requestedWallet > 0) {
+                // Live WalletAmount is a floating-point column, hence ROUND.
+                const paid = await CommonController.commonget(
+                    "UPDATE Users SET WalletAmount = WalletAmount - ? WHERE UserID = ? AND ROUND(WalletAmount, 2) >= ?",
+                    [requestedWallet, req.UserID, requestedWallet]);
+                if (!paid.affectedRows) return fail(400, "Your wallet balance has changed. Please check your order and try again.");
+                held.wallet = requestedWallet;
+            }
+
             createorder = await CreateOrders(body, OrderID, RazorpayOrderID, expecteddate)
             body.orderid = createorder.insertId
             console.log(createorder.insertId, 'createorder.insertIdcreateorder.insertIdcreateorder.insertIdcreateorder.insertIdcreateorder.insertId')
 
             createorderitems = await Orderitemscreate(body.OrderItems, createorder.insertId)
             if (bill.PrintItems.length) await PrintStore.attachToOrder(body.CartID, createorder.insertId, bill.PrintItems)
-            decreasevariantsQuantity = await decvariantsQuantity(body.OrderItems)
+            // The order exists now, so what was claimed stays with it.
+            held.cartId = null;
+            held.wallet = 0;
+            held.stock = [];
             if (requestedWallet > 0) {
-                decreasewalletAmount = await decWalletAmount(body.WalletAmount, req.UserID, body.orderid)
+                await CommonController.Add_To_Wallet_Debit(req.UserID, (process.env.OrderPlace || 3), body.orderid, requestedWallet)
             }
             //else {
             //    console.log("Wallet Balance for the user: ", req.WalletAmount)
@@ -404,6 +449,7 @@ const ordercontroller = {
         }
         catch (err) {
             console.log("exception in adding orders ", err);
+            await releaseHeld().catch((e) => console.log('releasing the order hold failed', e && e.message));
             return resp.status(500).json({ "Status": 0, "Message": "Error in adding orders" });
         }
     },
@@ -626,21 +672,6 @@ async function addTrackingDetails(order) {
     }
 }
 
-function decWalletAmount(WalletAmount, UserID, OrderID) {
-    try {
-        return new Promise(async function (resolve, reject) {
-            let updateWallets = `update Users set WalletAmount=WalletAmount-${parseFloat(WalletAmount)} where UserID=${UserID}`
-            console.log(updateWallets)
-            let update_Wallets = await CommonController.commonget(updateWallets)
-            await CommonController.Add_To_Wallet_Debit(UserID, (process.env.OrderPlace || 3), OrderID, WalletAmount)
-            resolve(1);
-        });
-    }
-    catch (err) {
-        reject(-1);
-    }
-}
-
 function incWalletAmount(WalletAmount, UserID, OrderID) {
     try {
         return new Promise(async function (resolve, reject) {
@@ -648,31 +679,6 @@ function incWalletAmount(WalletAmount, UserID, OrderID) {
             console.log(updateWallets)
             let update_Wallets = await CommonController.commonget(updateWallets)
             await CommonController.Add_To_Wallet(UserID, (process.env.OrderCancel || 4), OrderID, WalletAmount)
-            resolve(1);
-        });
-    }
-    catch (err) {
-        reject(-1);
-    }
-}
-
-function decvariantsQuantity(items) {
-    try {
-        return new Promise(function (resolve, reject) {
-            for (var j = 0; j < items.length; j++) {
-                console.log(items[j], 'item1', typeof (items[j]))
-                const query = "update ProductVariants set AvailableQty=AvailableQty-? where ProductID = ? and VariantID = ?"
-                pool.query(query, [parseInt(items[j]['Quantity'], 10) || 0, items[j]['ProductID'], items[j]['VariantID']], function (err, results, fields) {
-                    if (err) {
-                        console.log("Error in decreasing Quantity :" + err);
-                        reject(-1);
-                    }
-                    else {
-                        console.log(results.affectedRows, 'affected rows')
-
-                    }
-                });
-            }
             resolve(1);
         });
     }
