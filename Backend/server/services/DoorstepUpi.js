@@ -30,6 +30,29 @@ const getRazorpay = () => {
 // Tests replace the Razorpay client.
 const setRazorpayForTests = (client) => { razorpay = client; };
 
+// Razorpay's QR image is a whole branded card. The rider app shows only the code: we read
+// the UPI link out of the image and the app draws a plain QR from it. If reading fails
+// the app falls back to the image, so payment never depends on this.
+const QR_IMAGE_HOSTS = /(^|\.)(rzp\.io|razorpay\.com)$/i;
+async function upiLinkFromImage(imageUrl) {
+    try {
+        const url = new URL(imageUrl);
+        if (url.protocol !== 'https:' || !QR_IMAGE_HOSTS.test(url.hostname)) return null;
+        const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(8000) });
+        if (!res.ok || !QR_IMAGE_HOSTS.test(new URL(res.url).hostname)) return null;
+        const bytes = Buffer.from(await res.arrayBuffer());
+        let image;
+        if (bytes[0] === 0x89 && bytes[1] === 0x50) image = require('pngjs').PNG.sync.read(bytes);
+        else if (bytes[0] === 0xff && bytes[1] === 0xd8) image = require('jpeg-js').decode(bytes, { useTArray: true });
+        else return null;
+        const found = require('jsqr')(new Uint8ClampedArray(image.data), image.width, image.height);
+        return found && /^upi:\/\/pay\?/i.test(found.data) ? found.data : null;
+    } catch (err) {
+        console.log('[DoorstepUpi] could not read the QR image:', err.message);
+        return null;
+    }
+}
+
 class DoorstepError extends Error {
     constructor(message, httpStatus = 400) {
         super(message);
@@ -47,7 +70,7 @@ const riderOrder = async (orderId, riderId) => {
 
 const isPaid = (order) => String(order.PaymentStatus) === '1';
 
-/** Rider asks for a QR code. Returns { ImageUrl, Amount, QrID, ExpiresAt }. */
+/** Rider asks for a QR code. Returns { ImageUrl, UpiLink, Amount, QrID, ExpiresAt }. */
 async function createQr(orderId, riderId) {
     const order = await riderOrder(orderId, riderId);
     if (!order) throw new DoorstepError('This order is not assigned to you', 403);
@@ -66,7 +89,8 @@ async function createQr(orderId, riderId) {
         try {
             const existing = await rp.qrCode.fetch(order.DoorstepQrID);
             if (existing && existing.status === 'active' && Number(existing.payment_amount) === amount) {
-                return { QrID: existing.id, ImageUrl: existing.image_url, Amount: amount / 100, ExpiresAt: existing.close_by };
+                return { QrID: existing.id, ImageUrl: existing.image_url, UpiLink: await upiLinkFromImage(existing.image_url),
+                    Amount: amount / 100, ExpiresAt: existing.close_by };
             }
         } catch (err) {
             // Make a new one below.
@@ -84,7 +108,8 @@ async function createQr(orderId, riderId) {
         notes: { OrderID: String(order.OrderID), Purpose: 'DOORSTEP_UPI' },
     });
     await query('UPDATE Orders SET DoorstepQrID = ?, DoorstepQrCreatedAt = NOW() WHERE OrderID = ?', [qr.id, order.OrderID]);
-    return { QrID: qr.id, ImageUrl: qr.image_url, Amount: amount / 100, ExpiresAt: qr.close_by || closeBy };
+    return { QrID: qr.id, ImageUrl: qr.image_url, UpiLink: await upiLinkFromImage(qr.image_url),
+        Amount: amount / 100, ExpiresAt: qr.close_by || closeBy };
 }
 
 /**
@@ -144,4 +169,4 @@ async function handleWebhookEvent(event) {
     return recordPayment(qr && qr.id, payment);
 }
 
-module.exports = { createQr, status, recordPayment, handleWebhookEvent, DoorstepError, setRazorpayForTests };
+module.exports = { upiLinkFromImage, createQr, status, recordPayment, handleWebhookEvent, DoorstepError, setRazorpayForTests };

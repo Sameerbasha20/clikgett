@@ -9,6 +9,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
@@ -36,6 +38,11 @@ import com.deliveryboy_clickget.Utils.Api;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -697,6 +704,24 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    /** A plain black-on-white QR for a upi://pay link, or null when there is no link. */
+    private Bitmap qrBitmap(String upiLink, int size) {
+        if (upiLink == null || !upiLink.startsWith("upi://")) return null;
+        try {
+            java.util.Map<EncodeHintType, Object> hints = new java.util.EnumMap<>(EncodeHintType.class);
+            hints.put(EncodeHintType.MARGIN, 1);
+            BitMatrix m = new QRCodeWriter().encode(upiLink, BarcodeFormat.QR_CODE, size, size, hints);
+            int w = m.getWidth(), h = m.getHeight();
+            int[] pixels = new int[w * h];
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) pixels[y * w + x] = m.get(x, y) ? Color.BLACK : Color.WHITE;
+            }
+            return Bitmap.createBitmap(pixels, w, h, Bitmap.Config.RGB_565);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     /**
      * Customer pays a cash order by UPI: show a Razorpay QR for the exact amount and
      * check every few seconds until Razorpay confirms it (the server also hears it
@@ -728,7 +753,14 @@ public class OrderDetailsActivity extends AppCompatActivity {
             LinearLayout.LayoutParams qrLp = new LinearLayout.LayoutParams(dp(260), dp(260));
             qrLp.topMargin = dp(8);
             box.addView(qr, qrLp);
-            Picasso.get().load(response.optString("ImageUrl")).placeholder(R.drawable.ic_baseline_crop_original_24).into(qr);
+            // Only the code: drawn here from the UPI link the server read out of Razorpay's
+            // QR. Razorpay's full card image is the fallback.
+            Bitmap code = qrBitmap(response.optString("UpiLink", ""), dp(260));
+            if (code != null) {
+                qr.setImageBitmap(code);
+            } else {
+                Picasso.get().load(response.optString("ImageUrl")).placeholder(R.drawable.ic_baseline_crop_original_24).into(qr);
+            }
 
             TextView waiting = new TextView(this);
             waiting.setText("Ask the customer to scan with any UPI app.\nWaiting for payment…");

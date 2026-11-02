@@ -98,6 +98,9 @@ dependencies {
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     implementation 'com.android.volley:volley:1.2.1'
     implementation 'com.squareup.picasso:picasso:2.71828'
+
+    // Draws the doorstep UPI QR (plain code, without Razorpay's card)
+    implementation 'com.google.zxing:core:3.5.3'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
 
     // Permissions

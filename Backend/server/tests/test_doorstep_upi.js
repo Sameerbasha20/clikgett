@@ -29,7 +29,7 @@ const fakeRazorpay = () => {
         qrs,
         qrCode: {
             create: async (body) => {
-                const qr = { id: `qr_test_${++n}`, image_url: `https://rzp.io/i/qr_test_${n}`, status: 'active', ...body, payments: [] };
+                const qr = { id: `qr_test_${++n}`, image_url: `https://qr.example.test/i/qr_test_${n}`, status: 'active', ...body, payments: [] };
                 qrs.set(qr.id, qr);
                 return qr;
             },
@@ -78,6 +78,7 @@ const fakeRazorpay = () => {
             made && made.type === 'upi_qr' && made.usage === 'single_use' && made.fixed_amount === true && made.payment_amount === 4150,
             JSON.stringify(made));
         check('QR image is returned to the rider app', qr.ImageUrl.startsWith('https://') && qr.Amount === 41.5);
+        check('an image not hosted by Razorpay is never downloaded (app falls back to the image)', qr.UpiLink === null);
         const again = await DoorstepUpi.createQr(id, rider.AdminID);
         check('a second tap reuses the same QR', again.QrID === qr.QrID && rp.qrs.size === 1);
 
