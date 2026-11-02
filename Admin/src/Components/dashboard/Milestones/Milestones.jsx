@@ -9,10 +9,12 @@ import { Services } from "../../../Services";
 import { toast } from "react-toastify";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { useNavigate } from "react-router-dom";
+import usePagedList from "../usePagedList";
 
 function Milestones() {
     const navigate = useNavigate();
     const [rewardsList, setRewardsList] = useState([]);
+    const paged = usePagedList(rewardsList);
     const [userProgress, setUserProgress] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
@@ -221,7 +223,7 @@ function Milestones() {
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                rewardsList.map((r) => (
+                                                paged.rows.map((r) => (
                                                     <tr key={r.RewardID}>
                                                         <td><strong>#{r.RewardID}</strong></td>
                                                         <td><strong>{r.RewardName}</strong></td>
@@ -264,6 +266,7 @@ function Milestones() {
                                             )}
                                         </tbody>
                                     </table>
+                                    {paged.pager}
                                 </div>
                             </div>
                         </>

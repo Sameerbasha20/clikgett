@@ -9,10 +9,12 @@ import { Services } from "../../../Services";
 import { toast } from "react-toastify";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { useNavigate } from "react-router-dom";
+import usePagedList from "../usePagedList";
 
 function Sales() {
     const navigate = useNavigate();
     const [salesList, setSalesList] = useState([]);
+    const paged = usePagedList(salesList);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [detailsModal, setDetailsModal] = useState(false);
@@ -201,7 +203,7 @@ function Sales() {
                                             </td>
                                         </tr>
                                     ) : (
-                                        salesList.map((sale) => (
+                                        paged.rows.map((sale) => (
                                             <tr key={sale.SaleID}>
                                                 <td><strong>#{sale.SaleID}</strong></td>
                                                 <td>
@@ -241,6 +243,7 @@ function Sales() {
                                     )}
                                 </tbody>
                             </table>
+                            {paged.pager}
                         </div>
                     )}
                 </div>

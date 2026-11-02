@@ -6,8 +6,8 @@ import classes from "../Dashboard/Dashboard.module.css";
 import { Services } from "../../../Services";
 import { toast } from "react-toastify";
 import { FaTrash } from "react-icons/fa";
+import usePagedList from "../usePagedList";
 
-const PAGE = 100;
 const PRICE_CHIPS = [0, 1, 9, 29, 49, 99];
 const CART_CHIPS = [199, 299, 499, 799, 999];
 const tabLabel = (price) => (Number(price) <= 0 ? "FREE" : `₹${Number(price)}`);
@@ -33,7 +33,6 @@ function ProductUnlocks() {
     const [deals, setDeals] = useState([]);
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("name-asc");
-    const [limit, setLimit] = useState(PAGE);
     const [defaults, setDefaults] = useState({ price: "1", maxQty: "1" });
     const [threshold, setThreshold] = useState(null);
     const [thresholdInput, setThresholdInput] = useState("");
@@ -153,6 +152,8 @@ function ProductUnlocks() {
     const chip = (active) => `btn btn-sm ${active ? "btn-success" : "btn-outline-secondary"}`;
     const small = { width: 82 };
 
+    const paged = usePagedList(shown, 50);
+
     return (
         <div className={dashboardclasses["dashboard-wrapper"]}>
             <div className={dashboardclasses["dashboard-leftside"]}>
@@ -201,7 +202,7 @@ function ProductUnlocks() {
                             <button type="button" className={chip(tab === "deals")} onClick={() => setTab("deals")}>Live deals ({deals.length})</button>
                         </div>
                         <input type="search" className="form-control" style={{ maxWidth: 300 }} placeholder="Search name, pack or product ID"
-                            value={search} onChange={(e) => { setSearch(e.target.value); setLimit(PAGE); }} />
+                            value={search} onChange={(e) => { setSearch(e.target.value); }} />
                         {tab === "products" && (
                             <select className="form-select" style={{ maxWidth: 200 }} value={sort} onChange={(e) => setSort(e.target.value)}>
                                 {Object.entries(SORTS).map(([k, s]) => <option key={k} value={k}>{s.label}</option>)}
@@ -234,7 +235,7 @@ function ProductUnlocks() {
                                             <tr><th>Product</th><th>Pack</th><th>Price</th><th>Stock</th><th>Deal price ₹</th><th></th></tr>
                                         </thead>
                                         <tbody>
-                                            {shown.slice(0, limit).map((p) => {
+                                            {paged.rows.map((p) => {
                                                 const key = `p${p.VariantID}`;
                                                 const existing = dealByPack.get(p.VariantID);
                                                 return (
@@ -273,13 +274,7 @@ function ProductUnlocks() {
                                             })}
                                         </tbody>
                                     </table>
-                                    {shown.length > limit && (
-                                        <div style={{ textAlign: "center", marginTop: 12 }}>
-                                            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setLimit((l) => l + PAGE)}>
-                                                Show {Math.min(PAGE, shown.length - limit)} more of {shown.length}
-                                            </button>
-                                        </div>
-                                    )}
+                                    {paged.pager}
                                 </>
                             )
                         ) : shownDeals.length === 0 ? (

@@ -6,6 +6,7 @@ import SideNav from "../../Navbar/sideNav";
 import dashboardclasses from "../dashboard.module.css";
 import classes from "../Dashboard/Dashboard.module.css";
 import { Services } from "../../../Services";
+import usePagedList from "../usePagedList";
 
 const REFRESH_MS = 60000;
 const fmt = (v) => (v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—");
@@ -56,6 +57,8 @@ function OutOfStock() {
     const shown = (items || []).filter((v) => !q || `${v.ProductName} ${v.CategoryName} ${v.SubCategoryName}`.toLowerCase().includes(q));
     const waiting = (items || []).filter((v) => v.InCarts > 0).length;
 
+    const paged = usePagedList(shown);
+
     return (
         <div className={dashboardclasses["dashboard-wrapper"]}>
             <div className={dashboardclasses["dashboard-leftside"]}>
@@ -92,6 +95,7 @@ function OutOfStock() {
                         ) : shown.length === 0 ? (
                             <span className={classes.muted}>{items.length === 0 ? "Everything is in stock." : "No match for your search."}</span>
                         ) : (
+                            <>
                             <table className={classes.table}>
                                 <thead>
                                     <tr>
@@ -100,7 +104,7 @@ function OutOfStock() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {shown.map((v) => (
+                                    {paged.rows.map((v) => (
                                         <tr key={v.VariantID}>
                                             <td>
                                                 <button type="button" className={classes.linkBtn} style={{ padding: 0, textAlign: "left", color: "#0f172a" }}
@@ -132,6 +136,8 @@ function OutOfStock() {
                                     ))}
                                 </tbody>
                             </table>
+                            {paged.pager}
+                            </>
                         )}
                     </div>
                 </div>

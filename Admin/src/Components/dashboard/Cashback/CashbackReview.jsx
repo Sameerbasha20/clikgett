@@ -7,6 +7,7 @@ import classes from "./CashbackReview.module.css";
 import { Services } from "../../../Services";
 import { toast } from "react-toastify";
 import { FaCheck, FaTimes } from "react-icons/fa";
+import usePagedList from "../usePagedList";
 
 const TABS = [
     { key: "pending", label: "Waiting for review" },
@@ -31,6 +32,7 @@ const ORDER_STATUS = { 1: "Delivered", 3: "Cancelled", 4: "Cancelled", 6: "Retur
 function CashbackReview() {
     const [tab, setTab] = useState("pending");
     const [items, setItems] = useState([]);
+    const paged = usePagedList(items);
     const [counts, setCounts] = useState({ Pending: 0, Approved: 0, Rejected: 0, PendingAmount: 0 });
     const [mode, setMode] = useState("");
     const [loading, setLoading] = useState(true);
@@ -167,6 +169,7 @@ function CashbackReview() {
                         ) : items.length === 0 ? (
                             <p className={classes.empty}>{emptyText}</p>
                         ) : (
+                            <>
                             <table className={classes.table}>
                                 <thead>
                                     <tr>
@@ -179,7 +182,7 @@ function CashbackReview() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {items.map((item) => {
+                                    {paged.rows.map((item) => {
                                         const orderGone = Number(item.OrderStatus) !== 1;
                                         return (
                                             <React.Fragment key={item.PendingID}>
@@ -266,6 +269,8 @@ function CashbackReview() {
                                     })}
                                 </tbody>
                             </table>
+                            {paged.pager}
+                            </>
                         )}
                     </div>
                 </div>

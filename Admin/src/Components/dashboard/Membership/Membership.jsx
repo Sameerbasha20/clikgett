@@ -5,6 +5,7 @@ import SideNav from "../../Navbar/sideNav";
 import dashboardclasses from "../dashboard.module.css";
 import classes from "../Dashboard/Dashboard.module.css";
 import { Services } from "../../../Services";
+import usePagedList from "../usePagedList";
 
 const empty = { PlanID: null, PlanName: "", Price: "", DurationDays: 30, FreeDelivery: true, ExtraCashbackPercentage: 0, Status: 1 };
 const fmtDate = (v) => (v ? new Date(v).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—");
@@ -16,6 +17,7 @@ const fmtDate = (v) => (v ? new Date(v).toLocaleDateString("en-IN", { day: "nume
 function Membership() {
     const [plans, setPlans] = useState([]);
     const [members, setMembers] = useState([]);
+    const pagedMembers = usePagedList(members);
     const [form, setForm] = useState(null);
     const [saving, setSaving] = useState(false);
 
@@ -134,10 +136,11 @@ function Membership() {
                         {members.length === 0 ? (
                             <span className={classes.muted}>Nobody has an active membership yet.</span>
                         ) : (
+                            <>
                             <table className={classes.table}>
                                 <thead><tr><th>Customer</th><th>Mobile</th><th>Plan</th><th className={classes.num}>Paid</th><th>Since</th><th>Until</th></tr></thead>
                                 <tbody>
-                                    {members.map((m) => (
+                                    {pagedMembers.rows.map((m) => (
                                         <tr key={m.UserMembershipID}>
                                             <td>{m.CustomerName || `User ${m.UserID}`}</td>
                                             <td>{m.MobileNumber || "—"}</td>
@@ -149,6 +152,8 @@ function Membership() {
                                     ))}
                                 </tbody>
                             </table>
+                            {pagedMembers.pager}
+                            </>
                         )}
                     </div>
                 </div>

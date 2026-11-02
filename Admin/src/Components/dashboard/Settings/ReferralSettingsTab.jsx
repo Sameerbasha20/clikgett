@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Services } from "../../../Services";
 import { toast } from "react-toastify";
+import usePagedList from "../usePagedList";
 import {
     FaGift,
     FaUsers,
@@ -28,7 +29,9 @@ function ReferralSettingsTab() {
 
     // Audit logs & Claims state
     const [auditLogs, setAuditLogs] = useState([]);
+    const pagedAudit = usePagedList(auditLogs);
     const [claims, setClaims] = useState([]);
+    const pagedClaims = usePagedList(claims);
 
     const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
@@ -387,7 +390,7 @@ function ReferralSettingsTab() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {auditLogs.map((log) => {
+                                    {pagedAudit.rows.map((log) => {
                                         let newCfg = {};
                                         try { newCfg = JSON.parse(log.NewConfig || "{}"); } catch (e) {}
                                         return (
@@ -404,6 +407,7 @@ function ReferralSettingsTab() {
                                     })}
                                 </tbody>
                             </table>
+                            {pagedAudit.pager}
                         </div>
                     )}
                 </div>
@@ -433,7 +437,7 @@ function ReferralSettingsTab() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {claims.map((c) => (
+                                    {pagedClaims.rows.map((c) => (
                                         <tr key={c.ClaimID}>
                                             <td>#{c.ClaimID}</td>
                                             <td>
@@ -460,6 +464,7 @@ function ReferralSettingsTab() {
                                     ))}
                                 </tbody>
                             </table>
+                            {pagedClaims.pager}
                         </div>
                     )}
                 </div>

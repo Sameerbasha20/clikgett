@@ -37,6 +37,7 @@ const stamp = String(Date.now()).slice(-7);
 const staff = [];
 const users = [];
 const orders = [];
+const photoRequests = [];
 let nextMobile = 0;
 
 const newCustomer = async (wallet = 0) => {
@@ -143,11 +144,58 @@ const ledgerOf = async (id) => Number((await q(
         const [cart] = await q('SELECT isOrderLinked FROM Carts WHERE UserID = ?', [loser.id]);
         check('and keeps their cart', cart.isOrderLinked === 1, cart.isOrderLinked);
         await q('UPDATE ProductVariants SET AvailableQty = ? WHERE VariantID = ?', [before, variant.VariantID]);
+
+        // ---- Photo orders
+        const newProposal = async (customer) => {
+            const code = `SAFE${stamp}${photoRequests.length}`;
+            const ins = await q('INSERT INTO PhotoOrderRequests SET ?', [{
+                RequestCode: code, UserID: customer.id, TypedItems: 'test list', RequestStatus: 'AWAITING_CUSTOMER_CONFIRMATION',
+                DeliveryAddressSnapshot: JSON.stringify({ Address: 'TEST ORDER - safety test', ...NEAR }),
+            }]);
+            photoRequests.push(ins.insertId);
+            await q(`INSERT INTO PhotoOrderItems (RequestID, ProductID, VariantID, Quantity, UnitPrice, LineTotal, AvailabilityStatus)
+                     VALUES (?, ?, ?, ?, ?, ?, 'AVAILABLE')`,
+            [ins.insertId, variant.ProductID, variant.VariantID, quantity, variant.OfferPrice, variant.OfferPrice * quantity]);
+            return ins.insertId;
+        };
+        const statusOf = async (id) => (await q('SELECT RequestStatus FROM PhotoOrderRequests WHERE RequestID = ?', [id]))[0].RequestStatus;
+
+        const photoCustomer = await newCustomer();
+        const proposal = await newProposal(photoCustomer);
+        before = await stockOf(variant);
+        const taps = await Promise.all([1, 2, 3].map(() => call('POST', `/photo-orders/request/${proposal}/confirm`, photoCustomer.token, { paymentMethod: 'COD' })));
+        taps.forEach((x) => { if (x.json && x.json.OrderID) orders.push(x.json.OrderID); });
+        check('a proposal makes exactly one order, accepted 3 times at once',
+            taps.filter((x) => x.json && x.json.OrderID).length === 1, taps.map((x) => x.status).join(','));
+        check('photo order takes stock once', before - await stockOf(variant) === quantity, `${before} -> ${await stockOf(variant)}`);
+        check('the request is marked as ordered', await statusOf(proposal) === 'ORDER_CREATED');
+
+        const ADMIN = `token ${sign({ AdminID: activeAdmin })}`;
+        r = await call('PUT', `/admin/photo-orders/claim/${proposal}`, ADMIN);
+        check('admin cannot reopen a closed request', r.status === 400, r.status);
+        r = await call('POST', `/admin/photo-orders/cancel/${proposal}`, ADMIN, { cancelReason: 'test' });
+        check('admin cannot cancel a closed request', r.status === 400 && await statusOf(proposal) === 'ORDER_CREATED', r.status);
+        r = await call('POST', `/admin/photo-orders/prepare-proposal/${proposal}`, ADMIN, { items: [] });
+        check('admin cannot change items of a closed request', r.status === 400, r.status);
+
+        const noStock = await newProposal(photoCustomer);
+        before = await stockOf(variant);
+        await q('UPDATE ProductVariants SET AvailableQty = ? WHERE VariantID = ?', [quantity - 1, variant.VariantID]);
+        r = await call('POST', `/photo-orders/request/${noStock}/confirm`, photoCustomer.token, { paymentMethod: 'COD' });
+        if (r.json && r.json.OrderID) orders.push(r.json.OrderID);
+        check('no stock: refused and the proposal stays open',
+            r.status === 400 && await statusOf(noStock) === 'AWAITING_CUSTOMER_CONFIRMATION' && await stockOf(variant) === quantity - 1, r.status);
+        await q('UPDATE ProductVariants SET AvailableQty = ? WHERE VariantID = ?', [before, variant.VariantID]);
     } catch (err) {
         check('test run completed without errors', false, err.sqlMessage || err.message);
     } finally {
         if (variant) await q('UPDATE ProductVariants SET AvailableQty = ? WHERE VariantID = ?', [variant.AvailableQty, variant.VariantID]);
         await q('UPDATE AdminShopToggleSettings SET ShopStatus = ?, StoreMode = ? WHERE SettingID = ?', [shop.ShopStatus, shop.StoreMode, shop.SettingID]);
+        for (const id of photoRequests) {
+            await q('DELETE FROM PhotoOrderStatusTimeline WHERE RequestID = ?', [id]);
+            await q('DELETE FROM PhotoOrderItems WHERE RequestID = ?', [id]);
+            await q('DELETE FROM PhotoOrderRequests WHERE RequestID = ?', [id]);
+        }
         for (const id of orders) {
             await q('DELETE FROM OrderStatusTimeline WHERE OrderID = ?', [id]);
             await q('DELETE FROM OrderItems WHERE OrderID = ?', [id]);

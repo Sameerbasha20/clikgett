@@ -39,6 +39,11 @@ const ALLOWED_MIME_TYPES = {
 
 const customerPhotos = require('../utils/customerPhotos');
 
+// Statuses the store can still work on. After these the request is closed.
+const OPEN_STATUSES = ['PENDING', 'UNDER_REVIEW', 'PROPOSAL_DRAFT', 'AWAITING_CUSTOMER_CONFIRMATION'];
+const isOpen = (status) => OPEN_STATUSES.includes(status);
+const closedMessage = (status) => `This request is closed (${status}) and can no longer be changed.`;
+
 const PhotoOrdersController = {
 
     /**
@@ -356,7 +361,38 @@ const PhotoOrdersController = {
             if (chosenPayment !== 'COD') {
                 return resp.status(400).json({ Status: 0, Message: 'Only Cash on Delivery is available for photo orders right now.' });
             }
-            const OrdersController = require('./Orders');
+
+            // Only one request can accept the proposal (a double tap sends two).
+            const claimed = await queryAsync(
+                "UPDATE PhotoOrderRequests SET RequestStatus = 'ORDER_CREATED' WHERE RequestID = ? AND RequestStatus = 'AWAITING_CUSTOMER_CONFIRMATION'",
+                [requestId]);
+            if (!claimed.affectedRows) {
+                return resp.status(409).json({ Status: 0, Message: 'This proposal has already been confirmed.' });
+            }
+            const takenStock = [];
+            const handBack = async () => {
+                for (const t of takenStock) {
+                    await queryAsync('UPDATE ProductVariants SET AvailableQty = AvailableQty + ? WHERE ProductID = ? AND VariantID = ?',
+                        [t.Quantity, t.ProductID, t.VariantID]);
+                }
+                await queryAsync("UPDATE PhotoOrderRequests SET RequestStatus = 'AWAITING_CUSTOMER_CONFIRMATION' WHERE RequestID = ?", [requestId]);
+            };
+            try {
+                for (const item of cartItems) {
+                    const Quantity = parseInt(item.Quantity, 10) || 0;
+                    const taken = await queryAsync(
+                        'UPDATE ProductVariants SET AvailableQty = AvailableQty - ? WHERE ProductID = ? AND VariantID = ? AND AvailableQty >= ?',
+                        [Quantity, item.ProductID, item.VariantID, Quantity]);
+                    if (!taken.affectedRows) {
+                        await handBack();
+                        return resp.status(400).json({ Status: 0, Message: `${item.ProductName} just went out of stock. Please contact support.` });
+                    }
+                    takenStock.push({ Quantity, ProductID: item.ProductID, VariantID: item.VariantID });
+                }
+            } catch (stockErr) {
+                await handBack();
+                throw stockErr;
+            }
 
             // Format order body for canonical CreateOrders
             const orderPayload = {
@@ -419,7 +455,10 @@ const PhotoOrdersController = {
                 orderPayload.PaymentTransactionID,
                 orderPayload.Discount,
                 cartItems.reduce((sum, item) => sum + (parseInt(item.Quantity) || 1), 0)
-            ]);
+            ]).catch(async (orderErr) => {
+                await handBack();
+                throw orderErr;
+            });
 
             const createdOrderId = orderInsertRes.insertId;
 
@@ -434,20 +473,12 @@ const PhotoOrdersController = {
                     createdOrderId, item.ProductID, item.VariantID, item.ProductName,
                     item.Quantity, item.Price, item.OfferPrice, item.metrictype, item.metricvalue
                 ]);
-
-                // Authoritative Inventory Deduction
-                await queryAsync(`
-                    UPDATE ProductVariants 
-                    SET AvailableQty = AvailableQty - ? 
-                    WHERE ProductID = ? AND VariantID = ?
-                `, [item.Quantity, item.ProductID, item.VariantID]);
             }
 
             // Update PhotoOrderRequests status to ORDER_CREATED
             await queryAsync(`
                 UPDATE PhotoOrderRequests 
-                SET RequestStatus = 'ORDER_CREATED',
-                    CreatedOrderID = ?,
+                SET CreatedOrderID = ?,
                     ConfirmedAt = NOW(),
                     ResolvedAt = NOW(),
                     GrandTotal = ?
@@ -656,6 +687,7 @@ const PhotoOrdersController = {
             }
 
             const prevStatus = rows[0].RequestStatus;
+            if (!isOpen(prevStatus)) return resp.status(400).json({ Status: 0, Message: closedMessage(prevStatus) });
             await queryAsync(`
                 UPDATE PhotoOrderRequests 
                 SET AdminReviewerID = ?,
@@ -696,6 +728,7 @@ const PhotoOrdersController = {
             }
 
             const photoReq = reqRows[0];
+            if (!isOpen(photoReq.RequestStatus)) return resp.status(400).json({ Status: 0, Message: closedMessage(photoReq.RequestStatus) });
 
             // Replace existing proposal items with updated set
             await queryAsync("DELETE FROM PhotoOrderItems WHERE RequestID = ?", [requestId]);
@@ -797,6 +830,7 @@ const PhotoOrdersController = {
             }
 
             const photoReq = reqRows[0];
+            if (!isOpen(photoReq.RequestStatus)) return resp.status(400).json({ Status: 0, Message: closedMessage(photoReq.RequestStatus) });
             const itemCountRows = await queryAsync("SELECT COUNT(*) as count FROM PhotoOrderItems WHERE RequestID = ?", [requestId]);
             if (!itemCountRows[0].count) {
                 return resp.status(400).json({ Status: 0, Message: 'Cannot send an empty proposal. Add items first.' });
@@ -851,6 +885,7 @@ const PhotoOrdersController = {
             }
 
             const photoReq = reqRows[0];
+            if (!isOpen(photoReq.RequestStatus)) return resp.status(400).json({ Status: 0, Message: closedMessage(photoReq.RequestStatus) });
 
             await queryAsync(`
                 UPDATE PhotoOrderRequests 

@@ -6,8 +6,8 @@ import SideNav from "../../Navbar/sideNav";
 import dashboardclasses from "../dashboard.module.css";
 import classes from "../Dashboard/Dashboard.module.css";
 import { Services } from "../../../Services";
+import usePagedList from "../usePagedList";
 
-const PAGE = 100;
 const SORTS = {
     "name-asc": { label: "Name A → Z", fn: (a, b) => a.ProductName.localeCompare(b.ProductName) },
     "name-desc": { label: "Name Z → A", fn: (a, b) => b.ProductName.localeCompare(a.ProductName) },
@@ -33,7 +33,6 @@ function Stock() {
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("name-asc");
     const [filter, setFilter] = useState(new URLSearchParams(location.search).get("filter") || "all");
-    const [limit, setLimit] = useState(PAGE);
     const [editing, setEditing] = useState(null);
     const [addQty, setAddQty] = useState("");
     const [saving, setSaving] = useState(false);
@@ -94,6 +93,8 @@ function Stock() {
         </button>
     );
 
+    const paged = usePagedList(shown, 50);
+
     return (
         <div className={dashboardclasses["dashboard-wrapper"]}>
             <div className={dashboardclasses["dashboard-leftside"]}>
@@ -124,7 +125,7 @@ function Stock() {
                             style={{ maxWidth: 320 }}
                             placeholder="Search name, category or product ID"
                             value={search}
-                            onChange={(e) => { setSearch(e.target.value); setLimit(PAGE); }}
+                            onChange={(e) => { setSearch(e.target.value); }}
                         />
                         <select className="form-select" style={{ maxWidth: 220 }} value={sort} onChange={(e) => setSort(e.target.value)}>
                             {Object.entries(SORTS).map(([k, s]) => <option key={k} value={k}>{s.label}</option>)}
@@ -133,7 +134,7 @@ function Stock() {
                             {Object.entries(FILTERS).map(([k, label]) => (
                                 <button key={k} type="button"
                                     className={`btn btn-sm ${filter === k ? "btn-success" : "btn-outline-secondary"}`}
-                                    onClick={() => { setFilter(k); setLimit(PAGE); }}>
+                                    onClick={() => { setFilter(k); }}>
                                     {label}
                                 </button>
                             ))}
@@ -153,7 +154,7 @@ function Stock() {
                                         <tr><th>Product ID</th><th>Product</th><th>Pack</th><th>Category</th><th>Price</th><th>Left</th><th></th></tr>
                                     </thead>
                                     <tbody>
-                                        {shown.slice(0, limit).map((v) => (
+                                        {paged.rows.map((v) => (
                                             <tr key={v.VariantID} style={v.Active ? undefined : { opacity: 0.55 }}>
                                                 <td>
                                                     <button type="button" className="btn btn-link btn-sm p-0 fw-bold" title="Add stock" onClick={() => openAdd(v)}>
@@ -181,13 +182,7 @@ function Stock() {
                                         ))}
                                     </tbody>
                                 </table>
-                                {shown.length > limit && (
-                                    <div style={{ textAlign: "center", marginTop: 12 }}>
-                                        <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => setLimit((l) => l + PAGE)}>
-                                            Show {Math.min(PAGE, shown.length - limit)} more
-                                        </button>
-                                    </div>
-                                )}
+                                {paged.pager}
                             </>
                         )}
                     </div>

@@ -10,6 +10,7 @@ import ScaleLoader from "react-spinners/ScaleLoader";
 import { css } from "@emotion/react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import usePagedList from "../usePagedList";
 
 function Transactions() {
     const { id } = useParams();
@@ -22,6 +23,7 @@ function Transactions() {
     const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
     let [loading, setLoading] = useState(false);
     const [transactions, setTransactions] = useState([]);
+    const paged = usePagedList(transactions);
     const [balance, setBalance] = useState(0);
 
     const {
@@ -208,7 +210,7 @@ function Transactions() {
                                                     <td colSpan="6" style={{ padding: "2rem", textAlign: "center", color: "#9ca3af" }}>No transactions found for this user.</td>
                                                 </tr>
                                             ) : (
-                                                transactions.map((tx) => (
+                                                paged.rows.map((tx) => (
                                                     <tr key={tx.WalletID || tx.ID} style={{ borderBottom: "1px solid #f3f4f6", fontSize: "0.85rem" }}>
                                                         <td style={{ padding: "8px", fontWeight: "600" }}>#{tx.WalletID || tx.ID}</td>
                                                         <td style={{ padding: "8px" }}>
@@ -242,6 +244,7 @@ function Transactions() {
                                             )}
                                         </tbody>
                                     </table>
+                                    {paged.pager}
                                 </div>
                             )}
                         </div>

@@ -8,10 +8,12 @@ import { Services } from "../../../Services";
 import { toast } from "react-toastify";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { useNavigate } from "react-router-dom";
+import usePagedList from "../usePagedList";
 
 function AbandonedCarts() {
     const navigate = useNavigate();
     const [cartLogs, setCartLogs] = useState([]);
+    const paged = usePagedList(cartLogs);
     const [loading, setLoading] = useState(true);
     const [detailModal, setDetailModal] = useState(false);
     const [selectedCart, setSelectedCart] = useState(null);
@@ -209,7 +211,7 @@ function AbandonedCarts() {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            cartLogs.map((log) => (
+                                            paged.rows.map((log) => (
                                                 <tr key={log.LogID}>
                                                     <td style={{ paddingLeft: "16px" }}>
                                                         <span className="fw-bold text-dark">#{log.LogID}</span>
@@ -266,6 +268,7 @@ function AbandonedCarts() {
                                         )}
                                     </tbody>
                                 </table>
+                                {paged.pager}
                             </div>
                         </div>
                     )}

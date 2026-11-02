@@ -8,9 +8,11 @@ import { toast } from "react-toastify";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { FaPlus, FaTrash, FaEdit, FaToggleOn, FaToggleOff } from "react-icons/fa";
 import { dayStartToUtc, dayEndToUtc, toDateInput } from "../../../dateInputs";
+import usePagedList from "../usePagedList";
 
 function CartOffers() {
     const [offers, setOffers] = useState([]);
+    const paged = usePagedList(offers);
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState(false);
     const [editingOffer, setEditingOffer] = useState(null);
@@ -217,7 +219,7 @@ function CartOffers() {
                                             </td>
                                         </tr>
                                     ) : (
-                                        offers.map((o) => (
+                                        paged.rows.map((o) => (
                                             <tr key={o.OfferID} style={{ borderBottom: "1px solid #f3f4f6" }}>
                                                 <td style={{ padding: "12px 16px", fontWeight: "600" }}>#{o.OfferID}</td>
                                                 <td style={{ padding: "12px 16px", fontWeight: "600", color: "#111827" }}>{o.OfferName}</td>
@@ -275,6 +277,7 @@ function CartOffers() {
                                     )}
                                 </tbody>
                             </table>
+                            {paged.pager}
                         </div>
                     )}
 

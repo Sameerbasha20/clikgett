@@ -7,6 +7,7 @@ import { Services } from "../../../Services";
 import { toast } from "react-toastify";
 import ScaleLoader from "react-spinners/ScaleLoader";
 import { useNavigate } from "react-router-dom";
+import usePagedList from "../usePagedList";
 import { 
     FaSearch, 
     FaUsers, 
@@ -23,6 +24,7 @@ function SearchAnalytics() {
     const navigate = useNavigate();
     const [keywords, setKeywords] = useState([]);
     const [filteredKeywords, setFilteredKeywords] = useState([]);
+    const pagedKeywords = usePagedList(filteredKeywords);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState("frequent"); // 'frequent', 'zero_results', 'recent', 'all'
@@ -31,6 +33,7 @@ function SearchAnalytics() {
     const [detailModal, setDetailModal] = useState(false);
     const [modalKeyword, setModalKeyword] = useState("");
     const [customerSearches, setCustomerSearches] = useState([]);
+    const pagedSearches = usePagedList(customerSearches);
     const [modalLoading, setModalLoading] = useState(false);
 
     const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
@@ -270,7 +273,7 @@ function SearchAnalytics() {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            filteredKeywords.map((item, index) => {
+                                            pagedKeywords.rows.map((item, index) => {
                                                 const keywordStr = item.SearchTerm || item.Keyword || "N/A";
                                                 const searchCount = parseInt(item.SearchCount, 10) || 0;
                                                 const avgRes = Math.round(parseFloat(item.AvgResultCount || 0));
@@ -280,7 +283,7 @@ function SearchAnalytics() {
                                                     <tr key={index}>
                                                         <td style={{ paddingLeft: "16px" }}>
                                                             <span className="badge bg-light text-secondary border">
-                                                                #{item.Rank || index + 1}
+                                                                #{item.Rank || pagedKeywords.offset + index + 1}
                                                             </span>
                                                         </td>
                                                         <td style={{ overflow: "hidden" }}>
@@ -361,6 +364,7 @@ function SearchAnalytics() {
                                         )}
                                     </tbody>
                                 </table>
+                                {pagedKeywords.pager}
                             </div>
                         </div>
                     )}
@@ -415,7 +419,7 @@ function SearchAnalytics() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {customerSearches.map((s, idx) => (
+                                                {pagedSearches.rows.map((s, idx) => (
                                                     <tr key={idx}>
                                                         <td>
                                                             <strong>{s.FirstName} {s.LastName}</strong>
@@ -439,6 +443,7 @@ function SearchAnalytics() {
                                                 ))}
                                             </tbody>
                                         </table>
+                                        {pagedSearches.pager}
                                     </div>
                                 )}
                             </div>
