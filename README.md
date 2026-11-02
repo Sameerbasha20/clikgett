@@ -40,5 +40,6 @@ clikgett-code/
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | Deploying, rolling back, secrets, daily checks |
 | [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) | Running and testing everything on your own computer |
 | [docs/audit/AUDIT_REPORT.md](docs/audit/AUDIT_REPORT.md) | Security and code audit, with evidence |
+| [docs/testing/TEST_REPORT.md](docs/testing/TEST_REPORT.md) | Test results, defects and what is not tested |
 
 Never commit `.env` files, keys or signing files.

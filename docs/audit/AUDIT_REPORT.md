@@ -15,7 +15,7 @@ spend the same wallet balance several times, and a deactivated admin or rider ke
 |---|---:|---|
 | Critical | 1 | Direct money loss; fix before release |
 | High | 7 | Serious risk; fix before or right after release, as marked |
-| Medium | 10 | Fix in the first weeks after release |
+| Medium | 11 | Fix in the first weeks after release |
 | Low | 6 | Clean-up |
 
 Each finding says how it was checked:
@@ -128,6 +128,7 @@ once the new backend's database access is confirmed, and limit 22 to known addre
 | M8 | **All admins have full power.** There is one admin role. Sign-ins are logged, but other admin actions are not. | Code | Add roles and an action log |
 | M9 | **Weak request limits.** No security headers (`helmet`). JSON bodies up to 15 MB on a server with 914 MB of memory and no swap. | Code, Seen | Add `helmet`; lower the limit except on upload routes |
 | M10 | **Data quality on live.** 8 customers' balances differ from their ledger, and one account holds ₹3,39,204 (client report kept outside git: `Handover\wallet-mismatches-2026-11-02.csv`). Duplicate mobile numbers block the unique rule. Foreign keys are mostly absent. Near-duplicate tables exist (`Cart`/`Carts`, `Sales`/`sales`). | Tested, Seen | Client decides on balances; merge accounts; clean up in a later release |
+| M11 | **Rider delay overwrites the admin's ETA change.** Admin +10 then rider +15 gives +15, not +25, and a smaller second report can move the ETA earlier (`reportDelay` logic, `controllers/DeliveryOperations.js`). Found by `test_eta_sync_e2e`; see `docs/testing/TEST_REPORT.md`. | Tested | Add each delay to the current ETA |
 
 ## Low
 
