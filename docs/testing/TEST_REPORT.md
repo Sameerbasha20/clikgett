@@ -14,7 +14,7 @@ and iOS are not done.
 | Test set | Files | Result |
 |---|---:|---|
 | Backend, regular (`npm test`) | 18 | 18 pass, 389 counted checks plus the ETA suite |
-| Backend, older suites | 12 | 2 pass, 10 could not give a result |
+| Backend, older suites | 13 | 3 pass, 10 could not give a result |
 | Admin website | 2 | 2 of 2 pass |
 | Customer app (Flutter) | 6 | 34 of 34 pass |
 | Delivery app | 2 | Not run; default template tests only |
