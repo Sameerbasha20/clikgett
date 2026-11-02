@@ -5,6 +5,31 @@ const CommonController = require('./CommonController');
 
 const pool = require('../utils/db');
 
+const PRODUCT_IMAGES = 'http://clikgett-media.local/Products/';
+const DEFAULT_LIMIT = 2;
+
+// Products for a sale with their per-order limit: [{ ProductID, MaxQtyPerOrder }].
+// Accepts Items (with limits) or the older ProductIDs list.
+const saleRows = (saleId, body) => {
+    const items = Array.isArray(body.Items) ? body.Items
+        : Array.isArray(body.ProductIDs) ? body.ProductIDs.map((ProductID) => ({ ProductID })) : null;
+    if (!items) return null;
+    const seen = new Set();
+    return items
+        .map((i) => ({ id: parseInt(i.ProductID, 10), limit: parseInt(i.MaxQtyPerOrder, 10) }))
+        .filter((i) => i.id > 0 && !seen.has(i.id) && seen.add(i.id))
+        .map((i) => [saleId, i.id, null, Number.isFinite(i.limit) && i.limit >= 0 ? i.limit : DEFAULT_LIMIT]);
+};
+const firstImage = (raw) => {
+    try {
+        const list = typeof raw === 'string' ? JSON.parse(raw) : (raw || []);
+        const img = list.find(Boolean);
+        return img ? (String(img).startsWith('http') ? img : PRODUCT_IMAGES + img) : null;
+    } catch (e) {
+        return null;
+    }
+};
+
 const SalesController = {
     getActiveSales: async (req, res) => {
         try {
@@ -59,38 +84,28 @@ const SalesController = {
                         continue;
                     }
 
-                    // Apply Sale pricing to variants according to PricingEngine rules
+                    // Sale prices come from ProductDeals (via getproducts): the discount is taken
+                    // off the MRP and counts only below the offer price, as at checkout. Products
+                    // the sale does not make cheaper are left out of the rail.
                     const discVal = parseFloat(sale.DiscountValue || 0);
-                    const processedProducts = products.map(prod => {
-                        if (prod.ProductVariants && prod.ProductVariants.length > 0) {
-                            prod.ProductVariants.forEach(variant => {
-                                const offerPrice = parseFloat(variant.OfferPrice || variant.Price || 0);
-                                const originalPrice = parseFloat(variant.Price || variant.OfferPrice || 0);
-                                let discountAmount = 0;
-                                if (sale.DiscountType === 'percentage') {
-                                    discountAmount = (offerPrice * discVal) / 100;
-                                } else if (sale.DiscountType === 'flat') {
-                                    discountAmount = discVal;
-                                }
-                                const saleUnitPrice = Math.max(0, parseFloat((offerPrice - discountAmount).toFixed(2)));
-                                const discountPercent = originalPrice > 0 
-                                    ? Math.round(((originalPrice - saleUnitPrice) / originalPrice) * 100)
-                                    : (sale.DiscountType === 'percentage' ? Math.round(discVal) : 0);
-
-                                variant.SalePrice = saleUnitPrice;
-                                variant.FlashSalePrice = saleUnitPrice;
-                                variant.SaleDiscount = discountAmount;
-                                variant.DiscountPercent = discountPercent;
-                                variant.ActiveSale = {
-                                    SaleID: sale.SaleID,
-                                    SaleName: sale.SaleName,
-                                    DiscountType: sale.DiscountType,
-                                    DiscountValue: sale.DiscountValue
-                                };
-                            });
-                            // Also set at top-level product for convenience
-                            const primaryVar = prod.ProductVariants[0];
-                            prod.SalePrice = primaryVar.SalePrice;
+                    const processedProducts = products.filter((prod) => prod.Deal).map((prod) => {
+                        (prod.ProductVariants || []).forEach((variant) => {
+                            const mrp = parseFloat(variant.Price || variant.OfferPrice || 0);
+                            const offer = parseFloat(variant.OfferPrice || variant.Price || 0);
+                            const saleUnitPrice = variant.SalePrice != null ? parseFloat(variant.SalePrice) : offer;
+                            variant.FlashSalePrice = saleUnitPrice;
+                            variant.SaleDiscount = parseFloat((mrp - saleUnitPrice).toFixed(2));
+                            variant.DiscountPercent = mrp > 0 ? Math.round(((mrp - saleUnitPrice) / mrp) * 100) : 0;
+                            variant.ActiveSale = {
+                                SaleID: sale.SaleID,
+                                SaleName: sale.SaleName,
+                                DiscountType: sale.DiscountType,
+                                DiscountValue: discVal
+                            };
+                        });
+                        const primaryVar = (prod.ProductVariants || [])[0];
+                        if (primaryVar) {
+                            prod.SalePrice = primaryVar.SalePrice != null ? primaryVar.SalePrice : primaryVar.OfferPrice;
                             prod.FlashSalePrice = primaryVar.FlashSalePrice;
                             prod.Price = primaryVar.Price;
                             prod.OfferPrice = primaryVar.OfferPrice;
@@ -99,6 +114,7 @@ const SalesController = {
                         }
                         return prod;
                     });
+                    if (!processedProducts.length) continue;
 
                     resultSales.push({
                         SaleID: sale.SaleID,
@@ -159,8 +175,11 @@ const SalesController = {
             }
 
             const itemsQuery = `
-                SELECT si.SaleItemID, si.SaleID, si.ProductID, si.CategoryID,
-                       p.ProductName, p.ImageUrl AS ProductImage
+                SELECT si.SaleItemID, si.SaleID, si.ProductID, si.CategoryID, si.MaxQtyPerOrder,
+                       p.ProductName, p.ProductImages,
+                       (SELECT pv.Price FROM ProductVariants pv WHERE pv.ProductID = si.ProductID AND pv.status = 1 ORDER BY pv.VariantID LIMIT 1) AS MRP,
+                       (SELECT pv.OfferPrice FROM ProductVariants pv WHERE pv.ProductID = si.ProductID AND pv.status = 1 ORDER BY pv.VariantID LIMIT 1) AS OfferPrice,
+                       (SELECT CONCAT(pv.metricvalue, ' ', pv.metrictype) FROM ProductVariants pv WHERE pv.ProductID = si.ProductID AND pv.status = 1 ORDER BY pv.VariantID LIMIT 1) AS Unit
                 FROM SaleItems si
                 LEFT JOIN Products p ON si.ProductID = p.ProductID
                 WHERE si.SaleID = ?
@@ -173,7 +192,7 @@ const SalesController = {
                 return res.json({
                     Status: 1,
                     Sale: sales[0],
-                    Items: items
+                    Items: items.map((i) => ({ ...i, ProductImages: undefined, Image: firstImage(i.ProductImages) }))
                 });
             });
         });
@@ -218,9 +237,9 @@ const SalesController = {
 
             const newSaleId = result.insertId;
 
-            if (Array.isArray(ProductIDs) && ProductIDs.length > 0) {
-                const itemValues = ProductIDs.map(pId => [newSaleId, pId, null]);
-                const insertItemsQuery = `INSERT INTO SaleItems (SaleID, ProductID, CategoryID) VALUES ?`;
+            const itemValues = saleRows(newSaleId, req.body) || [];
+            if (itemValues.length > 0) {
+                const insertItemsQuery = `INSERT INTO SaleItems (SaleID, ProductID, CategoryID, MaxQtyPerOrder) VALUES ?`;
                 pool.query(insertItemsQuery, [itemValues], (itemErr) => {
                     if (itemErr) {
                         console.error('Error adding products to sale:', itemErr);
@@ -267,7 +286,14 @@ const SalesController = {
                 console.error('Error updating sale:', err);
                 return res.status(500).json({ Status: 0, Message: 'Error updating sale' });
             }
-            return res.json({ Status: 1, Message: 'Sale updated successfully' });
+            // A product list in the request replaces the sale's products.
+            const rows = saleRows(SaleID, req.body);
+            if (!rows) return res.json({ Status: 1, Message: 'Sale updated successfully' });
+            pool.query('DELETE FROM SaleItems WHERE SaleID = ?', [SaleID], (delErr) => {
+                if (delErr || !rows.length) return res.json({ Status: delErr ? 0 : 1, Message: delErr ? 'Error updating products' : 'Sale updated successfully' });
+                pool.query('INSERT INTO SaleItems (SaleID, ProductID, CategoryID, MaxQtyPerOrder) VALUES ?', [rows], (insErr) => (
+                    res.json({ Status: insErr ? 0 : 1, Message: insErr ? 'Error updating products' : 'Sale updated successfully' })));
+            });
         });
     },
 
@@ -290,13 +316,12 @@ const SalesController = {
     },
 
     addSaleItems: (req, res) => {
-        const { SaleID, ProductIDs } = req.body;
-        if (!SaleID || !Array.isArray(ProductIDs) || ProductIDs.length === 0) {
-            return res.status(400).json({ Status: 0, Message: 'SaleID and ProductIDs array are required' });
+        const { SaleID } = req.body;
+        const itemValues = SaleID ? saleRows(SaleID, req.body) : null;
+        if (!itemValues || itemValues.length === 0) {
+            return res.status(400).json({ Status: 0, Message: 'SaleID and products are required' });
         }
-
-        const itemValues = ProductIDs.map(pId => [SaleID, pId, null]);
-        const insertQuery = `INSERT INTO SaleItems (SaleID, ProductID, CategoryID) VALUES ?`;
+        const insertQuery = `INSERT INTO SaleItems (SaleID, ProductID, CategoryID, MaxQtyPerOrder) VALUES ?`;
         pool.query(insertQuery, [itemValues], (err, result) => {
             if (err) {
                 console.error('Error adding sale items:', err);
@@ -304,6 +329,36 @@ const SalesController = {
             }
             return res.json({ Status: 1, Message: 'Items added to sale successfully', AddedCount: result.affectedRows });
         });
+    },
+
+    // Products to pick from when building a sale: photo, unit, MRP and offer price.
+    saleCatalog: (req, res) => {
+        pool.query(
+            `SELECT p.ProductID, p.ProductName, p.ProductImages, v.VariantID, v.Price AS MRP, v.OfferPrice,
+                    CONCAT(v.metricvalue, ' ', v.metrictype) AS Unit, v.AvailableQty
+               FROM Products p
+               JOIN ProductVariants v ON v.VariantID = (SELECT MIN(v2.VariantID) FROM ProductVariants v2 WHERE v2.ProductID = p.ProductID AND v2.status = 1)
+              WHERE p.Status = 1
+              ORDER BY p.ProductName`,
+            (err, rows) => {
+                if (err) {
+                    console.error('Error loading sale catalogue:', err);
+                    return res.status(500).json({ Status: 0, Message: 'Could not load products' });
+                }
+                return res.json({ Status: 1, Products: rows.map((r) => ({ ...r, ProductImages: undefined, Image: firstImage(r.ProductImages) })) });
+            });
+    },
+
+    // Units per order at the sale price for one product in a sale (0 = no limit).
+    setItemLimit: (req, res) => {
+        const id = parseInt(req.body && req.body.SaleItemID, 10);
+        const limit = parseInt(req.body && req.body.MaxQtyPerOrder, 10);
+        if (!(id > 0) || !(limit >= 0 && limit <= 100)) {
+            return res.status(400).json({ Status: 0, Message: 'Limit must be between 0 and 100 (0 = no limit)' });
+        }
+        pool.query('UPDATE SaleItems SET MaxQtyPerOrder = ? WHERE SaleItemID = ?', [limit, id], (err, r) => (
+            err ? res.status(500).json({ Status: 0, Message: 'Could not save the limit' })
+                : res.json({ Status: r.affectedRows ? 1 : 0, Message: r.affectedRows ? 'Limit saved' : 'Sale product not found' })));
     },
 
     removeSaleItem: (req, res) => {

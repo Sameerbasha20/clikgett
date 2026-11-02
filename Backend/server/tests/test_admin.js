@@ -104,15 +104,15 @@ const check = (name, ok, detail = '') => {
         check('bulk deals list products with bulk tiers', r.json && r.json.Status === 1 && r.json.Products.every((p) =>
             (p.BulkTiers && p.BulkTiers.length) || (p.ProductVariants || []).some((v) => parseFloat(v.Buy2Price) > 0)));
 
-        const [prod] = await q(`SELECT V.ProductID, V.OfferPrice FROM ProductVariants V JOIN Products P ON P.ProductID = V.ProductID
-                                 WHERE V.status = 1 AND P.Status = 1 AND V.OfferPrice >= 20 AND V.AvailableQty > 0 LIMIT 1`);
+        const [prod] = await q(`SELECT V.ProductID, V.Price, V.OfferPrice FROM ProductVariants V JOIN Products P ON P.ProductID = V.ProductID
+                                 WHERE V.status = 1 AND P.Status = 1 AND V.OfferPrice >= 20 AND V.Price * 0.9 < V.OfferPrice - 0.5 AND V.AvailableQty > 0 LIMIT 1`);
         const sale = await q(`INSERT INTO Sales (SaleName, Description, DiscountType, DiscountValue, StartDate, EndDate, Status, CreatedAt)
                               VALUES ('TEST DEAL', 'automated test', 'percentage', 10, NOW() - INTERVAL 1 HOUR, NOW() + INTERVAL 1 HOUR, 1, NOW())`);
         tempSaleId = sale.insertId;
         await q('INSERT INTO SaleItems (SaleID, ProductID, CreatedAt) VALUES (?, ?, NOW())', [tempSaleId, prod.ProductID]);
         r = await call('GET', `/products/detail/${prod.ProductID}`);
         const detail = r.json && r.json.Products;
-        const expected = Math.round(parseFloat(prod.OfferPrice) * 0.9 * 100) / 100;
+        const expected = Math.round(parseFloat(prod.Price) * 0.9 * 100) / 100; // 10% off the MRP
         check('product shows the running deal and its sale price',
             detail && detail.Deal && detail.Deal.SaleName === 'TEST DEAL' && detail.ProductVariants.some((v) => Math.abs(v.SalePrice - expected) < 0.01),
             detail && JSON.stringify(detail.ProductVariants.map((v) => v.SalePrice)));

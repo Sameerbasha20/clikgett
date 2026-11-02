@@ -12,13 +12,15 @@ const queryAsync = (sql, params = []) => new Promise((resolve, reject) => {
     pool.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
 });
 
-const salePrice = (offerPrice, sale) => {
-    const base = parseFloat(offerPrice) || 0;
+// Flash-sale price: the discount comes off the MRP, and counts only below the offer price.
+const salePrice = (mrp, offerPrice, sale) => {
+    const offer = parseFloat(offerPrice) || 0;
+    const base = parseFloat(mrp) || offer;
     const value = parseFloat(sale.DiscountValue) || 0;
     if (!(base > 0) || !(value > 0)) return null;
     const discount = sale.DiscountType === 'percentage' ? (base * value) / 100 : sale.DiscountType === 'flat' ? value : 0;
     const price = Math.max(0, Math.round((base - discount) * 100) / 100);
-    return price < base ? price : null;
+    return price < (offer || base) ? price : null;
 };
 
 async function attachDeals(products) {
@@ -27,7 +29,7 @@ async function attachDeals(products) {
     if (!ids.length) return list;
     const [sales, tiers] = await Promise.all([
         queryAsync(
-            `SELECT s.SaleName, s.DiscountType, s.DiscountValue, s.EndDate, si.ProductID
+            `SELECT s.SaleName, s.DiscountType, s.DiscountValue, s.EndDate, si.ProductID, si.MaxQtyPerOrder
                FROM Sales s JOIN SaleItems si ON si.SaleID = s.SaleID
               WHERE si.ProductID IN (?) AND s.Status = 1 AND s.StartDate <= NOW() AND s.EndDate >= NOW()
               ORDER BY s.CreatedAt DESC`,
@@ -47,11 +49,11 @@ async function attachDeals(products) {
         if (sale) {
             let any = false;
             (p.ProductVariants || []).forEach((v) => {
-                const price = salePrice(v.OfferPrice || v.Price, sale);
+                const price = salePrice(v.Price, v.OfferPrice || v.Price, sale);
                 v.SalePrice = price;
                 if (price != null) any = true;
             });
-            if (any) p.Deal = { SaleName: sale.SaleName, EndDate: sale.EndDate };
+            if (any) p.Deal = { SaleName: sale.SaleName, EndDate: sale.EndDate, MaxQtyPerOrder: parseInt(sale.MaxQtyPerOrder, 10) || null };
         }
         p.BulkTiers = tiers
             .filter((t) => t.ProductID == p.ProductID)

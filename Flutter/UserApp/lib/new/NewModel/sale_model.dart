@@ -112,6 +112,8 @@ class SaleProduct {
   final double? saleDiscount;
   final List<String>? productImages;
   final List<SaleProductVariant>? productVariants;
+  /// The product as the server sent it (same shape as the home products).
+  final Map<String, dynamic>? raw;
 
   SaleProduct({
     this.productId,
@@ -129,6 +131,7 @@ class SaleProduct {
     this.saleDiscount,
     this.productImages,
     this.productVariants,
+    this.raw,
   });
 
   factory SaleProduct.fromJson(Map<String, dynamic> json) => SaleProduct(
@@ -162,6 +165,7 @@ class SaleProduct {
             ? []
             : List<SaleProductVariant>.from(json["ProductVariants"]!
                 .map((x) => SaleProductVariant.fromJson(x))),
+        raw: Map<String, dynamic>.from(json),
       );
 
   Map<String, dynamic> toJson() => {

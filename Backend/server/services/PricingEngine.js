@@ -109,7 +109,7 @@ const PricingEngine = {
         if (!pIds.length) return [];
         const sql = `
             SELECT s.SaleID, s.SaleName, s.DiscountType, s.DiscountValue,
-                   s.StartDate, s.EndDate, s.Status, si.ProductID, si.SaleItemID
+                   s.StartDate, s.EndDate, s.Status, si.ProductID, si.SaleItemID, si.MaxQtyPerOrder
             FROM Sales s
             JOIN SaleItems si ON s.SaleID = si.SaleID
             WHERE si.ProductID IN (?)
@@ -155,18 +155,29 @@ const PricingEngine = {
         let flashSaleUnitPrice = offerPrice;
         let hasActiveSale = false;
 
+        // Flash sale: the discount is taken off the MRP, and only counts when it beats the
+        // offer price. Up to MaxQtyPerOrder units get the sale price; the rest the offer price.
+        let saleLimit = 0;
         if (activeSale && activeSale.Status == 1) {
             const discVal = parseFloat(activeSale.DiscountValue || 0);
             if (discVal > 0) {
                 if (activeSale.DiscountType === 'percentage') {
-                    flashSaleDiscount = (offerPrice * discVal) / 100;
+                    flashSaleDiscount = (basePrice * discVal) / 100;
                 } else if (activeSale.DiscountType === 'flat') {
                     flashSaleDiscount = discVal;
                 }
-                flashSaleUnitPrice = Math.max(0, parseFloat((offerPrice - flashSaleDiscount).toFixed(2)));
-                hasActiveSale = true;
+                const salePriceFromMrp = Math.max(0, parseFloat((basePrice - flashSaleDiscount).toFixed(2)));
+                if (salePriceFromMrp < offerPrice) {
+                    flashSaleUnitPrice = salePriceFromMrp;
+                    hasActiveSale = true;
+                    saleLimit = parseInt(activeSale.MaxQtyPerOrder, 10) || 0;
+                }
             }
         }
+        const saleLineTotal = (q) => {
+            const atSale = saleLimit > 0 ? Math.min(q, saleLimit) : q;
+            return parseFloat((flashSaleUnitPrice * atSale + offerPrice * (q - atSale)).toFixed(2));
+        };
 
         // Check product & category restrictions for this item
         const catId = itemCategoryId || item.CategoryID;
@@ -295,13 +306,13 @@ const PricingEngine = {
         else if (finalLineTotal === 0) {
             if (hasActiveSale && hasActiveMemberPrice) {
                 // If both Flash Sale and Membership Pricing exist, customer receives the lowest price
-                if (memberUnitPrice <= flashSaleUnitPrice) {
+                if (memberUnitPrice * qty <= saleLineTotal(qty)) {
                     finalLineTotal = parseFloat((memberUnitPrice * qty).toFixed(2));
                     unitPrice = memberUnitPrice;
                     appliedRule = `Membership Exclusive Price (${(memberPriceConfig && memberPriceConfig.PlanName) || (userMembership && userMembership.PlanName) || 'Member'}: ₹${memberUnitPrice.toFixed(2)})`;
                 } else {
-                    finalLineTotal = parseFloat((flashSaleUnitPrice * qty).toFixed(2));
-                    unitPrice = flashSaleUnitPrice;
+                    finalLineTotal = saleLineTotal(qty);
+                    unitPrice = parseFloat((finalLineTotal / qty).toFixed(2));
                     appliedRule = `Flash Sale: ${activeSale.SaleName} (${activeSale.DiscountType === 'percentage' ? activeSale.DiscountValue + '%' : '₹' + activeSale.DiscountValue} OFF)`;
                 }
             } else if (hasActiveMemberPrice) {
@@ -309,8 +320,8 @@ const PricingEngine = {
                 unitPrice = memberUnitPrice;
                 appliedRule = `Membership Exclusive Price (${(memberPriceConfig && memberPriceConfig.PlanName) || (userMembership && userMembership.PlanName) || 'Member'}: ₹${memberUnitPrice.toFixed(2)})`;
             } else if (hasActiveSale) {
-                finalLineTotal = parseFloat((flashSaleUnitPrice * qty).toFixed(2));
-                unitPrice = flashSaleUnitPrice;
+                finalLineTotal = saleLineTotal(qty);
+                unitPrice = parseFloat((finalLineTotal / qty).toFixed(2));
                 appliedRule = `Flash Sale: ${activeSale.SaleName} (${activeSale.DiscountType === 'percentage' ? activeSale.DiscountValue + '%' : '₹' + activeSale.DiscountValue} OFF)`;
             } else {
                 finalLineTotal = offerPrice * qty;
@@ -320,9 +331,9 @@ const PricingEngine = {
         }
 
         // If Buy More / Buy 2 evaluated, but Flash Sale offers an even lower price, apply Flash Sale
-        if (hasActiveSale && (flashSaleUnitPrice * qty) < finalLineTotal) {
-            finalLineTotal = parseFloat((flashSaleUnitPrice * qty).toFixed(2));
-            unitPrice = flashSaleUnitPrice;
+        if (hasActiveSale && saleLineTotal(qty) < finalLineTotal) {
+            finalLineTotal = saleLineTotal(qty);
+            unitPrice = parseFloat((finalLineTotal / qty).toFixed(2));
             appliedRule = `Flash Sale: ${activeSale.SaleName} (${activeSale.DiscountType === 'percentage' ? activeSale.DiscountValue + '%' : '₹' + activeSale.DiscountValue} OFF)`;
         }
 

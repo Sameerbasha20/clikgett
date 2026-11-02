@@ -573,6 +573,8 @@ export const Services = {
     deleteSale: (method = "POST", body, token) => httpcall("sales/delete", method, body, token),
     addSaleProducts: (method = "POST", body, token) => httpcall("sales/additems", method, body, token),
     removeSaleProduct: (method = "POST", body, token) => httpcall("sales/removeitem", method, body, token),
+    getSaleCatalog: (method = "GET", body = null, token) => httpcall("sales/catalog", method, body, token),
+    setSaleItemLimit: (method = "POST", body, token) => httpcall("sales/item-limit", method, body, token),
     getProductSale: (method = "GET", body = null, token, productId) => httpcall(`sales/product/${productId}`, method, body, token),
     assignProductSale: (method = "POST", body, token) => httpcall("sales/assign-product", method, body, token),
     removeProductSale: (method = "POST", body, token) => httpcall("sales/remove-product", method, body, token),

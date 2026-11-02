@@ -441,13 +441,19 @@ double sellingPriceOf(BestItem product, ProductVariant? v) {
 class ProductDeal {
   final String name;
   final DateTime? endsAt;
+  /// Units per order at the sale price (null = no limit); more cost the offer price.
+  final int? maxQtyPerOrder;
 
-  ProductDeal({required this.name, this.endsAt});
+  ProductDeal({required this.name, this.endsAt, this.maxQtyPerOrder});
 
-  factory ProductDeal.fromJson(Map<String, dynamic> j) => ProductDeal(
-        name: '${j["SaleName"] ?? ''}',
-        endsAt: serverDate(j["EndDate"]),
-      );
+  factory ProductDeal.fromJson(Map<String, dynamic> j) {
+    final limit = j["MaxQtyPerOrder"] is num ? (j["MaxQtyPerOrder"] as num).toInt() : int.tryParse('${j["MaxQtyPerOrder"] ?? ''}');
+    return ProductDeal(
+      name: '${j["SaleName"] ?? ''}',
+      endsAt: serverDate(j["EndDate"]),
+      maxQtyPerOrder: limit != null && limit > 0 ? limit : null,
+    );
+  }
 }
 
 class BulkTier {

@@ -14,6 +14,8 @@ router
     .post('/delete', util.authenticate.adminAuthenticate, SalesController.deleteSale)
     .delete('/:id', util.authenticate.adminAuthenticate, SalesController.deleteSale)
     .post('/additems', util.authenticate.adminAuthenticate, SalesController.addSaleItems)
+    .get('/catalog', util.authenticate.adminAuthenticate, SalesController.saleCatalog)
+    .post('/item-limit', util.authenticate.adminAuthenticate, SalesController.setItemLimit)
     .post('/removeitem', util.authenticate.adminAuthenticate, SalesController.removeSaleItem)
     .get('/product/:productId', util.authenticate.adminAuthenticate, SalesController.getProductSale)
     .post('/assign-product', util.authenticate.adminAuthenticate, SalesController.assignProductToSale)

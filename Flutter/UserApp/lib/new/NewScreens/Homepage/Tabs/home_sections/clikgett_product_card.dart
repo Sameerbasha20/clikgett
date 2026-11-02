@@ -419,7 +419,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                         child: memberPrice != null
                             ? const _MemberChip()
                             : dealPrice != null
-                                ? _DealChip(price: dealPrice, ends: _dealEnds)
+                                ? _DealChip(price: dealPrice, ends: _dealEnds, limit: widget.product.deal?.maxQtyPerOrder)
                                 : Text(bulkHint!,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -577,8 +577,9 @@ class _MemberChip extends StatelessWidget {
 class _DealChip extends StatelessWidget {
   final double price;
   final String ends;
+  final int? limit;
 
-  const _DealChip({required this.price, required this.ends});
+  const _DealChip({required this.price, required this.ends, this.limit});
 
   @override
   Widget build(BuildContext context) {
@@ -594,7 +595,7 @@ class _DealChip extends StatelessWidget {
           const Icon(Icons.bolt_rounded, size: 11, color: Colors.white),
           Flexible(
             child: Text(
-              '${money(price)} · $ends',
+              limit != null ? '${money(price)} · max $limit · $ends' : '${money(price)} · $ends',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(fontSize: 9.5, height: 1.6, fontWeight: FontWeight.w700, color: Colors.white),

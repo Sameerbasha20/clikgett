@@ -11,6 +11,43 @@ import ScaleLoader from "react-spinners/ScaleLoader";
 import { useNavigate } from "react-router-dom";
 import usePagedList from "../usePagedList";
 
+// Sale price for a product: the discount comes off the MRP and counts only below the offer price.
+const salePriceFor = (mrp, offer, type, value) => {
+    const m = parseFloat(mrp) || parseFloat(offer) || 0;
+    const o = parseFloat(offer) || m;
+    const v = parseFloat(value) || 0;
+    if (!(m > 0) || !(v > 0)) return null;
+    const price = Math.max(0, Math.round((m - (type === "percentage" ? (m * v) / 100 : v)) * 100) / 100);
+    return price < o ? price : null;
+};
+const rs = (n) => `₹${Number(n || 0).toFixed(Number(n || 0) % 1 ? 2 : 0)}`;
+
+// Photo, name, unit and the three prices of one product.
+function ProductLine({ prod, type, value }) {
+    const sale = salePriceFor(prod.MRP, prod.OfferPrice, type, value);
+    return (
+        <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
+            <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 6, background: "#f1f5f9", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {prod.Image
+                    ? <img src={prod.Image} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                    : <span style={{ fontSize: "0.65rem", color: "#94a3b8" }}>No photo</span>}
+            </div>
+            <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: "0.88rem" }}>{prod.ProductName || `Product #${prod.ProductID}`}</div>
+                <div style={{ fontSize: "0.78rem", color: "#64748b" }}>
+                    {prod.Unit ? `${prod.Unit} · ` : ""}MRP <s>{rs(prod.MRP)}</s> · Offer {rs(prod.OfferPrice)}
+                    {" · "}
+                    {value
+                        ? sale != null
+                            ? <strong style={{ color: "#15803d" }}>Sale {rs(sale)}</strong>
+                            : <strong style={{ color: "#b91c1c" }}>no saving: offer price is already lower</strong>
+                        : <span>enter a discount to see the sale price</span>}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function Sales() {
     const navigate = useNavigate();
     const [salesList, setSalesList] = useState([]);
@@ -32,6 +69,8 @@ function Sales() {
     const [endDate, setEndDate] = useState("");
     const [selectedProductIds, setSelectedProductIds] = useState([]);
     const [productSearch, setProductSearch] = useState("");
+    const [limits, setLimits] = useState({}); // ProductID -> units per order at the sale price
+    const [addSearch, setAddSearch] = useState("");
 
     const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
 
@@ -55,7 +94,7 @@ function Sales() {
     };
 
     const loadProducts = () => {
-        Services.getAllProducts("GET", null, token)
+        Services.getSaleCatalog("GET", null, token)
             .then((res) => {
                 if (res.Status === 1 && res.Products) {
                     setAvailableProducts(res.Products);
@@ -79,6 +118,7 @@ function Sales() {
         setEndDate("");
         setSelectedProductIds([]);
         setProductSearch("");
+        setLimits({});
     };
 
     const handleOpenCreate = () => {
@@ -102,7 +142,7 @@ function Sales() {
             // The picker shows IST; send the exact instant (UTC) so the server stores it correctly.
             StartDate: startDate ? new Date(startDate).toISOString() : startDate,
             EndDate: endDate ? new Date(endDate).toISOString() : endDate,
-            ProductIDs: selectedProductIds,
+            Items: selectedProductIds.map((id) => ({ ProductID: id, MaxQtyPerOrder: limits[id] === undefined ? 2 : limits[id] })),
             Status: 1
         };
 
@@ -330,27 +370,42 @@ function Sales() {
                                             <input
                                                 type="search"
                                                 className="form-control mb-2"
-                                                placeholder="Search products by name or SKU"
+                                                placeholder="Search products by name or ID"
                                                 value={productSearch}
                                                 onChange={(e) => setProductSearch(e.target.value)}
                                             />
                                             {selectedProductIds.length > 0 && (
-                                                <div className="d-flex flex-wrap gap-1 mb-2">
+                                                <div className="border rounded mb-2">
                                                     {selectedProductIds.map((id) => {
-                                                        const prod = availableProducts.find((p) => p.ProductID === id);
+                                                        const prod = availableProducts.find((p) => p.ProductID === id) || { ProductID: id };
                                                         return (
-                                                            <span key={id} className="badge bg-success d-inline-flex align-items-center" style={{ fontSize: "0.8rem" }}>
-                                                                {prod ? prod.ProductName : `#${id}`}
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn-close btn-close-white ms-1"
-                                                                    style={{ fontSize: "0.55rem" }}
-                                                                    aria-label="Remove"
-                                                                    onClick={() => setSelectedProductIds(selectedProductIds.filter((x) => x !== id))}
-                                                                />
-                                                            </span>
+                                                            <div key={id} className="d-flex align-items-center justify-content-between gap-2 px-3 py-2 border-bottom">
+                                                                <ProductLine prod={prod} type={discountType} value={discountValue} />
+                                                                <div className="d-flex align-items-center gap-2" style={{ flexShrink: 0 }}>
+                                                                    <label className="small text-muted m-0" htmlFor={`limit-${id}`}>Max per order</label>
+                                                                    <input
+                                                                        id={`limit-${id}`}
+                                                                        type="number"
+                                                                        min="0"
+                                                                        max="100"
+                                                                        className="form-control form-control-sm"
+                                                                        style={{ width: 70 }}
+                                                                        value={limits[id] === undefined ? 2 : limits[id]}
+                                                                        onChange={(e) => setLimits({ ...limits, [id]: e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value, 10) || 0) })}
+                                                                    />
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-sm btn-outline-danger"
+                                                                        aria-label="Remove"
+                                                                        onClick={() => setSelectedProductIds(selectedProductIds.filter((x) => x !== id))}
+                                                                    >
+                                                                        <FaTimes />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
                                                         );
                                                     })}
+                                                    <div className="px-3 py-1 small text-muted">Max per order: units a customer gets at the sale price in one order; more cost the offer price. 0 = no limit.</div>
                                                 </div>
                                             )}
                                             <div className="border rounded" style={{ maxHeight: "220px", overflowY: "auto" }}>
@@ -358,7 +413,7 @@ function Sales() {
                                                     const q = productSearch.trim().toLowerCase();
                                                     const matches = availableProducts.filter((prod) => !q ||
                                                         String(prod.ProductName || "").toLowerCase().includes(q) ||
-                                                        String(prod.SKU || prod.ProductID).toLowerCase().includes(q));
+                                                        String(prod.ProductID).includes(q));
                                                     if (!matches.length) return <div className="p-3 text-muted small">No products match "{productSearch}"</div>;
                                                     return matches.slice(0, 200).map((prod) => {
                                                         const checked = selectedProductIds.includes(prod.ProductID);
@@ -372,7 +427,7 @@ function Sales() {
                                                                         ? selectedProductIds.filter((x) => x !== prod.ProductID)
                                                                         : [...selectedProductIds, prod.ProductID])}
                                                                 />
-                                                                <span>{prod.ProductName} <span className="text-muted">(SKU: {prod.SKU || prod.ProductID})</span></span>
+                                                                <ProductLine prod={prod} type={discountType} value={discountValue} />
                                                             </label>
                                                         );
                                                     });
@@ -395,10 +450,10 @@ function Sales() {
             {/* Details Modal */}
             {detailsModal && selectedSale && (
                 <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-                    <div className="modal-dialog modal-md">
+                    <div className="modal-dialog modal-lg">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Products in "{selectedSale.SaleName}"</h5>
+                                <h5 className="modal-title">Products in "{selectedSale.SaleName}" ({selectedSale.DiscountType === "percentage" ? `${parseFloat(selectedSale.DiscountValue)}% off MRP` : `₹${parseFloat(selectedSale.DiscountValue)} off MRP`})</h5>
                                 <button type="button" className="btn-close" onClick={() => setDetailsModal(false)}></button>
                             </div>
                             <div className="modal-body">
@@ -407,11 +462,32 @@ function Sales() {
                                 ) : (
                                     <ul className="list-group">
                                         {saleItems.map((item) => (
-                                            <li key={item.SaleItemID} className="list-group-item d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <strong>{item.ProductName || `Product #${item.ProductID}`}</strong>
-                                                    <div className="text-muted small">ID: {item.ProductID}</div>
-                                                </div>
+                                            <li key={item.SaleItemID} className="list-group-item d-flex justify-content-between align-items-center gap-2">
+                                                <ProductLine prod={item} type={selectedSale.DiscountType} value={selectedSale.DiscountValue} />
+                                                <div className="d-flex align-items-center gap-2" style={{ flexShrink: 0 }}>
+                                                <label className="small text-muted m-0" htmlFor={`item-limit-${item.SaleItemID}`}>Max per order</label>
+                                                <input
+                                                    id={`item-limit-${item.SaleItemID}`}
+                                                    type="number"
+                                                    min="0"
+                                                    max="100"
+                                                    className="form-control form-control-sm"
+                                                    style={{ width: 70 }}
+                                                    defaultValue={item.MaxQtyPerOrder == null ? 0 : item.MaxQtyPerOrder}
+                                                    onBlur={(e) => {
+                                                        const value = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                                        if (value === (item.MaxQtyPerOrder || 0)) return;
+                                                        Services.setSaleItemLimit("POST", JSON.stringify({ SaleItemID: item.SaleItemID, MaxQtyPerOrder: value }), token)
+                                                            .then((res) => {
+                                                                if (res.Status === 1) {
+                                                                    toast.success("Limit saved");
+                                                                    handleViewDetails(selectedSale);
+                                                                } else {
+                                                                    toast.error(res.Message || "Could not save the limit");
+                                                                }
+                                                            });
+                                                    }}
+                                                />
                                                 <button 
                                                     className="btn btn-sm btn-outline-danger"
                                                     onClick={() => {
@@ -421,9 +497,50 @@ function Sales() {
                                                 >
                                                     <FaTimes />
                                                 </button>
+                                                </div>
                                             </li>
                                         ))}
                                     </ul>
+                                )}
+                            </div>
+                            <div className="px-3 pb-3">
+                                <label className="form-label fw-semibold">Add products to this sale</label>
+                                <input
+                                    type="search"
+                                    className="form-control form-control-sm mb-2"
+                                    placeholder="Search products by name or ID"
+                                    value={addSearch}
+                                    onChange={(e) => setAddSearch(e.target.value)}
+                                />
+                                {addSearch.trim().length >= 2 && (
+                                    <div className="border rounded" style={{ maxHeight: 240, overflowY: "auto" }}>
+                                        {availableProducts
+                                            .filter((p) => !saleItems.some((i) => i.ProductID === p.ProductID))
+                                            .filter((p) => String(p.ProductName || "").toLowerCase().includes(addSearch.trim().toLowerCase()) || String(p.ProductID).includes(addSearch.trim()))
+                                            .slice(0, 30)
+                                            .map((prod) => (
+                                                <div key={prod.ProductID} className="d-flex align-items-center justify-content-between gap-2 px-3 py-2 border-bottom">
+                                                    <ProductLine prod={prod} type={selectedSale.DiscountType} value={selectedSale.DiscountValue} />
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-primary"
+                                                        onClick={() => {
+                                                            Services.addSaleProducts("POST", JSON.stringify({ SaleID: selectedSale.SaleID, Items: [{ ProductID: prod.ProductID, MaxQtyPerOrder: 2 }] }), token)
+                                                                .then((res) => {
+                                                                    if (res.Status === 1) {
+                                                                        toast.success(`${prod.ProductName} added (max 2 per order)`);
+                                                                        handleViewDetails(selectedSale);
+                                                                    } else {
+                                                                        toast.error(res.Message || "Could not add the product");
+                                                                    }
+                                                                });
+                                                        }}
+                                                    >
+                                                        Add
+                                                    </button>
+                                                </div>
+                                            ))}
+                                    </div>
                                 )}
                             </div>
                             <div className="modal-footer">

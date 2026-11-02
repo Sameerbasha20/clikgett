@@ -140,11 +140,12 @@ async function copyRow(table, idColumn, id, overrides) {
         r = await call('POST', '/sales/assign-product', ADMIN, { SaleID: saleId, ProductID: productId });
         check('flash sale: admin assigns the product', r.json && r.json.Status === 1, r.json && r.json.Message);
         p = await detail();
+        // 20% off the MRP (100), not off the offer price (90).
         check('flash sale: customer product shows the deal and sale price',
-            p.Deal && near(variantOf(p).SalePrice, 72), `Deal=${JSON.stringify(p.Deal)} SalePrice=${variantOf(p).SalePrice}`);
+            p.Deal && near(variantOf(p).SalePrice, 80), `Deal=${JSON.stringify(p.Deal)} SalePrice=${variantOf(p).SalePrice}`);
         await setCart(1);
         b = await bill();
-        check('flash sale: cart charges the sale price', b && near(b.ItemsTotal, 72), b && b.ItemsTotal);
+        check('flash sale: cart charges the sale price', b && near(b.ItemsTotal, 80), b && b.ItemsTotal);
         r = await call('POST', '/sales/remove-product', ADMIN, { SaleID: saleId, ProductID: productId });
         b = await bill();
         check('flash sale: removing the product ends the discount', r.json && r.json.Status === 1 && b && near(b.ItemsTotal, 90), b && b.ItemsTotal);
