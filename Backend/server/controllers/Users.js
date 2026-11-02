@@ -41,11 +41,15 @@ const pool = require('../utils/db');
 
 
 
-// In-stock first, then best-selling (last 120 days), then newest.
-const POPULARITY_ORDER = `order by (select coalesce(max(pv.AvailableQty), 0) > 0 from ProductVariants pv where pv.ProductID = p.ProductID and pv.Status = 1) desc,
-    coalesce((select sum(oi.Quantity) from OrderItems oi inner join Orders o on o.OrderID = oi.OrderID
-              where oi.ProductID = p.ProductID and o.OrderStatus not in (3,4) and o.CreatedAt > NOW() - INTERVAL 120 DAY), 0) desc,
-    p.ProductID desc`;
+// In-stock first, then best-selling (last 120 days), then newest. Stock and sales are
+// worked out once per query (joined), not once per product: per product it took
+// seconds per home section as orders grew.
+const POPULARITY_JOIN = `left join (select ProductID, max(AvailableQty) as Stock from ProductVariants where Status = 1 group by ProductID) pop_stock
+        on pop_stock.ProductID = p.ProductID
+    left join (select oi.ProductID, sum(oi.Quantity) as Sold from OrderItems oi inner join Orders o on o.OrderID = oi.OrderID
+               where o.OrderStatus not in (3,4) and o.CreatedAt > NOW() - INTERVAL 120 DAY group by oi.ProductID) pop_sold
+        on pop_sold.ProductID = p.ProductID`;
+const POPULARITY_ORDER = `order by coalesce(pop_stock.Stock, 0) > 0 desc, coalesce(pop_sold.Sold, 0) desc, p.ProductID desc`;
 
 // Category images are stored as file names; the app needs full URLs.
 const categoryImageUrl = (file) => {
@@ -79,12 +83,12 @@ async function sectionProducts(section, userId, limit, related = {}) {
     if (type === 'category_shelf') {
         const catIds = ids(related.categories || await sectionCategories(section.HomeSectionID), 'CategoryID');
         if (!catIds) return [];
-        return CommonController.getproducts(`select p.* from Products p where p.Status=1 and p.CategoryID in (${catIds}) ${POPULARITY_ORDER} limit 0,${lim}`);
+        return CommonController.getproducts(`select p.* from Products p ${POPULARITY_JOIN} where p.Status=1 and p.CategoryID in (${catIds}) ${POPULARITY_ORDER} limit 0,${lim}`);
     }
     if (type === 'subcategory_shelf') {
         const subIds = ids(related.subcategories || await sectionSubcategories(section.HomeSectionID), 'SubCategoryID');
         if (!subIds) return [];
-        return CommonController.getproducts(`select p.* from Products p where p.Status=1 and p.SubCategoryID in (${subIds}) ${POPULARITY_ORDER} limit 0,${lim}`);
+        return CommonController.getproducts(`select p.* from Products p ${POPULARITY_JOIN} where p.Status=1 and p.SubCategoryID in (${subIds}) ${POPULARITY_ORDER} limit 0,${lim}`);
     }
     if (type === 'bestsellers') {
         return CommonController.getproducts(`select p.* from Products p
@@ -96,7 +100,7 @@ async function sectionProducts(section, userId, limit, related = {}) {
     if (type === 'recommendations') {
         // Best-sellers from the categories this customer buys from; otherwise overall best-sellers.
         if (uid > 0) {
-            const personal = await CommonController.getproducts(`select p.* from Products p where p.Status=1
+            const personal = await CommonController.getproducts(`select p.* from Products p ${POPULARITY_JOIN} where p.Status=1
                 and p.CategoryID in (select distinct p2.CategoryID from OrderItems oi2 inner join Orders o2 on o2.OrderID = oi2.OrderID
                                      inner join Products p2 on p2.ProductID = oi2.ProductID where o2.UserID = ${uid})
                 and p.ProductID not in (select oi3.ProductID from OrderItems oi3 inner join Orders o3 on o3.OrderID = oi3.OrderID where o3.UserID = ${uid})

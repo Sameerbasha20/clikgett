@@ -220,7 +220,7 @@ class HomeController extends GetxController {
                       },
                     _isLoading(false)
                   }
-                : {customToast(message: 'Error'), _isLoading(false)})
+                : {customToast(message: 'Could not load the store. Pull down to try again.'), _isLoading(false)})
             //     .catchError((onError) {
             //   debugPrint(onError.toString());
             //   customToast(message: onError.toString());
