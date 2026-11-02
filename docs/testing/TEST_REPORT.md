@@ -1,36 +1,35 @@
 # ClikGett test report
 
 **Date:** 2 November 2026
-**Code tested:** branch `dev`, commit `760e634`
-**Where:** local Docker system (backend on Node 22, MySQL), nothing on live
+**Code tested:** branch `dev`, commit `98a83b8`
+**Where:** local Docker system (backend on Node 22, MySQL) and the AWS copy of live data; nothing on live
 
 ## Result
 
-**All 15 regular backend suites pass (352 of 352 checks), along with the admin (2 of 2) and
-customer app (34 of 34) tests.** That does not make the system release-ready. The regular
-suites do not cover the wallet race, duplicate orders or deactivated accounts, which the
-audit proved are real. An older suite also found one real ETA bug. Real-phone testing, live
-Razorpay and iOS are not done.
+**All 18 regular backend suites pass, along with the admin (2 of 2) and customer app (34 of
+34) tests. The 4 defects found on 2 November are fixed and proven by new or repaired tests.**
+That does not make the system release-ready on its own: real-phone testing, live Razorpay
+and iOS are not done.
 
 | Test set | Files | Result |
 |---|---:|---|
-| Backend, regular (`npm test`) | 15 | 15 pass, 352 of 352 checks |
-| Backend, older suites | 15 | 3 pass, 1 real bug, 1 unexplained failure, 10 could not give a result |
+| Backend, regular (`npm test`) | 18 | 18 pass, 389 counted checks plus the ETA suite |
+| Backend, older suites | 12 | 2 pass, 10 could not give a result |
 | Admin website | 2 | 2 of 2 pass |
 | Customer app (Flutter) | 6 | 34 of 34 pass |
 | Delivery app | 2 | Not run; default template tests only |
 
 ## Defects found
 
-| # | Severity | Defect | Found by | Status |
-|---|---|---|---|---|
-| 1 | Critical | One wallet balance pays for several simultaneous orders: ₹800 paid for 3 ₹492 orders, ending at ₹-676 | Audit test | Open |
-| 2 | High | The same cart creates duplicate orders when submitted at the same moment | Audit test | Open |
-| 3 | High | Deactivated admins and riders can still use the API | Audit test | Open |
-| 4 | Medium | A rider's delay report overwrites the admin's ETA adjustment. Admin +10 then rider +15 gives +15, not +25. A smaller second report can move the ETA earlier. | `test_eta_sync_e2e` | Open |
-| 5 | To review | `test_delivery_assignment_workflow`, check 17: after a rider is reassigned, the old assignment's audit note came back empty | Older suite | Not diagnosed |
+| # | Severity | Defect | Found by | Status | Proof |
+|---|---|---|---|---|---|
+| 1 | Critical | One wallet balance paid for several simultaneous orders: ₹800 paid for 3 ₹492 orders, ending at ₹-676 | Audit test | **Fixed** | 3 orders at once: 1 accepted, wallet stays above zero and matches its history |
+| 2 | High | The same cart created duplicate orders, and stock could be oversold | Audit test | **Fixed** | One order per cart; the last units sell once, and the customer who misses out keeps their wallet and cart |
+| 3 | High | Deactivated admins and riders could still use the API, and admins could log in | Audit test | **Fixed** | Refused at login and on every request; active staff unaffected |
+| 4 | Medium | A rider's delay report overwrote the admin's ETA change: admin +10 then rider +15 gave +15, not +25 | `test_eta_sync_e2e` | **Fixed** | Gives +25. A rider's newer estimate still replaces their own earlier one, by design |
+| 5 | None | Not a defect. The reassignment note says "rider"; the old test looked for "driver". The audit trail was correct. | Older suite | Test corrected | 20 of 20 |
 
-Defects 1–4 are in `docs/audit/AUDIT_REPORT.md` as C1, H1, H2 and M11.
+Defects 1–4 are C1, H1, H2 and M11 in `docs/audit/AUDIT_REPORT.md`.
 
 ## Backend: regular suites
 
@@ -53,7 +52,10 @@ Run with `npm test`. All must pass before deploying.
 | `test_qa_bug_fixes` | 45 | Bugs fixed during QA, including photo uploads |
 | `test_doorstep_upi` | 15 | UPI at the door, with a stand-in for Razorpay |
 | `test_customer_rewards` | 27 | Comeback and birthday rewards, savings, typed photo orders, keywords |
-| **Total** | **352** | |
+| `test_order_safety` | 17 | Orders at the same moment, wallet, stock, deactivated staff |
+| `test_delivery_assignment_workflow` | 20 | Assigning and reassigning riders |
+| `test_eta_sync_e2e` | Passes | Admin and rider ETA changes combine |
+| **Total** | **389 + ETA suite** | |
 
 ## Backend: older suites
 
@@ -66,8 +68,6 @@ bridge from port 5000 to the backend's port 5001.
 | `test_photo_orders_e2e` | 17 of 17 | Pass |
 | `test_customer_requests_and_enquiries` | All passed | Pass |
 | `test_buymore_e2e` | 4 of 4 | Pass |
-| `test_eta_sync_e2e` | Stopped at check 2 | **Real bug**, defect 4 |
-| `test_delivery_assignment_workflow` | 19 of 20 | Unexplained, defect 5 |
 | `test_buymore_api` | Prints results only | No pass or fail checks |
 | `test_delay_and_serviceability` | 9 of 10 | Test out of date: it never opens the store, so the order is refused as closed |
 | `test_post_delivery_feedback_and_cashback` | 6 of 7 | Test out of date: the reward is one-time and the test account has used it |
@@ -92,6 +92,11 @@ the latest changes:
   that run.
 - The current live app's calls got the same answers from the old and new backends.
 - Database upgrade steps ran cleanly, and were repeated with timings on 2 November.
+
+Re-run there on 2 November with the fixes, against a temporary test server:
+`test_order_safety` 17 of 17, `test_eta_sync_e2e` pass, `test_checkout` 34 of 34,
+`test_order_flow` 23 of 23, `test_customer_rewards` 27 of 27, `test_doorstep_upi` 15 of 15.
+This matters because live stores wallet balances in a different number format from local.
 
 ## Not tested
 

@@ -1,31 +1,32 @@
 Suite	Group	Verdict	Passed	Total	Note
 test_account	regular	PASS	12	12	
 test_admin	regular	PASS	26	26	
+test_cashback_review	regular	PASS	17	17	
+test_checkout	regular	PASS	34	34	
+test_customer_rewards	regular	PASS	27	27	
+test_delivery_assignment_workflow	regular	PASS	20	20	test wording corrected
+test_doorstep_upi	regular	PASS	15	15	
+test_eta_sync_e2e	regular	PASS			fixed; no check count printed
+test_features	regular	PASS	16	16	
+test_login_security	regular	PASS	21	21	
+test_order_flow	regular	PASS	23	23	
+test_order_safety	regular	PASS	17	17	new
+test_print_store	regular	PASS	20	20	
+test_product_actions	regular	PASS	26	26	
+test_qa_bug_fixes	regular	PASS	45	45	
+test_refresh_tokens	regular	PASS	21	21	
+test_security_regressions	regular	PASS	28	28	
+test_stock_and_deals	regular	PASS	21	21
 test_admin_regression	older	CANNOT SIGN IN			needs the admin password in clear text
 test_audit_regressions	older	CANNOT SIGN IN	20	34	needs the admin password in clear text
 test_buymore_api	older	NO CHECKS			prints results only
 test_buymore_e2e	older	PASS	4	4	
-test_cashback_review	regular	PASS	17	17	
-test_checkout	regular	PASS	34	34	
 test_customer_requests_and_enquiries	older	PASS			via port bridge
-test_customer_rewards	regular	PASS	27	27	
 test_delay_and_serviceability	older	OUT OF DATE	9	10	never opens the store
-test_delivery_assignment_workflow	older	FAIL	19	20	via port bridge; check 17 not diagnosed
 test_demo_otp	older	CANNOT SIGN IN	5	10	needs the admin password in clear text
-test_doorstep_upi	regular	PASS	15	15	
-test_dynamic_home_sections	older	CANNOT SIGN IN			needs the admin password in clear text
-test_eta_sync_e2e	older	FAIL	1		real bug: rider delay overwrites admin adjustment
-test_features	regular	PASS	16	16	
+test_dynamic_home_sections	older	CANN288761749672OT SIGN IN			needs the admin password in clear text
 test_four_features	older	CANNOT SIGN IN	1	4	needs the admin password in clear text
-test_login_security	regular	PASS	21	21	
 test_order_910_real_session	older	CANNOT SIGN IN			needs the admin password in clear text
-test_order_flow	regular	PASS	23	23	
 test_photo_orders_e2e	older	PASS	17	17	via port bridge
 test_post_delivery_feedback_and_cashback	older	OUT OF DATE	6	7	one-time reward already used
-test_print_store	regular	PASS	20	20	
-test_product_actions	regular	PASS	26	26	
 test_product_requests_and_search	older	OUT OF DATE	2	3	stand-in database out of date
-test_qa_bug_fixes	regular	PASS	45	45	
-test_refresh_tokens	regular	PASS	21	21	
-test_security_regressions	regular	PASS	28	28	
-test_stock_and_deals	regular	PASS	21	21	

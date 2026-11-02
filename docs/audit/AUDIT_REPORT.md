@@ -1,21 +1,21 @@
 # ClikGett audit report
 
 **Date:** 2 November 2026
-**Code audited:** branch `dev`, commit `054f116`
+**Code audited:** branch `dev`, commit `054f116`. Fixes re-tested at `98a83b8`.
 **Covers:** backend API, admin website, customer app, delivery app, database, AWS setup
 
 ## Result
 
-**Not ready for release until the code fixes in the first table below are done.** The
+**Not ready for release until the open actions in the first table below are done.** The
 core security is sound: no SQL injection, customers cannot reach each other's data, and
-payments are verified on the server. The main risk is money and access: a customer can
-spend the same wallet balance several times, and a deactivated admin or rider keeps access.
+payments are verified on the server. The most serious problems found (wallet overspending,
+duplicate orders and deactivated staff keeping access) are fixed and re-tested.
 
 | Severity | Count | Meaning |
 |---|---:|---|
-| Critical | 1 | Direct money loss; fix before release |
-| High | 7 | Serious risk; fix before or right after release, as marked |
-| Medium | 11 | Fix in the first weeks after release |
+| Critical | 1 (fixed) | Direct money loss; fix before release |
+| High | 7 (2 fixed) | Serious risk; fix before or right after release, as marked |
+| Medium | 11 (1 fixed) | Fix in the first weeks after release |
 | Low | 6 | Clean-up |
 
 Each finding says how it was checked:
@@ -28,52 +28,57 @@ Each finding says how it was checked:
 
 ## What must happen before release
 
-| # | Action | Finding | Who |
-|---|---|---|---|
-| 1 | Make wallet spending safe against simultaneous orders | C1 | Development |
-| 2 | Stop duplicate orders and overselling | H1 | Development |
-| 3 | Block deactivated admins and riders at login and on every request | H2 | Development |
-| 4 | Remove or update the risky packages | H3 | Development |
-| 5 | Add the webhook secret and test Razorpay with live keys | H4 | Client + Development |
-| 6 | Set up alarms | H5 | Development (needs an alert email) |
+| # | Action | Finding | Who | Status |
+|---|---|---|---|---|
+| 1 | Make wallet spending safe against simultaneous orders | C1 | Development | Done |
+| 2 | Stop duplicate orders and overselling | H1 | Development | Done |
+| 3 | Block deactivated admins and riders at login and on every request | H2 | Development | Done |
+| 4 | Remove or update the risky packages | H3 | Development | Open |
+| 5 | Add the webhook secret and test Razorpay with live keys | H4 | Client + Development | Open |
+| 6 | Set up alarms | H5 | Development (needs an alert email) | Open |
 
 ## Critical
 
-### C1. One wallet balance can pay for several orders (Tested)
+### C1. One wallet balance can pay for several orders (Tested) — FIXED
 
-**What happens:** a customer with ₹800 sent 3 ₹492 orders at the same moment. All 3 were
+**What happened:** a customer with ₹800 sent 3 ₹492 orders at the same moment. All 3 were
 accepted and the wallet ended at **₹-676**. The customer received ₹1,476 of goods for
 ₹800. A double-tap or a slow network retry can trigger this by accident.
 
 **Cause:** the balance is read when the bill is worked out, then reduced later with no
 check that enough is left (`decWalletAmount`, `controllers/Orders.js`).
 
-**Fix:** reduce the balance only if it covers the amount
-(`UPDATE ... WHERE WalletAmount >= ?`), and refuse the order if no row changed.
+**Fixed:** the balance is now reduced only if it covers the amount, before the order is
+created, and the order is refused otherwise. Proven by `test_order_safety` on local and on
+the AWS copy.
 
 ## High
 
-### H1. Duplicate orders and overselling (Tested for duplicates, Code for overselling)
+### H1. Duplicate orders and overselling (Tested) — FIXED
 
-**What happens:** the same test created 3 separate orders from one cart. Stock is reduced
+**What happened:** the same test created 3 separate orders from one cart. Stock is reduced
 with no check either (`decvariantsQuantity`, `controllers/Orders.js`), so two customers can
 buy the last item and stock can go below zero.
 
 **Cause:** order creation is a series of separate database steps, not one transaction. If
 a step fails midway, the order can be left half-saved.
 
-**Fix:** wrap order creation in a transaction, claim the cart once at the start so a
-second request fails, and reduce stock only where `AvailableQty >= ?`.
+**Fixed:** one request claims the cart, and stock and wallet are claimed only if enough is
+left. If the order cannot go through, they are handed back. Proven by `test_order_safety`.
 
-### H2. Deactivated admins and riders keep access (Tested)
+**Still true:** this is not one database transaction. A server crash in the moment between
+claiming and saving the order could leave stock or wallet held. That window is small; the
+wallet check would show it.
 
-**What happens:** an admin and a rider with `Status = 0` both called protected APIs with
+### H2. Deactivated admins and riders keep access (Tested) — FIXED
+
+**What happened:** an admin and a rider with `Status = 0` both called protected APIs with
 their tokens and got normal answers. Admin login does not check `Status` either (Code,
 `controllers/AdminAuth2FA.js`). A dismissed staff member could keep full admin access,
 including changing wallets and prices.
 
-**Fix:** add `AND Status = 1` to the checks in `utils/utils.js` (admin and rider) and to
-admin login.
+**Fixed:** login and every request now require `Status = 1`. The live copy has only status
+0 and 1, so no active account is affected. Proven by `test_order_safety`.
 
 ### H3. Vulnerable packages (Scan)
 
@@ -118,7 +123,7 @@ once the new backend's database access is confirmed, and limit 22 to known addre
 
 | # | Finding | Checked by | Fix |
 |---|---|---|---|
-| M1 | **Photo orders are not atomic.** Accepting a proposal checks the status, then writes in separate steps, so a double-tap can create 2 orders. Admins can claim, edit or cancel a request after its order exists (`controllers/PhotoOrders.js`). | Code | Claim the status change atomically; limit admin actions by status |
+| M1 | **Photo orders are not atomic.** The H1 fix does not cover them. Accepting a proposal checks the status, then writes in separate steps, so a double-tap can create 2 orders, and stock is not protected. Admins can claim, edit or cancel a request after its order exists (`controllers/PhotoOrders.js`). | Code | Claim the status change atomically; limit admin actions by status |
 | M2 | **Admin wallet edits overwrite the balance.** `creditDebitWallet` reads then writes an absolute value, so a customer order at the same moment is lost (`controllers/AdminUsers.js`). The ledger does not record which admin did it. | Code | Use a relative update; store the admin ID |
 | M3 | **Cashback expiry is manual and can take spent money.** It runs only when an admin triggers it, and it deducts the full credit even if spent, without matching the ledger (`expireCashback`). The new comeback and birthday rewards do not have this flaw. | Code | Use the same logic as `services/CustomerRewards.js`; run it on a schedule |
 | M4 | **Customer data in logs.** 815 `console.log` calls in server code, 16 of which print whole order or payment bodies. The old log reached 1.8 GB on a 16 GB disk with no rotation. | Code, Seen | Remove body logging; rotate logs |
@@ -128,7 +133,7 @@ once the new backend's database access is confirmed, and limit 22 to known addre
 | M8 | **All admins have full power.** There is one admin role. Sign-ins are logged, but other admin actions are not. | Code | Add roles and an action log |
 | M9 | **Weak request limits.** No security headers (`helmet`). JSON bodies up to 15 MB on a server with 914 MB of memory and no swap. | Code, Seen | Add `helmet`; lower the limit except on upload routes |
 | M10 | **Data quality on live.** 8 customers' balances differ from their ledger, and one account holds ₹3,39,204 (client report kept outside git: `Handover\wallet-mismatches-2026-11-02.csv`). Duplicate mobile numbers block the unique rule. Foreign keys are mostly absent. Near-duplicate tables exist (`Cart`/`Carts`, `Sales`/`sales`). | Tested, Seen | Client decides on balances; merge accounts; clean up in a later release |
-| M11 | **Rider delay overwrites the admin's ETA change.** Admin +10 then rider +15 gives +15, not +25, and a smaller second report can move the ETA earlier (`reportDelay` logic, `controllers/DeliveryOperations.js`). Found by `test_eta_sync_e2e`; see `docs/testing/TEST_REPORT.md`. | Tested | Add each delay to the current ETA |
+| M11 | **Rider delay overwrites the admin's ETA change.** Admin +10 then rider +15 gave +15, not +25 (`reportDelay`, `controllers/DeliveryOperations.js`). Found by `test_eta_sync_e2e`. | Tested | **Fixed:** the admin's change is kept; a rider's newer estimate replaces only their own earlier one |
 
 ## Low
 
