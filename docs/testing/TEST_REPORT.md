@@ -13,7 +13,7 @@ and iOS are not done.
 
 | Test set | Files | Result |
 |---|---:|---|
-| Backend, regular (`npm test`) | 18 | 18 pass, 404 counted checks plus the ETA suite |
+| Backend, regular (`npm test`) | 18 | 18 pass, 410 counted checks plus the ETA suite |
 | Backend, older suites | 13 | 3 pass, 10 could not give a result |
 | Admin website | 3 | 5 of 5 pass |
 | Customer app (Flutter) | 6 | 34 of 34 pass |
@@ -53,10 +53,10 @@ Run with `npm test`. All must pass before deploying.
 | `test_qa_bug_fixes` | 45 | Bugs fixed during QA, including photo uploads |
 | `test_doorstep_upi` | 15 | UPI at the door, with a stand-in for Razorpay |
 | `test_customer_rewards` | 27 | Comeback and birthday rewards, savings, typed photo orders, keywords |
-| `test_order_safety` | 28 | Orders and photo orders at the same moment, wallet, stock, deactivated staff, store cancellation reason |
+| `test_order_safety` | 34 | Orders and photo orders at the same moment, wallet, stock, deactivated staff, store cancellation reason, prepaid cancellation refunded as ClikGett Cash |
 | `test_delivery_assignment_workflow` | 20 | Assigning and reassigning riders |
 | `test_eta_sync_e2e` | Passes | Admin and rider ETA changes combine |
-| **Total** | **404 + ETA suite** | |
+| **Total** | **410 + ETA suite** | |
 
 ## Backend: older suites
 

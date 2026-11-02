@@ -122,12 +122,30 @@ const refundWallet = async (order) => {
     return amount;
 };
 
+// What was paid online. GrandTotal is already after the wallet part (the bill's "to pay"),
+// so the wallet is not subtracted again.
+const onlinePaid = (order) => (String(order.PaymentTransactionID || '').startsWith('pay_')
+    ? Math.max(0, parseFloat(order.GrandTotal) || 0) : 0);
+
+// A customer who cancels a prepaid order gets the online part back as ClikGett Cash,
+// at once, instead of a bank refund.
+const refundOnlineToWallet = async (order) => {
+    const amount = Math.round(onlinePaid(order) * 100) / 100;
+    if (amount <= 0) return null;
+    await query("UPDATE Users SET WalletAmount = WalletAmount + ? WHERE UserID = ?", [amount, order.UserID]);
+    await CommonController.Add_To_Wallet(order.UserID, (process.env.OrderCancel || 4), order.OrderID, amount,
+        `Refund for cancelled order #${String(order.OrderID).padStart(4, '0')}`);
+    await query("UPDATE Orders SET RefundStatus = 'WALLET_REFUNDED' WHERE OrderID = ?", [order.OrderID]);
+    await addTimeline(order.OrderID, order.OrderStatus, `Online payment of Rs.${amount.toFixed(2)} refunded to ClikGett Cash.`);
+    return amount;
+};
+
 // Refunds the online (Razorpay) part of a cancelled order. Never blocks the
 // cancellation: failures are recorded for manual follow-up.
 const refundOnline = async (order) => {
     const paymentId = String(order.PaymentTransactionID || '');
     if (!paymentId.startsWith('pay_')) return null;
-    const onlineAmount = Math.max(0, (parseFloat(order.GrandTotal) || 0) - (parseFloat(order.WalletAmount) || 0));
+    const onlineAmount = onlinePaid(order);
     const rp = getRazorpay();
     if (!rp || onlineAmount <= 0) {
         await query("UPDATE Orders SET RefundStatus = 'MANUAL_REQUIRED' WHERE OrderID = ?", [order.OrderID]);
@@ -243,9 +261,13 @@ const transition = async (orderId, to, actor, options = {}) => {
     if (to === S.CANCELLED_BY_STORE || to === S.CANCELLED_BY_CUSTOMER || to === S.RETURNED) {
         if (to !== S.RETURNED) await restock(orderId);
         const walletBack = await refundWallet(order);
-        const onlineBack = await refundOnline(order);
+        // Customer cancellations: online money back as ClikGett Cash. Store cancellations
+        // and returns: back to the original payment method.
+        const toWallet = to === S.CANCELLED_BY_CUSTOMER;
+        const onlineBack = toWallet ? await refundOnlineToWallet(order) : await refundOnline(order);
         await refreshRiderLoad(order.DeliveryBoyID);
-        const refundText = [walletBack ? `Rs.${walletBack.toFixed(2)} returned to your ClikGett Cash.` : '', onlineBack ? `Rs.${onlineBack.toFixed(2)} refund initiated to your payment method.` : ''].filter(Boolean).join(' ');
+        const cashBack = (walletBack || 0) + (toWallet ? (onlineBack || 0) : 0);
+        const refundText = [cashBack ? `Rs.${cashBack.toFixed(2)} returned to your ClikGett Cash.` : '', !toWallet && onlineBack ? `Rs.${onlineBack.toFixed(2)} refund initiated to your payment method.` : ''].filter(Boolean).join(' ');
         if (to === S.CANCELLED_BY_CUSTOMER) {
             await notifyCustomer(order, `Order ${label} cancelled`, `Your order has been cancelled as requested. ${refundText}`.trim());
         } else {

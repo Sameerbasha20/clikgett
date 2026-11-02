@@ -364,10 +364,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
 
   String _refundText(TrackedOrder o) {
     final parts = <String>[];
-    if (o.walletUsed > 0) parts.add('${_rs(o.walletUsed)} returned to your ClikGett Cash');
-    if (o.paid && o.paymentMethod == 'ONLINE') {
-      final online = o.grandTotal;
-      final s = (o.refundStatus ?? '').toUpperCase();
+    final s = (o.refundStatus ?? '').toUpperCase();
+    // A customer's own cancellation refunds the online part as ClikGett Cash too.
+    final online = o.paid && o.paymentMethod == 'ONLINE' ? o.grandTotal : 0.0;
+    final cash = o.walletUsed + (s == 'WALLET_REFUNDED' ? online : 0);
+    if (cash > 0) parts.add('${_rs(cash)} returned to your ClikGett Cash');
+    if (online > 0 && s != 'WALLET_REFUNDED') {
       parts.add(s == 'INITIATED' || s == 'PROCESSED'
           ? '${_rs(online)} refund started to your original payment method (3–5 working days)'
           : '${_rs(online)} will be refunded to your original payment method');

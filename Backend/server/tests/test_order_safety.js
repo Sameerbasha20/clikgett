@@ -161,6 +161,29 @@ const ledgerOf = async (id) => Number((await q(
         const [notice] = await q('SELECT Message FROM UserNotifications WHERE UserID = ? ORDER BY NotificationID DESC LIMIT 1', [cancelled.id]);
         check('the notification has the reason', notice && notice.Message.includes(reason), notice && notice.Message);
 
+        // ---- A prepaid order cancelled by the customer goes back as ClikGett Cash
+        const prepaid = await newCustomer(50);
+        const ins = await q(`INSERT INTO Orders (MobileNumber, CancellationReason, City, CartID, UserID, PromoCode, SubTotal, TaxAmount, PromoAmount,
+                DeliverCharges, GrandTotal, PaymentMethod, Address, FlatNo, LandMark, Latitude, Longitude, PaymentStatus,
+                PaymentTransactionID, OrderStatus, DeliveryBoyID, RazorpayOrderID, Discount, OrderType, WalletAmount, TipAmount,
+                Distance, ScheduleStatus, TotalItemQuantity, CreatedAt)
+             VALUES ('', 'NA', 'NA', 0, ?, 'NA', 330, 0, 0, 20, 300, 'ONLINE', 'TEST ORDER - safety test', '1', 'NA', 0, 0, 1,
+                'pay_safetytest', 8, 0, 'order_safetytest', 0, 'Delivery', 50, 0, 1, 'Immediate', 1, NOW())`, [prepaid.id]);
+        orders.push(ins.insertId);
+        await q('UPDATE Users SET WalletAmount = 0 WHERE UserID = ?', [prepaid.id]);
+        await q("INSERT INTO Wallets (UserID, Amount, Credited_Debited, ContentType, ContentID, Description, CreatedAt) VALUES (?, 50, 2, 3, ?, 'test spend', NOW())",
+            [prepaid.id, ins.insertId]);
+        r = await call('PUT', `/orders/cancelorderuser/${ins.insertId}`, prepaid.token, { CancellationReason: 'Changed my mind' });
+        check('customer cancels the prepaid order', r.json && r.json.Status === 1, JSON.stringify(r.json));
+        check('online ₹300 and wallet ₹50 both come back as ClikGett Cash', await walletOf(prepaid.id) === 350, await walletOf(prepaid.id));
+        check('prepaid refund matches the wallet history', Math.abs(await walletOf(prepaid.id) - await ledgerOf(prepaid.id)) < 0.01);
+        const [refunded] = await q('SELECT RefundStatus FROM Orders WHERE OrderID = ?', [ins.insertId]);
+        check('the order shows the refund went to ClikGett Cash', refunded.RefundStatus === 'WALLET_REFUNDED', refunded.RefundStatus);
+        r = await call('PUT', `/orders/cancelorderuser/${ins.insertId}`, prepaid.token, { CancellationReason: 'again' });
+        check('cancelling twice does not refund twice', await walletOf(prepaid.id) === 350, await walletOf(prepaid.id));
+        const [told] = await q('SELECT Message FROM UserNotifications WHERE UserID = ? ORDER BY NotificationID DESC LIMIT 1', [prepaid.id]);
+        check('the customer is told it is in ClikGett Cash', told && /350\.00 returned to your ClikGett Cash/.test(told.Message), told && told.Message);
+
         // ---- Photo orders
         const newProposal = async (customer) => {
             const code = `SAFE${stamp}${photoRequests.length}`;
