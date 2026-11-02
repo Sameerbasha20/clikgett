@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import TopNav from "../../Navbar/topNav";
 import SideNav from "../../Navbar/sideNav";
 import dashboardclasses from "../dashboard.module.css";
@@ -29,6 +29,8 @@ function Warehouse() {
     const [users, setUsers] = useState([]);
     const [exportT, setExport] = useState();
     const [searchusers, setSearchusers] = useState([]);
+    const [searchText, setSearchText] = useState("");
+    const [signupMonth, setSignupMonth] = useState("all");
     const headerstyles = {
         color: "#707275",
         fontWeight: 700,
@@ -262,7 +264,8 @@ function Warehouse() {
         {
             dataField: "CreatedAt",
             text: "REGISTERED ON",
-            sort: false,
+            sort: true,
+            sortFunc: (a, b, order) => (order === "asc" ? 1 : -1) * (new Date(a || 0) - new Date(b || 0)),
             formatter: (cell) => {
                 return (
                     <p>
@@ -305,24 +308,34 @@ function Warehouse() {
     });
     const defaultSorted = [
         {
-            dataField: "name",
+            dataField: "CreatedAt",
             order: "desc",
         },
     ];
-    const searchHandler = (e) => {
-        const search = users.filter(
-            (item) =>
-                item.FirstName.toLowerCase().includes(
-                    e.target.value.toLowerCase()
-                ) ||
-                item.EmailID.toLowerCase().includes(
-                    e.target.value.toLowerCase()
-                ) ||
-                item.MobileNumber.toLowerCase().includes(e.target.value)
-        );
-        // console.log(search);
-        setSearchusers(search);
+    // Sign-up month of a customer, e.g. "2026-10" (in the browser's time, IST on store PCs).
+    const monthOf = (date) => {
+        const d = new Date(date);
+        return isNaN(d) ? "" : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     };
+    const monthLabel = (key) => new Date(`${key}-01T00:00:00`).toLocaleString("en-IN", { month: "long", year: "numeric" });
+    const signupMonths = useMemo(() => {
+        const counts = {};
+        users.forEach((u) => {
+            const m = monthOf(u.CreatedAt);
+            if (m) counts[m] = (counts[m] || 0) + 1;
+        });
+        return Object.keys(counts).sort().reverse().map((m) => ({ key: m, count: counts[m] }));
+    }, [users]);
+    useEffect(() => {
+        const text = searchText.toLowerCase();
+        setSearchusers(users.filter((item) =>
+            (signupMonth === "all" || monthOf(item.CreatedAt) === signupMonth) &&
+            (!text ||
+                String(item.FirstName || "").toLowerCase().includes(text) ||
+                String(item.EmailID || "").toLowerCase().includes(text) ||
+                String(item.MobileNumber || "").toLowerCase().includes(text))));
+    }, [users, searchText, signupMonth]);
+    const searchHandler = (e) => setSearchText(e.target.value);
     return (
         <>
             <div className={dashboardclasses["dashboard-wrapper"]}>
@@ -354,6 +367,17 @@ function Warehouse() {
                                         placeholder="Search by Name/email/phone"
                                         onChange={searchHandler}
                                     />
+                                    <select
+                                        aria-label="Signed up in"
+                                        value={signupMonth}
+                                        onChange={(e) => setSignupMonth(e.target.value)}
+                                        style={{ padding: "6px 8px", border: "1px solid #cbd5e1", borderRadius: "6px", marginLeft: "8px" }}
+                                    >
+                                        <option value="all">Signed up: all months</option>
+                                        {signupMonths.map((m) => (
+                                            <option key={m.key} value={m.key}>{monthLabel(m.key)} ({m.count})</option>
+                                        ))}
+                                    </select>
                                     <button
                                         onClick={() =>
                                             window.open(exportT, "_blank")
@@ -361,6 +385,11 @@ function Warehouse() {
                                         Export
                                     </button>
                                 </div>
+                                <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "6px 0" }}>
+                                    {signupMonth === "all"
+                                        ? `${searchusers.length} customers · newest sign-ups first`
+                                        : `${searchusers.length} customers signed up in ${monthLabel(signupMonth)}`}
+                                </p>
                                 <div className="category-table">
                                     <BootstrapTable
                                         bootstrap4

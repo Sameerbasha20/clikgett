@@ -843,9 +843,6 @@ class _CartState extends State<Cart> {
   Widget _walletCard(CheckoutBill bill) {
     if (bill.walletBalance <= 0) return const SizedBox.shrink();
     final canUse = bill.walletUsable > 0;
-    final smallOrderCap = bill.walletUsable < bill.walletBalance &&
-        bill.toPay + bill.walletApplied < bill.minOrderForFullWallet &&
-        bill.smallOrderWalletCap > 0;
     return _card(
       child: Row(children: [
         const Icon(Icons.account_balance_wallet_outlined, color: primaryDark),
@@ -855,10 +852,10 @@ class _CartState extends State<Cart> {
             Text('Use ClikGett Cash', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
             Text(
               !canUse
-                  ? 'Balance ${_rs(bill.walletBalance)} · not usable on this order'
-                  : smallOrderCap
-                      ? 'Use ${_rs(bill.walletUsable)} of ${_rs(bill.walletBalance)} (full balance on orders above ${_rs(bill.minOrderForFullWallet)})'
-                      : 'Use ${_rs(bill.walletUsable)} of your ${_rs(bill.walletBalance)} balance',
+                  ? bill.minOrderForFullWallet > 0
+                      ? 'Balance ${_rs(bill.walletBalance)} · usable on orders of ${_rs(bill.minOrderForFullWallet)} or more'
+                      : 'Balance ${_rs(bill.walletBalance)} · not usable on this order'
+                  : 'Use ${_rs(bill.walletUsable)} of your ${_rs(bill.walletBalance)} balance',
               style: GoogleFonts.poppins(fontSize: 12, color: tColor3),
             ),
           ]),

@@ -27,7 +27,7 @@ async function loadSettings() {
     } catch (_) { /* keep defaults */ }
     return {
         minOrderValue: parseFloat(s.MinOrderValue || 149),
-        minOrderForFullWallet: parseFloat(s.Minordervalue_wallet || 399),
+        minOrderForFullWallet: parseFloat(s.Minordervalue_wallet || 250),
         smallOrderWalletCap: parseFloat(s.MinUseOfWallet || 40),
         freeDeliveryThreshold: parseFloat(s.FreeDelivery_CartAmount || 499),
         tipPresets,
@@ -68,13 +68,13 @@ async function loadCart(userId) {
 
 /**
  * Wallet rule (from Settings):
- *  - order total >= Minordervalue_wallet  -> wallet can cover the whole order
- *  - smaller orders                       -> at most MinUseOfWallet from the wallet
+ *  - order total >= Minordervalue_wallet  -> ClikGett Cash can cover the whole order
+ *  - smaller orders                       -> ClikGett Cash cannot be used
  */
 function walletUsable(balance, payableBeforeWallet, cfg) {
     if (balance <= 0 || payableBeforeWallet <= 0) return 0;
-    const cap = payableBeforeWallet >= cfg.minOrderForFullWallet ? payableBeforeWallet : cfg.smallOrderWalletCap;
-    return money(Math.min(balance, cap, payableBeforeWallet));
+    if (payableBeforeWallet < cfg.minOrderForFullWallet) return 0;
+    return money(Math.min(balance, payableBeforeWallet));
 }
 
 /**

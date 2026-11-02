@@ -2,7 +2,7 @@ Suite	Group	Verdict	Passed	Total	Note
 test_account	regular	PASS	12	12	
 test_admin	regular	PASS	26	26	
 test_cashback_review	regular	PASS	17	17	
-test_checkout	regular	PASS	34	34	
+test_checkout	regular	PASS	36	36	
 test_customer_rewards	regular	PASS	27	27	
 test_delivery_assignment_workflow	regular	PASS	20	20	test wording corrected
 test_doorstep_upi	regular	PASS	15	15	

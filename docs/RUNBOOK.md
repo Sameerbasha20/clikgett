@@ -64,6 +64,8 @@ run first on `clikgett-rehearsal`, a copy restored from snapshot `before-release
 6. Switch: in nginx `sites-enabled/default`, api.clikgett.com `proxy_pass` → `127.0.0.1:3001`,
    `nginx -t && systemctl reload nginx`. Then set `BACKGROUND_JOBS=on` and restart `server-v2`.
    Only one backend may run the jobs: the payment sweep issues real Razorpay refunds.
+   After the switch, in admin → Settings, check the ClikGett Cash minimum order is ₹250
+   (customers can use ClikGett Cash only on orders of ₹250 or more, then all of it).
 7. Roll back: point nginx back to `127.0.0.1:3000` and reload. The database changes only
    add tables, columns and rows, so the old backend keeps working.
    If live data had to be restored from the snapshot instead, first export everything

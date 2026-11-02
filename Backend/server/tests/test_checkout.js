@@ -98,12 +98,16 @@ const FAR = { Latitude: 15.93, Longitude: 78.11 };
         check('free-delivery gap reported', b.FreeDeliveryApplied ? b.AmountForFreeDelivery === 0 : near(b.AmountForFreeDelivery, b.FreeDeliveryThreshold - b.ItemsTotal));
 
         // ---- Wallet rule
+        const { walletUsable } = require('../services/CheckoutBill');
+        const rule = { minOrderForFullWallet: 250 };
+        check('ClikGett Cash: Rs.249 order cannot use it', walletUsable(500, 249, rule) === 0);
+        check('ClikGett Cash: Rs.250 order can use all of it', walletUsable(500, 250, rule) === 250 && walletUsable(100, 600, rule) === 100);
         const w = await bill({ UseWallet: true });
         check('large order: wallet covers up to the payable amount', near(w.WalletApplied, Math.min(500, w.ToPay + w.WalletApplied)), `applied=${w.WalletApplied}`);
         await setCart(Math.max(2, Math.ceil(160 / parseFloat(variant.OfferPrice))));
         const small = await bill({ UseWallet: true });
         if (small.ItemsTotal + small.DeliveryFee < small.WalletRule.MinOrderForFullWallet) {
-            check('small order: wallet limited to MinUseOfWallet', small.WalletApplied <= small.WalletRule.SmallOrderWalletCap + 0.001, `applied=${small.WalletApplied}`);
+            check('small order: ClikGett Cash cannot be used below the minimum', small.WalletApplied === 0 && small.WalletUsable === 0, `applied=${small.WalletApplied}`);
         }
 
         // ---- Tampered order: app sends fake totals, server charges the real bill
