@@ -38,15 +38,6 @@ clikgett-code/
 | Guide | Use it for |
 |---|---|
 | [docs/RUNBOOK.md](docs/RUNBOOK.md) | Deploying, rolling back, secrets, daily checks |
-| [docs/LOCAL_DOCKER_SETUP.md](docs/LOCAL_DOCKER_SETUP.md) | Running everything on your own computer |
-| [docs/LOCAL_TESTING_GUIDE.md](docs/LOCAL_TESTING_GUIDE.md) | Testing locally |
-
-## Quick start
-
-```
-docker compose up -d
-cd Backend
-API_URL=http://127.0.0.1:5001/api npm test
-```
+| [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) | Running and testing everything on your own computer |
 
 Never commit `.env` files, keys or signing files.
