@@ -31,6 +31,8 @@ function Warehouse() {
     const [searchusers, setSearchusers] = useState([]);
     const [searchText, setSearchText] = useState("");
     const [signupMonth, setSignupMonth] = useState("all");
+    const [sortBy, setSortBy] = useState("newest");
+    const [selected, setSelected] = useState([]);
     const headerstyles = {
         color: "#707275",
         fontWeight: 700,
@@ -264,8 +266,7 @@ function Warehouse() {
         {
             dataField: "CreatedAt",
             text: "REGISTERED ON",
-            sort: true,
-            sortFunc: (a, b, order) => (order === "asc" ? 1 : -1) * (new Date(a || 0) - new Date(b || 0)),
+            sort: false,
             formatter: (cell) => {
                 return (
                     <p>
@@ -306,12 +307,14 @@ function Warehouse() {
             console.log("sizePerPage", sizePerPage);
         },
     });
-    const defaultSorted = [
-        {
-            dataField: "CreatedAt",
-            order: "desc",
-        },
-    ];
+    // Sort by (next to "Signed up"): the list is sorted here, not by the table.
+    const fullName = (u) => `${u.FirstName || ""} ${u.LastName || ""}`.trim().toLowerCase();
+    const SORTS = {
+        newest: { label: "Newest first", fn: (a, b) => new Date(b.CreatedAt || 0) - new Date(a.CreatedAt || 0) },
+        oldest: { label: "Oldest first", fn: (a, b) => new Date(a.CreatedAt || 0) - new Date(b.CreatedAt || 0) },
+        az: { label: "Name A to Z", fn: (a, b) => fullName(a).localeCompare(fullName(b)) },
+        za: { label: "Name Z to A", fn: (a, b) => fullName(b).localeCompare(fullName(a)) },
+    };
     // Sign-up month of a customer, e.g. "2026-10" (in the browser's time, IST on store PCs).
     const monthOf = (date) => {
         const d = new Date(date);
@@ -333,8 +336,35 @@ function Warehouse() {
             (!text ||
                 String(item.FirstName || "").toLowerCase().includes(text) ||
                 String(item.EmailID || "").toLowerCase().includes(text) ||
-                String(item.MobileNumber || "").toLowerCase().includes(text))));
-    }, [users, searchText, signupMonth]);
+                String(item.MobileNumber || "").toLowerCase().includes(text))).sort(SORTS[sortBy].fn));
+    }, [users, searchText, signupMonth, sortBy]);
+
+    // Ticked customers (kept across pages); "Select all" takes everyone in the current list.
+    const allSelected = searchusers.length > 0 && searchusers.every((u) => selected.includes(u.UserID));
+    const selectRow = {
+        mode: "checkbox",
+        clickToSelect: false,
+        selected,
+        onSelect: (row, isSelect) => setSelected((list) => (isSelect ? [...list, row.UserID] : list.filter((id) => id !== row.UserID))),
+        onSelectAll: (isSelect, rows) => {
+            const ids = rows.map((r) => r.UserID);
+            setSelected((list) => (isSelect ? [...new Set([...list, ...ids])] : list.filter((id) => !ids.includes(id))));
+        },
+    };
+    const exportSelected = () => {
+        const chosen = users.filter((u) => selected.includes(u.UserID));
+        const cell = (v) => `"${String(v === null || v === undefined ? "" : v).replace(/"/g, '""')}"`;
+        const lines = [["Name", "Email", "Phone", "ClikGett Cash", "Registered on"].join(",")].concat(chosen.map((u) => [
+            `${u.FirstName || ""} ${u.LastName || ""}`.trim(), u.EmailID, u.MobileNumber, u.WalletAmount,
+            u.CreatedAt ? new Date(u.CreatedAt).toLocaleDateString("en-IN") : "",
+        ].map(cell).join(",")));
+        const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `customers-selected-${chosen.length}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
     const searchHandler = (e) => setSearchText(e.target.value);
     return (
         <>
@@ -378,6 +408,16 @@ function Warehouse() {
                                             <option key={m.key} value={m.key}>{monthLabel(m.key)} ({m.count})</option>
                                         ))}
                                     </select>
+                                    <select
+                                        aria-label="Sort by"
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        style={{ padding: "6px 8px", border: "1px solid #cbd5e1", borderRadius: "6px", marginLeft: "8px" }}
+                                    >
+                                        {Object.entries(SORTS).map(([key, s]) => (
+                                            <option key={key} value={key}>Sort: {s.label}</option>
+                                        ))}
+                                    </select>
                                     <button
                                         onClick={() =>
                                             window.open(exportT, "_blank")
@@ -385,18 +425,38 @@ function Warehouse() {
                                         Export
                                     </button>
                                 </div>
-                                <p style={{ fontSize: "0.85rem", color: "#64748b", margin: "6px 0" }}>
-                                    {signupMonth === "all"
-                                        ? `${searchusers.length} customers · newest sign-ups first`
-                                        : `${searchusers.length} customers signed up in ${monthLabel(signupMonth)}`}
-                                </p>
+                                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px", margin: "6px 0" }}>
+                                    <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                                        {signupMonth === "all"
+                                            ? `${searchusers.length} customers · ${SORTS[sortBy].label.toLowerCase()}`
+                                            : `${searchusers.length} customers signed up in ${monthLabel(signupMonth)} · ${SORTS[sortBy].label.toLowerCase()}`}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-primary"
+                                        onClick={() => setSelected(allSelected ? [] : searchusers.map((u) => u.UserID))}
+                                    >
+                                        {allSelected ? "Unselect all" : `Select all (${searchusers.length})`}
+                                    </button>
+                                    {selected.length > 0 && (
+                                        <>
+                                            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>{selected.length} selected</span>
+                                            <button type="button" className="btn btn-sm btn-primary" onClick={exportSelected}>
+                                                Export selected
+                                            </button>
+                                            <button type="button" className="btn btn-sm btn-link" onClick={() => setSelected([])}>
+                                                Clear
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                                 <div className="category-table">
                                     <BootstrapTable
                                         bootstrap4
                                         keyField="UserID"
                                         data={searchusers}
                                         columns={columns}
-                                        defaultSorted={defaultSorted}
+                                        selectRow={selectRow}
                                         pagination={pagination}
                                         wrapperClasses="table-responsive"
                                     />
