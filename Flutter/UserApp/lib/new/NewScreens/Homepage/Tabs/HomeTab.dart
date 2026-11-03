@@ -10,7 +10,6 @@ import 'package:fav_app/new/Controllers/profile_controller.dart';
 import 'package:fav_app/new/Controllers/wallet.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/category_grid.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/home_header.dart';
-import 'package:fav_app/new/NewScreens/Homepage/Storefront/quick_actions_row.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/milestone_reward_card.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Storefront/section_product_rail.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/flash_sale_section.dart';
@@ -111,7 +110,6 @@ class _HomeTabState extends State<Home> {
             slivers: [
               SliverToBoxAdapter(child: StorefrontHeader(isLoggedIn: _isLoggedIn)),
               SliverPersistentHeader(pinned: true, delegate: StickySearchBarDelegate(hints: _searchHints)),
-              const SliverToBoxAdapter(child: QuickActionsRow()),
               if (_isLoggedIn) const SliverToBoxAdapter(child: HomeMilestoneCard()),
               SliverToBoxAdapter(child: _StoreClosedCard(timingController: timingController)),
               const SliverToBoxAdapter(child: UnlockDealsBanner()),

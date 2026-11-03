@@ -60,6 +60,19 @@ class _CurrentOrdersState extends State<CurrentOrders> {
     }
   }
 
+  Widget _listHeading(String title, int count) => Padding(
+        padding: const EdgeInsets.fromLTRB(4, 6, 4, 8),
+        child: Row(children: [
+          Text(title, style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w800, color: tColor)),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+            decoration: BoxDecoration(color: primaryGhost, borderRadius: BorderRadius.circular(10)),
+            child: Text('$count', style: GoogleFonts.poppins(fontSize: 11.sp, fontWeight: FontWeight.w700, color: primaryDark)),
+          ),
+        ]),
+      );
+
   Widget _photoRequestCard(PhotoOrderModel p) {
     final needsAction = p.requestStatus == 'AWAITING_CUSTOMER_CONFIRMATION';
     return GestureDetector(
@@ -120,15 +133,19 @@ class _CurrentOrdersState extends State<CurrentOrders> {
                         await ordersController.getcurrentorder(
                             context: context);
                       },
-                      child: ListView.builder(
-                        itemCount: _photoRequests.length + ordersController.orders.length,
+                      child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
-                        itemBuilder: (context, index) {
-                          if (index < _photoRequests.length) return _photoRequestCard(_photoRequests[index]);
-                          var orders = ordersController.orders[index - _photoRequests.length];
-                          return ordersBody(orders: orders, context: context);
-                        },
+                        children: [
+                          if (ordersController.orders.isNotEmpty) ...[
+                            if (_photoRequests.isNotEmpty) _listHeading('Orders', ordersController.orders.length),
+                            for (final orders in ordersController.orders) ordersBody(orders: orders, context: context),
+                          ],
+                          if (_photoRequests.isNotEmpty) ...[
+                            _listHeading('Photo orders', _photoRequests.length),
+                            for (final p in _photoRequests) _photoRequestCard(p),
+                          ],
+                        ],
                       ),
                     ),
         ));

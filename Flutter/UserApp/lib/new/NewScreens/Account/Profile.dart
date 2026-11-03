@@ -95,6 +95,31 @@ class _ProfileState extends State<Profile> {
     _loadSummary();
   }
 
+  /// Birthday inside the profile card: the date once saved, otherwise a link to add it.
+  Widget _birthdayLine() {
+    final saved = _summary?.dateOfBirth != null;
+    return InkWell(
+      onTap: _birthday,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 3),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.cake_outlined, size: 14, color: saved ? tColor3 : primaryDark),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              _birthdaySubtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                  fontSize: 12, color: saved ? tColor3 : primaryDark, fontWeight: saved ? FontWeight.w400 : FontWeight.w600),
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+
   String get _birthdaySubtitle {
     final dob = _summary?.dateOfBirth;
     final reward = _summary?.birthdayReward ?? 0;
@@ -190,7 +215,6 @@ class _ProfileState extends State<Profile> {
               const SectionTitle('Your account'),
               MenuGroup([
                 MenuTile(icon: Icons.location_on_outlined, title: 'Saved addresses', onTap: () => _push(ManageAddress())),
-                MenuTile(icon: Icons.cake_outlined, title: 'Birthday', subtitle: _birthdaySubtitle, onTap: _birthday),
                 MenuTile(icon: Icons.photo_camera_outlined, title: 'Photo orders', subtitle: 'Orders you sent as a photo of your list', onTap: () => _push(const PhotoOrdersListScreen())),
                 MenuTile(icon: Icons.forum_outlined, title: 'My requests', subtitle: 'Product requests and messages to us', onTap: () => _push(const MyRequestsScreen())),
                 MenuTile(icon: Icons.notifications_none_rounded, title: 'Notifications', onTap: () => _push(const Notifications())),
@@ -251,6 +275,7 @@ class _ProfileState extends State<Profile> {
                   if (u != null) Text(u.mobileNumber, style: GoogleFonts.poppins(fontSize: 12.5, color: tColor3)),
                   if ((u?.emailId ?? '').isNotEmpty && u!.emailId != 'NA')
                     Text(u.emailId!, style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
+                  if (u != null) _birthdayLine(),
                 ]),
               ),
               TextButton(
