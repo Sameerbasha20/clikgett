@@ -150,6 +150,14 @@ async function copyRow(table, idColumn, id, overrides) {
         b = await bill();
         check('flash sale: removing the product ends the discount', r.json && r.json.Status === 1 && b && near(b.ItemsTotal, 90), b && b.ItemsTotal);
 
+        // ---- Chilled tag: only when the admin sets it on the product
+        r = await call('PUT', `/adminproducts/updateproduct/${productId}`, ADMIN, { IsChilled: 1 });
+        p = await detail();
+        check('chilled: admin marks the product chilled', r.json && r.json.Status === 1 && p.IsChilled === 1, `IsChilled=${p.IsChilled}`);
+        await call('PUT', `/adminproducts/updateproduct/${productId}`, ADMIN, { IsChilled: 0 });
+        p = await detail();
+        check('chilled: admin removes the tag', p.IsChilled === 0, `IsChilled=${p.IsChilled}`);
+
         // ---- Membership price
         r = await call('POST', '/membership/product/save', ADMIN,
             { ProductID: productId, items: [{ PlanID: plan.PlanID, MembershipPrice: 80, Status: 1 }] });

@@ -154,6 +154,9 @@ class BestItem {
   /// The signed-in member's own price is on each variant's memberPrice.
   MemberOffer? memberOffer;
 
+  /// Set by the admin on the product: shows the "Chilled" tag.
+  bool isChilled;
+
   BestItem({
     this.productId,
     this.categoryId,
@@ -172,6 +175,7 @@ class BestItem {
     this.deal,
     this.bulkTiers = const [],
     this.memberOffer,
+    this.isChilled = false,
   });
 
   factory BestItem.fromJson(Map<String, dynamic> json) => BestItem(
@@ -203,6 +207,7 @@ class BestItem {
             ? (json["BulkTiers"] as List).whereType<Map>().map((t) => BulkTier.fromJson(Map<String, dynamic>.from(t))).toList()
             : const [],
         memberOffer: json["MemberOffer"] is Map ? MemberOffer.fromJson(Map<String, dynamic>.from(json["MemberOffer"])) : null,
+        isChilled: json["IsChilled"] == 1 || json["IsChilled"] == true || json["IsChilled"] == '1',
       );
 
   Map<String, dynamic> toJson() => {

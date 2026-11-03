@@ -153,7 +153,8 @@ function AddCategory(props) {
                         CategoryID: p.CategoryID,
                         SubCategoryID: p.SubCategoryID,
                         Status: p.Status,
-                        Type: p.Type || 1
+                        Type: p.Type || 1,
+                        IsChilled: Number(p.IsChilled) === 1
                     });
 
                     // Subcategories for this category
@@ -438,6 +439,7 @@ function AddCategory(props) {
                 SearchKeywords: keywordsValue,
                 Type: 1,
                 Status: 1,
+                IsChilled: data.IsChilled ? 1 : 0,
                 ProductVariants: [
                     {
                         metrictype: initialVariant.metrictype || "gm",
@@ -485,6 +487,7 @@ function AddCategory(props) {
                 SearchKeywords: keywordsValue,
                 Status: data.Status !== undefined ? data.Status : 1,
                 Type: 1,
+                IsChilled: data.IsChilled ? 1 : 0,
                 ProductImages: paths.map((item) => item.path)
             });
 
@@ -1220,6 +1223,16 @@ function AddCategory(props) {
                                             {errors?.SubCategoryID?.message}
                                         </p>
                                     )}
+                                </div>
+
+                                <div>
+                                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                                        Chilled tag
+                                    </label>
+                                    <label style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", background: "#f0f9ff", cursor: "pointer", fontSize: "0.9rem" }}>
+                                        <input type="checkbox" {...register("IsChilled")} style={{ width: 16, height: 16 }} />
+                                        <span>{"\u{1F9CA}"} Show "Chilled" on this product</span>
+                                    </label>
                                 </div>
 
                                 {productId && (

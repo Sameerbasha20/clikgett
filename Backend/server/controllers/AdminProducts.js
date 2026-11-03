@@ -221,7 +221,8 @@ const adminproductcontroller={
             Status = "Status = Status";
 
             const Keywords = Body.SearchKeywords !== undefined ? "SearchKeywords=" + pool.escape(cleanKeywords(Body.SearchKeywords)) + "," : "";
-            queryString = "UPDATE Products SET " +ProductName+Description+ProductImages+CategoryID+SubCategoryID+Keywords+Status+" WHERE ProductID=" + pool.escape(req.params.ProductID) + ";";
+            const Chilled = Body.IsChilled !== undefined ? "IsChilled=" + (Number(Body.IsChilled) ? 1 : 0) + "," : "";
+            queryString = "UPDATE Products SET " +ProductName+Description+ProductImages+CategoryID+SubCategoryID+Keywords+Chilled+Status+" WHERE ProductID=" + pool.escape(req.params.ProductID) + ";";
             console.log(queryString)
             return new Promise(function(resolve, reject) {
             pool.query(queryString, function(err, result, fields) {
@@ -1220,7 +1221,7 @@ function createproduct(body) {
             }
 
             // Parameterised insert: values go in as they are (no manual quote escaping).
-            let InsertProducts = {ProductImages:JSON.stringify(body.ProductImages),SubCategoryID:body.SubCategoryID,ProductName: String(body.ProductName).trim(), Description: body.Description,ImageUrl: "NA",status:1,CategoryID:body.CategoryID,Type:body.Type,SearchKeywords:cleanKeywords(body.SearchKeywords)}
+            let InsertProducts = {ProductImages:JSON.stringify(body.ProductImages),SubCategoryID:body.SubCategoryID,ProductName: String(body.ProductName).trim(), Description: body.Description,ImageUrl: "NA",status:1,CategoryID:body.CategoryID,Type:body.Type,SearchKeywords:cleanKeywords(body.SearchKeywords),IsChilled:Number(body.IsChilled) ? 1 : 0}
             let sql = "INSERT INTO Products set ?";
             pool.query(sql, InsertProducts, (err, results) => {
                     console.log('add product')

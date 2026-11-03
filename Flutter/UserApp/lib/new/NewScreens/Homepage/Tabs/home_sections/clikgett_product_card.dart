@@ -2,7 +2,6 @@ import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
-import 'package:fav_app/new/Controllers/home_controller.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/Homepage/ItemDescription.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
@@ -138,23 +137,8 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     return !_isOutOfStock && left > 0 && left < 10 ? left : null;
   }
 
-  /// Cold drinks, juices and ice creams get a "Chilled" tag (matched on the category name).
-  static final RegExp _chilledCategory =
-      RegExp(r'cool ?drinks?|soft ?drinks?|cold ?drinks?|juice|soda|ice ?cream|frozen', caseSensitive: false);
-
-  bool get _isChilled {
-    final p = widget.product;
-    // The subcategory decides when there is one: "Tea, Coffee, Energy Drinks" holds tea powders too.
-    final sub = (p.subCategoryName ?? '').trim();
-    if (sub.isNotEmpty) return _chilledCategory.hasMatch(sub);
-    final names = (p.categoryName ?? '').trim();
-    if (names.isNotEmpty) return _chilledCategory.hasMatch(names);
-    // Older responses without names: look the category up in what the home page loaded.
-    final id = p.categoryId;
-    if (id == null || !Get.isRegistered<HomeController>()) return false;
-    final category = Get.find<HomeController>().categories.firstWhereOrNull((c) => c.categoryId == id);
-    return category != null && _chilledCategory.hasMatch(category.categoryName ?? '');
-  }
+  /// The admin marks a product as chilled (Products.IsChilled).
+  bool get _isChilled => widget.product.isChilled;
 
   String get _packSize => "${_fmt(selectedVariant?.metricvalue)} ${selectedVariant?.metrictype ?? ''}".trim();
 
@@ -345,7 +329,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(color: const Color(0xFF7DD3FC)),
                         ),
-                        child: Text('❄️ Chilled',
+                        child: Text('🧊 Chilled',
                             style: GoogleFonts.poppins(color: const Color(0xFF0369A1), fontSize: 9.5, fontWeight: FontWeight.w700)),
                       ),
                     ),

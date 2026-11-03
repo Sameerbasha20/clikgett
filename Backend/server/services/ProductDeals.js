@@ -27,7 +27,7 @@ async function attachDeals(products) {
     const list = Array.isArray(products) ? products : [];
     const ids = [...new Set(list.map((p) => parseInt(p.ProductID, 10)).filter((n) => n > 0))];
     if (!ids.length) return list;
-    const [sales, tiers] = await Promise.all([
+    const [sales, tiers, chilled] = await Promise.all([
         queryAsync(
             `SELECT s.SaleName, s.DiscountType, s.DiscountValue, s.EndDate, si.ProductID, si.MaxQtyPerOrder
                FROM Sales s JOIN SaleItems si ON si.SaleID = s.SaleID
@@ -42,8 +42,11 @@ async function attachDeals(products) {
               ORDER BY MinQuantity ASC`,
             [ids]
         ).catch(() => []),
+        queryAsync('SELECT ProductID FROM Products WHERE ProductID IN (?) AND IsChilled = 1', [ids]).catch(() => []),
     ]);
+    const chilledIds = new Set(chilled.map((r) => Number(r.ProductID)));
     for (const p of list) {
+        p.IsChilled = chilledIds.has(Number(p.ProductID)) ? 1 : 0;
         const sale = sales.find((s) => s.ProductID == p.ProductID);
         p.Deal = null;
         if (sale) {

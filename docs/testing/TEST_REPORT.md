@@ -13,7 +13,7 @@ and iOS are not done.
 
 | Test set | Files | Result |
 |---|---:|---|
-| Backend, regular (`npm test`) | 19 | 19 pass, 429 counted checks plus the ETA suite |
+| Backend, regular (`npm test`) | 19 | 19 pass, 431 counted checks plus the ETA suite |
 | Backend, older suites | 13 | 3 pass, 10 could not give a result |
 | Admin website | 3 | 5 of 5 pass |
 | Customer app (Flutter) | 6 | 39 of 39 pass |
@@ -41,7 +41,7 @@ Run with `npm test`. All must pass before deploying.
 | `test_security_regressions` | 28 | Token handling, access control, known past security fixes |
 | `test_login_security` | 21 | OTP limits, lockouts, login rules |
 | `test_refresh_tokens` | 21 | Token renewal, reuse detection, logout |
-| `test_product_actions` | 26 | Add, buy-more, notify-me and limits on products; flash sale 20% off MRP |
+| `test_product_actions` | 28 | Add, buy-more, notify-me and limits on products; flash sale 20% off MRP; Chilled tag set by admin |
 | `test_order_flow` | 23 | Order status from placed to delivered, cancelling |
 | `test_checkout` | 39 | Server-side bill, delivery fees, coupons, wallet, ClikGett Cash only from ₹250, no minimum order, order for someone else |
 | `test_flash_sale` | 14 | Sale discount taken off MRP, used only when below the offer price, units per order at the sale price, admin photos, prices and limits |
@@ -57,7 +57,7 @@ Run with `npm test`. All must pass before deploying.
 | `test_order_safety` | 34 | Orders and photo orders at the same moment, wallet, stock, deactivated staff, store cancellation reason, prepaid cancellation refunded as ClikGett Cash |
 | `test_delivery_assignment_workflow` | 20 | Assigning and reassigning riders |
 | `test_eta_sync_e2e` | Passes | Admin and rider ETA changes combine |
-| **Total** | **429 + ETA suite** | |
+| **Total** | **431 + ETA suite** | |
 
 ## Backend: older suites
 
