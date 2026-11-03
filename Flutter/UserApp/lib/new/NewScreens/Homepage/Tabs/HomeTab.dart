@@ -137,15 +137,17 @@ class _HomeTabState extends State<Home> {
 
   List<Widget> _sections() {
     final sections = homeController.homepagesectionList;
-    if (sections.isEmpty) {
-      // No sections configured: show real categories and best-sellers only.
-      return [
-        HomeHeroBannerCarousel(homeController: homeController),
-        CategoryGrid(title: 'Shop by category', categories: homeController.categories),
-        SectionProductRail(title: 'Bestsellers', products: homeController.bestItems),
-      ];
-    }
-    return sections.map(_section).toList();
+    final list = sections.isEmpty
+        // No sections configured: show real categories and best-sellers only.
+        ? <Widget>[
+            HomeHeroBannerCarousel(homeController: homeController),
+            CategoryGrid(title: 'Shop by category', categories: homeController.categories),
+            SectionProductRail(title: 'Bestsellers', products: homeController.bestItems),
+          ]
+        : sections.map(_section).toList();
+    // A running flash sale is always the 3rd section (it hides itself when there is none).
+    list.insert(list.length < 2 ? list.length : 2, const FlashSaleSection());
+    return list;
   }
 
   Widget _section(home_model.HomePageSectionProduct s) {
@@ -173,12 +175,7 @@ class _HomeTabState extends State<Home> {
           ],
         );
       case 'deals_and_offers':
-        return Column(
-          children: [
-            if (homeController.activeSales.isNotEmpty) const FlashSaleSection(),
-            SectionProductRail(title: name, subtitle: s.description, products: products, homeSectionId: s.homeSectionId),
-          ],
-        );
+        return SectionProductRail(title: name, subtitle: s.description, products: products, homeSectionId: s.homeSectionId);
       default:
         return SectionProductRail(title: name, subtitle: s.description, products: products, homeSectionId: s.homeSectionId);
     }
