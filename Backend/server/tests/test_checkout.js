@@ -151,6 +151,18 @@ const FAR = { Latitude: 15.93, Longitude: 78.11 };
             r = await placeOrder({ PaymentMethod: 'COD' });
             check('order below minimum value is refused', r.json && r.json.Status === 0 && /Minimum order/.test(r.json.Message), r.json && r.json.Message);
         }
+        check('no minimum order value to place an order', tiny.MinOrderMet === true, `MinOrderValue=${tiny.MinOrderValue}`);
+
+        // ---- Order for someone else
+        r = await placeOrder({ PaymentMethod: 'COD', ReceiverName: 'R', ReceiverMobile: '12345' });
+        check('order for someone else needs a name and a valid mobile', r.json && r.json.Status === 0 && /receiver/i.test(r.json.Message), r.json && r.json.Message);
+        r = await placeOrder({ PaymentMethod: 'COD', ReceiverName: 'Ravi Kumar', ReceiverMobile: '9876543210' });
+        check('a small order for someone else is placed', r.json && r.json.Status === 1, r.json && r.json.Message);
+        if (r.json && r.json.OrderID) {
+            const [o] = await q('SELECT ReceiverName, ReceiverMobile FROM Orders WHERE OrderID = ?', [r.json.OrderID]);
+            check('the receiver is saved on the order', o && o.ReceiverName === 'Ravi Kumar' && o.ReceiverMobile === '9876543210', JSON.stringify(o));
+        }
+
         await setCart(bigQty);
         r = await placeOrder({ PaymentMethod: 'WALLET', WalletAmount: 0 });
         check('wallet payment without enough balance is refused', r.json && r.json.Status === 0, r.json && r.json.Message);

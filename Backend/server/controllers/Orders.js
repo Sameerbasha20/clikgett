@@ -308,6 +308,19 @@ const ordercontroller = {
             if (!bill.MinOrderMet)
                 return fail(400, `Minimum order value is Rs.${bill.MinOrderValue}. Add Rs.${bill.AmountForMinOrder} more to place the order.`);
 
+            // Order for someone else: the receiver's name and a valid mobile number, both or neither.
+            const receiverName = String(body.ReceiverName || '').trim();
+            const receiverMobile = String(body.ReceiverMobile || '').replace(/\D/g, '').slice(-10);
+            if (receiverName || body.ReceiverMobile) {
+                if (receiverName.length < 2 || receiverName.length > 100 || !/^[6-9][0-9]{9}$/.test(receiverMobile))
+                    return fail(400, "Please enter the receiver's name and a valid 10-digit mobile number.");
+                body.ReceiverName = receiverName;
+                body.ReceiverMobile = receiverMobile;
+            } else {
+                body.ReceiverName = null;
+                body.ReceiverMobile = null;
+            }
+
             let paymentMethod = String(body.PaymentMethod || 'COD').toUpperCase();
             if (bill.ToPay === 0 && bill.WalletApplied > 0) paymentMethod = 'WALLET';
             if (!['COD', 'ONLINE', 'WALLET'].includes(paymentMethod))
@@ -771,7 +784,9 @@ function CreateOrders(body, OrderID, RazorpayOrderID, expecteddate) {
                 ScheduleStatus: isScheduled ? 'Scheduled' : 'Immediate',
                 ScheduledDateTime: isScheduled ? body.ScheduledDateTime : null,
                 OrderSizeBufferMinutes: body.OrderSizeBufferMinutes || 0,
-                TotalItemQuantity: body.TotalItemQuantity || 0
+                TotalItemQuantity: body.TotalItemQuantity || 0,
+                ReceiverName: body.ReceiverName || null,
+                ReceiverMobile: body.ReceiverMobile || null
             }
             let sql = "INSERT INTO Orders set ?";
 

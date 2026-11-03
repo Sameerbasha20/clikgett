@@ -26,7 +26,8 @@ async function loadSettings() {
         if (Array.isArray(parsed) && parsed.length) tipPresets = parsed.map(Number).filter((n) => n > 0);
     } catch (_) { /* keep defaults */ }
     return {
-        minOrderValue: parseFloat(s.MinOrderValue || 149),
+        // No minimum to place an order. The minimum (Minordervalue_wallet) applies only to ClikGett Cash.
+        minOrderValue: 0,
         minOrderForFullWallet: parseFloat(s.Minordervalue_wallet || 250),
         smallOrderWalletCap: parseFloat(s.MinUseOfWallet || 40),
         freeDeliveryThreshold: parseFloat(s.FreeDelivery_CartAmount || 499),

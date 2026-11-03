@@ -316,6 +316,7 @@ const deliveryboycontroller = {
             }
             console.log(GetOrders, " : GetOrders")
             let OrdersResult = await CommonController.commonget(GetOrders)
+            if (Array.isArray(OrdersResult)) OrdersResult.forEach(forReceiver)
 
 
             console.log(OrdersResult, " : get routes order result")
@@ -855,6 +856,16 @@ function getroutes(DeliveryBoyID, Type) {
     }
 }
 
+/** The rider sees and calls the receiver of an order placed for someone else. */
+function forReceiver(order) {
+    if (order && order.ReceiverName && order.ReceiverMobile) {
+        order.OrderedBy = order.UserName;
+        order.UserName = order.ReceiverName;
+        order.MobileNumber = order.ReceiverMobile;
+    }
+    return order;
+}
+
 function getorder(OrderID) {
     try {
         return new Promise(function (resolve, reject) {
@@ -880,7 +891,7 @@ function getorder(OrderID) {
                         let userresults = await CommonController.getuserdetail(results[0]['UserID']);
                         results[0]['UserName'] = userresults[0]['UserName']
                         results[0]['EmailID'] = userresults[0]['EmailID']
-                        resolve(results[0])
+                        resolve(forReceiver(results[0]))
                     }
                     else {
                         resolve({})

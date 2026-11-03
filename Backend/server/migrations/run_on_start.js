@@ -18,6 +18,7 @@ const MIGRATIONS = [
     require('./customer_rewards_migration'),
     require('./clikgett_cash_wording_migration'),
     require('./sale_limits_migration'),
+    require('./receiver_details_migration'),
 ];
 
 (async () => {

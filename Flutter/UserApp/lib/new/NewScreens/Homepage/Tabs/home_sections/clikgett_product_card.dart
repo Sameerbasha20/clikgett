@@ -140,12 +140,15 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
 
   /// Cold drinks, juices and ice creams get a "Chilled" tag (matched on the category name).
   static final RegExp _chilledCategory =
-      RegExp(r'cool ?drinks?|soft ?drinks?|cold ?drinks?|energy ?drinks?|juice|beverage|soda|ice ?cream|frozen', caseSensitive: false);
+      RegExp(r'cool ?drinks?|soft ?drinks?|cold ?drinks?|juice|soda|ice ?cream|frozen', caseSensitive: false);
 
   bool get _isChilled {
     final p = widget.product;
-    final names = '${p.categoryName ?? ''} ${p.subCategoryName ?? ''}';
-    if (names.trim().isNotEmpty) return _chilledCategory.hasMatch(names);
+    // The subcategory decides when there is one: "Tea, Coffee, Energy Drinks" holds tea powders too.
+    final sub = (p.subCategoryName ?? '').trim();
+    if (sub.isNotEmpty) return _chilledCategory.hasMatch(sub);
+    final names = (p.categoryName ?? '').trim();
+    if (names.isNotEmpty) return _chilledCategory.hasMatch(names);
     // Older responses without names: look the category up in what the home page loaded.
     final id = p.categoryId;
     if (id == null || !Get.isRegistered<HomeController>()) return false;

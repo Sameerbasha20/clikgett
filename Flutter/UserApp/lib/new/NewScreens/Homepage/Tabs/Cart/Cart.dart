@@ -76,6 +76,13 @@ class _CartState extends State<Cart> {
   bool _loading = true;
   bool _refreshing = false;
   bool _placing = false;
+
+  // Order for someone else: their name and phone; the address is chosen with the normal picker.
+  bool _forOther = false;
+  String _receiverName = '';
+  String _receiverMobile = '';
+  bool get _receiverReady =>
+      !_forOther || (_receiverName.trim().length >= 2 && RegExp(r'^[6-9][0-9]{9}$').hasMatch(_receiverMobile));
   String? _promoCode;
   int _tip = 0;
   bool _useWallet = false;
@@ -1105,6 +1112,7 @@ class _CartState extends State<Cart> {
           final storeClosed = timingController.timingResponse.value.status == 0 &&
               timingController.timingResponse.value.message.isNotEmpty;
           return Column(mainAxisSize: MainAxisSize.min, children: [
+            _orderForRow(),
             InkWell(
               onTap: _chooseAddress,
               child: Padding(
@@ -1117,7 +1125,12 @@ class _CartState extends State<Cart> {
                         ? Text('Select a delivery address',
                             style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: red))
                         : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text('Delivering to ${address.type.replaceAll(',', ' ').trim()}',
+                            Text(
+                                _forOther && _receiverReady
+                                    ? 'Delivering to $_receiverName (${address.type.replaceAll(',', ' ').trim()})'
+                                    : 'Delivering to ${address.type.replaceAll(',', ' ').trim()}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor)),
                             Text([address.flatNo, address.address].where((s) => s.trim().isNotEmpty).join(', '),
                                 maxLines: 1,
@@ -1186,6 +1199,9 @@ class _CartState extends State<Cart> {
     } else if (address == null) {
       label = 'Select address';
       onTap = _chooseAddress;
+    } else if (!_receiverReady) {
+      label = 'Add receiver details';
+      onTap = _askReceiver;
     } else if (bill.stockProblems.isNotEmpty) {
       label = 'Remove out-of-stock items';
     } else if (!bill.minOrderMet) {
@@ -1254,6 +1270,105 @@ class _CartState extends State<Cart> {
         ),
       ),
     );
+  }
+
+  /// "Ordering for": yourself, or someone else (asks their name, phone, then their address).
+  Widget _orderForRow() => Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Text('Ordering for', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: tColor3)),
+            const SizedBox(width: 10),
+            _chip('Myself', !_forOther, () => setState(() => _forOther = false)),
+            const SizedBox(width: 8),
+            _chip('Someone else', _forOther, _askReceiver),
+          ]),
+          if (_forOther && _receiverReady)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: InkWell(
+                onTap: _askReceiver,
+                child: Row(children: [
+                  const Icon(Icons.person_outline_rounded, size: 18, color: primaryDark),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text('$_receiverName · $_receiverMobile',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: tColor)),
+                  ),
+                  Text('Edit', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: primaryDark)),
+                ]),
+              ),
+            ),
+        ]),
+      );
+
+  /// Receiver's name and phone, then their delivery address.
+  Future<void> _askReceiver() async {
+    final name = TextEditingController(text: _receiverName);
+    final phone = TextEditingController(text: _receiverMobile);
+    String? error;
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
+          child: SafeArea(
+            top: false,
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Who is receiving this order?', style: GoogleFonts.poppins(fontSize: 16.5, fontWeight: FontWeight.w700, color: tColor)),
+              const SizedBox(height: 4),
+              Text('Our rider will call them and deliver to their address.',
+                  style: GoogleFonts.poppins(fontSize: 12.5, color: tColor3)),
+              const SizedBox(height: 14),
+              TextField(
+                controller: name,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'Receiver name', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: phone,
+                keyboardType: TextInputType.phone,
+                maxLength: 10,
+                decoration: const InputDecoration(labelText: 'Receiver mobile number', prefixText: '+91 ', border: OutlineInputBorder(), counterText: ''),
+              ),
+              if (error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(error!, style: GoogleFonts.poppins(fontSize: 12, color: red)),
+                ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  onPressed: () {
+                    final n = name.text.trim();
+                    final m = phone.text.replaceAll(RegExp(r'\D'), '');
+                    if (n.length < 2) return setSheet(() => error = 'Enter the receiver\'s name');
+                    if (!RegExp(r'^[6-9][0-9]{9}$').hasMatch(m)) return setSheet(() => error = 'Enter a valid 10-digit mobile number');
+                    _receiverName = n;
+                    _receiverMobile = m;
+                    Navigator.pop(ctx, true);
+                  },
+                  child: Text('Next: choose their address',
+                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: white)),
+                ),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _forOther = true);
+    await _chooseAddress();
   }
 
   Future<void> _chooseAddress() async {
@@ -1399,6 +1514,8 @@ class _CartState extends State<Cart> {
         'ScheduleStatus': _slot != null && _slot!.isScheduled ? 'Scheduled' : 'Immediate',
         if (_slot != null && _slot!.isScheduled) 'ScheduledDateTime': _slot!.formattedScheduledDateTime,
         'username': Get.find<ProfileController>().users?.firstName ?? '',
+        if (_forOther) 'ReceiverName': _receiverName,
+        if (_forOther) 'ReceiverMobile': _receiverMobile,
       };
 
       if (method == 'ONLINE') {

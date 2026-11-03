@@ -706,6 +706,15 @@ function Products() {
                                                         <h4>:</h4>
                                                         <p>{orders.UserName}</p>
                                                     </div>
+                                                    {orders.ReceiverName && (
+                                                        <div className={dashboardclasses["order-date"]}>
+                                                            <h5>Deliver to</h5>
+                                                            <h4>:</h4>
+                                                            <p>
+                                                                <strong>{orders.ReceiverName}</strong> · {orders.ReceiverMobile} (ordered for someone else)
+                                                            </p>
+                                                        </div>
+                                                    )}
 
                                                     <div
                                                         className={
