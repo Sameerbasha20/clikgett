@@ -8,7 +8,11 @@ class ScheduledSlotInfo {
   final bool isScheduled;
   final DateTime? scheduledDate;
   final String? slotLabel;
-  final String? formattedScheduledDateTime; // start of the chosen day in UTC, e.g. "2026-10-06 18:30:00"
+  /// Start of the chosen time slot in UTC, e.g. "2026-10-06 04:30:00"; null until a slot is picked.
+  final String? formattedScheduledDateTime;
+
+  /// Schedule later is on but no time slot is picked yet: the order can't be placed.
+  bool get needsSlot => isScheduled && formattedScheduledDateTime == null;
 
   ScheduledSlotInfo({
     required this.isScheduled,
@@ -32,18 +36,46 @@ class DeliverySlotWidget extends StatefulWidget {
 
 class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
   bool isScheduled = false;
-  int selectedDateIndex = 0; // 0 = Tomorrow, 1 = Day after tomorrow, 2 = 3 days later
+  int selectedDateIndex = 0;
+  int? selectedSlotHour; // start hour of the picked 2-hour slot
 
   late List<DateTime> availableDates;
+
+  /// Two-hour delivery slots: 8-10 AM ... 8-10 PM (start hours).
+  static const List<int> slotStartHours = [8, 10, 12, 14, 16, 18, 20];
+
+  /// Slots on [day] that start at least an hour from now.
+  List<int> _slotsFor(DateTime day) {
+    final earliest = DateTime.now().add(const Duration(hours: 1));
+    return slotStartHours.where((h) => DateTime(day.year, day.month, day.day, h).isAfter(earliest)).toList();
+  }
+
+  static String _hour(int h) {
+    final h12 = h % 12 == 0 ? 12 : h % 12;
+    return '$h12 ${h < 12 ? 'AM' : 'PM'}';
+  }
+
+  static String slotText(int h) => '${_hour(h)} - ${_hour(h + 2)}';
+
+  String _dayLabel(DateTime d) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final diff = DateTime(d.year, d.month, d.day).difference(today).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Tomorrow';
+    return DateFormat('EEE, MMM d').format(d);
+  }
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     availableDates = [
-      DateTime(now.year, now.month, now.day + 1), // Tomorrow
-      DateTime(now.year, now.month, now.day + 2), // Day after tomorrow
-      DateTime(now.year, now.month, now.day + 3), // 3 days later
+      if (_slotsFor(today).isNotEmpty) today, // later today, while slots remain
+      DateTime(now.year, now.month, now.day + 1),
+      DateTime(now.year, now.month, now.day + 2),
+      DateTime(now.year, now.month, now.day + 3),
     ];
   }
 
@@ -99,6 +131,7 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
             (d) => d.year == picked.year && d.month == picked.month && d.day == picked.day,
           );
         }
+        selectedSlotHour = null;
       });
       _notifyChange();
     }
@@ -113,16 +146,21 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
         formattedScheduledDateTime: null,
       ));
     } else {
-      // Only a day is chosen; the order is released for delivery from the start of that day
-      // (IST midnight, sent as UTC like every other server time).
+      // The order is released to the riders at the start of the picked slot
+      // (local time, sent as UTC like every other server time).
       final selectedDate = availableDates[selectedDateIndex];
-      final dayStartUtc = DateTime(selectedDate.year, selectedDate.month, selectedDate.day).toUtc();
+      final hour = selectedSlotHour;
+      if (hour == null || !_slotsFor(selectedDate).contains(hour)) {
+        widget.onSlotChanged(ScheduledSlotInfo(isScheduled: true, scheduledDate: selectedDate));
+        return;
+      }
+      final slotStartUtc = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, hour).toUtc();
 
       widget.onSlotChanged(ScheduledSlotInfo(
         isScheduled: true,
         scheduledDate: selectedDate,
-        slotLabel: DateFormat('EEE, d MMM').format(selectedDate),
-        formattedScheduledDateTime: DateFormat('yyyy-MM-dd HH:mm:ss').format(dayStartUtc),
+        slotLabel: '${_dayLabel(selectedDate)}, ${slotText(hour)}',
+        formattedScheduledDateTime: DateFormat('yyyy-MM-dd HH:mm:ss').format(slotStartUtc),
       ));
     }
   }
@@ -307,14 +345,15 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
                   ...List.generate(availableDates.length, (index) {
                     final date = availableDates[index];
                     final isSelected = selectedDateIndex == index;
-                    final dayLabel = index == 0
-                        ? "Tomorrow"
-                        : DateFormat('EEE, MMM d').format(date);
+                    final dayLabel = _dayLabel(date);
 
                     return GestureDetector(
                       onTap: () {
                         setState(() {
                           selectedDateIndex = index;
+                          if (selectedSlotHour != null && !_slotsFor(date).contains(selectedSlotHour)) {
+                            selectedSlotHour = null;
+                          }
                         });
                         _notifyChange();
                       },
@@ -373,9 +412,50 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
                 ],
               ),
             ),
+            const SizedBox(height: 14),
+            Text(
+              "Select Time Slot",
+              style: GoogleFonts.poppins(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final h in _slotsFor(availableDates[selectedDateIndex]))
+                  GestureDetector(
+                    onTap: () {
+                      setState(() => selectedSlotHour = h);
+                      _notifyChange();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selectedSlotHour == h ? primary : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: selectedSlotHour == h ? primary : Colors.grey.shade300, width: 1.2),
+                      ),
+                      child: Text(
+                        slotText(h),
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.sp,
+                          fontWeight: selectedSlotHour == h ? FontWeight.w600 : FontWeight.w500,
+                          color: selectedSlotHour == h ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 8),
             Text(
-              "Your order will be delivered during the day you pick.",
+              selectedSlotHour == null
+                  ? "Pick a time slot to place a scheduled order."
+                  : "Your order will be delivered between ${slotText(selectedSlotHour!)}.",
               style: GoogleFonts.poppins(
                 fontSize: 11.5.sp,
                 color: Colors.grey.shade600,

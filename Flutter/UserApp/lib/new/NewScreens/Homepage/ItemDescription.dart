@@ -193,6 +193,10 @@ class _ItemDescriptionState extends State<ItemDescription> {
                                     maxQty: categoryController.maxavailableQty.value,
                                     categoryId: categoryController.productsDetails?.categoryId,
                                     subCategoryId: categoryController.productsDetails?.subCategoryId,
+                                    onAdded: (qty) {
+                                      categoryController.updateQuantity(qty);
+                                      if (mounted) setState(() {});
+                                    },
                                   ),
                                   // Blank dates come back as 0000-00-00 / 1899; only show a real one.
                                   if ((DateTime.tryParse(categoryController.productsDetails?.productVariants?.first.ExpiryDate ?? '')?.year ?? 0) >= 2000)

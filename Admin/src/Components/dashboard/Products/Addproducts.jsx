@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dashboardclasses from "../dashboard.module.css";
 import { IoClose, IoPricetagsOutline } from "react-icons/io5";
 import { FileUploader } from "react-drag-drop-files";
@@ -110,6 +110,25 @@ function AddCategory(props) {
 
     const formData = watch();
 
+    // The saved subcategory, applied once its options are on screen (a select can't take a
+    // value it has no option for).
+    const pendingSubCategory = useRef(null);
+    useEffect(() => {
+        const id = pendingSubCategory.current;
+        if (id && subCategoryItems.some((s) => String(s.SubCategoryID) === String(id))) {
+            setValue("SubCategoryID", String(id));
+            pendingSubCategory.current = null;
+        }
+    }, [subCategoryItems, setValue]);
+
+    // Same for the category once the category list arrives.
+    useEffect(() => {
+        const id = productDetails?.CategoryID;
+        if (id && categoryItems.some((c) => String(c.CategoryID) === String(id))) {
+            setValue("CategoryID", String(id));
+        }
+    }, [categoryItems, productDetails, setValue]);
+
     // -------------------------------------------------------------
     // Initial Load & Category Resolution
     // -------------------------------------------------------------
@@ -152,16 +171,15 @@ function AddCategory(props) {
                         ProductName: p.ProductName,
                         CategoryID: p.CategoryID,
                         SubCategoryID: p.SubCategoryID,
-                        Status: p.Status,
+                        Status: String(p.Status),
                         Type: p.Type || 1,
                         IsChilled: Number(p.IsChilled) === 1
                     });
 
                     // Subcategories for this category
                     if (p.CategoryID) {
-                        loadSubCategories(p.CategoryID, () => {
-                            setValue("SubCategoryID", p.SubCategoryID);
-                        });
+                        pendingSubCategory.current = p.SubCategoryID;
+                        loadSubCategories(p.CategoryID);
                     }
 
                     // Images
@@ -485,7 +503,7 @@ function AddCategory(props) {
                 ProductName: data.ProductName,
                 Description: descriptionValue || "NA",
                 SearchKeywords: keywordsValue,
-                Status: data.Status !== undefined ? data.Status : 1,
+                Status: data.Status !== undefined ? Number(data.Status) : 1,
                 Type: 1,
                 IsChilled: data.IsChilled ? 1 : 0,
                 ProductImages: paths.map((item) => item.path)

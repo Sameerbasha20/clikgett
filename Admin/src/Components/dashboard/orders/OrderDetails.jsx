@@ -532,6 +532,14 @@ function Products() {
                                             <h5>SCHEDULED FOR</h5>
                                             <p style={{ color: "#5b21b6", fontWeight: 700 }}>
                                                 📅 {new Date(orders.ScheduledDateTime).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", year: "numeric" })}
+                                                {(() => {
+                                                    // Slots are 2 hours from the scheduled start; older orders start at midnight (day only).
+                                                    const start = new Date(orders.ScheduledDateTime);
+                                                    if (start.getHours() === 0 && start.getMinutes() === 0) return null;
+                                                    const end = new Date(start.getTime() + 2 * 3600 * 1000);
+                                                    const t = (d) => d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+                                                    return <>, {t(start)} – {t(end)}</>;
+                                                })()}
                                             </p>
                                         </div>
                                     )}

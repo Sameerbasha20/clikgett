@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/stock_helper.dart';
 import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
@@ -131,10 +132,11 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     return avail < maxQ ? avail : maxQ;
   }
 
-  /// 1-9 left: shown on the card so customers know to hurry.
+  /// 1-5 in stock: shown on the card so customers know to hurry. Uses the stock itself,
+  /// not the per-order limit (a limit of 5 is not "only 5 left").
   int? get _fewLeft {
-    final left = _maxAllowed;
-    return !_isOutOfStock && left > 0 && left < 10 ? left : null;
+    final left = selectedVariant?.availableQty ?? 0;
+    return !_isOutOfStock && left > 0 && left <= StockHelper.lowStockLimit ? left : null;
   }
 
   /// The admin marks a product as chilled (Products.IsChilled).

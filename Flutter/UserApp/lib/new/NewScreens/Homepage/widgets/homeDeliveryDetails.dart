@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/schedule_format.dart';
 import 'dart:async';
 
 import 'package:fav_app/new/Constants/colors.dart';
@@ -7,7 +8,6 @@ import 'package:fav_app/new/Services/order_tracking_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 /// Live order card above the bottom navigation on the home screen.
 class DeliveryStatus extends StatefulWidget {
@@ -88,7 +88,7 @@ class _DeliveryStatusState extends State<DeliveryStatus> with SingleTickerProvid
 
           final String headline;
           if (scheduled) {
-            headline = 'Scheduled for ${DateFormat('EEE, d MMM').format(scheduledAt)}';
+            headline = 'Scheduled for ${scheduledWhen(scheduledAt)}';
           } else if (status == OrderStatus.arrived) {
             headline = 'Your delivery partner is here';
           } else if (late) {

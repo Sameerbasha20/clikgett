@@ -165,10 +165,11 @@ function DeliveryETASettingsTab() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #e2e8f0", paddingBottom: "12px", marginBottom: "20px" }}>
                 <div>
                     <h4 style={{ margin: 0, color: "#1e293b", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <FaRoute color="#0e9f6e" /> Distance-Based Delivery ETA Configuration
+                        <FaRoute color="#0e9f6e" /> Delivery Time by Distance
                     </h4>
                     <p style={{ margin: "4px 0 0 0", color: "#64748b", fontSize: "0.85rem" }}>
-                        Configure dynamic base ETAs based on distance between fulfillment store and customer delivery location.
+                        The delivery time customers see ("Delivery in 20 minutes"), by distance from the store.
+                        This sets minutes only. The delivery fee (₹ per km) is in Business &amp; Delivery Rules.
                     </p>
                 </div>
                 <div className="custom-control custom-switch">

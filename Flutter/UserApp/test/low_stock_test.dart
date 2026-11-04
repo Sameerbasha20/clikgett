@@ -18,10 +18,11 @@ void main() {
       expect(StockHelper.isOutOfStock(10), isFalse);
     });
 
-    test('CASE 3: AvailableQty = 9 -> "Only 9 left"', () {
-      expect(StockHelper.getStockMessage(9), equals('Only 9 left'));
-      expect(StockHelper.isLowStock(9), isTrue);
-      expect(StockHelper.isOutOfStock(9), isFalse);
+    test('CASE 3: AvailableQty = 6 or 9 -> no message (shown from 5 down)', () {
+      expect(StockHelper.getStockMessage(9), isNull);
+      expect(StockHelper.getStockMessage(6), isNull);
+      expect(StockHelper.isLowStock(6), isFalse);
+      expect(StockHelper.isOutOfStock(6), isFalse);
     });
 
     test('CASE 4: AvailableQty = 5 -> "Only 5 left"', () {
@@ -45,18 +46,18 @@ void main() {
 
     test('CASE 7: Multiple variants evaluated independently', () {
       final variantA = ProductVariant(variantId: 1, metricvalue: 500, metrictype: 'ml', availableQty: 20);
-      final variantB = ProductVariant(variantId: 2, metricvalue: 1, metrictype: 'L', availableQty: 6);
+      final variantB = ProductVariant(variantId: 2, metricvalue: 1, metrictype: 'L', availableQty: 4);
       final variantC = ProductVariant(variantId: 3, metricvalue: 2, metrictype: 'L', availableQty: 0);
 
       expect(StockHelper.getStockMessage(variantA.availableQty), isNull);
-      expect(StockHelper.getStockMessage(variantB.availableQty), equals('Only 6 left'));
+      expect(StockHelper.getStockMessage(variantB.availableQty), equals('Only 4 left'));
       expect(StockHelper.getStockMessage(variantC.availableQty), equals('Out of Stock'));
     });
 
     test('CASE 8: Change selected variant A -> B -> C -> A sequence', () {
       final variants = [
         ProductVariant(variantId: 1, availableQty: 20),
-        ProductVariant(variantId: 2, availableQty: 6),
+        ProductVariant(variantId: 2, availableQty: 4),
         ProductVariant(variantId: 3, availableQty: 0),
       ];
 
@@ -66,7 +67,7 @@ void main() {
 
       // Select B
       selected = variants[1];
-      expect(StockHelper.getStockMessage(selected.availableQty), equals('Only 6 left'));
+      expect(StockHelper.getStockMessage(selected.availableQty), equals('Only 4 left'));
 
       // Select C
       selected = variants[2];

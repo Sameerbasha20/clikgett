@@ -110,9 +110,9 @@ class _HomeTabState extends State<Home> {
             slivers: [
               SliverToBoxAdapter(child: StorefrontHeader(isLoggedIn: _isLoggedIn)),
               SliverPersistentHeader(pinned: true, delegate: StickySearchBarDelegate(hints: _searchHints)),
-              if (_isLoggedIn) const SliverToBoxAdapter(child: HomeMilestoneCard()),
+              if (_isLoggedIn) const SliverToBoxAdapter(child: HomeMilestoneCard(compact: true)),
               SliverToBoxAdapter(child: _StoreClosedCard(timingController: timingController)),
-              const SliverToBoxAdapter(child: UnlockDealsBanner()),
+              const SliverToBoxAdapter(child: UnlockDealsBanner(compact: true)),
               if (_previouslyBought.isNotEmpty)
                 SliverToBoxAdapter(
                   child: SectionProductRail(

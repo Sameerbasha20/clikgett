@@ -271,7 +271,7 @@ const transition = async (orderId, to, actor, options = {}) => {
         if (to === S.CANCELLED_BY_CUSTOMER) {
             await notifyCustomer(order, `Order ${label} cancelled`, `Your order has been cancelled as requested. ${refundText}`.trim());
         } else {
-            await notifyCustomer(order, `Order ${label} cancelled`, `Sorry, we had to cancel your order.${reasonText} ${refundText}`.trim());
+            await notifyCustomer(order, `Order ${label} cancelled`, `Sorry, we were unable to deliver your order.${reasonText} ${refundText}`.trim());
         }
         if (Number(order.DeliveryBoyID) > 0) {
             await notifyRider(order.DeliveryBoyID, `Order ${label} cancelled`, 'This order was cancelled. Do not deliver it.', { orderId: order.OrderID, type: 'cancelled' });

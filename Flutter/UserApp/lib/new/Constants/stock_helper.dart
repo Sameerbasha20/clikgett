@@ -3,6 +3,9 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 
 /// Helper class to evaluate variant-level stock states for ClikGett UserApp.
 class StockHelper {
+  /// "Only N left" shows from this many down.
+  static const int lowStockLimit = 5;
+
   /// Evaluates stock status for a given variant's available quantity.
   ///
   /// Low-stock rules:
@@ -17,7 +20,7 @@ class StockHelper {
     if (availableQty == 0) {
       return "Out of Stock";
     }
-    if (availableQty < 10) {
+    if (availableQty <= lowStockLimit) {
       return "Only $availableQty left";
     }
     return null;
@@ -28,7 +31,7 @@ class StockHelper {
     if (availableQty == null || availableQty < 1) {
       return false;
     }
-    return availableQty < 10;
+    return availableQty <= lowStockLimit;
   }
 
   /// Returns true if stock is 0 or less.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import TopNav from "../../Navbar/topNav";
 import SideNav from "../../Navbar/sideNav";
@@ -30,6 +30,41 @@ function PhotoOrderDetail() {
     const [saving, setSaving] = useState(false);
     const [imageSrc, setImageSrc] = useState(null);
     const [imageState, setImageState] = useState("loading"); // loading | ready | error | none
+
+    // Photo viewer: zoom with the buttons or mouse wheel, drag to move when zoomed.
+    const [viewerOpen, setViewerOpen] = useState(false);
+    const [zoom, setZoom] = useState(1);
+    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const drag = useRef(null);
+    const clampZoom = (z) => Math.min(5, Math.max(1, Math.round(z * 100) / 100));
+    const zoomBy = (factor) => setZoom((z) => {
+        const next = clampZoom(z * factor);
+        if (next === 1) setPan({ x: 0, y: 0 });
+        return next;
+    });
+    const openViewer = () => { setZoom(1); setPan({ x: 0, y: 0 }); setViewerOpen(true); };
+    useEffect(() => {
+        if (!viewerOpen) return undefined;
+        const onKey = (e) => {
+            if (e.key === "Escape") setViewerOpen(false);
+            if (e.key === "+" || e.key === "=") zoomBy(1.25);
+            if (e.key === "-") zoomBy(0.8);
+        };
+        const onMove = (e) => {
+            if (!drag.current) return;
+            setPan({ x: drag.current.px + e.clientX - drag.current.x, y: drag.current.py + e.clientY - drag.current.y });
+        };
+        const onUp = () => { drag.current = null; };
+        window.addEventListener("keydown", onKey);
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+        return () => {
+            window.removeEventListener("keydown", onKey);
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [viewerOpen]);
 
     // The image endpoint requires the admin Authorization header, which an <img src>
     // cannot send, so download it with fetch and show it from a local blob URL.
@@ -103,13 +138,36 @@ function PhotoOrderDetail() {
             .catch(() => toast.error("Error claiming request"));
     };
 
+    // Suggestions while typing (2+ letters, after a short pause). Older answers are ignored.
+    const searchSeq = useRef(0);
+    useEffect(() => {
+        const q = searchQuery.trim();
+        if (q.length < 2) {
+            setSearchResults([]);
+            return undefined;
+        }
+        const timer = setTimeout(() => {
+            const seq = ++searchSeq.current;
+            Services.searchAdminProducts("GET", null, token, q)
+                .then((res) => {
+                    if (seq !== searchSeq.current) return;
+                    setSearchResults(res && res.Status === 1 ? (res.Product || []) : []);
+                })
+                .catch(() => {});
+        }, 300);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchQuery]);
+
     // Catalog search
     const handleSearchProducts = (e) => {
         e.preventDefault();
         if (!searchQuery.trim()) return;
         setSearching(true);
+        const seq = ++searchSeq.current;
         Services.searchAdminProducts("GET", null, token, searchQuery)
             .then((res) => {
+                if (seq !== searchSeq.current) return;
                 if (res.Status === 1) {
                     setSearchResults(res.Product || []);
                 } else {
@@ -357,6 +415,62 @@ function PhotoOrderDetail() {
                     </div>
 
                     {/* Dual-Pane Studio Grid */}
+                    {viewerOpen && imageSrc && (
+                        <div
+                            onClick={() => setViewerOpen(false)}
+                            onWheel={(e) => zoomBy(e.deltaY < 0 ? 1.15 : 0.87)}
+                            style={{
+                                position: "fixed", inset: 0, zIndex: 3000, background: "rgba(15, 23, 42, 0.92)",
+                                display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden"
+                            }}
+                        >
+                            <div
+                                onClick={(e) => e.stopPropagation()}
+                                style={{ position: "absolute", top: 16, right: 16, display: "flex", gap: 8, alignItems: "center", zIndex: 2 }}
+                            >
+                                {[
+                                    ["\u2212", () => zoomBy(0.8), "Zoom out"],
+                                    [`${Math.round(zoom * 100)}%`, () => { setZoom(1); setPan({ x: 0, y: 0 }); }, "Reset"],
+                                    ["+", () => zoomBy(1.25), "Zoom in"],
+                                    ["\u2715", () => setViewerOpen(false), "Close (Esc)"],
+                                ].map(([label, onClick, title]) => (
+                                    <button
+                                        key={title}
+                                        type="button"
+                                        title={title}
+                                        onClick={onClick}
+                                        style={{
+                                            minWidth: 42, height: 38, padding: "0 10px", borderRadius: 8, border: "none",
+                                            background: "#fff", color: "#0f172a", fontWeight: 700, fontSize: "1rem", cursor: "pointer"
+                                        }}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                            <img
+                                src={imageSrc}
+                                alt="Customer Upload"
+                                draggable={false}
+                                onClick={(e) => e.stopPropagation()}
+                                onDoubleClick={() => (zoom > 1 ? (setZoom(1), setPan({ x: 0, y: 0 })) : setZoom(2))}
+                                onMouseDown={(e) => {
+                                    if (zoom <= 1) return;
+                                    e.preventDefault();
+                                    drag.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y };
+                                }}
+                                style={{
+                                    maxWidth: "92vw", maxHeight: "86vh", userSelect: "none",
+                                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                                    transition: drag.current ? "none" : "transform 0.12s ease-out",
+                                    cursor: zoom > 1 ? "grab" : "zoom-in", boxShadow: "0 10px 40px rgba(0,0,0,0.5)", borderRadius: 6
+                                }}
+                            />
+                            <div style={{ position: "absolute", bottom: 14, color: "#cbd5e1", fontSize: "0.8rem" }}>
+                                Scroll or use + / \u2212 to zoom · drag to move · double-click to toggle · Esc to close
+                            </div>
+                        </div>
+                    )}
                     <div className={styles.studioGrid}>
                         {/* LEFT PANE: Customer Photo & Details */}
                         <div>
@@ -366,9 +480,14 @@ function PhotoOrderDetail() {
                                 </h3>
                                 <div className={styles.imagePreviewBox}>
                                     {imageState === "ready" && (
-                                        <a href={imageSrc} target="_blank" rel="noreferrer" title="Open full size">
-                                            <img src={imageSrc} alt="Customer Upload" className={styles.photoImg} />
-                                        </a>
+                                        <img
+                                            src={imageSrc}
+                                            alt="Customer Upload"
+                                            className={styles.photoImg}
+                                            title="Click to enlarge"
+                                            style={{ cursor: "zoom-in" }}
+                                            onClick={openViewer}
+                                        />
                                     )}
                                     {imageState === "loading" && (
                                         <span style={{ color: "#cbd5e1" }}>Loading photo...</span>
@@ -450,7 +569,8 @@ function PhotoOrderDetail() {
                                     <input
                                         type="text"
                                         className={styles.searchInput}
-                                        placeholder="Search catalog by name or category (e.g. Milk, Rice)..."
+                                        placeholder="Type a product name (e.g. Milk, Rice) to see matches..."
+                                        autoComplete="off"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />

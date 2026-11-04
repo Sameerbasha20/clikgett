@@ -21,9 +21,10 @@ class _Pack {
 }
 
 /// "Select unit" on the product page (Blinkit style): the single pack plus its
-/// buy-more options, e.g. "750 ml ₹39" | "2 x 750 ml ₹77". Tapping a card puts that
-/// many in the cart. Hidden when the pack has no buy-more price.
-class PackOptions extends StatelessWidget {
+/// buy-more options, e.g. "750 ml ₹39" | "2 x 750 ml ₹77". Tapping a card selects it and
+/// puts that many in the cart; [onAdded] lets the page update its own quantity button.
+/// Hidden when the pack has no buy-more price.
+class PackOptions extends StatefulWidget {
   final int productId;
   final int variantId;
   final String unit;
@@ -34,6 +35,7 @@ class PackOptions extends StatelessWidget {
   final int maxQty;
   final int? categoryId;
   final int? subCategoryId;
+  final ValueChanged<int>? onAdded;
 
   const PackOptions({
     super.key,
@@ -47,7 +49,25 @@ class PackOptions extends StatelessWidget {
     this.maxQty = 0,
     this.categoryId,
     this.subCategoryId,
+    this.onAdded,
   });
+
+  @override
+  State<PackOptions> createState() => _PackOptionsState();
+}
+
+class _PackOptionsState extends State<PackOptions> {
+  int? _picked; // the card just tapped (shown selected at once, before the cart reloads)
+  bool _busy = false;
+
+  int get productId => widget.productId;
+  int get variantId => widget.variantId;
+  String get unit => widget.unit;
+  double get price => widget.price;
+  double get mrp => widget.mrp;
+  List<home_model.BulkTier> get tiers => widget.tiers;
+  double? get buy2Price => widget.buy2Price;
+  int get maxQty => widget.maxQty;
 
   /// "1.000 Ltr" -> "1 Ltr", "0.500 kg" -> "0.5 kg".
   static String _tidy(String unit) => unit.trim().replaceAllMapped(
@@ -72,6 +92,7 @@ class PackOptions extends StatelessWidget {
   }
 
   Future<void> _choose(BuildContext context, _Pack pack) async {
+    if (_busy) return;
     final token = await CommonServices.getToken();
     if (!context.mounted) return;
     if (token.isEmpty) {
@@ -83,17 +104,30 @@ class PackOptions extends StatelessWidget {
       customToast(message: 'Only $maxQty available');
       return;
     }
-    await Get.find<CartController>().updateQuantity(
+    setState(() {
+      _picked = pack.quantity;
+      _busy = true;
+    });
+    final ok = await Get.find<CartController>().updateQuantity(
       productId: productId,
       variantId: variantId,
       quantity: pack.quantity,
       removeToast: true,
       isThroughDescriptionScreen: true,
       isFromCartScreen: true,
-      categoryId: categoryId,
-      subCategoryId: subCategoryId,
+      categoryId: widget.categoryId,
+      subCategoryId: widget.subCategoryId,
       context: context,
     );
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      if (!ok) _picked = null;
+    });
+    if (ok) {
+      widget.onAdded?.call(pack.quantity);
+      customToast(message: '${pack.label} added to cart');
+    }
   }
 
   @override
@@ -111,7 +145,9 @@ class PackOptions extends StatelessWidget {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(children: [
-              for (final p in packs) _card(context, p, selected: inCart == p.quantity, disabled: maxQty > 0 && p.quantity > maxQty),
+              for (final p in packs)
+                _card(context, p,
+                    selected: (_busy ? _picked : (inCart > 0 ? inCart : _picked)) == p.quantity, disabled: maxQty > 0 && p.quantity > maxQty),
             ]),
           );
         }),

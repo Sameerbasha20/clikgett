@@ -267,7 +267,9 @@ void showMilestonesSheet(BuildContext context, List<dynamic> milestones) {
 /// Home screen version: a road from the first order to the last reward, with a scooter
 /// at the customer's position and a gift at every reward.
 class HomeMilestoneCard extends StatefulWidget {
-  const HomeMilestoneCard({Key? key}) : super(key: key);
+  /// compact: a slim strip for the home screen; tapping it opens the full card.
+  final bool compact;
+  const HomeMilestoneCard({Key? key, this.compact = false}) : super(key: key);
 
   @override
   State<HomeMilestoneCard> createState() => _HomeMilestoneCardState();
@@ -505,6 +507,7 @@ class _HomeMilestoneCardState extends State<HomeMilestoneCard> with TickerProvid
     if (_milestones.isEmpty) return const SizedBox.shrink();
     final remaining = int.tryParse('${_next?['RemainingOrders'] ?? 0}') ?? 0;
     final allDone = _next == null || remaining <= 0;
+    if (widget.compact) return _compact(remaining, allDone);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
       child: Material(
@@ -579,6 +582,83 @@ class _HomeMilestoneCardState extends State<HomeMilestoneCard> with TickerProvid
     );
   }
 
+  /// Home strip: gift, "N orders to <reward>", a thin progress bar. Opens the rewards page.
+  Widget _compact(int remaining, bool allDone) {
+    final nextTarget = _next == null ? 0 : _target(_next);
+    final progress = allDone || nextTarget <= 0 ? 1.0 : (_totalOrders / nextTarget).clamp(0.0, 1.0).toDouble();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MilestonesPage())),
+          child: Ink(
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              gradient: const LinearGradient(colors: [Color(0xFF064E3B), Color(0xFF0D9488)]),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Stack(children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(children: [
+                    AnimatedBuilder(
+                      animation: _pulse,
+                      builder: (_, child) =>
+                          Transform.rotate(angle: allDone ? 0 : math.sin(_pulse.value * math.pi * 2) * 0.1, child: child),
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(colors: [_goldLight, _gold]),
+                        ),
+                        child: Icon(allDone ? Icons.emoji_events_rounded : Icons.redeem_rounded,
+                            color: const Color(0xFF78350F), size: 17),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(
+                          allDone
+                              ? 'All rewards unlocked'
+                              : '$remaining order${remaining == 1 ? '' : 's'} to ${_next?['RewardName'] ?? 'your next reward'}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white),
+                        ),
+                        const SizedBox(height: 5),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: AnimatedBuilder(
+                            animation: _fill,
+                            builder: (_, __) => LinearProgressIndicator(
+                              value: progress * Curves.easeOutCubic.transform(_fill.value),
+                              minHeight: 4,
+                              backgroundColor: Colors.white.withOpacity(0.18),
+                              color: _gold,
+                            ),
+                          ),
+                        ),
+                      ]),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.chevron_right_rounded, color: Colors.white.withOpacity(0.85), size: 22),
+                  ]),
+                ),
+                _celebration(),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _glow(double size) => Container(
         width: size,
         height: size,
@@ -619,4 +699,34 @@ class _ConfettiPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ConfettiPainter old) => old.t != t;
+}
+
+/// The full rewards card, opened from the home strip. Tap the card for every reward.
+class MilestonesPage extends StatelessWidget {
+  const MilestonesPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Colors.black87,
+        title: Text('My rewards', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700)),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          const HomeMilestoneCard(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Text('Every delivered order counts. Tap the card to see all rewards.',
+                style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.black54)),
+          ),
+        ],
+      ),
+    );
+  }
 }

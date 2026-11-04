@@ -1,5 +1,5 @@
 import 'package:fav_app/new/Constants/number_format.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
+import 'dart:async';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/adress_controller.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
@@ -272,24 +272,10 @@ class StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                       children: [
                         const Icon(Icons.search_rounded, color: tColor3, size: 22),
                         const SizedBox(width: 8),
-                        Text('Search ', style: GoogleFonts.poppins(fontSize: 13.5, color: grey70)),
+                        Text('Search ', style: GoogleFonts.poppins(fontSize: 13.5, height: 1.2, color: grey70)),
                         Expanded(
-                          // IgnorePointer: the animation has its own tap handler, which swallowed
-                          // taps on the search bar while the hint was moving.
                           child: IgnorePointer(
-                            child: ClipRect(
-                              child: AnimatedTextKit(
-                              key: ValueKey(shownHints.join('|')),
-                              repeatForever: true,
-                              pause: const Duration(milliseconds: 1400),
-                              animatedTexts: shownHints
-                                  .map((h) => RotateAnimatedText('"$h"',
-                                      // Hints sit right after "Search", not centred in the bar.
-                                      alignment: Alignment.centerLeft,
-                                      textStyle: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: tColor4)))
-                                  .toList(),
-                              ),
-                            ),
+                            child: _RotatingHint(key: ValueKey(shownHints.join('|')), hints: shownHints),
                           ),
                         ),
                       ],
@@ -324,6 +310,59 @@ class StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Search hints that slide up one after another, on the same line as "Search".
+class _RotatingHint extends StatefulWidget {
+  final List<String> hints;
+  const _RotatingHint({super.key, required this.hints});
+
+  @override
+  State<_RotatingHint> createState() => _RotatingHintState();
+}
+
+class _RotatingHintState extends State<_RotatingHint> {
+  int _index = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.hints.length > 1) {
+      _timer = Timer.periodic(const Duration(milliseconds: 2400), (_) {
+        if (mounted) setState(() => _index = (_index + 1) % widget.hints.length);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 380),
+        layoutBuilder: (current, previous) => Stack(alignment: Alignment.centerLeft, children: [...previous, if (current != null) current]),
+        transitionBuilder: (child, animation) {
+          final incoming = child.key == ValueKey(_index);
+          final offset = Tween<Offset>(begin: Offset(0, incoming ? 0.8 : -0.8), end: Offset.zero).animate(animation);
+          return FadeTransition(opacity: animation, child: SlideTransition(position: offset, child: child));
+        },
+        child: Align(
+          key: ValueKey(_index),
+          alignment: Alignment.centerLeft,
+          child: Text('"${widget.hints[_index]}"',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(fontSize: 13.5, height: 1.2, fontWeight: FontWeight.w600, color: tColor4)),
         ),
       ),
     );

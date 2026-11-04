@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/schedule_format.dart';
 import 'dart:async';
 
 import 'package:fav_app/Screens/Orders/post_delivery_dialog.dart';
@@ -297,9 +298,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
     if (delivered) {
       subtitle = 'Delivered ${_dateTime(o.deliveredAt ?? o.reachedAt(OrderStatus.delivered))}';
     } else if (cancelled) {
-      subtitle = o.status == OrderStatus.cancelledByStore ? 'Sorry, the store had to cancel this order.' : 'You cancelled this order.';
+      subtitle = o.status == OrderStatus.cancelledByStore ? 'Sorry, we were unable to deliver this order.' : 'You cancelled this order.';
     } else if (o.scheduled && o.scheduledAt != null && o.status == OrderStatus.received) {
-      subtitle = 'Scheduled for ${DateFormat('EEE, d MMM').format(o.scheduledAt!)}';
+      subtitle = 'Scheduled for ${scheduledWhen(o.scheduledAt!)}';
     } else if (o.etaMinutesLeft != null && o.etaMinutesLeft! > 0) {
       subtitle = 'Arriving in about ${o.etaMinutesLeft} min · by ${_time(o.estimate)}';
     } else if (o.status == OrderStatus.arrived) {

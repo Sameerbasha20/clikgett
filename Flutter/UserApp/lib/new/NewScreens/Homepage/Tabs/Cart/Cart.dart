@@ -398,7 +398,7 @@ class _CartState extends State<Cart> {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(
-              scheduled ? 'Scheduled: ${_slot!.slotLabel ?? ''}' : (eta != null ? 'Delivery in $eta minutes' : 'Fast delivery'),
+              scheduled ? (_slot!.needsSlot ? 'Pick a delivery time slot' : 'Scheduled: ${_slot!.slotLabel ?? ''}') : (eta != null ? 'Delivery in $eta minutes' : 'Fast delivery'),
               style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: tColor),
             ),
             Text('${bill.itemCount} item${bill.itemCount == 1 ? '' : 's'} in this order',
@@ -1202,6 +1202,8 @@ class _CartState extends State<Cart> {
     } else if (!_receiverReady) {
       label = 'Add receiver details';
       onTap = _askReceiver;
+    } else if (_slot != null && _slot!.needsSlot) {
+      label = 'Pick a delivery time slot';
     } else if (bill.stockProblems.isNotEmpty) {
       label = 'Remove out-of-stock items';
     } else if (!bill.minOrderMet) {
@@ -1511,8 +1513,8 @@ class _CartState extends State<Cart> {
         'WalletAmount': _useWallet ? bill.walletApplied : 0,
         'DeliveryInstructions': _instructions.toList(),
         'OrderType': 'Delivery',
-        'ScheduleStatus': _slot != null && _slot!.isScheduled ? 'Scheduled' : 'Immediate',
-        if (_slot != null && _slot!.isScheduled) 'ScheduledDateTime': _slot!.formattedScheduledDateTime,
+        'ScheduleStatus': _slot != null && _slot!.isScheduled && !_slot!.needsSlot ? 'Scheduled' : 'Immediate',
+        if (_slot != null && _slot!.isScheduled && !_slot!.needsSlot) 'ScheduledDateTime': _slot!.formattedScheduledDateTime,
         'username': Get.find<ProfileController>().users?.firstName ?? '',
         if (_forOther) 'ReceiverName': _receiverName,
         if (_forOther) 'ReceiverMobile': _receiverMobile,

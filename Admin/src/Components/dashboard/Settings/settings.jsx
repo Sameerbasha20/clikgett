@@ -258,7 +258,7 @@ function SettingsPage() {
                                     className={`btn ${activeTab === "delivery-eta" ? "btn-primary" : "btn-outline-primary"}`}
                                     onClick={() => setActiveTab("delivery-eta")}
                                 >
-                                    <FaRoute className="mr-1" /> Distance Delivery ETA
+                                    <FaRoute className="mr-1" /> Delivery Time (ETA)
                                 </button>
                                 <button
                                     className={`btn ${activeTab === "referrals" ? "btn-primary" : "btn-outline-primary"}`}
