@@ -38,8 +38,9 @@ function SearchAnalytics() {
 
     const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
 
-    const fetchAnalytics = (tab = activeTab) => {
-        setLoading(true);
+    // quiet = background refresh: no spinner, no error toasts.
+    const fetchAnalytics = (tab = activeTab, quiet = false) => {
+        if (!quiet) setLoading(true);
         let filterParam = "";
         if (tab === "zero_results") filterParam = "filter=zero_results";
         else if (tab === "recent") filterParam = "filter=recent";
@@ -52,20 +53,30 @@ function SearchAnalytics() {
                     const list = res.data || res.Keywords || res.keywords || [];
                     setKeywords(list);
                     applySearchFilter(list, searchQuery);
-                } else {
+                    setLastUpdated(new Date());
+                } else if (!quiet) {
                     toast.error((res && (res.message || res.Message)) || "Failed to load search analytics");
                 }
             })
             .catch((err) => {
                 setLoading(false);
                 console.error(err);
-                toast.error("Error loading search analytics");
+                if (!quiet) toast.error("Error loading search analytics");
             });
     };
+
+    const [lastUpdated, setLastUpdated] = useState(null);
 
     useEffect(() => {
         fetchAnalytics(activeTab);
     }, [activeTab]);
+
+    // Live: new searches appear without reloading the page.
+    useEffect(() => {
+        const timer = setInterval(() => fetchAnalytics(activeTab, true), 30000);
+        return () => clearInterval(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, searchQuery]);
 
     const applySearchFilter = (list, query) => {
         if (!query.trim()) {
@@ -148,6 +159,9 @@ function SearchAnalytics() {
                             </h3>
                             <p className="text-muted mb-0" style={{ fontSize: "0.875rem", marginTop: "4px" }}>
                                 Discover what customers search for most frequently and identify missing products to stock
+                            </p>
+                            <p className="mb-0" style={{ fontSize: "0.8rem", marginTop: "4px", color: "#16a34a", fontWeight: 600 }}>
+                                ● Live · updates every 30 seconds{lastUpdated ? ` · last update ${lastUpdated.toLocaleTimeString("en-IN")}` : ""}
                             </p>
                         </div>
                         <div className="d-flex align-items-center gap-2">

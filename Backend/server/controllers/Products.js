@@ -301,7 +301,7 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
         try {
             const userId = req.UserID;
             if (userId) {
-                pool.query("DELETE FROM SearchLogs WHERE UserID = ?", [userId], (err) => {
+                pool.query("UPDATE SearchLogs SET UserID = NULL WHERE UserID = ?", [userId], (err) => {
                     if (err) console.error("Error clearing SearchLogs for user:", err);
                 });
             }

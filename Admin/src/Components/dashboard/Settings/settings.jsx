@@ -53,7 +53,7 @@ function SettingsPage() {
     const [longDistanceFee, setLongDistanceFee] = useState("40.00");
     const [baseDeliveryCharge, setBaseDeliveryCharge] = useState("25");
     const [pricePerKm, setPricePerKm] = useState("5");
-    const [freeDeliveryAbove, setFreeDeliveryAbove] = useState("");
+    const [freeDeliveryAbove, setFreeDeliveryAbove] = useState(null); // null = not edited, show the saved value
     const [largeCartThreshold1Items, setLargeCartThreshold1Items] = useState("10");
     const [largeCartThreshold1Minutes, setLargeCartThreshold1Minutes] = useState("5");
     const [largeCartThreshold2Items, setLargeCartThreshold2Items] = useState("20");
@@ -154,7 +154,7 @@ function SettingsPage() {
             .then((res) => {
                 // Free-delivery threshold lives in the Settings table.
                 const freeSetting = categoryItems.find((x) => x.SettingKey === "FreeDelivery_CartAmount");
-                if (freeSetting && freeDeliveryAbove !== "" && String(freeSetting.SettingValue) !== String(freeDeliveryAbove)) {
+                if (freeSetting && freeDeliveryAbove !== null && freeDeliveryAbove !== "" && String(freeSetting.SettingValue) !== String(freeDeliveryAbove)) {
                     Services.updatesettings("PUT", JSON.stringify({ SettingValue: String(freeDeliveryAbove) }), token, freeSetting.ID);
                 }
                 // Print on/off lives in the Settings table.
@@ -387,7 +387,7 @@ function SettingsPage() {
                                         <div className="col-md-4 form-group">
                                             <label><strong>Free delivery at cart value (₹):</strong></label>
                                             <input type="number" min="0" step="1" className="form-control"
-                                                value={freeDeliveryAbove !== "" ? freeDeliveryAbove : ((categoryItems.find((x) => x.SettingKey === "FreeDelivery_CartAmount") || {}).SettingValue || "")}
+                                                value={freeDeliveryAbove !== null ? freeDeliveryAbove : ((categoryItems.find((x) => x.SettingKey === "FreeDelivery_CartAmount") || {}).SettingValue || "")}
                                                 onChange={(e) => setFreeDeliveryAbove(e.target.value)} />
                                         </div>
                                     </div>

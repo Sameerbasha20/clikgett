@@ -229,7 +229,7 @@ function Warehouse() {
 
         {
             dataField: "status",
-            text: "STATUS",
+            text: "VARIANT STATUS",
             sort: false,
             formatter: statusFormatter,
             headerStyle: (colum, colIndex) => {
@@ -359,6 +359,18 @@ function Warehouse() {
                                         <h4>Category</h4>
                                         <h5>:</h5>
                                         <p>{categoryItems?.CategoryName}</p>
+                                    </div>
+                                    <div
+                                        className={
+                                            dashboardclasses["user-details"]
+                                        }>
+                                        <h4>Product Status</h4>
+                                        <h5>:</h5>
+                                        <p>
+                                            <span className={categoryItems?.Status === 1 ? dashboardclasses["status_active"] : dashboardclasses["status_inactive"]}>
+                                                {categoryItems?.Status === 1 ? "Active" : "Inactive (hidden from customers)"}
+                                            </span>
+                                        </p>
                                     </div>
                                     <div
                                         className={
