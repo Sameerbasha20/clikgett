@@ -1,3 +1,4 @@
+import 'package:fav_app/new/NewScreens/Widgets/price_compare_tag.dart';
 import 'package:fav_app/new/Constants/stock_helper.dart';
 import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/colors.dart';
@@ -401,7 +402,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                         ),
                       ),
                     ),
-                    if (memberPrice != null || dealPrice != null || bulkHint != null) ...[
+                    if (memberPrice != null || dealPrice != null || bulkHint != null || product.priceCompareLowerPct != null) ...[
                       const SizedBox(height: 3),
                       SizedBox(
                         height: 16,
@@ -409,7 +410,9 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                             ? const _MemberChip()
                             : dealPrice != null
                                 ? _DealChip(price: dealPrice, ends: _dealEnds, limit: widget.product.deal?.maxQtyPerOrder)
-                                : Text(bulkHint!,
+                                : bulkHint == null
+                                ? PriceCompareTag(percent: product.priceCompareLowerPct!, fontSize: 10)
+                                : Text(bulkHint,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: primaryDark)),

@@ -157,6 +157,9 @@ class BestItem {
   /// Set by the admin on the product: shows the "Chilled" tag.
   bool isChilled;
 
+  /// "Our app: X% lower" (admin > Price Compare); null = no tag.
+  int? priceCompareLowerPct;
+
   BestItem({
     this.productId,
     this.categoryId,
@@ -176,6 +179,7 @@ class BestItem {
     this.bulkTiers = const [],
     this.memberOffer,
     this.isChilled = false,
+    this.priceCompareLowerPct,
   });
 
   factory BestItem.fromJson(Map<String, dynamic> json) => BestItem(
@@ -208,6 +212,7 @@ class BestItem {
             : const [],
         memberOffer: json["MemberOffer"] is Map ? MemberOffer.fromJson(Map<String, dynamic>.from(json["MemberOffer"])) : null,
         isChilled: json["IsChilled"] == 1 || json["IsChilled"] == true || json["IsChilled"] == '1',
+        priceCompareLowerPct: (json["PriceCompareLowerPct"] is num && (json["PriceCompareLowerPct"] as num) > 0) ? (json["PriceCompareLowerPct"] as num).toInt() : null,
       );
 
   Map<String, dynamic> toJson() => {

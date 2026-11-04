@@ -20,6 +20,7 @@ const MIGRATIONS = [
     require('./sale_limits_migration'),
     require('./receiver_details_migration'),
     require('./product_chilled_migration'),
+    require('./promotions_migration'),
 ];
 
 (async () => {

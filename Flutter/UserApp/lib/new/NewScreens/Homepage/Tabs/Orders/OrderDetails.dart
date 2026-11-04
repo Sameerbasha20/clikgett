@@ -1,3 +1,4 @@
+import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/delivered_time_banner.dart';
 import 'package:fav_app/new/Constants/schedule_format.dart';
 import 'dart:async';
 
@@ -233,6 +234,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                     children: [
+                      if (order.status == OrderStatus.delivered)
+                        DeliveredTimeBanner(
+                          placedAt: order.createdAt,
+                          deliveredAt: order.deliveredAt ?? order.reachedAt(OrderStatus.delivered),
+                          promisedBy: order.estimate,
+                          scheduled: order.scheduled,
+                        ),
                       if (OrderStatus.isCancelled(order.status)) _statusCard(order) else OrderHeroCard(order: order),
                       if (!OrderStatus.isFinal(order.status)) DeliveryRouteCard(order: order),
                       if (order.status == OrderStatus.arrived && order.otp != null) _otpCard(order),
@@ -755,6 +763,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
         _title('Bill details'),
         _row('Items total', _rs(o.subTotal)),
         if (o.discount > 0) _row('Discount${o.promoCode != null ? ' (${o.promoCode})' : ''}', '-${_rs(o.discount)}', green: true),
+        if (o.welcomeDiscount > 0)
+          _row('Welcome offer${o.welcomeStep != null ? ' (order ${o.welcomeStep})' : ''}', '-${_rs(o.welcomeDiscount)}', green: true),
         _row('Delivery fee', o.deliveryFee <= 0 ? 'FREE' : _rs(o.deliveryFee), green: o.deliveryFee <= 0),
         if (o.tip > 0) _row('Delivery partner tip', _rs(o.tip)),
         if (o.walletUsed > 0) _row('Paid from ClikGett Cash', '-${_rs(o.walletUsed)}', green: true),

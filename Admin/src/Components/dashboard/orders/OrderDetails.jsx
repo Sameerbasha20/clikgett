@@ -1305,7 +1305,7 @@ function Products() {
                                                     }>
                                                     <h5>Discount Amount</h5>
                                                     <h4>:</h4>
-                                                    <p>₹ {orders.Discount}</p>
+                                                    <p>₹ {orders.Discount}{Number(orders.WelcomeDiscount) > 0 ? ` (incl. ₹${orders.WelcomeDiscount} welcome offer, order ${orders.WelcomeStep})` : ""}</p>
                                                 </div>
 
                                                 <div

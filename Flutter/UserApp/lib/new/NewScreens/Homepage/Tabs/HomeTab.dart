@@ -1,3 +1,5 @@
+import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/welcome_offer_card.dart';
+import 'package:fav_app/new/Services/promotions_service.dart';
 import 'package:fav_app/new/NewScreens/Deals/unlock_deals_banner.dart';
 import 'package:fav_app/Models/Home/TimingProvider.dart';
 import 'package:fav_app/new/Constants/colors.dart';
@@ -44,6 +46,10 @@ class _HomeTabState extends State<Home> {
   /// "Previously bought" rail under the search bar (logged-in customers).
   List<home_model.BestItem> _previouslyBought = [];
 
+  /// Products tagged "Our app: X% lower" (admin > Price Compare), in admin order.
+  List<home_model.BestItem> _cheaperHere = [];
+  final GlobalKey<WelcomeOfferCardState> _welcomeKey = GlobalKey<WelcomeOfferCardState>();
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +60,10 @@ class _HomeTabState extends State<Home> {
     final token = await CommonServices.getToken();
     _isLoggedIn = token.isNotEmpty;
     if (mounted) setState(() {});
+    PromotionsService.priceCompareProducts().then((list) {
+      if (mounted) setState(() => _cheaperHere = list);
+    });
+    _welcomeKey.currentState?.reload();
     if (_isLoggedIn) {
       StorefrontServices.previouslyBought().then((list) {
         if (mounted) setState(() => _previouslyBought = list);
@@ -113,12 +123,21 @@ class _HomeTabState extends State<Home> {
               if (_isLoggedIn) const SliverToBoxAdapter(child: HomeMilestoneCard(compact: true)),
               SliverToBoxAdapter(child: _StoreClosedCard(timingController: timingController)),
               const SliverToBoxAdapter(child: UnlockDealsBanner(compact: true)),
+              SliverToBoxAdapter(child: WelcomeOfferCard(key: _welcomeKey)),
               if (_previouslyBought.isNotEmpty)
                 SliverToBoxAdapter(
                   child: SectionProductRail(
                     title: 'Previously bought',
                     subtitle: 'Your usuals, ready to add again',
                     products: _previouslyBought,
+                  ),
+                ),
+              if (_cheaperHere.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: SectionProductRail(
+                    title: 'Lower than other apps',
+                    subtitle: 'Same items, better prices on ClikGett',
+                    products: _cheaperHere,
                   ),
                 ),
               SliverList(delegate: SliverChildListDelegate(_sections())),

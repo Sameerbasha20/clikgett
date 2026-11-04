@@ -21,6 +21,8 @@ import Settings from "./Components/dashboard/Settings/settings";
 import Exports from "./Components/dashboard/operations";
 import StoreTimings from "./Components/dashboard/StoreTimings/Category";
 import Sales from "./Components/dashboard/Sales/Sales";
+import WelcomeOffer from "./Components/dashboard/Promotions/WelcomeOffer";
+import PriceCompare from "./Components/dashboard/Promotions/PriceCompare";
 import AbandonedCarts from "./Components/dashboard/AbandonedCarts/AbandonedCarts";
 import Milestones from "./Components/dashboard/Milestones/Milestones";
 import CartOffers from "./Components/dashboard/CartOffers/CartOffers";
@@ -71,6 +73,8 @@ const pages = [
     ["/banners", <Banners />],
     ["/promocodes", <Promocodes />],
     ["/sales", <Sales />],
+    ["/welcome-offer", <WelcomeOffer />],
+    ["/price-compare", <PriceCompare />],
     ["/cart-offers", <CartOffers />],
     ["/abandoned-carts", <AbandonedCarts />],
     ["/notification", <Notification />],

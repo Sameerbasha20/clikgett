@@ -1,3 +1,4 @@
+import 'package:fav_app/new/NewScreens/Widgets/price_compare_tag.dart';
 // ignore_for_file: prefer_const_constructors
 import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/Constants.dart';
@@ -421,6 +422,11 @@ class _ItemDescriptionState extends State<ItemDescription> {
             ),
           ],
         ),
+        if ((categoryController.productsDetails?.priceCompareLowerPct ?? 0) > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: PriceCompareTag(percent: categoryController.productsDetails!.priceCompareLowerPct!, fontSize: 13),
+          ),
         if (StockHelper.isLowStock(availableQty))
           LowStockBadge(availableQty: availableQty),
       ],

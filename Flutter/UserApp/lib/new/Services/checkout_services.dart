@@ -136,6 +136,11 @@ class CheckoutBill {
   final String? couponMessage;
   final String? cartOfferName;
   final double cartOfferDiscount;
+  final double welcomeDiscount;
+  final int? welcomeStep;
+  final int? welcomeNextStep;
+  final double welcomeNextDiscount;
+  final double welcomeAmountNeeded;
   final double deliveryFee;
   final bool freeDelivery;
   final double freeDeliveryThreshold;
@@ -182,6 +187,11 @@ class CheckoutBill {
         couponMessage = j['CouponMessage'] is String ? j['CouponMessage'] : null,
         cartOfferName = j['CartOffer'] is Map ? '${j['CartOffer']['OfferName'] ?? ''}' : null,
         cartOfferDiscount = _d(j['CartOfferDiscount']),
+        welcomeDiscount = _d(j['WelcomeDiscount']),
+        welcomeStep = j['WelcomeStep'] is num ? (j['WelcomeStep'] as num).toInt() : null,
+        welcomeNextStep = j['WelcomeOffer'] is Map && j['WelcomeOffer']['Step'] is num ? (j['WelcomeOffer']['Step'] as num).toInt() : null,
+        welcomeNextDiscount = j['WelcomeOffer'] is Map ? _d(j['WelcomeOffer']['Discount']) : 0,
+        welcomeAmountNeeded = j['WelcomeOffer'] is Map ? _d(j['WelcomeOffer']['AmountNeeded']) : 0,
         deliveryFee = _d(j['DeliveryFee']),
         freeDelivery = j['FreeDeliveryApplied'] == true,
         freeDeliveryThreshold = _d(j['FreeDeliveryThreshold']),

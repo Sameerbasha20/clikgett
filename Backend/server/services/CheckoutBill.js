@@ -5,6 +5,7 @@ const pool = require('../utils/db');
 const PricingEngine = require('./PricingEngine');
 const DeliveryTime = require('./DeliveryTime');
 const PrintStore = require('./PrintStore');
+const WelcomeOffer = require('./WelcomeOffer');
 
 const MAX_TIP = 1000;
 const PRODUCTS_S3 = 'http://clikgett-media.local/Products/';
@@ -116,7 +117,11 @@ async function computeBill(opts) {
     const couponDiscount = money(calc.CouponDiscount);
     const offerDiscount = money(calc.CartOfferDiscount);
     const deliveryFee = printOnly ? money(await PrintStore.printOnlyDeliveryFee(printTotal, distanceKm)) : money(calc.DeliveryCharges);
-    const itemsAfterDiscounts = money(itemsTotal - couponDiscount - offerDiscount);
+    const itemsAfterOffers = money(itemsTotal - couponDiscount - offerDiscount);
+    // Welcome offer: ₹ off the customer's 1st, 2nd, ... order (admin > Welcome Offer).
+    const welcome = printOnly ? { Discount: 0, Step: null, Offer: null } : await WelcomeOffer.forBill(userId, itemsAfterOffers);
+    const welcomeDiscount = money(welcome.Discount);
+    const itemsAfterDiscounts = money(itemsAfterOffers - welcomeDiscount);
     const goodsTotal = money(itemsAfterDiscounts + printTotal);
     const payableBeforeWallet = money(Math.max(0, goodsTotal + deliveryFee + tip));
     const usable = walletUsable(walletBalance, payableBeforeWallet, cfg);
@@ -148,6 +153,9 @@ async function computeBill(opts) {
         CouponMessage: calc.CouponMessage || null,
         CartOffer: calc.AppliedCartOffer,
         CartOfferDiscount: offerDiscount,
+        WelcomeOffer: welcome.Offer,
+        WelcomeDiscount: welcomeDiscount,
+        WelcomeStep: welcome.Step,
         DeliveryFee: deliveryFee,
         FreeDeliveryApplied: !!calc.FreeDeliveryApplied,
         FreeDeliveryThreshold: cfg.freeDeliveryThreshold,
@@ -159,7 +167,7 @@ async function computeBill(opts) {
         WalletApplied: walletApplied,
         ToPay: toPay,
         FreeDeliverySavings: freeDeliverySavings,
-        TotalSavings: money(calc.OriginalSubTotal - itemsTotal + couponDiscount + offerDiscount + freeDeliverySavings),
+        TotalSavings: money(calc.OriginalSubTotal - itemsTotal + couponDiscount + offerDiscount + welcomeDiscount + freeDeliverySavings),
         MinOrderValue: cfg.minOrderValue,
         // A prints-only order has no minimum (a few pages cost less than the minimum).
         MinOrderMet: printOnly || goodsTotal >= cfg.minOrderValue,

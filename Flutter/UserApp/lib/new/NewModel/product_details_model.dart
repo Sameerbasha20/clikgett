@@ -69,10 +69,14 @@ class Products {
     required this.productImages,
     this.keywords = const [],
     this.bulkTiers = const [],
+    this.priceCompareLowerPct,
   });
 
   /// Buy-more prices (bundles such as "2 for ₹77", or per-item slabs).
   List<home_model.BulkTier> bulkTiers;
+
+  /// "Our app: X% lower" (admin > Price Compare); null = no tag.
+  int? priceCompareLowerPct;
 
   factory Products.fromJson(Map<String, dynamic> json) => Products(
         productId: json["ProductID"],
@@ -106,6 +110,7 @@ class Products {
                 .map((t) => home_model.BulkTier.fromJson(Map<String, dynamic>.from(t)))
                 .toList()
             : const [],
+        priceCompareLowerPct: (json["PriceCompareLowerPct"] is num && (json["PriceCompareLowerPct"] as num) > 0) ? (json["PriceCompareLowerPct"] as num).toInt() : null,
       );
 
   Map<String, dynamic> toJson() => {

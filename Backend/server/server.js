@@ -43,6 +43,7 @@ const deliveryboyrouter = require('./routes/DeliveryBoy');
 const Productcsvrouter = require('./routes/Productcsv');
 const AdminTimingRouter = require('./routes/AdminTiming');
 const salesRouter = require('./routes/Sales');
+const promotionsRouter = require('./routes/Promotions');
 const rewardsRouter = require('./routes/Rewards');
 const buyMoreRouter = require('./routes/BuyMore');
 const restrictionsRouter = require('./routes/ProductRestrictions');
@@ -155,6 +156,7 @@ try {
     app.use('/api/csv', Productcsvrouter);
     app.use('/api/admintiming', AdminTimingRouter);
     app.use('/api/sales', salesRouter);
+    app.use('/api/promotions', promotionsRouter);
     app.use('/api/rewards', rewardsRouter);
     app.use('/api/milestones', rewardsRouter);
     app.use('/api/buymore', buyMoreRouter);

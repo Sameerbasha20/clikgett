@@ -333,7 +333,9 @@ const ordercontroller = {
             body.SubTotal = Math.round((bill.ItemsTotal + bill.PrintTotal) * 100) / 100;
             body.PromoCode = bill.PromoCode || undefined;
             body.PromoAmount = Math.round((bill.CouponDiscount + bill.CartOfferDiscount) * 100) / 100;
-            body.Discount = body.PromoAmount;
+            body.WelcomeDiscount = bill.WelcomeDiscount || 0;
+            body.WelcomeStep = bill.WelcomeDiscount > 0 ? bill.WelcomeStep : null;
+            body.Discount = Math.round((body.PromoAmount + body.WelcomeDiscount) * 100) / 100;
             body.DeliverCharges = bill.DeliveryFee;
             body.TipAmount = bill.Tip;
             body.WalletAmount = bill.WalletApplied;
@@ -786,7 +788,9 @@ function CreateOrders(body, OrderID, RazorpayOrderID, expecteddate) {
                 OrderSizeBufferMinutes: body.OrderSizeBufferMinutes || 0,
                 TotalItemQuantity: body.TotalItemQuantity || 0,
                 ReceiverName: body.ReceiverName || null,
-                ReceiverMobile: body.ReceiverMobile || null
+                ReceiverMobile: body.ReceiverMobile || null,
+                WelcomeDiscount: parseFloat(body.WelcomeDiscount) || 0,
+                WelcomeStep: body.WelcomeStep || null
             }
             let sql = "INSERT INTO Orders set ?";
 

@@ -149,6 +149,8 @@ class TrackedOrder {
   final List<PrintJob> printJobs;
   final double subTotal;
   final double discount;
+  final double welcomeDiscount;
+  final int? welcomeStep;
   final double deliveryFee;
   final double tip;
   final double walletUsed;
@@ -196,6 +198,8 @@ class TrackedOrder {
             .toList(),
         subTotal = _d(j['SubTotal']),
         discount = _d(j['PromoAmount']),
+        welcomeDiscount = _d(j['WelcomeDiscount']),
+        welcomeStep = j['WelcomeStep'] is num ? (j['WelcomeStep'] as num).toInt() : null,
         deliveryFee = _d(j['DeliverCharges']),
         tip = _d(j['TipAmount']),
         walletUsed = _d(j['WalletAmount']),

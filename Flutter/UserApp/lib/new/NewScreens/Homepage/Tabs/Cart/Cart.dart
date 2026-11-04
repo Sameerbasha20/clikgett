@@ -1050,6 +1050,22 @@ class _CartState extends State<Cart> {
           if (bill.couponDiscount > 0) _billRow('Coupon (${bill.promoCode})', '-${_rs(bill.couponDiscount)}', green: true),
           if (bill.cartOfferDiscount > 0)
             _billRow((bill.cartOfferName ?? '').isNotEmpty ? bill.cartOfferName! : 'Cart offer', '-${_rs(bill.cartOfferDiscount)}', green: true),
+          if (bill.welcomeDiscount > 0)
+            _billRow('Welcome offer${bill.welcomeStep != null ? ' (order ${bill.welcomeStep})' : ''}', '-${_rs(bill.welcomeDiscount)}', green: true),
+          if (bill.welcomeDiscount <= 0 && bill.welcomeAmountNeeded > 0 && bill.welcomeNextDiscount > 0)
+            Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(color: const Color(0xFFECFDF5), borderRadius: BorderRadius.circular(8)),
+              child: Row(children: [
+                const Icon(Icons.local_offer_rounded, size: 16, color: Color(0xFF047857)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text('Add ${_rs(bill.welcomeAmountNeeded)} more to get ${_rs(bill.welcomeNextDiscount)} off with the welcome offer',
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF065F46))),
+                ),
+              ]),
+            ),
           _billRow('Delivery fee', bill.deliveryFee <= 0 ? 'FREE' : _rs(bill.deliveryFee),
               green: bill.deliveryFee <= 0,
               strike: bill.freeDeliverySavings > 0 ? _rs(bill.freeDeliverySavings + bill.deliveryFee) : null),
