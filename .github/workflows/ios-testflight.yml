@@ -6,6 +6,8 @@
 #   ASC_KEY_ID          Key ID
 #   ASC_ISSUER_ID       Issuer ID
 #   ASC_KEY_P8_BASE64   the downloaded AuthKey_<id>.p8, base64-encoded
+#   GOOGLE_PLACES_KEY   GOOGLE_PLACES_KEY from deploy/app-keys.env (address search)
+#   GMS_API_KEY         MAPS_API_KEY from deploy/app-keys.env (Google Maps on iPhone)
 name: iOS TestFlight (customer app)
 
 on:
@@ -14,7 +16,7 @@ on:
       api_base_url:
         description: API the build talks to (PC on the Wi-Fi for testing, or the https production URL)
         required: true
-        default: http://192.168.29.89:5001/api
+        default: https://clikgett-backend.onrender.com/api
       build_name:
         description: Version shown to testers (leave empty to use pubspec.yaml; must be newer than the App Store version)
         required: false
@@ -31,6 +33,8 @@ jobs:
       TEAM_ID: R54A3KD2SK
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      GOOGLE_PLACES_KEY: ${{ secrets.GOOGLE_PLACES_KEY }}
+      GMS_API_KEY: ${{ secrets.GMS_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +52,10 @@ jobs:
             echo "::error::Add the ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8_BASE64 repository secrets first."
             exit 1
           fi
+          if [ -z "$GOOGLE_PLACES_KEY" ] || [ -z "$GMS_API_KEY" ]; then
+            echo "::error::Add the GOOGLE_PLACES_KEY and GMS_API_KEY repository secrets (address search and maps need them)."
+            exit 1
+          fi
           echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
 
       - run: flutter pub get
@@ -61,7 +69,8 @@ jobs:
           flutter build ios --release --no-codesign \
             --build-number="$BUILD_NUMBER" \
             ${{ inputs.build_name && format('--build-name={0}', inputs.build_name) || '' }} \
-            --dart-define=API_BASE_URL="${{ inputs.api_base_url }}"
+            --dart-define=API_BASE_URL="${{ inputs.api_base_url }}" \
+            --dart-define=GOOGLE_PLACES_KEY="$GOOGLE_PLACES_KEY"
 
       - name: Archive (automatic signing)
         run: |
@@ -73,7 +82,8 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            GMS_API_KEY="$GMS_API_KEY"
 
       - name: Upload to TestFlight
         run: |
