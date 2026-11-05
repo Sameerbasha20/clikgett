@@ -36,7 +36,6 @@ import 'dart:convert';
 //
 //     final notificationsModel = notificationsModelFromJson(jsonString);
 
-import 'dart:convert';
 import 'package:fav_app/new/Services/common/server_date.dart';
 
 NotificationsModel notificationsModelFromJson(String str) =>

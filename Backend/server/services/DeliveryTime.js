@@ -1,6 +1,8 @@
 // One delivery-time estimate for the home header, checkout and the placed order.
 //
-//   distance  : up to Band1MaxKm (5 km) -> Band1BaseMinutes (20); farther -> Band3BaseMinutes (30)
+//   distance  : up to Band1MaxKm -> Band1BaseMinutes; up to Band2MaxKm -> Band2BaseMinutes; farther ->
+//               Band3BaseMinutes (same three bands as admin > Settings > Delivery Time and DeliveryETA.js;
+//               band 1 is below Band1MaxKm; band 2 runs from there up to and including Band2MaxKm)
 //               (DeliveryETARules, editable by admin)
 //   items     : total quantity above LargeCartThreshold1Items (10) adds LargeCartThreshold1Minutes (10),
 //               then every further (Threshold2 - Threshold1) items (10) adds LargeCartThreshold2Minutes (10)
@@ -23,6 +25,8 @@ async function loadRules() {
     return {
         nearKm: parseFloat(eta && eta.Band1MaxKm) || 5,
         nearMinutes: parseInt(eta && eta.Band1BaseMinutes, 10) || 20,
+        midKm: Math.max(parseFloat(eta && eta.Band1MaxKm) || 5, parseFloat(eta && eta.Band2MaxKm) || 0),
+        midMinutes: parseInt(eta && eta.Band2BaseMinutes, 10) || 25,
         farMinutes: parseInt(eta && eta.Band3BaseMinutes, 10) || 30,
         item1: parseInt(shop && shop.LargeCartThreshold1Items, 10) || 10,
         item1Minutes: parseInt(shop && shop.LargeCartThreshold1Minutes, 10) || 10,
@@ -79,7 +83,8 @@ async function estimate({ distanceKm = null, items = [], printJobs = 0 } = {}) {
             itemQuantity: 0, distanceKm: isNaN(dist) ? null : dist, band: 'print_only', notes: ['Prints only'],
         };
     }
-    const distanceMinutes = !isNaN(dist) && dist > r.nearKm ? r.farMinutes : r.nearMinutes;
+    const band = isNaN(dist) || dist < r.nearKm ? 1 : dist <= r.midKm ? 2 : 3;
+    const distanceMinutes = band === 1 ? r.nearMinutes : band === 2 ? r.midMinutes : r.farMinutes;
     const qty = items.reduce((n, i) => n + (parseInt(i.Quantity, 10) || 0), 0);
     const extraForItems = itemMinutes(qty, r);
     const fruitMinutes = (await hasFreshFruit(items)) ? FRUIT_MINUTES : 0;
@@ -96,7 +101,8 @@ async function estimate({ distanceKm = null, items = [], printJobs = 0 } = {}) {
         printMinutes,
         itemQuantity: qty,
         distanceKm: isNaN(dist) ? null : dist,
-        band: isNaN(dist) ? 'unknown_distance' : (dist > r.nearKm ? `above_${r.nearKm}km` : `within_${r.nearKm}km`),
+        band: isNaN(dist) ? 'unknown_distance'
+            : band === 1 ? `within_${r.nearKm}km` : band === 2 ? `within_${r.midKm}km` : `above_${r.midKm}km`,
         notes,
     };
 }

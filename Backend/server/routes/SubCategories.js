@@ -16,7 +16,7 @@ router
 
 .get('/detail/:SubCategoryID',util.authenticate.adminAuthenticate,subcategorycontroller.subcategorydetail_admin)
 
-.post('/add',validate.user_mandatoryfields.subcategory_mandatoryfields,util.authenticate.adminAuthenticate,subcategorycontroller.addsubcategory)
+.post('/add',util.authenticate.adminAuthenticate,validate.user_mandatoryfields.subcategory_mandatoryfields,subcategorycontroller.addsubcategory)
 .put('/update/:SubCategoryID',util.authenticate.adminAuthenticate,subcategorycontroller.updatesubcategory)
 .delete('/delete/:SubCategoryID',util.authenticate.adminAuthenticate,subcategorycontroller.deletesubcategory)
 

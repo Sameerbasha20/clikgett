@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_interceptor/http/intercepted_client.dart';
 
-final http.Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+final http.Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 double _d(dynamic v) => v is num ? v.toDouble() : double.tryParse('${v ?? ''}') ?? 0;
 int _i(dynamic v) => v is num ? v.toInt() : int.tryParse('${v ?? ''}') ?? 0;

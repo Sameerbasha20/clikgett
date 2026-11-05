@@ -125,8 +125,8 @@ const AdminHomeSectionsController = {
 
             let paginationClause = '';
             if (page && limit && parseInt(limit, 10) > 0) {
-                const p = Math.max(1, parseInt(page, 10));
-                const l = parseInt(limit, 10);
+                const p = Math.max(1, parseInt(page, 10) || 1);
+                const l = Math.min(200, parseInt(limit, 10));
                 const offset = (p - 1) * l;
                 paginationClause = `LIMIT ${offset}, ${l}`;
             }
@@ -869,7 +869,7 @@ const AdminHomeSectionsController = {
             }
 
             const l = Math.min(200, Math.max(1, parseInt(limit, 10)));
-            const offset = (Math.max(1, parseInt(page, 10)) - 1) * l;
+            const offset = (Math.max(1, parseInt(page, 10) || 1) - 1) * l;
 
             const products = await queryAsync(`
                 SELECT p.ProductID, p.ProductName, p.CategoryID, p.SubCategoryID, p.ImageUrl, p.ProductImages,

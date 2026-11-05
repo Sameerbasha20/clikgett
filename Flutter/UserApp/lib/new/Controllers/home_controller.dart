@@ -4,7 +4,6 @@ import 'package:fav_app/new/Services/Sale/sale_services.dart';
 import 'package:fav_app/new/Services/storefront_services.dart';
 import 'package:fav_app/old/Models/Home/home_model.dart' as homemodel;
 import 'package:flutter/foundation.dart';
-import 'package:geocoding/geocoding.dart';
 
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';

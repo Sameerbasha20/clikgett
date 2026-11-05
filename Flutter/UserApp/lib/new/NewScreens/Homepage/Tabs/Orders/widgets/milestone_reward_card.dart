@@ -17,7 +17,7 @@ class MilestoneRewardCard extends StatefulWidget {
 }
 
 class _MilestoneRewardCardState extends State<MilestoneRewardCard> {
-  final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+  final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
   bool _isLoading = true;
   int _totalOrders = 0;
   Map<String, dynamic>? _nextMilestone;
@@ -278,7 +278,7 @@ class HomeMilestoneCard extends StatefulWidget {
 /// Home rewards card: the level reached, orders to the next reward, and a track with every
 /// milestone. A milestone reached since the last visit plays a confetti burst once.
 class _HomeMilestoneCardState extends State<HomeMilestoneCard> with TickerProviderStateMixin {
-  final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+  final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
   int _totalOrders = 0;
   Map<String, dynamic>? _next;
   List<dynamic> _milestones = [];

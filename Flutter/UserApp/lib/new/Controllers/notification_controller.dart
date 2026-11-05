@@ -24,7 +24,7 @@ class NotificationController extends GetxController {
     Network.networkCheck(context).then((value) => value != null
         ? {
             NotificationsServices.getnotifications()
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -51,7 +51,7 @@ class NotificationController extends GetxController {
     await Network.networkCheck(context).then((onValue) async => onValue != null
         ? {
             await NotificationsServices.readNotification(body: body, uid: uid)
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {

@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../old/Services/Auth/login_services.dart';
-import '../NewScreens/Account/CreateProfile.dart';
 import '../NewScreens/Auth/OtpVerify.dart';
 import '../NewScreens/Homepage/Homepage.dart';
 import '../NewScreens/Widgets/customToast.dart';
@@ -185,7 +184,7 @@ class AuthController extends GetxController {
     Network.networkCheck(context).then((value) => value != null
         ? {
             LoginServices.verifyOtp(body)
-                .then((value) async => value != null
+                .then<void>((value) async => value != null
                     ? {
                         if (value.status == 1)
                           {

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:fav_app/new/Constants/textStyles.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Homepage.dart';
 import 'package:fav_app/new/NewScreens/Widgets/buttonWidget.dart';

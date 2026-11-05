@@ -2,7 +2,6 @@ import 'dart:ffi';
 import 'dart:typed_data';
 import 'package:fav_app/new/Constants/static_loader.dart';
 import 'package:fav_app/new/Controllers/adress_controller.dart';
-import 'package:fav_app/new/NewScreens/Address/GoogleMapSearchPlacesApi.dart';
 import 'package:fav_app/new/NewScreens/Address/SaerchAddress.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:fav_app/new/NewScreens/Widgets/textfieldWidget.dart';

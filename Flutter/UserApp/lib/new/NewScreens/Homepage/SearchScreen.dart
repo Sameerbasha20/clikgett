@@ -18,7 +18,7 @@ import 'package:http/http.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 /// Product search: live suggestions while typing, full results on submit,
 /// recent + popular searches and recommendations when the box is empty.

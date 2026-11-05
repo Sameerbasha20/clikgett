@@ -1,0 +1,74 @@
+# Checks on every push and pull request. The backend API suites need the seeded MySQL
+# from the Docker stack, so they run locally (`npm test` in Backend/); here the backend
+# is checked for syntax and that every router (with its controllers and services) loads.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Backend/package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - name: Syntax check
+        run: find server -name '*.js' -not -path '*/node_modules/*' -print0 | xargs -0 -n1 node --check
+      - name: Routers, controllers and services load
+        env:
+          NODE_ENV: test
+          REDIS_ENABLED: 'false'
+          SECRET_KEY: ci-only
+        run: |
+          node -e "
+            const fs = require('fs');
+            for (const f of fs.readdirSync('server/routes')) require('./server/routes/' + f);
+            console.log('all routers load');
+            process.exit(0);
+          "
+
+  admin:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Admin/package-lock.json
+      - run: npm ci --legacy-peer-deps
+      - run: npx react-scripts test --watchAll=false
+        env:
+          CI: 'true'
+      - run: npx react-scripts build
+        env:
+          CI: 'false'
+
+  customer-app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Flutter/UserApp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze (fails on errors only)
+        run: flutter analyze lib --no-fatal-warnings --no-fatal-infos
+      - run: flutter test

@@ -67,15 +67,26 @@ async function listAdminOrders(req, resp, past) {
             scheduled_date: 'o.ScheduledDateTime DESC, o.CreatedAt DESC',
             delivery_date: 'o.deliveredDateTime DESC, o.Delivered_Cancelled_datetime DESC, o.CreatedAt DESC',
         }[sort] || 'o.CreatedAt DESC';
+        // With ?page= the list is paged on the server (Total = all matching orders).
+        // Without it the old behaviour stays for older admin builds (past orders capped at 2000).
+        const paged = req.query.page !== undefined;
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize, 10) || 25));
+        let total = null;
+        if (paged) {
+            const [count] = await CommonController.commonget(`SELECT COUNT(*) AS n FROM (${query}) matched`, params);
+            total = Number(count && count.n) || 0;
+        }
         query += ` ORDER BY ${orderBy}`;
-        if (past) query += ' LIMIT 2000';
+        if (paged) query += ` LIMIT ${(page - 1) * pageSize}, ${pageSize}`;
+        else if (past) query += ' LIMIT 2000';
 
         const orders = await CommonController.commonget(query, params);
         for (const order of orders) {
             order.OrderID = order.OrderID.toString().padStart(4, '0');
             order.CreatedAt = await CommonController.convertdate(order.CreatedAt);
         }
-        return resp.json({ Status: 1, Orders: orders });
+        return resp.json(paged ? { Status: 1, Orders: orders, Total: total, Page: page, PageSize: pageSize } : { Status: 1, Orders: orders });
     } catch (err) {
         console.log("exception in getting orders", err);
         return resp.status(500).json({ Status: 0, Message: "Could not load orders. Please try again." });

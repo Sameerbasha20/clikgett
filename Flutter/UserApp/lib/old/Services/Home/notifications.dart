@@ -7,7 +7,7 @@ import 'package:http_interceptor/http/intercepted_client.dart';
 
 import '../../Models/response_model.dart';
 
-Client client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+Client client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 class NotificationsServices {
   static Future getnotifications() {

@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const totp = require('../utils/totp');
 const passwords = require('../utils/password');
+const adminRoles = require('../utils/adminRoles');
 require('dotenv').config();
 
 const pool = require('../utils/db');
@@ -541,7 +542,8 @@ const AdminAuth2FA = {
                             FirstName: user.FirstName,
                             LastName: user.LastName,
                             EmailID: user.EmailID,
-                            Role: user.Role
+                            Role: user.Role,
+                            AdminRole: adminRoles.normaliseRole(user.AdminRole)
                         };
 
                         return resolve(resp.status(200).json({

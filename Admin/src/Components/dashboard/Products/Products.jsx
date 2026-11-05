@@ -784,14 +784,31 @@ function Warehouse() {
             order: "desc",
         },
     ];
+    // Typing filters this category at once (every word must match, any order); from 2
+    // letters the server is also asked, so products in other categories show up too.
+    const searchTimer = React.useRef(null);
+    const searchSeq = React.useRef(0);
     const searchHandler = (e) => {
-        const search = categoryItems.filter((item) =>
-            item.ProductName.toLowerCase().includes(
-                e.target.value.toLowerCase()
-            )
-        );
-        // console.log(search);
-        setCategorySearchItems(search);
+        const text = e.target.value.trim().toLowerCase();
+        const words = text.split(/\s+/).filter(Boolean);
+        const local = categoryItems.filter((item) => {
+            const name = String(item.ProductName || "").toLowerCase();
+            return words.every((w) => name.includes(w));
+        });
+        setCategorySearchItems(local);
+        clearTimeout(searchTimer.current);
+        if (text.length < 2) return;
+        const seq = ++searchSeq.current;
+        searchTimer.current = setTimeout(() => {
+            Services.searchAdminProducts("GET", null, token, text)
+                .then((res) => {
+                    if (seq !== searchSeq.current || !res || res.Status !== 1) return;
+                    const found = res.Product || res.Products || [];
+                    const seen = new Set(local.map((p) => p.ProductID));
+                    setCategorySearchItems([...local, ...found.filter((p) => !seen.has(p.ProductID))]);
+                })
+                .catch(() => {});
+        }, 300);
     };
     return (
         <>
@@ -1945,7 +1962,7 @@ function Warehouse() {
                             </select>
                             <input
                                 type={"text"}
-                                placeholder="Search by product Name"
+                                placeholder="Search products (all categories)"
                                 onChange={searchHandler}
                             />
 

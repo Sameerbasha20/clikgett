@@ -206,12 +206,13 @@ async function runTests() {
         const data3 = getData3();
         assert.strictEqual(data3.Status, 1);
         assert(data3.Message.includes("Oily Skin Face Wash"));
-        const created3 = inMemoryDB.customerEnquiries.find(e => e.EnquiryID === data3.EnquiryID);
-        assert.strictEqual(created3.Category, "Product Request");
+        // Product requests are stored only in ProductRequests (not duplicated as enquiries).
+        const created3 = inMemoryDB.productRequests.find(r => r.RequestID === data3.RequestID);
+        assert(created3, "product request stored in ProductRequests");
         assert.strictEqual(created3.ProductName, "Oily Skin Face Wash");
         assert.strictEqual(created3.ImagePath, null);
-        assert(created3.Subject.includes("[Product Request]"));
-        console.log(`✓ Test 3 Passed: Manual product request persisted with ID #${created3.EnquiryID}.\n`);
+        assert(!inMemoryDB.customerEnquiries.some(e => e.ProductName === "Oily Skin Face Wash"), "not duplicated as an enquiry");
+        console.log(`✓ Test 3 Passed: Manual product request persisted with ID #${created3.RequestID}.\n`);
 
         // TEST 4: Option B - Request with Camera (Photo Attachment)
         console.log("[TEST 4] Option B: Product request with Camera photo attachment");
@@ -230,8 +231,21 @@ async function runTests() {
         assert.strictEqual(data4.Status, 1);
         assert(data4.ImagePath !== null);
         assert(data4.ImagePath.startsWith("images/product_requests/"));
-        const created4 = inMemoryDB.customerEnquiries.find(e => e.EnquiryID === data4.EnquiryID);
-        assert.strictEqual(created4.ImagePath, data4.ImagePath);
+        const created4p = inMemoryDB.productRequests.find(r => r.RequestID === data4.RequestID);
+        assert.strictEqual(created4p.ImagePath, data4.ImagePath);
+
+        // A support enquiry with a photo (used by the admin, access-control and status tests below).
+        const { req: req4e, res: res4e, getData: getData4e, getStatus: getStatus4e } = mockReqRes({
+            description: "The olive oil bottle arrived broken, photo attached.",
+            subject: "[Delivery Related] Broken bottle",
+            category: "Delivery Related",
+            imageBase64: validTestImageBase64,
+            mimeType: "image/png"
+        });
+        await CustomerRequestsController.submitEnquiry(req4e, res4e);
+        assert.strictEqual(getStatus4e(), 200);
+        const created4 = inMemoryDB.customerEnquiries.find(e => e.EnquiryID === getData4e().EnquiryID);
+        assert(created4 && created4.ImagePath, "support enquiry stored with its photo");
         console.log(`✓ Test 4 Passed: Product request with image uploaded and stored at ${data4.ImagePath}.\n`);
 
         // TEST 5: Image Size Limit Validation (> 10MB rejected)
@@ -256,11 +270,10 @@ async function runTests() {
         await CustomerRequestsController.adminListEnquiries(req6, res6);
         assert.strictEqual(getStatus6(), 200);
         const list6 = getData6().Enquiries;
-        assert(list6.length >= 3);
-        const productReqItem = list6.find(e => e.ProductName === "Organic Cold Pressed Olive Oil");
-        assert(productReqItem != null);
-        assert.strictEqual(productReqItem.Category, "Product Request");
-        assert(productReqItem.ImagePath != null);
+        assert(list6.length >= 2);
+        assert(!list6.some(e => e.ProductName === "Organic Cold Pressed Olive Oil"), "product requests are not listed as enquiries");
+        const photoItem = list6.find(e => e.EnquiryID === created4.EnquiryID);
+        assert(photoItem != null && photoItem.ImagePath != null);
         console.log(`✓ Test 6 Passed: Admin view returns ${list6.length} enquiries with product metadata.\n`);
 
         // TEST 7: Access Control - Unauthorized customer cannot access other customer's image

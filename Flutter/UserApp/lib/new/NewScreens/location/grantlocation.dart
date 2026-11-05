@@ -1,6 +1,5 @@
 import 'package:fav_app/new/Constants/textStyles.dart';
 import 'package:fav_app/new/NewScreens/Widgets/buttonWidget.dart';
-import 'package:fav_app/new/NewScreens/location/enteraddress.dart';
 import 'package:fav_app/new/NewScreens/location/locationaccess.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

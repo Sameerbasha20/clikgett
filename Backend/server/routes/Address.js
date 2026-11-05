@@ -11,7 +11,7 @@ router
 .get('/byaddressid/:AddressID',util.authenticate.userAuthenticate,addresscontroller.getaddressbyaddressid)
 .post('/check-serviceability', addresscontroller.checkServiceability)
 .post('/checkserviceability', addresscontroller.checkServiceability)
-.post('/addaddress',validate.user_mandatoryfields.address_mandatoryfields,util.authenticate.userAuthenticate,addresscontroller.addaddress)
+.post('/addaddress',util.authenticate.userAuthenticate,validate.user_mandatoryfields.address_mandatoryfields,addresscontroller.addaddress)
 .put('/:AddressID',util.authenticate.userAuthenticate,addresscontroller.updateaddress)
 .delete('/:AddressID',util.authenticate.userAuthenticate,addresscontroller.deleteaddress)
 

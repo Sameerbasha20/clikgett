@@ -33,6 +33,7 @@ const check = (name, ok, detail = '') => {
 (async () => {
     const [adminUser] = await q('SELECT AdminID FROM AdminUsers WHERE Role = 1 AND Status = 1 LIMIT 1');
     const ADMIN = `token ${sign({ AdminID: adminUser.AdminID })}`;
+    let tempAdmin2Id = null;
     let tempAdminId = null;
     let tempPlanId = null;
     let oosVariant = null;
@@ -68,15 +69,31 @@ const check = (name, ok, detail = '') => {
         r = await call('GET', '/membership/members', ADMIN);
         check('member list loads', r.json && r.json.Status === 1 && Array.isArray(r.json.Members));
 
-        // ---- Admin password hashing (old plain-text rows upgrade on login)
+        // ---- Admin passwords: plain text and bare MD5 are never accepted; the start-up
+        //      migration hashes them so the same password keeps working.
+        const upgrade = require('../migrations/password_hash_upgrade_migration');
         const ins = await q("INSERT INTO AdminUsers (FirstName, LastName, EmailID, Password, Role, Status, ProfilePic) VALUES ('Test', 'Admin', ?, 'PlainPass123', 1, 1, 'NA')", [email]);
         tempAdminId = ins.insertId;
         r = await call('POST', '/adminuser/login', null, { EmailID: email, Password: 'PlainPass123' });
-        const [row] = await q('SELECT Password FROM AdminUsers WHERE AdminID = ?', [tempAdminId]);
-        check('old plain-text password still logs in', r.json && r.json.Status === 1, r.json && r.json.Message);
-        check('password is stored hashed after login', String(row.Password).startsWith('scrypt$'));
+        check('a plain-text stored password is refused', r.json && r.json.Status === 0, r.json && r.json.Message);
+        await upgrade.run();
+        let [row] = await q('SELECT Password FROM AdminUsers WHERE AdminID = ?', [tempAdminId]);
+        check('the migration stores it hashed', String(row.Password).startsWith('scrypt$'));
         r = await call('POST', '/adminuser/login', null, { EmailID: email, Password: 'PlainPass123' });
-        check('hashed password logs in', r.json && r.json.Status === 1);
+        check('the same password logs in after hashing', r.json && r.json.Status === 1, r.json && r.json.Message);
+
+        const md5Email = `md5.${email}`;
+        const md5 = require('crypto').createHash('md5').update('Md5Pass1234').digest('hex');
+        const ins2 = await q("INSERT INTO AdminUsers (FirstName, LastName, EmailID, Password, Role, Status, ProfilePic) VALUES ('Test', 'Md5', ?, ?, 1, 1, 'NA')", [md5Email, md5]);
+        tempAdmin2Id = ins2.insertId;
+        r = await call('POST', '/adminuser/login', null, { EmailID: md5Email, Password: 'Md5Pass1234' });
+        check('a bare MD5 stored password is refused', r.json && r.json.Status === 0);
+        await upgrade.run();
+        [row] = await q('SELECT Password FROM AdminUsers WHERE AdminID = ?', [tempAdmin2Id]);
+        check('the migration wraps MD5 in scrypt', String(row.Password).startsWith('scrypt-md5$'));
+        r = await call('POST', '/adminuser/login', null, { EmailID: md5Email, Password: 'Md5Pass1234' });
+        [row] = await q('SELECT Password FROM AdminUsers WHERE AdminID = ?', [tempAdmin2Id]);
+        check('the MD5 password logs in and is upgraded to scrypt', r.json && r.json.Status === 1 && String(row.Password).startsWith('scrypt$'));
         r = await call('POST', '/adminuser/login', null, { EmailID: email, Password: 'wrong-password' });
         check('wrong password is refused', r.json && r.json.Status === 0);
 
@@ -141,6 +158,10 @@ const check = (name, ok, detail = '') => {
         check('test run completed without errors', false, err.sqlMessage || err.message);
     } finally {
         if (storeMode) await q('UPDATE AdminShopToggleSettings SET StoreMode = ?, StoreModeUntil = ?', [storeMode.StoreMode, storeMode.StoreModeUntil]);
+        if (tempAdmin2Id) {
+            await q('DELETE FROM AdminAuthAuditLogs WHERE AdminID = ?', [tempAdmin2Id]).catch(() => {});
+            await q('DELETE FROM AdminUsers WHERE AdminID = ?', [tempAdmin2Id]);
+        }
         if (tempAdminId) {
             await q('DELETE FROM AdminAuthAuditLogs WHERE AdminID = ?', [tempAdminId]).catch(() => {});
             await q('DELETE FROM AdminUsers WHERE AdminID = ?', [tempAdminId]);

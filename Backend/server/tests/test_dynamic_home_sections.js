@@ -157,38 +157,15 @@ async function runTests() {
     console.log("DYNAMIC HOME PAGE SECTIONS BACKEND E2E TEST SUITE");
     console.log("==================================================");
 
-    // Step 1: Admin Login & 2FA
-    console.log("\n[1] Testing Admin Login...");
-    const loginRes = await postJson('/api/adminusers/login', {
-        EmailID: 'admin@clikgett.com',
-        Password: '0192023a7bbd73250516f069df18b500'
-    });
-    console.log("Login response status:", loginRes.status, "require2FA:", loginRes.data.require2FA);
-    if (!loginRes.data.twoFactorToken) {
-        throw new Error("Failed to get twoFactorToken from login");
-    }
-
-    console.log("[2] Verifying 2FA with generated TOTP / recoveryCode / demo OTP...");
-    const totpUtil = require('../utils/totp');
-    let verifyPayload = {
-        EmailID: 'admin@clikgett.com',
-        twoFactorToken: loginRes.data.twoFactorToken
-    };
-    if (loginRes.data.secret) {
-        verifyPayload.code = totpUtil.generateTOTP(loginRes.data.secret);
-    } else if (loginRes.data.recoveryCodes && loginRes.data.recoveryCodes.length > 0) {
-        verifyPayload.recoveryCode = loginRes.data.recoveryCodes[0];
-    } else {
-        verifyPayload.code = '123456';
-    }
-
-    const verifyRes = await postJson('/api/adminusers/verify-2fa', verifyPayload);
-    console.log("Verify 2FA status:", verifyRes.status, "Status:", verifyRes.data && verifyRes.data.Status);
-    const adminToken = verifyRes.data && verifyRes.data.token;
-    if (!adminToken) {
-        console.error("2FA Error:", verifyRes.data);
-        throw new Error("Failed to receive admin auth JWT token");
-    }
+    // Step 1: an admin session. Login + 2FA are covered by test_demo_otp / test_audit_regressions;
+    // here a short-lived token for an existing super admin is enough.
+    console.log("[1] Signing an admin session...");
+    require('dotenv').config();
+    const pool = require('../utils/db');
+    const [superAdmin] = await new Promise((res, rej) => pool.query(
+        "SELECT AdminID FROM AdminUsers WHERE Role = 1 AND Status = 1 AND AdminRole = 'super' LIMIT 1", (e, r) => (e ? rej(e) : res(r))));
+    pool.end();
+    const adminToken = require('jsonwebtoken').sign({ AdminID: superAdmin.AdminID }, process.env.SECRET_KEY, { expiresIn: 600 });
     const authHeaders = { Authorization: `token ${adminToken}` };
     console.log("Admin token acquired successfully.");
 

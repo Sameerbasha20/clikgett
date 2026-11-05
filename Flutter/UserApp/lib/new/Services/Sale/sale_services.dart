@@ -8,7 +8,7 @@ import 'package:http_interceptor/http/intercepted_client.dart';
 
 class SaleServices {
   static final Client _client =
-      InterceptedClient.build(interceptors: [ApiInterceptor()]);
+      InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
   /// Retrieves all currently active Flash Sale / Sale campaigns from the backend.
   /// Reuses existing GET /api/sales/getsales endpoint without duplicating systems.

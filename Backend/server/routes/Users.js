@@ -48,9 +48,7 @@ router
 
  .delete('/deleteuser', util.authenticate.userAuthenticate, usercontroller.deleteAccount)
 
- .get('/datatransfer', util.authenticate.adminAuthenticate, usercontroller.products_transfer)
 
- .get('/updateproducts', util.authenticate.adminAuthenticate, usercontroller.updateproducts)
 
 
 module.exports = router

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:fav_app/Services/Home/cart_services.dart';
-import 'package:fav_app/new/Controllers/cart_controller.dart';
 import 'package:fav_app/new/NewModel/config.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

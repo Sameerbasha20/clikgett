@@ -65,8 +65,16 @@ const runDemoOtpTests = async () => {
     try {
         const AdminAuth2FA = require('../controllers/AdminAuth2FA');
 
-        // Locate or setup a test admin user
-        const [admin] = await queryAsync("SELECT * FROM AdminUsers WHERE Role = 1 LIMIT 1");
+        // A temporary admin with a known password (stored passwords are hashed, so a real
+        // admin's password can't be read back). Removed at the end.
+        const passwords = require('../utils/password');
+        const TEMP_PASSWORD = 'TwoFaTest#2026';
+        const tmpIns = await queryAsync(
+            "INSERT INTO AdminUsers (FirstName, LastName, EmailID, Password, Role, Status, ProfilePic, MobileNumber) VALUES ('TwoFA', 'Test', ?, ?, 1, 1, 'NA', '9999900099')",
+            [`twofa-test-${Date.now()}@example.com`, passwords.hash(TEMP_PASSWORD)]);
+        global.__tempAdminId = tmpIns.insertId;
+        const [admin] = await queryAsync("SELECT * FROM AdminUsers WHERE AdminID = ?", [tmpIns.insertId]);
+        admin.Password = TEMP_PASSWORD;
         assert(admin !== undefined, `Found admin user ${admin.EmailID} (AdminID: ${admin.AdminID})`);
 
         // Clean state for test admin
@@ -336,17 +344,20 @@ const runDemoOtpTests = async () => {
         process.env.ADMIN_2FA_DEMO_OTP = originalDemoFlag;
         process.env.ADMIN_2FA_FIXED_DEMO_OTP = originalFixedOtp;
 
-        // Reset database record
-        await queryAsync(
-            "UPDATE AdminUsers SET TwoFactorFailedAttempts = 0, TwoFactorLockedUntil = NULL WHERE AdminID = ?",
-            [admin.AdminID]
-        );
+        if (global.__tempAdminId) {
+            await queryAsync('DELETE FROM AdminAuthAuditLogs WHERE AdminID = ?', [global.__tempAdminId]).catch(() => {});
+            await queryAsync('DELETE FROM AdminUsers WHERE AdminID = ?', [global.__tempAdminId]).catch(() => {});
+        }
 
         pool.end();
         process.exit(failed > 0 ? 1 : 0);
 
     } catch (err) {
         console.error('Unhandled error during test execution:', err);
+        if (global.__tempAdminId) {
+            await queryAsync('DELETE FROM AdminAuthAuditLogs WHERE AdminID = ?', [global.__tempAdminId]).catch(() => {});
+            await queryAsync('DELETE FROM AdminUsers WHERE AdminID = ?', [global.__tempAdminId]).catch(() => {});
+        }
         pool.end();
         process.exit(1);
     }

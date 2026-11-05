@@ -302,6 +302,9 @@ const deliveryboycontroller = {
 
     get_routes: async (req, resp, next) => {
         let results; // per-request (were implicit globals)
+        if (!['pending', 'past'].includes(req.query.Type)) {
+            return resp.status(400).json({ "Status": 0, "Message": "Type must be 'pending' or 'past'" });
+        }
         try {
             results = await getroutes(req.AdminID, req.query.Type)
             if (req.query.Type == "pending") {

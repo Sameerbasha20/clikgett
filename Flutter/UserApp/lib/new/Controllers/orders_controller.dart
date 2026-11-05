@@ -26,7 +26,7 @@ class OrdersController extends GetxController {
     Network.networkCheck(context).then((value) => value != null
         ? {
             OrderServices.getcurrentorders()
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -61,7 +61,7 @@ class OrdersController extends GetxController {
     Network.networkCheck(context).then((value) async => value != null
         ? {
             await OrderServices.getpastorders()
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {

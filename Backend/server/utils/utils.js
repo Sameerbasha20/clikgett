@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('./db');
 const requestContext = require('./requestContext');
 const authTokens = require('./authTokens');
+const adminRoles = require('./adminRoles');
 require('dotenv').config();
 
 
@@ -84,11 +85,16 @@ const adminAuth = () => async (req, resp, next) => {
         return resp.status(401).json({ "Status": 0, "Message": "Unauthorized: Admin privileges required" });
     }
     try {
-        const results = await query("select AdminID from AdminUsers where Role=1 and Status=1 and AdminID = ?", [decoded.AdminID]);
+        const results = await query("select AdminID, AdminRole from AdminUsers where Role=1 and Status=1 and AdminID = ?", [decoded.AdminID]);
         if (!results.length) {
             return resp.status(401).json({ "Status": 0, "Message": "unauthorized admin user" });
         }
         req.AdminID = results[0].AdminID;
+        req.AdminRole = adminRoles.normaliseRole(results[0].AdminRole);
+        // Role areas (utils/adminRoles.js): e.g. a catalog admin can't adjust wallets.
+        if (!adminRoles.allowed(req.AdminRole, req.originalUrl)) {
+            return resp.status(403).json({ "Status": 0, "Message": "Your admin role does not allow this action" });
+        }
         next();
     } catch (err) {
         console.log("error in retrieving admin for access token: ", err.message);

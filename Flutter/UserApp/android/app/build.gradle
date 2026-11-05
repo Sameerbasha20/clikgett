@@ -29,6 +29,19 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+// Release builds must be signed with the real upload key (key.properties). Test APKs may use
+// the debug key only when asked: CLIKGETT_ALLOW_DEBUG_SIGNING=true or -PallowDebugSigning.
+def allowDebugSigning = System.getenv('CLIKGETT_ALLOW_DEBUG_SIGNING') == 'true' || project.hasProperty('allowDebugSigning')
+// HTTP (no TLS) only in debug builds, or release builds made with CLIKGETT_ALLOW_CLEARTEXT=true.
+def allowCleartextRelease = System.getenv('CLIKGETT_ALLOW_CLEARTEXT') == 'true'
+gradle.taskGraph.whenReady { graph ->
+    def releaseTask = graph.allTasks.any { t -> (t.name.startsWith('assemble') || t.name.startsWith('bundle') || t.name.startsWith('package')) && t.name.contains('Release') }
+    if (releaseTask && !keystorePropertiesFile.exists() && !allowDebugSigning) {
+        throw new GradleException('Release build without key.properties. Add the upload keystore (see key.properties.example), ' +
+            'or set CLIKGETT_ALLOW_DEBUG_SIGNING=true for a test APK that cannot go to the Play Store.')
+    }
+}
+
 android {
     namespace "com.app.clikget"
     compileSdkVersion 36
@@ -90,7 +103,12 @@ android {
         }
     }
     buildTypes {
+        debug {
+            manifestPlaceholders += [networkSecurityConfig: "@xml/network_security_config_dev", usesCleartextTraffic: "true"]
+        }
         release {
+            manifestPlaceholders += [networkSecurityConfig: allowCleartextRelease ? "@xml/network_security_config_dev" : "@xml/network_security_config",
+                                     usesCleartextTraffic: allowCleartextRelease ? "true" : "false"]
             // Uses android/key.properties (git-ignored, see key.properties.example) when present.
             // Without it, falls back to the debug key so local `flutter run --release` still works;
             // such builds cannot be uploaded to the Play Store.

@@ -6,7 +6,7 @@ import dashboardclasses from "../dashboard.module.css";
 import classes from "../Dashboard/Dashboard.module.css";
 import { Services } from "../../../Services";
 
-const empty = { id: null, firstName: "", lastName: "", emailId: "", password: "" };
+const empty = { id: null, firstName: "", lastName: "", emailId: "", password: "", adminRole: "operations" };
 const notify = (res, okMsg) => {
     if (res && res.Status === 1) toast.success(okMsg || res.Message, { position: "top-center", autoClose: 1500 });
     else toast.error((res && res.Message) || "Something went wrong", { position: "top-center" });
@@ -20,6 +20,8 @@ function AdminUsers() {
     const [admins, setAdmins] = useState([]);
     const [form, setForm] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [roles, setRoles] = useState([]);
+    const roleLabel = (key) => (roles.find((r) => r.key === key) || {}).label || key || "Super admin";
     let me = null;
     try {
         me = JSON.parse(sessionStorage.getItem("admindata") || "null");
@@ -35,6 +37,9 @@ function AdminUsers() {
 
     useEffect(() => {
         load();
+        Services.getAdminRoles("GET", null).then((res) => {
+            if (res && res.Status === 1) setRoles(res.Roles || []);
+        }).catch(() => {});
     }, []);
 
     const save = async (e) => {
@@ -44,7 +49,7 @@ function AdminUsers() {
             return;
         }
         setSaving(true);
-        const body = { firstName: form.firstName, lastName: form.lastName, emailId: form.emailId };
+        const body = { firstName: form.firstName, lastName: form.lastName, emailId: form.emailId, adminRole: form.adminRole || "operations" };
         if (form.password) body.password = form.password;
         const res = form.id
             ? await Services.updateAdmindata("PUT", body, null, form.id)
@@ -101,6 +106,14 @@ function AdminUsers() {
                                 <label>Email
                                     <input className="form-control" type="email" value={form.emailId} onChange={(e) => field("emailId", e.target.value)} required />
                                 </label>
+                                <label>Role (what they can open)
+                                    <select className="form-control" value={form.adminRole || "operations"} onChange={(e) => field("adminRole", e.target.value)}
+                                        disabled={String(form.id) === String(myId)}>
+                                        {(roles.length ? roles : [{ key: "super", label: "Super admin (everything)" }]).map((r) => (
+                                            <option key={r.key} value={r.key}>{r.label}</option>
+                                        ))}
+                                    </select>
+                                </label>
                                 <label>{form.id ? "New password (leave empty to keep)" : "Password (8+ characters)"}
                                     <input className="form-control" type="password" autoComplete="new-password" value={form.password} onChange={(e) => field("password", e.target.value)} required={!form.id} minLength={form.id ? undefined : 8} />
                                 </label>
@@ -114,16 +127,17 @@ function AdminUsers() {
 
                     <div className={classes.card}>
                         <table className={classes.table}>
-                            <thead><tr><th>Name</th><th>Email</th><th>Status</th><th className={classes.actions}>Actions</th></tr></thead>
+                            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th className={classes.actions}>Actions</th></tr></thead>
                             <tbody>
                                 {admins.map((a) => (
                                     <tr key={a.AdminID}>
                                         <td><b>{`${a.firstName || ""} ${a.lastName && a.lastName !== "NA" ? a.lastName : ""}`.trim()}</b>{String(a.AdminID) === String(myId) && <span className={classes.count}>you</span>}</td>
                                         <td>{a.emailId}</td>
+                                        <td>{roleLabel(a.adminRole || "super")}</td>
                                         <td>{Number(a.status) === 1 ? "Active" : "Inactive"}</td>
                                         <td className={classes.actions}>
                                             <div className={classes.actionGroup}>
-                                            <button type="button" className={classes.linkBtn} onClick={() => setForm({ id: a.AdminID, firstName: a.firstName || "", lastName: a.lastName && a.lastName !== "NA" ? a.lastName : "", emailId: a.emailId || "", password: "" })}>Edit</button>
+                                            <button type="button" className={classes.linkBtn} onClick={() => setForm({ id: a.AdminID, firstName: a.firstName || "", lastName: a.lastName && a.lastName !== "NA" ? a.lastName : "", emailId: a.emailId || "", password: "", adminRole: a.adminRole || "super" })}>Edit</button>
                                             <button type="button" className={classes.linkBtn} onClick={() => reset2fa(a)}>Reset 2FA</button>
                                             {String(a.AdminID) !== String(myId) && (
                                                 <button type="button" className={classes.linkBtn} style={{ color: "#b91c1c" }} onClick={() => remove(a)}>Remove</button>

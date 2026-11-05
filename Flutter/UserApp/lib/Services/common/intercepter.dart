@@ -2,8 +2,6 @@ import 'dart:convert';
 
 import 'package:fav_app/Constants/toast.dart';
 import 'package:fav_app/main.dart';
-import 'package:fav_app/old/Screens/Auth_Screens/login_Screens.dart';
-import 'package:flutter/material.dart';
 import 'package:http_interceptor/http_interceptor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'common_services.dart';

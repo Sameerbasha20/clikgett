@@ -33,7 +33,15 @@ const hashCode = (audience, mobile, code) => crypto
     .update(`${audience}:${mobile}:${code}`)
     .digest('hex');
 
-const isReviewLogin = (mobile) => !!process.env.REVIEW_LOGIN_MOBILE && !!process.env.REVIEW_LOGIN_OTP
+// The store-review account works for customer logins only, and only until REVIEW_LOGIN_UNTIL
+// (YYYY-MM-DD, end of that day IST). Without a valid date it is off, so it can't be left on.
+const reviewLoginActive = () => {
+    if (!process.env.REVIEW_LOGIN_MOBILE || !process.env.REVIEW_LOGIN_OTP) return false;
+    const until = /^\d{4}-\d{2}-\d{2}$/.test(process.env.REVIEW_LOGIN_UNTIL || '')
+        ? new Date(`${process.env.REVIEW_LOGIN_UNTIL}T23:59:59+05:30`) : null;
+    return !!until && Date.now() <= until.getTime();
+};
+const isReviewLogin = (mobile, audience = 'customer') => audience === 'customer' && reviewLoginActive()
     && String(mobile) === String(process.env.REVIEW_LOGIN_MOBILE);
 
 const fail = (status, message) => ({ ok: false, status, message });
@@ -46,7 +54,7 @@ async function issue(audience, mobile) {
     if (!AUDIENCES.includes(audience)) throw new Error(`Unknown OTP audience ${audience}`);
     mobile = String(mobile || '').trim();
     const digits = digitsFor(audience);
-    if (isReviewLogin(mobile)) return { ok: true, code: null, digits: String(process.env.REVIEW_LOGIN_OTP).length };
+    if (isReviewLogin(mobile, audience)) return { ok: true, code: null, digits: String(process.env.REVIEW_LOGIN_OTP).length };
 
     await query('INSERT IGNORE INTO LoginOtps (Audience, MobileNumber) VALUES (?, ?)', [audience, mobile]);
     const [row] = await query(
@@ -79,7 +87,7 @@ async function verify(audience, mobile, code) {
     mobile = String(mobile || '').trim();
     code = String(code === undefined || code === null ? '' : code).trim();
     if (!mobile || !/^\d{4,6}$/.test(code)) return fail(400, 'Incorrect OTP');
-    if (isReviewLogin(mobile)) {
+    if (isReviewLogin(mobile, audience)) {
         const expected = String(process.env.REVIEW_LOGIN_OTP);
         return code.length === expected.length && crypto.timingSafeEqual(Buffer.from(code), Buffer.from(expected))
             ? { ok: true } : fail(400, 'Incorrect OTP');

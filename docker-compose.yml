@@ -80,7 +80,7 @@ services:
   # 4. MinIO Service (Local S3-Compatible Object Storage)
   # ===========================================================================
   minio:
-    image: cgr.dev/chainguard/minio:latest
+    image: cgr.dev/chainguard/minio@sha256:6476f81b9739912fa9f50ceae2bb049a30336527cccd24beccfbeb4145f8f696
     container_name: clikgett-minio
     restart: unless-stopped
     command: ["server", "/data", "--console-address", ":9001"]
@@ -105,7 +105,7 @@ services:
   # 5. MinIO Bucket Initialization (Idempotent Setup)
   # ===========================================================================
   minio-init:
-    image: cgr.dev/chainguard/minio:latest
+    image: cgr.dev/chainguard/minio@sha256:6476f81b9739912fa9f50ceae2bb049a30336527cccd24beccfbeb4145f8f696
     container_name: clikgett-minio-init
     depends_on:
       minio:
@@ -123,7 +123,7 @@ services:
   # 6. Mailpit Service (Local SMTP & Email Capture)
   # ===========================================================================
   mailpit:
-    image: axllent/mailpit:latest
+    image: axllent/mailpit@sha256:94f6b70c1436defae6799d9ac7ff0eeff9540465b842026d5cdb018f1c0234ea
     container_name: clikgett-mailpit
     restart: unless-stopped
     ports:
@@ -142,8 +142,9 @@ services:
     container_name: clikgett-backend
     restart: unless-stopped
     ports:
-      # Reachable from phones on the LAN (http://<PC Wi-Fi IP>:5001). Set BACKEND_BIND_ADDRESS=127.0.0.1 to keep it local-only.
-      - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:5001:5000"
+      # Local-only by default. For phones on the Wi-Fi (http://<PC Wi-Fi IP>:5001) set
+      # BACKEND_BIND_ADDRESS=0.0.0.0 in .env; anyone on that network can then reach the dev API.
+      - "${BACKEND_BIND_ADDRESS:-127.0.0.1}:5001:5000"
     volumes:
       # Customer uploads must survive container rebuilds.
       - clikgett_photo_orders:/app/server/images/photo_orders
@@ -193,6 +194,7 @@ services:
       RIDER_OTP_DIGITS: ${RIDER_OTP_DIGITS:-4}
       REVIEW_LOGIN_MOBILE: ${REVIEW_LOGIN_MOBILE:-}
       REVIEW_LOGIN_OTP: ${REVIEW_LOGIN_OTP:-}
+      REVIEW_LOGIN_UNTIL: ${REVIEW_LOGIN_UNTIL:-}
       RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
       # Phones reach this backend directly on :5001, so client IP headers are not trusted.
       TRUST_PROXY: ${TRUST_PROXY:-}

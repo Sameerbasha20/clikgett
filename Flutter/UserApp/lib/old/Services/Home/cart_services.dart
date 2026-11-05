@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:fav_app/Models/Account/adresses.dart';
 import 'package:fav_app/new/Controllers/adress_controller.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
 import 'package:fav_app/old/Models/Home/cart_model.dart';
@@ -11,7 +10,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:http/http.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
 
-Client client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+Client client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 /// Retries once when the connection drops before a response (an idle
 /// connection closed by the server). Cart calls set absolute values, so a

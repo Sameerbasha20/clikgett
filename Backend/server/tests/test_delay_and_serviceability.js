@@ -373,6 +373,8 @@ async function runTests() {
                 Address: 'Highway 44, Far Away Town'
             }
         );
+        // Store hours are checked first; treat the store as open so the distance check is reached.
+        require('../services/StoreHours').getState = async () => ({ isOpen: true });
         await OrdersController.addorder(reqOrderReject, resOrderReject);
         assert.strictEqual(getOrderRejectStatus(), 400, "Backend must return 400 when placing order for unsupported address");
         const orderRejectData = getOrderRejectData();

@@ -574,6 +574,7 @@ export const Services = {
     addSaleProducts: (method = "POST", body, token) => httpcall("sales/additems", method, body, token),
     removeSaleProduct: (method = "POST", body, token) => httpcall("sales/removeitem", method, body, token),
     // Welcome offer and "Our app: X% lower" price tags
+    getAdminRoles: (method = "GET", body = null, token) => httpcall("adminuser/roles", method, body, token),
     getWelcomeOffer: (method = "GET", body = null, token) => httpcall("promotions/admin/welcome", method, body, token),
     saveWelcomeOffer: (method = "PUT", body, token) => httpcall("promotions/admin/welcome", method, body, token),
     searchPriceCompareProducts: (method = "GET", body = null, token, q) => httpcall(`promotions/admin/products?q=${encodeURIComponent(q)}`, method, body, token),

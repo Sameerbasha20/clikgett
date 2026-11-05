@@ -3,7 +3,7 @@ require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env'
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = (process.env.API_URL || 'http://127.0.0.1:5001/api').replace(/\/api\/?$/, '');
 
 const runTests = async () => {
     console.log('--- Testing Customer Requests and Enquiries APIs ---');

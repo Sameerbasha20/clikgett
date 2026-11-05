@@ -8,7 +8,7 @@ import 'package:http_interceptor/http/intercepted_client.dart';
 
 import '../../../new/NewModel/wallet.dart';
 
-Client client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+Client client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 class HomeServices {
   /// Null when the request fails, times out or cannot be read; the caller then stops
@@ -19,7 +19,7 @@ class HomeServices {
           Uri.parse('${Constants.baseUrl}/users/homepage'),
         )
         .timeout(const Duration(seconds: 45))
-        .then((response) => HomeModel.fromJson(jsonDecode(response.body)))
+        .then<void>((response) => HomeModel.fromJson(jsonDecode(response.body)))
         .catchError((Object e) {
       debugPrint('home failed: $e');
       return null;

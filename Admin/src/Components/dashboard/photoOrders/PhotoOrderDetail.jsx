@@ -621,7 +621,7 @@ function PhotoOrderDetail() {
                                                 <div>
                                                     <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>{prod.ProductName}</div>
                                                     <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
-                                                        Price: ₹{prod.OfferPrice || prod.Price} | Category: {prod.CategoryName || "General"}
+                                                        Price: ₹{(prod.ProductVariants && prod.ProductVariants[0] && (prod.ProductVariants[0].OfferPrice || prod.ProductVariants[0].Price)) || prod.OfferPrice || prod.Price || "—"}{prod.ProductVariants && prod.ProductVariants[0] ? ` / ${prod.ProductVariants[0].metricvalue} ${prod.ProductVariants[0].metrictype}` : ""} | Category: {prod.CategoryName || "General"}
                                                     </div>
                                                 </div>
                                                 <button

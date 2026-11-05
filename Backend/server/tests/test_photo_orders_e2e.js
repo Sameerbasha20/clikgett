@@ -8,7 +8,7 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const mysql = require('mysql');
 
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = (process.env.API_URL || 'http://127.0.0.1:5001/api').replace(/\/$/, '');
 
 const pool = mysql.createPool({
     connectionLimit: 5,

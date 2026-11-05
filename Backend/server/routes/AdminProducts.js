@@ -14,8 +14,8 @@ router
 
 .get('/productdetail/:ProductID',util.authenticate.adminAuthenticate,adminproductscontroller.getproductsbyproductid)
 
-.post('/addproduct',validate.user_mandatoryfields.product_mandatoryfields,util.authenticate.adminAuthenticate,adminproductscontroller.addproduct)
-.post('/addvariant',validate.user_mandatoryfields.variant_mandatoryfields,util.authenticate.adminAuthenticate,adminproductscontroller.addvariant)
+.post('/addproduct',util.authenticate.adminAuthenticate,validate.user_mandatoryfields.product_mandatoryfields,adminproductscontroller.addproduct)
+.post('/addvariant',util.authenticate.adminAuthenticate,validate.user_mandatoryfields.variant_mandatoryfields,adminproductscontroller.addvariant)
 .put('/updateproduct/:ProductID',util.authenticate.adminAuthenticate,adminproductscontroller.updateproduct)
 .get('/out-of-stock',util.authenticate.adminAuthenticate,adminStock.outOfStock)
 .put('/restock/:VariantID',util.authenticate.adminAuthenticate,adminStock.restock)

@@ -5,6 +5,10 @@ const router = express.Router();
 const pool = require('../utils/db');
 const RedisService = require('../utils/redis');
 
+// Production responses leave out host names, DB names and raw errors.
+const DETAILED = process.env.NODE_ENV !== 'production';
+const detail = (v) => (DETAILED ? v : undefined);
+
 // ─── Helper: ping the DB pool with timeout ──────────────────────────────────
 function pingDatabase() {
     return new Promise((resolve) => {
@@ -44,13 +48,13 @@ router.get('/', async (req, res) => {
             database: {
                 type: 'mysql',
                 status: db.connected ? 'connected' : 'disconnected',
-                host: process.env.DB_HOST || process.env.HOST || 'unknown',
-                error: db.error || null
+                host: detail(process.env.DB_HOST || process.env.HOST || 'unknown'),
+                error: detail(db.error || null)
             },
             redis: {
                 status: redis.status,
                 enabled: redis.enabled,
-                host: redis.host || null,
+                host: detail(redis.host || null),
                 latencyMs: redis.latencyMs || null
             }
         },
@@ -68,9 +72,9 @@ router.get('/db', async (req, res) => {
             status: 'healthy',
             database: 'connected',
             service: 'clikgett-backend',
-            host: process.env.DB_HOST || process.env.HOST || 'unknown',
-            port: process.env.DB_PORT || 3306,
-            dbName: process.env.DB_NAME || process.env.db || 'unknown',
+            host: detail(process.env.DB_HOST || process.env.HOST || 'unknown'),
+            port: detail(process.env.DB_PORT || 3306),
+            dbName: detail(process.env.DB_NAME || process.env.db || 'unknown'),
             timestamp
         });
     } else {
@@ -78,8 +82,8 @@ router.get('/db', async (req, res) => {
             status: 'unhealthy',
             database: 'disconnected',
             service: 'clikgett-backend',
-            host: process.env.DB_HOST || process.env.HOST || 'unknown',
-            error: db.error || 'Connection failed',
+            host: detail(process.env.DB_HOST || process.env.HOST || 'unknown'),
+            error: detail(db.error || 'Connection failed'),
             timestamp
         });
     }
@@ -94,13 +98,14 @@ router.get('/redis', async (req, res) => {
 
     return res.status(statusCode).json({
         service: 'clikgett-backend',
-        redis,
+        redis: DETAILED ? redis : { status: redis.status, enabled: redis.enabled },
         timestamp
     });
 });
 
 // ─── POST /health/redis/test (Safe set/get/del verification) ─────────────────
 router.post('/redis/test', async (req, res) => {
+    if (!DETAILED) return res.status(404).json({ status: 'error', message: 'Not available' });
     if (!RedisService.isAvailable()) {
         return res.status(503).json({
             status: 'error',

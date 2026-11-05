@@ -236,7 +236,8 @@ const runTests = async () => {
         assert.strictEqual(eligRes.status, 200);
         assert.strictEqual(eligRes.data.isDelivered, true);
         assert.strictEqual(eligRes.data.alreadySubmitted, true);
-        assert.strictEqual(eligRes.data.rewardProgram.enabled, true);
+        // One-time reward: offered only if this customer hasn't used it yet.
+        assert.strictEqual(eligRes.data.rewardProgram.enabled, !eligRes.data.rewardProgram.alreadyRewarded);
         assert.strictEqual(parseFloat(eligRes.data.rewardProgram.amount), 20.00);
         console.log('✅ PASS: Feedback eligibility endpoint returned accurate state and reward terms');
 

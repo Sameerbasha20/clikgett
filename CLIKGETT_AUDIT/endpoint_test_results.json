@@ -1,0 +1,4963 @@
+{
+ "generated": "2026-11-05T03:56:21.148Z",
+ "environment": "Local Docker backend http://127.0.0.1:5001 with local MySQL (clikgett-dev). No production systems contacted.",
+ "method": [
+  "Unauthenticated request to every protected endpoint (all methods; handlers not reached when auth works).",
+  "Wrong-role token (customer/rider/admin) against admin, rider and customer endpoints.",
+  "Authorized GET to every GET endpoint with real local IDs (side-effect GETs such as triggers/OTP skipped).",
+  "Mutating endpoints counted PASS only when exercised by a passing npm-test suite."
+ ],
+ "summary": {
+  "distinctEndpoints": 403,
+  "PASS": 261,
+  "FAIL": 0,
+  "BLOCKED": 9,
+  "NOT TESTED": 133,
+  "protectedEndpoints": 354,
+  "refusedWithoutToken": 354
+ },
+ "results": [
+  {
+   "id": "EP-001",
+   "method": "POST",
+   "path": "/api/users/signup/sendotp",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_qa_bug_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-002",
+   "method": "POST",
+   "path": "/api/users/login/sendotp",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_qa_bug_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-003",
+   "method": "POST",
+   "path": "/api/users/login/verifyotp",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_refresh_tokens.js, test_security_regressions.js"
+   ]
+  },
+  {
+   "id": "EP-004",
+   "method": "POST",
+   "path": "/api/users/signup",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_security_regressions.js"
+   ]
+  },
+  {
+   "id": "EP-005",
+   "method": "GET",
+   "path": "/api/users/homepage",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/users/homepage -> HTTP 200, Status=1, 347 ms, 185702 bytes"
+   ]
+  },
+  {
+   "id": "EP-006",
+   "method": "GET",
+   "path": "/api/users/homepagesectionproducts",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/users/homepagesectionproducts -> HTTP 200, Status=undefined, 138 ms, 274679 bytes"
+   ]
+  },
+  {
+   "id": "EP-007",
+   "method": "GET",
+   "path": "/api/users/homepagesectionproducts_all/:HomeSectionId",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/users/homepagesectionproducts_all/1 -> HTTP 200, Status=undefined, 8 ms, 26 bytes"
+   ]
+  },
+  {
+   "id": "EP-008",
+   "method": "GET",
+   "path": "/api/users/webhomepage",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/users/webhomepage -> HTTP 200, Status=1, 237 ms, 185702 bytes"
+   ]
+  },
+  {
+   "id": "EP-009",
+   "method": "PUT",
+   "path": "/api/users/update",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-010",
+   "method": "GET",
+   "path": "/api/users/detail",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/users/detail -> HTTP 200, Status=undefined, 16 ms, 550 bytes"
+   ]
+  },
+  {
+   "id": "EP-011",
+   "method": "GET",
+   "path": "/api/users/notification-preferences",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_qa_bug_fixes.js",
+    "authorized GET /api/users/notification-preferences -> HTTP 200, Status=1, 7 ms, 46 bytes"
+   ]
+  },
+  {
+   "id": "EP-012",
+   "method": "PUT",
+   "path": "/api/users/notification-preferences",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_qa_bug_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-013",
+   "method": "POST",
+   "path": "/api/users/addfeedback",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_post_delivery_feedback_and_cashback.js"
+   ]
+  },
+  {
+   "id": "EP-015",
+   "method": "GET",
+   "path": "/api/users/feedback/order-status/:orderId",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_post_delivery_feedback_and_cashback.js",
+    "authorized GET /api/users/feedback/order-status/1925 -> HTTP 200, Status=1, 9 ms, 272 bytes"
+   ]
+  },
+  {
+   "id": "EP-016",
+   "method": "GET",
+   "path": "/api/users/feedback/eligibility/:orderId",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/users/feedback/eligibility/1925 -> HTTP 200, Status=1, 6 ms, 272 bytes"
+   ]
+  },
+  {
+   "id": "EP-017",
+   "method": "GET",
+   "path": "/api/users/notifications",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_qa_bug_fixes.js",
+    "authorized GET /api/users/notifications -> HTTP 200, Status=1, 26 ms, 54315 bytes"
+   ]
+  },
+  {
+   "id": "EP-018",
+   "method": "PUT",
+   "path": "/api/users/updatenotifications/:NotificationID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-019",
+   "method": "GET",
+   "path": "/api/users/settings",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/users/settings -> HTTP 200, Status=1, 12 ms, 6361 bytes"
+   ]
+  },
+  {
+   "id": "EP-020",
+   "method": "GET",
+   "path": "/api/users/user_wallets",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/users/user_wallets -> HTTP 200, Status=undefined, 15 ms, 4851 bytes"
+   ]
+  },
+  {
+   "id": "EP-021",
+   "method": "POST",
+   "path": "/api/users/add_wallet_money",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-022",
+   "method": "DELETE",
+   "path": "/api/users/deleteuser",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_account.js"
+   ]
+  },
+  {
+   "id": "EP-023",
+   "method": "POST",
+   "path": "/api/auth/refresh",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_refresh_tokens.js"
+   ]
+  },
+  {
+   "id": "EP-024",
+   "method": "POST",
+   "path": "/api/auth/logout",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_refresh_tokens.js"
+   ]
+  },
+  {
+   "id": "EP-025",
+   "method": "GET",
+   "path": "/api/account/config",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_account.js",
+    "authorized GET /api/account/config -> HTTP 200, Status=1, 17 ms, 3408 bytes"
+   ]
+  },
+  {
+   "id": "EP-026",
+   "method": "GET",
+   "path": "/api/account/referral",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_account.js",
+    "authorized GET /api/account/referral -> HTTP 200, Status=1, 22 ms, 166 bytes"
+   ]
+  },
+  {
+   "id": "EP-027",
+   "method": "GET",
+   "path": "/api/account/membership/plans",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_account.js, test_admin.js",
+    "authorized GET /api/account/membership/plans -> HTTP 200, Status=1, 14 ms, 358 bytes"
+   ]
+  },
+  {
+   "id": "EP-028",
+   "method": "POST",
+   "path": "/api/account/membership/buy",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_account.js"
+   ]
+  },
+  {
+   "id": "EP-029",
+   "method": "POST",
+   "path": "/api/account/membership/confirm",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_account.js"
+   ]
+  },
+  {
+   "id": "EP-030",
+   "method": "GET",
+   "path": "/api/account/summary",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_customer_rewards.js",
+    "authorized GET /api/account/summary -> HTTP 200, Status=1, 20 ms, 85 bytes"
+   ]
+  },
+  {
+   "id": "EP-031",
+   "method": "POST",
+   "path": "/api/account/birthday",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_customer_rewards.js"
+   ]
+  },
+  {
+   "id": "EP-032",
+   "method": "GET",
+   "path": "/api/account/rewards/settings",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_customer_rewards.js, test_order_safety.js",
+    "authorized GET /api/account/rewards/settings -> HTTP 200, Status=1, 17 ms, 353 bytes"
+   ]
+  },
+  {
+   "id": "EP-033",
+   "method": "PUT",
+   "path": "/api/account/rewards/settings",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_customer_rewards.js"
+   ]
+  },
+  {
+   "id": "EP-034",
+   "method": "POST",
+   "path": "/api/account/rewards/run",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_customer_rewards.js"
+   ]
+  },
+  {
+   "id": "EP-035",
+   "method": "GET",
+   "path": "/api/categories/subcategories_by_category/:CategoryID",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/categories/subcategories_by_category/1 -> HTTP 200, Status=1, 12 ms, 386 bytes"
+   ]
+  },
+  {
+   "id": "EP-036",
+   "method": "GET",
+   "path": "/api/categories/allcategoriesuser",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/categories/allcategoriesuser -> HTTP 200, Status=1, 23 ms, 2983 bytes"
+   ]
+  },
+  {
+   "id": "EP-037",
+   "method": "GET",
+   "path": "/api/categories/websubcategories",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/categories/websubcategories -> HTTP 200, Status=1, 8 ms, 31 bytes"
+   ]
+  },
+  {
+   "id": "EP-038",
+   "method": "GET",
+   "path": "/api/categories/subcategorydetail/:SubCategoryID",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/categories/subcategorydetail/1 -> HTTP 200, Status=1, 12 ms, 263 bytes"
+   ]
+  },
+  {
+   "id": "EP-039",
+   "method": "GET",
+   "path": "/api/categories/allcategoriesadmin",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/categories/allcategoriesadmin -> HTTP 200, Status=1, 7 ms, 6762 bytes"
+   ]
+  },
+  {
+   "id": "EP-040",
+   "method": "GET",
+   "path": "/api/categories/detail/:CategoryID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/categories/detail/1 -> HTTP 200, Status=1, 11 ms, 310 bytes"
+   ]
+  },
+  {
+   "id": "EP-041",
+   "method": "POST",
+   "path": "/api/categories/addcategory",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_qa_bug_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-042",
+   "method": "PUT",
+   "path": "/api/categories/updatecategory/:CategoryID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-043",
+   "method": "DELETE",
+   "path": "/api/categories/deletecategory/:CategoryID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-044",
+   "method": "GET",
+   "path": "/api/products/list",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/products/list -> HTTP 200, Status=1, 14 ms, 38 bytes"
+   ]
+  },
+  {
+   "id": "EP-045",
+   "method": "GET",
+   "path": "/api/products/weblist",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/products/weblist -> HTTP 200, Status=1, 8 ms, 38 bytes"
+   ]
+  },
+  {
+   "id": "EP-046",
+   "method": "GET",
+   "path": "/api/products/bulk-deals",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_admin.js",
+    "authorized GET /api/products/bulk-deals -> HTTP 200, Status=1, 16 ms, 1315 bytes"
+   ]
+  },
+  {
+   "id": "EP-047",
+   "method": "GET",
+   "path": "/api/products/previously-bought",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_stock_and_deals.js",
+    "authorized GET /api/products/previously-bought -> HTTP 200, Status=1, 20 ms, 1430 bytes"
+   ]
+  },
+  {
+   "id": "EP-048",
+   "method": "GET",
+   "path": "/api/products/detail/:ProductID",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_admin.js, test_product_actions.js",
+    "authorized GET /api/products/detail/2 -> HTTP 200, Status=1, 11 ms, 1428 bytes"
+   ]
+  },
+  {
+   "id": "EP-049",
+   "method": "GET",
+   "path": "/api/products/search/:SearchString",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_customer_rewards.js, test_promotions.js, test_qa_bug_fixes.js",
+    "authorized GET /api/products/search/milk -> HTTP 200, Status=1, 40 ms, 57030 bytes"
+   ]
+  },
+  {
+   "id": "EP-050",
+   "method": "GET",
+   "path": "/api/products/suggestions",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_customer_rewards.js, test_qa_bug_fixes.js, test_security_regressions.js",
+    "authorized GET /api/products/suggestions -> HTTP 200, Status=1, 7 ms, 140 bytes"
+   ]
+  },
+  {
+   "id": "EP-051",
+   "method": "GET",
+   "path": "/api/products/suggestions/:query",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/products/suggestions/milk -> HTTP 200, Status=1, 32 ms, 2756 bytes"
+   ]
+  },
+  {
+   "id": "EP-052",
+   "method": "DELETE",
+   "path": "/api/products/search-history",
+   "status": "NOT TESTED",
+   "authEnforced": null,
+   "evidence": []
+  },
+  {
+   "id": "EP-053",
+   "method": "GET",
+   "path": "/api/products/recommendedproducts",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/products/recommendedproducts -> HTTP 200, Status=1, 45 ms, 26772 bytes"
+   ]
+  },
+  {
+   "id": "EP-054",
+   "method": "GET",
+   "path": "/api/products/youmaylikeit",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/products/youmaylikeit -> HTTP 200, Status=1, 33 ms, 3837 bytes"
+   ]
+  },
+  {
+   "id": "EP-055",
+   "method": "GET",
+   "path": "/api/products/similar/:ProductID",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/products/similar/2 -> HTTP 200, Status=1, 17 ms, 24434 bytes"
+   ]
+  },
+  {
+   "id": "EP-056",
+   "method": "POST",
+   "path": "/api/carts/validate_cart",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-057",
+   "method": "POST",
+   "path": "/api/carts/mycart",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-058",
+   "method": "POST",
+   "path": "/api/carts/bill",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_checkout.js, test_flash_sale.js, test_product_actions.js, test_promotions.js, test_stock_and_deals.js"
+   ]
+  },
+  {
+   "id": "EP-059",
+   "method": "POST",
+   "path": "/api/carts/addcart",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js"
+   ]
+  },
+  {
+   "id": "EP-060",
+   "method": "DELETE",
+   "path": "/api/carts/deletecartitem/:ProductID/:VariantID/:Type",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-061",
+   "method": "DELETE",
+   "path": "/api/carts/deletekit/:KitID/:Type",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-062",
+   "method": "DELETE",
+   "path": "/api/carts/deletecart/:CartID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js"
+   ]
+  },
+  {
+   "id": "EP-063",
+   "method": "GET",
+   "path": "/api/carts/abandoned/trigger-notifications",
+   "status": "BLOCKED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "not called: would send SMS/push/payment traffic or needs provider signature"
+   ]
+  },
+  {
+   "id": "EP-064",
+   "method": "POST",
+   "path": "/api/carts/abandoned/trigger-notifications",
+   "status": "BLOCKED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "not called: would send SMS/push/payment traffic or needs provider signature"
+   ]
+  },
+  {
+   "id": "EP-065",
+   "method": "GET",
+   "path": "/api/carts/abandoned/list",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/carts/abandoned/list -> HTTP 200, Status=1, 35 ms, 180391 bytes"
+   ]
+  },
+  {
+   "id": "EP-066",
+   "method": "GET",
+   "path": "/api/carts/abandoned",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/carts/abandoned -> HTTP 200, Status=1, 43 ms, 180391 bytes"
+   ]
+  },
+  {
+   "id": "EP-067",
+   "method": "GET",
+   "path": "/api/carts/abandoned/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/carts/abandoned/1 -> HTTP 200, Status=1, 21 ms, 844 bytes"
+   ]
+  },
+  {
+   "id": "EP-068",
+   "method": "POST",
+   "path": "/api/carts/abandoned/status",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-069",
+   "method": "POST",
+   "path": "/api/carts/abandoned/details",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-070",
+   "method": "POST",
+   "path": "/api/adminuser/login",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_admin.js, test_order_safety.js"
+   ]
+  },
+  {
+   "id": "EP-071",
+   "method": "POST",
+   "path": "/api/adminuser/send-2fa-sms",
+   "status": "BLOCKED",
+   "authEnforced": null,
+   "evidence": [
+    "not called: would send SMS/push/payment traffic or needs provider signature"
+   ]
+  },
+  {
+   "id": "EP-072",
+   "method": "POST",
+   "path": "/api/adminuser/verify-2fa",
+   "status": "NOT TESTED",
+   "authEnforced": null,
+   "evidence": []
+  },
+  {
+   "id": "EP-073",
+   "method": "POST",
+   "path": "/api/adminuser/reset-2fa/:AdminID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-074",
+   "method": "GET",
+   "path": "/api/adminuser/2fa-status",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/2fa-status -> HTTP 200, Status=1, 13 ms, 67 bytes"
+   ]
+  },
+  {
+   "id": "EP-075",
+   "method": "POST",
+   "path": "/api/adminuser/upload-url",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_security_regressions.js"
+   ]
+  },
+  {
+   "id": "EP-076",
+   "method": "GET",
+   "path": "/api/adminuser/global-search",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js",
+    "authorized GET /api/adminuser/global-search -> HTTP 400, Status=0, 12 ms, 161 bytes, \"Search query must be at least 2 characters long\""
+   ]
+  },
+  {
+   "id": "EP-077",
+   "method": "GET",
+   "path": "/api/adminuser/referrals/config",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/referrals/config -> HTTP 200, Status=1, 8 ms, 360 bytes"
+   ]
+  },
+  {
+   "id": "EP-078",
+   "method": "PUT",
+   "path": "/api/adminuser/referrals/config",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-079",
+   "method": "GET",
+   "path": "/api/adminuser/referrals/audit-history",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/referrals/audit-history -> HTTP 200, Status=1, 16 ms, 5558 bytes"
+   ]
+  },
+  {
+   "id": "EP-080",
+   "method": "GET",
+   "path": "/api/adminuser/referrals/claims",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/referrals/claims -> HTTP 200, Status=1, 10 ms, 24 bytes"
+   ]
+  },
+  {
+   "id": "EP-081",
+   "method": "GET",
+   "path": "/api/adminuser/delivery-eta/rules",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/delivery-eta/rules -> HTTP 200, Status=1, 14 ms, 292 bytes"
+   ]
+  },
+  {
+   "id": "EP-082",
+   "method": "PUT",
+   "path": "/api/adminuser/delivery-eta/rules",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-083",
+   "method": "GET",
+   "path": "/api/adminuser/delivery-eta/order/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/delivery-eta/order/1925 -> HTTP 200, Status=1, 10 ms, 358 bytes"
+   ]
+  },
+  {
+   "id": "EP-084",
+   "method": "GET",
+   "path": "/api/adminuser/getalldeliveryboys",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/getalldeliveryboys -> HTTP 200, Status=1, 9 ms, 8217 bytes"
+   ]
+  },
+  {
+   "id": "EP-085",
+   "method": "GET",
+   "path": "/api/adminuser/getactivedeliveryboys",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/getactivedeliveryboys -> HTTP 200, Status=1, 10 ms, 8217 bytes"
+   ]
+  },
+  {
+   "id": "EP-086",
+   "method": "GET",
+   "path": "/api/adminuser/deliveryboydetail",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/deliveryboydetail -> HTTP 200, Status=1, 11 ms, 29 bytes"
+   ]
+  },
+  {
+   "id": "EP-087",
+   "method": "PUT",
+   "path": "/api/adminuser/updatedeliveryboy/:AdminID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-088",
+   "method": "DELETE",
+   "path": "/api/adminuser/deletedeliveryboy/:AdminID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-089",
+   "method": "POST",
+   "path": "/api/adminuser/addeliveryboy",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-090",
+   "method": "PUT",
+   "path": "/api/adminuser/updateuser/:UserID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-091",
+   "method": "GET",
+   "path": "/api/adminuser/userdetail/:UserID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/userdetail/1000523 -> HTTP 200, Status=undefined, 14 ms, 550 bytes"
+   ]
+  },
+  {
+   "id": "EP-092",
+   "method": "GET",
+   "path": "/api/adminuser/customer-full-details/:UserID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/customer-full-details/1000523 -> HTTP 200, Status=1, 49 ms, 16828 bytes"
+   ]
+  },
+  {
+   "id": "EP-093",
+   "method": "GET",
+   "path": "/api/adminuser/userslist",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/userslist -> HTTP 200, Status=1, 130 ms, 922940 bytes"
+   ]
+  },
+  {
+   "id": "EP-094",
+   "method": "GET",
+   "path": "/api/adminuser/feedbackdetail/:FeedbackID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/feedbackdetail/1 -> HTTP 200, Status=1, 19 ms, 1356 bytes"
+   ]
+  },
+  {
+   "id": "EP-095",
+   "method": "GET",
+   "path": "/api/adminuser/feedback/detail/:FeedbackID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/feedback/detail/1 -> HTTP 200, Status=1, 12 ms, 1356 bytes"
+   ]
+  },
+  {
+   "id": "EP-096",
+   "method": "GET",
+   "path": "/api/adminuser/feedbacklist",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/feedbacklist -> HTTP 200, Status=1, 14 ms, 7769 bytes"
+   ]
+  },
+  {
+   "id": "EP-098",
+   "method": "GET",
+   "path": "/api/adminuser/feedback/list",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_post_delivery_feedback_and_cashback.js",
+    "authorized GET /api/adminuser/feedback/list -> HTTP 200, Status=1, 10 ms, 7769 bytes"
+   ]
+  },
+  {
+   "id": "EP-099",
+   "method": "PUT",
+   "path": "/api/adminuser/feedback/reply/:FeedbackID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-100",
+   "method": "POST",
+   "path": "/api/adminuser/feedback/reply/:FeedbackID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-101",
+   "method": "POST",
+   "path": "/api/adminuser/feedback/review/:FeedbackID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_post_delivery_feedback_and_cashback.js"
+   ]
+  },
+  {
+   "id": "EP-102",
+   "method": "PUT",
+   "path": "/api/adminuser/feedback/review/:FeedbackID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-103",
+   "method": "POST",
+   "path": "/api/adminuser/feedback/credit-reward/:FeedbackID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_post_delivery_feedback_and_cashback.js"
+   ]
+  },
+  {
+   "id": "EP-104",
+   "method": "GET",
+   "path": "/api/adminuser/feedback/reward-config",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_post_delivery_feedback_and_cashback.js",
+    "authorized GET /api/adminuser/feedback/reward-config -> HTTP 200, Status=1, 15 ms, 62 bytes"
+   ]
+  },
+  {
+   "id": "EP-105",
+   "method": "POST",
+   "path": "/api/adminuser/feedback/reward-config",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_post_delivery_feedback_and_cashback.js"
+   ]
+  },
+  {
+   "id": "EP-106",
+   "method": "PUT",
+   "path": "/api/adminuser/feedback/reward-config",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-107",
+   "method": "POST",
+   "path": "/api/adminuser/sendnotifications",
+   "status": "BLOCKED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "not called: would send SMS/push/payment traffic or needs provider signature"
+   ]
+  },
+  {
+   "id": "EP-108",
+   "method": "GET",
+   "path": "/api/adminuser/settingslist",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js, test_security_regressions.js",
+    "authorized GET /api/adminuser/settingslist -> HTTP 200, Status=undefined, 7 ms, 6361 bytes"
+   ]
+  },
+  {
+   "id": "EP-109",
+   "method": "GET",
+   "path": "/api/adminuser/settingdetail/:ID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/settingdetail/1 -> HTTP 200, Status=undefined, 8 ms, 171 bytes"
+   ]
+  },
+  {
+   "id": "EP-110",
+   "method": "POST",
+   "path": "/api/adminuser/addsettings",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-111",
+   "method": "PUT",
+   "path": "/api/adminuser/updatesettings/:ID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-112",
+   "method": "DELETE",
+   "path": "/api/adminuser/deletesettings/:ID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-113",
+   "method": "GET",
+   "path": "/api/adminuser/list",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/list -> HTTP 200, Status=1, 8 ms, 578 bytes"
+   ]
+  },
+  {
+   "id": "EP-114",
+   "method": "GET",
+   "path": "/api/adminuser/adminlist",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/adminlist -> HTTP 200, Status=1, 6 ms, 578 bytes"
+   ]
+  },
+  {
+   "id": "EP-115",
+   "method": "GET",
+   "path": "/api/adminuser/roles",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js",
+    "authorized GET /api/adminuser/roles -> HTTP 200, Status=1, 6 ms, 536 bytes"
+   ]
+  },
+  {
+   "id": "EP-116",
+   "method": "POST",
+   "path": "/api/adminuser/addadmin",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-117",
+   "method": "GET",
+   "path": "/api/adminuser/detail/:AdminID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminuser/detail/16 -> HTTP 200, Status=1, 9 ms, 270 bytes"
+   ]
+  },
+  {
+   "id": "EP-118",
+   "method": "PUT",
+   "path": "/api/adminuser/updateadminuser/:AdminID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js, test_audit_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-119",
+   "method": "DELETE",
+   "path": "/api/adminuser/deleteadminuser/:AdminID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js"
+   ]
+  },
+  {
+   "id": "EP-120",
+   "method": "PUT",
+   "path": "/api/adminuser/update/:AdminID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-121",
+   "method": "PUT",
+   "path": "/api/adminuser/user/update/:UserID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-122",
+   "method": "DELETE",
+   "path": "/api/adminuser/user/delete/:UserID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-123",
+   "method": "GET",
+   "path": "/api/adminuser/wallettransactions/:UserID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js",
+    "authorized GET /api/adminuser/wallettransactions/1000523 -> HTTP 200, Status=1, 8 ms, 4946 bytes"
+   ]
+  },
+  {
+   "id": "EP-124",
+   "method": "POST",
+   "path": "/api/adminuser/creditdebitwallet",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-125",
+   "method": "POST",
+   "path": "/api/adminuser/expirecashback",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-182",
+   "method": "GET",
+   "path": "/api/banners",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/banners -> HTTP 200, Status=undefined, 12 ms, 1601 bytes"
+   ]
+  },
+  {
+   "id": "EP-183",
+   "method": "GET",
+   "path": "/api/banners/detail/:BannerID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/banners/detail/1 -> HTTP 200, Status=undefined, 8 ms, 25 bytes"
+   ]
+  },
+  {
+   "id": "EP-184",
+   "method": "POST",
+   "path": "/api/banners/addbanner",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-185",
+   "method": "PUT",
+   "path": "/api/banners/updatebanner/:BannerID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-186",
+   "method": "DELETE",
+   "path": "/api/banners/deletebanner/:BannerID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-187",
+   "method": "GET",
+   "path": "/api/subcategories",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/subcategories -> HTTP 200, Status=1, 20 ms, 20490 bytes"
+   ]
+  },
+  {
+   "id": "EP-188",
+   "method": "GET",
+   "path": "/api/subcategories/bycategory/:CategoryID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/subcategories/bycategory/1 -> HTTP 200, Status=1, 13 ms, 740 bytes"
+   ]
+  },
+  {
+   "id": "EP-189",
+   "method": "GET",
+   "path": "/api/subcategories/detail/:SubCategoryID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/subcategories/detail/1 -> HTTP 200, Status=1, 13 ms, 263 bytes"
+   ]
+  },
+  {
+   "id": "EP-190",
+   "method": "POST",
+   "path": "/api/subcategories/add",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-191",
+   "method": "PUT",
+   "path": "/api/subcategories/update/:SubCategoryID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-192",
+   "method": "DELETE",
+   "path": "/api/subcategories/delete/:SubCategoryID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-193",
+   "method": "PUT",
+   "path": "/api/subcategories/admin/reorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-194",
+   "method": "PUT",
+   "path": "/api/subcategories/reorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-195",
+   "method": "POST",
+   "path": "/api/subcategories/admin/reorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-196",
+   "method": "POST",
+   "path": "/api/subcategories/reorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-197",
+   "method": "GET",
+   "path": "/api/adminproducts/bycategory",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminproducts/bycategory -> HTTP 200, Status=1, 251 ms, 1287403 bytes"
+   ]
+  },
+  {
+   "id": "EP-198",
+   "method": "GET",
+   "path": "/api/adminproducts/bysubcategory",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminproducts/bysubcategory -> HTTP 200, Status=1, 5 ms, 26 bytes"
+   ]
+  },
+  {
+   "id": "EP-199",
+   "method": "GET",
+   "path": "/api/adminproducts/search/:SearchString",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js",
+    "authorized GET /api/adminproducts/search/milk -> HTTP 200, Status=1, 33 ms, 138223 bytes"
+   ]
+  },
+  {
+   "id": "EP-200",
+   "method": "GET",
+   "path": "/api/adminproducts/productdetail/:ProductID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminproducts/productdetail/2 -> HTTP 200, Status=1, 12 ms, 1428 bytes"
+   ]
+  },
+  {
+   "id": "EP-201",
+   "method": "POST",
+   "path": "/api/adminproducts/addproduct",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_qa_bug_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-202",
+   "method": "POST",
+   "path": "/api/adminproducts/addvariant",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-203",
+   "method": "PUT",
+   "path": "/api/adminproducts/updateproduct/:ProductID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_customer_rewards.js, test_product_actions.js"
+   ]
+  },
+  {
+   "id": "EP-204",
+   "method": "GET",
+   "path": "/api/adminproducts/out-of-stock",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js, test_audit_fixes.js",
+    "authorized GET /api/adminproducts/out-of-stock -> HTTP 200, Status=1, 319 ms, 34560 bytes"
+   ]
+  },
+  {
+   "id": "EP-205",
+   "method": "PUT",
+   "path": "/api/adminproducts/restock/:VariantID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js"
+   ]
+  },
+  {
+   "id": "EP-206",
+   "method": "PUT",
+   "path": "/api/adminproducts/updateproductvariant/:VariantID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-207",
+   "method": "DELETE",
+   "path": "/api/adminproducts/deleteproduct/:ProductID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-208",
+   "method": "DELETE",
+   "path": "/api/adminproducts/deletevariant/:VariantID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-209",
+   "method": "GET",
+   "path": "/api/adminproducts/buy-more-config",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminproducts/buy-more-config -> HTTP 200, Status=1, 12 ms, 1849 bytes"
+   ]
+  },
+  {
+   "id": "EP-210",
+   "method": "PUT",
+   "path": "/api/adminproducts/buy-more-config/:ConfigID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-211",
+   "method": "DELETE",
+   "path": "/api/adminproducts/buy-more-config/:ConfigID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-212",
+   "method": "GET",
+   "path": "/api/promocodes/winback/trigger",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "exercised by passing suite(s): test_security_regressions.js"
+   ]
+  },
+  {
+   "id": "EP-213",
+   "method": "POST",
+   "path": "/api/promocodes/winback/trigger",
+   "status": "BLOCKED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "not called: would send SMS/push/payment traffic or needs provider signature"
+   ]
+  },
+  {
+   "id": "EP-214",
+   "method": "GET",
+   "path": "/api/promocodes/active",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/promocodes/active -> HTTP 200, Status=undefined, 20 ms, 28 bytes"
+   ]
+  },
+  {
+   "id": "EP-215",
+   "method": "POST",
+   "path": "/api/promocodes/user/verify",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-216",
+   "method": "GET",
+   "path": "/api/promocodes/admin/all",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/promocodes/admin/all -> HTTP 200, Status=undefined, 12 ms, 2523 bytes"
+   ]
+  },
+  {
+   "id": "EP-217",
+   "method": "GET",
+   "path": "/api/promocodes/admin/detail/:PromoCodeID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/promocodes/admin/detail/1 -> HTTP 200, Status=undefined, 11 ms, 27 bytes"
+   ]
+  },
+  {
+   "id": "EP-218",
+   "method": "POST",
+   "path": "/api/promocodes/admin/add",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-219",
+   "method": "PUT",
+   "path": "/api/promocodes/admin/update/:PromoCodeID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-220",
+   "method": "DELETE",
+   "path": "/api/promocodes/admin/delete/:PromoCodeID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-221",
+   "method": "GET",
+   "path": "/api/address/myaddress",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/address/myaddress -> HTTP 200, Status=1, 16 ms, 320 bytes"
+   ]
+  },
+  {
+   "id": "EP-222",
+   "method": "GET",
+   "path": "/api/address/byaddressid/:AddressID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/address/byaddressid/1 -> HTTP 200, Status=1, 17 ms, 25 bytes"
+   ]
+  },
+  {
+   "id": "EP-223",
+   "method": "POST",
+   "path": "/api/address/check-serviceability",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_checkout.js, test_features.js"
+   ]
+  },
+  {
+   "id": "EP-224",
+   "method": "POST",
+   "path": "/api/address/checkserviceability",
+   "status": "NOT TESTED",
+   "authEnforced": null,
+   "evidence": []
+  },
+  {
+   "id": "EP-225",
+   "method": "POST",
+   "path": "/api/address/addaddress",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-226",
+   "method": "PUT",
+   "path": "/api/address/:AddressID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-227",
+   "method": "DELETE",
+   "path": "/api/address/:AddressID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-228",
+   "method": "GET",
+   "path": "/api/orders/currentorders",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_qa_bug_fixes.js, test_refresh_tokens.js",
+    "authorized GET /api/orders/currentorders -> HTTP 200, Status=1, 24 ms, 502 bytes"
+   ]
+  },
+  {
+   "id": "EP-229",
+   "method": "GET",
+   "path": "/api/orders/pastorders",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_order_safety.js",
+    "authorized GET /api/orders/pastorders -> HTTP 200, Status=1, 20 ms, 16155 bytes"
+   ]
+  },
+  {
+   "id": "EP-230",
+   "method": "GET",
+   "path": "/api/orders/myorder/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_order_flow.js, test_order_safety.js, test_qa_bug_fixes.js",
+    "authorized GET /api/orders/myorder/1925 -> HTTP 200, Status=1, 42 ms, 2909 bytes"
+   ]
+  },
+  {
+   "id": "EP-231",
+   "method": "POST",
+   "path": "/api/orders/orderpayments",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-232",
+   "method": "POST",
+   "path": "/api/orders/createorder",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_checkout.js, test_order_safety.js, test_promotions.js"
+   ]
+  },
+  {
+   "id": "EP-233",
+   "method": "PUT",
+   "path": "/api/orders/cancelorderuser/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_order_flow.js, test_order_safety.js, test_security_regressions.js"
+   ]
+  },
+  {
+   "id": "EP-234",
+   "method": "POST",
+   "path": "/api/orders/reorder",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_checkout.js"
+   ]
+  },
+  {
+   "id": "EP-235",
+   "method": "GET",
+   "path": "/api/orders/checktiming",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_admin.js",
+    "authorized GET /api/orders/checktiming -> HTTP 200, Status=undefined, 28 ms, 59 bytes, \"We're available now\""
+   ]
+  },
+  {
+   "id": "EP-236",
+   "method": "GET",
+   "path": "/api/orders/orderstatus/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/orders/orderstatus/1925 -> HTTP 200, Status=1, 10 ms, 28 bytes"
+   ]
+  },
+  {
+   "id": "EP-237",
+   "method": "GET",
+   "path": "/api/orders/invoice/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "exercised by passing suite(s): test_security_regressions.js",
+    "authorized GET /api/orders/invoice/1925 -> HTTP 200, Status=undefined, 80 ms, 3090 bytes"
+   ]
+  },
+  {
+   "id": "EP-238",
+   "method": "GET",
+   "path": "/api/orders/invoice/:OrderID/link",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "authorized GET /api/orders/invoice/1925/link -> HTTP 200, Status=1, 13 ms, 241 bytes"
+   ]
+  },
+  {
+   "id": "EP-239",
+   "method": "GET",
+   "path": "/api/adminorders/dashboard",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js, test_audit_fixes.js",
+    "authorized GET /api/adminorders/dashboard -> HTTP 200, Status=1, 21 ms, 7581 bytes"
+   ]
+  },
+  {
+   "id": "EP-240",
+   "method": "GET",
+   "path": "/api/adminorders/new-since",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js",
+    "authorized GET /api/adminorders/new-since -> HTTP 200, Status=1, 8 ms, 45 bytes"
+   ]
+  },
+  {
+   "id": "EP-241",
+   "method": "GET",
+   "path": "/api/adminorders/currentorders",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_qa_bug_fixes.js",
+    "authorized GET /api/adminorders/currentorders -> HTTP 200, Status=1, 29 ms, 13066 bytes"
+   ]
+  },
+  {
+   "id": "EP-242",
+   "method": "GET",
+   "path": "/api/adminorders/pastorders",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js, test_qa_bug_fixes.js",
+    "authorized GET /api/adminorders/pastorders -> HTTP 200, Status=1, 237 ms, 1631600 bytes"
+   ]
+  },
+  {
+   "id": "EP-243",
+   "method": "GET",
+   "path": "/api/adminorders/orderdetail",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/orderdetail -> HTTP 200, Status=1, 5 ms, 39 bytes"
+   ]
+  },
+  {
+   "id": "EP-244",
+   "method": "GET",
+   "path": "/api/adminorders/invoice/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "authorized GET /api/adminorders/invoice/1925 -> HTTP 200, Status=undefined, 79 ms, 3090 bytes"
+   ]
+  },
+  {
+   "id": "EP-245",
+   "method": "GET",
+   "path": "/api/adminorders/invoice/:OrderID/link",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "authorized GET /api/adminorders/invoice/1925/link -> HTTP 200, Status=1, 7 ms, 246 bytes"
+   ]
+  },
+  {
+   "id": "EP-246",
+   "method": "GET",
+   "path": "/api/adminorders/eligible-drivers",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/eligible-drivers -> HTTP 200, Status=1, 18 ms, 3114 bytes"
+   ]
+  },
+  {
+   "id": "EP-247",
+   "method": "PUT",
+   "path": "/api/adminorders/assigndeliverboy/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_cashback_review.js, test_order_flow.js"
+   ]
+  },
+  {
+   "id": "EP-248",
+   "method": "PUT",
+   "path": "/api/adminorders/updatestatus/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_cashback_review.js, test_order_flow.js, test_order_safety.js"
+   ]
+  },
+  {
+   "id": "EP-249",
+   "method": "PUT",
+   "path": "/api/adminorders/editedeliverytime/:OrderID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-250",
+   "method": "PUT",
+   "path": "/api/adminorders/adjustorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-251",
+   "method": "POST",
+   "path": "/api/adminorders/adjustorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-252",
+   "method": "PUT",
+   "path": "/api/adminorders/adjustorder/:OrderID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-253",
+   "method": "POST",
+   "path": "/api/adminorders/remove-item",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-254",
+   "method": "DELETE",
+   "path": "/api/adminorders/orders/:OrderID/items/:OrderItemID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-255",
+   "method": "GET",
+   "path": "/api/adminorders/removed-items/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/removed-items/1925 -> HTTP 200, Status=1, 15 ms, 30 bytes"
+   ]
+  },
+  {
+   "id": "EP-256",
+   "method": "GET",
+   "path": "/api/adminorders/adjustments/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/adjustments/1925 -> HTTP 200, Status=1, 12 ms, 29 bytes"
+   ]
+  },
+  {
+   "id": "EP-257",
+   "method": "GET",
+   "path": "/api/adminorders/adjustorder/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/adjustorder/1925 -> HTTP 200, Status=1, 9 ms, 29 bytes"
+   ]
+  },
+  {
+   "id": "EP-258",
+   "method": "GET",
+   "path": "/api/adminorders/scheduledorders",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/scheduledorders -> HTTP 200, Status=1, 26 ms, 3582 bytes"
+   ]
+  },
+  {
+   "id": "EP-259",
+   "method": "GET",
+   "path": "/api/adminorders/orderdetail/timeline/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/orderdetail/timeline/1925 -> HTTP 200, Status=1, 10 ms, 147 bytes"
+   ]
+  },
+  {
+   "id": "EP-260",
+   "method": "GET",
+   "path": "/api/adminorders/ordertimeline/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/ordertimeline/1925 -> HTTP 200, Status=1, 10 ms, 147 bytes"
+   ]
+  },
+  {
+   "id": "EP-261",
+   "method": "GET",
+   "path": "/api/adminorders/pastorders/sort",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastorders/sort -> HTTP 200, Status=1, 376 ms, 1621626 bytes"
+   ]
+  },
+  {
+   "id": "EP-262",
+   "method": "GET",
+   "path": "/api/adminorders/pastorderssort",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastorderssort -> HTTP 200, Status=1, 116 ms, 1621626 bytes"
+   ]
+  },
+  {
+   "id": "EP-263",
+   "method": "GET",
+   "path": "/api/adminorders/pastorders/filter",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastorders/filter -> HTTP 200, Status=1, 245 ms, 1648158 bytes"
+   ]
+  },
+  {
+   "id": "EP-264",
+   "method": "GET",
+   "path": "/api/adminorders/pastordersfilter",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastordersfilter -> HTTP 200, Status=1, 112 ms, 1648158 bytes"
+   ]
+  },
+  {
+   "id": "EP-265",
+   "method": "GET",
+   "path": "/api/adminorders/pastorders/mobilefilter",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastorders/mobilefilter -> HTTP 200, Status=1, 97 ms, 1608741 bytes"
+   ]
+  },
+  {
+   "id": "EP-266",
+   "method": "GET",
+   "path": "/api/adminorders/pastordersmobilefilter",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastordersmobilefilter -> HTTP 200, Status=1, 90 ms, 1608741 bytes"
+   ]
+  },
+  {
+   "id": "EP-267",
+   "method": "GET",
+   "path": "/api/adminorders/pastorders/usernamefilter",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastorders/usernamefilter -> HTTP 200, Status=1, 152 ms, 1640340 bytes"
+   ]
+  },
+  {
+   "id": "EP-268",
+   "method": "GET",
+   "path": "/api/adminorders/pastordersusernamefilter",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastordersusernamefilter -> HTTP 200, Status=1, 163 ms, 1640340 bytes"
+   ]
+  },
+  {
+   "id": "EP-269",
+   "method": "GET",
+   "path": "/api/adminorders/pastorders/orderidfilter",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastorders/orderidfilter -> HTTP 200, Status=1, 188 ms, 1608741 bytes"
+   ]
+  },
+  {
+   "id": "EP-270",
+   "method": "GET",
+   "path": "/api/adminorders/pastordersorderidfilter",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/pastordersorderidfilter -> HTTP 200, Status=1, 168 ms, 1608741 bytes"
+   ]
+  },
+  {
+   "id": "EP-271",
+   "method": "GET",
+   "path": "/api/adminorders/currentorders/sort",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/currentorders/sort -> HTTP 200, Status=1, 12 ms, 12908 bytes"
+   ]
+  },
+  {
+   "id": "EP-272",
+   "method": "GET",
+   "path": "/api/adminorders/currentorderssort",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/currentorderssort -> HTTP 200, Status=1, 12 ms, 12908 bytes"
+   ]
+  },
+  {
+   "id": "EP-273",
+   "method": "GET",
+   "path": "/api/adminorders/live-operations",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/live-operations -> HTTP 200, Status=1, 37 ms, 7607 bytes"
+   ]
+  },
+  {
+   "id": "EP-274",
+   "method": "GET",
+   "path": "/api/adminorders/delays",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_features.js",
+    "authorized GET /api/adminorders/delays -> HTTP 200, Status=1, 28 ms, 2850 bytes"
+   ]
+  },
+  {
+   "id": "EP-275",
+   "method": "POST",
+   "path": "/api/adminorders/delays/:DelayID/review",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-276",
+   "method": "PUT",
+   "path": "/api/adminorders/reassign/:OrderID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-277",
+   "method": "GET",
+   "path": "/api/adminorders/dynamic-eta/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/adminorders/dynamic-eta/1925 -> HTTP 200, Status=1, 23 ms, 398 bytes"
+   ]
+  },
+  {
+   "id": "EP-278",
+   "method": "POST",
+   "path": "/api/deliveryboy/sendotp",
+   "status": "BLOCKED",
+   "authEnforced": null,
+   "evidence": [
+    "not called: would send SMS/push/payment traffic or needs provider signature"
+   ]
+  },
+  {
+   "id": "EP-279",
+   "method": "POST",
+   "path": "/api/deliveryboy/login",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_refresh_tokens.js, test_security_regressions.js"
+   ]
+  },
+  {
+   "id": "EP-280",
+   "method": "GET",
+   "path": "/api/deliveryboy/getroutes",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js, test_order_flow.js",
+    "authorized GET /api/deliveryboy/getroutes -> HTTP 400, Status=0, 7 ms, 57 bytes, \"Type must be 'pending' or 'past'\""
+   ]
+  },
+  {
+   "id": "EP-281",
+   "method": "GET",
+   "path": "/api/deliveryboy/ordersbyroute",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/deliveryboy/ordersbyroute -> HTTP 200, Status=1, 15 ms, 24 bytes"
+   ]
+  },
+  {
+   "id": "EP-282",
+   "method": "GET",
+   "path": "/api/deliveryboy/orderdetail",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_order_flow.js",
+    "authorized GET /api/deliveryboy/orderdetail -> HTTP 403, Status=0, 8 ms, 58 bytes, \"This order is not assigned to you\""
+   ]
+  },
+  {
+   "id": "EP-283",
+   "method": "GET",
+   "path": "/api/deliveryboy/orderstatus",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/deliveryboy/orderstatus -> HTTP 200, Status=1, 17 ms, 95 bytes"
+   ]
+  },
+  {
+   "id": "EP-284",
+   "method": "PUT",
+   "path": "/api/deliveryboy/updatestatus/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_cashback_review.js, test_order_flow.js"
+   ]
+  },
+  {
+   "id": "EP-285",
+   "method": "PUT",
+   "path": "/api/deliveryboy/update/:AdminID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-286",
+   "method": "POST",
+   "path": "/api/deliveryboy/sendotp_order",
+   "status": "BLOCKED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "not called: would send SMS/push/payment traffic or needs provider signature"
+   ]
+  },
+  {
+   "id": "EP-287",
+   "method": "POST",
+   "path": "/api/deliveryboy/verifyotp_order",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_order_flow.js"
+   ]
+  },
+  {
+   "id": "EP-288",
+   "method": "POST",
+   "path": "/api/deliveryboy/deliver/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_cashback_review.js, test_order_flow.js"
+   ]
+  },
+  {
+   "id": "EP-289",
+   "method": "POST",
+   "path": "/api/deliveryboy/orders/:OrderID/upi-qr",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-290",
+   "method": "GET",
+   "path": "/api/deliveryboy/orders/:OrderID/upi-status",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/deliveryboy/orders/1201/upi-status -> HTTP 200, Status=1, 7 ms, 56 bytes"
+   ]
+  },
+  {
+   "id": "EP-291",
+   "method": "POST",
+   "path": "/api/deliveryboy/fcmtoken",
+   "status": "BLOCKED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "not called: would send SMS/push/payment traffic or needs provider signature"
+   ]
+  },
+  {
+   "id": "EP-292",
+   "method": "GET",
+   "path": "/api/deliveryboy/summary",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_order_flow.js, test_order_safety.js",
+    "authorized GET /api/deliveryboy/summary -> HTTP 200, Status=1, 31 ms, 212 bytes"
+   ]
+  },
+  {
+   "id": "EP-293",
+   "method": "PUT",
+   "path": "/api/deliveryboy/duty-status",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-294",
+   "method": "GET",
+   "path": "/api/deliveryboy/duty-status",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_refresh_tokens.js",
+    "authorized GET /api/deliveryboy/duty-status -> HTTP 200, Status=1, 11 ms, 250 bytes"
+   ]
+  },
+  {
+   "id": "EP-295",
+   "method": "POST",
+   "path": "/api/deliveryboy/location/ping",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-296",
+   "method": "POST",
+   "path": "/api/deliveryboy/orders/report-delay",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_features.js"
+   ]
+  },
+  {
+   "id": "EP-297",
+   "method": "POST",
+   "path": "/api/deliveryboy/orders/report-issue",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_features.js"
+   ]
+  },
+  {
+   "id": "EP-298",
+   "method": "PUT",
+   "path": "/api/productcsv/update/:filename",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-299",
+   "method": "GET",
+   "path": "/api/productcsv/pendingproductscsv",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/productcsv/pendingproductscsv -> HTTP 200, Status=1, 21 ms, 169 bytes"
+   ]
+  },
+  {
+   "id": "EP-300",
+   "method": "GET",
+   "path": "/api/productcsv/orderdetails",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/productcsv/orderdetails -> HTTP 200, Status=1, 12 ms, 162 bytes"
+   ]
+  },
+  {
+   "id": "EP-301",
+   "method": "GET",
+   "path": "/api/productcsv/productdetails",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/productcsv/productdetails -> HTTP 200, Status=1, 18 ms, 164 bytes"
+   ]
+  },
+  {
+   "id": "EP-306",
+   "method": "POST",
+   "path": "/api/admintiming/add",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-307",
+   "method": "PUT",
+   "path": "/api/admintiming/update/:TimingID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-308",
+   "method": "GET",
+   "path": "/api/admintiming",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/admintiming -> HTTP 200, Status=undefined, 16 ms, 167 bytes"
+   ]
+  },
+  {
+   "id": "EP-309",
+   "method": "GET",
+   "path": "/api/admintiming/shopstatus",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js, test_qa_bug_fixes.js",
+    "authorized GET /api/admintiming/shopstatus -> HTTP 200, Status=undefined, 26 ms, 1352 bytes"
+   ]
+  },
+  {
+   "id": "EP-310",
+   "method": "PUT",
+   "path": "/api/admintiming/toggle",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-311",
+   "method": "PUT",
+   "path": "/api/admintiming/store-mode",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js"
+   ]
+  },
+  {
+   "id": "EP-312",
+   "method": "DELETE",
+   "path": "/api/admintiming/delete/:TimingID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-313",
+   "method": "PUT",
+   "path": "/api/admintiming/updatesettings/:SettingID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_qa_bug_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-314",
+   "method": "GET",
+   "path": "/api/sales/getsales",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_flash_sale.js",
+    "authorized GET /api/sales/getsales -> HTTP 200, Status=1, 14 ms, 23 bytes"
+   ]
+  },
+  {
+   "id": "EP-315",
+   "method": "GET",
+   "path": "/api/sales/all",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/sales/all -> HTTP 200, Status=1, 11 ms, 943 bytes"
+   ]
+  },
+  {
+   "id": "EP-316",
+   "method": "GET",
+   "path": "/api/sales",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/sales -> HTTP 200, Status=1, 11 ms, 943 bytes"
+   ]
+  },
+  {
+   "id": "EP-317",
+   "method": "GET",
+   "path": "/api/sales/details/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_flash_sale.js",
+    "authorized GET /api/sales/details/1 -> HTTP 200, Status=1, 19 ms, 589 bytes"
+   ]
+  },
+  {
+   "id": "EP-318",
+   "method": "POST",
+   "path": "/api/sales/create",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_flash_sale.js, test_product_actions.js"
+   ]
+  },
+  {
+   "id": "EP-319",
+   "method": "POST",
+   "path": "/api/sales/update",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_flash_sale.js"
+   ]
+  },
+  {
+   "id": "EP-320",
+   "method": "PUT",
+   "path": "/api/sales/:id",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-321",
+   "method": "POST",
+   "path": "/api/sales/delete",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-322",
+   "method": "DELETE",
+   "path": "/api/sales/:id",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-323",
+   "method": "POST",
+   "path": "/api/sales/additems",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-324",
+   "method": "GET",
+   "path": "/api/sales/catalog",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_flash_sale.js",
+    "authorized GET /api/sales/catalog -> HTTP 200, Status=1, 50 ms, 243416 bytes"
+   ]
+  },
+  {
+   "id": "EP-325",
+   "method": "POST",
+   "path": "/api/sales/item-limit",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_flash_sale.js"
+   ]
+  },
+  {
+   "id": "EP-326",
+   "method": "POST",
+   "path": "/api/sales/removeitem",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-327",
+   "method": "GET",
+   "path": "/api/sales/product/:productId",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/sales/product/2 -> HTTP 200, Status=1, 5 ms, 688 bytes"
+   ]
+  },
+  {
+   "id": "EP-328",
+   "method": "POST",
+   "path": "/api/sales/assign-product",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_product_actions.js"
+   ]
+  },
+  {
+   "id": "EP-329",
+   "method": "POST",
+   "path": "/api/sales/remove-product",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_product_actions.js"
+   ]
+  },
+  {
+   "id": "EP-330",
+   "method": "GET",
+   "path": "/api/promotions/welcome",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_promotions.js",
+    "authorized GET /api/promotions/welcome -> HTTP 200, Status=1, 10 ms, 173 bytes"
+   ]
+  },
+  {
+   "id": "EP-331",
+   "method": "GET",
+   "path": "/api/promotions/price-compare",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_promotions.js",
+    "authorized GET /api/promotions/price-compare -> HTTP 200, Status=1, 12 ms, 26 bytes"
+   ]
+  },
+  {
+   "id": "EP-332",
+   "method": "GET",
+   "path": "/api/promotions/admin/welcome",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_promotions.js",
+    "authorized GET /api/promotions/admin/welcome -> HTTP 200, Status=1, 14 ms, 163 bytes"
+   ]
+  },
+  {
+   "id": "EP-333",
+   "method": "PUT",
+   "path": "/api/promotions/admin/welcome",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_promotions.js"
+   ]
+  },
+  {
+   "id": "EP-334",
+   "method": "GET",
+   "path": "/api/promotions/admin/products",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_promotions.js",
+    "authorized GET /api/promotions/admin/products -> HTTP 200, Status=1, 5 ms, 26 bytes"
+   ]
+  },
+  {
+   "id": "EP-335",
+   "method": "GET",
+   "path": "/api/promotions/admin/price-compare",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_promotions.js",
+    "authorized GET /api/promotions/admin/price-compare -> HTTP 200, Status=1, 12 ms, 23 bytes"
+   ]
+  },
+  {
+   "id": "EP-336",
+   "method": "POST",
+   "path": "/api/promotions/admin/price-compare",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_promotions.js"
+   ]
+  },
+  {
+   "id": "EP-337",
+   "method": "POST",
+   "path": "/api/promotions/admin/price-compare/order",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_promotions.js"
+   ]
+  },
+  {
+   "id": "EP-338",
+   "method": "PUT",
+   "path": "/api/promotions/admin/price-compare/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_promotions.js"
+   ]
+  },
+  {
+   "id": "EP-339",
+   "method": "DELETE",
+   "path": "/api/promotions/admin/price-compare/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_promotions.js"
+   ]
+  },
+  {
+   "id": "EP-340",
+   "method": "GET",
+   "path": "/api/rewards/all",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/rewards/all -> HTTP 200, Status=1, 11 ms, 25 bytes"
+   ]
+  },
+  {
+   "id": "EP-341",
+   "method": "GET",
+   "path": "/api/rewards/milestones",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/rewards/milestones -> HTTP 200, Status=1, 11 ms, 28 bytes"
+   ]
+  },
+  {
+   "id": "EP-342",
+   "method": "GET",
+   "path": "/api/rewards/config",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/rewards/config -> HTTP 200, Status=1, 10 ms, 28 bytes"
+   ]
+  },
+  {
+   "id": "EP-343",
+   "method": "GET",
+   "path": "/api/rewards/userprogress",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/rewards/userprogress -> HTTP 200, Status=1, 12 ms, 26 bytes"
+   ]
+  },
+  {
+   "id": "EP-344",
+   "method": "POST",
+   "path": "/api/rewards/create",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-345",
+   "method": "POST",
+   "path": "/api/rewards/update",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-346",
+   "method": "PUT",
+   "path": "/api/rewards/:id",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-347",
+   "method": "POST",
+   "path": "/api/rewards/delete",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-348",
+   "method": "DELETE",
+   "path": "/api/rewards/:id",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-349",
+   "method": "GET",
+   "path": "/api/rewards/myMilestones",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/rewards/myMilestones -> HTTP 200, Status=1, 14 ms, 1328 bytes"
+   ]
+  },
+  {
+   "id": "EP-350",
+   "method": "GET",
+   "path": "/api/rewards/myRewards",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/rewards/myRewards -> HTTP 200, Status=1, 13 ms, 1328 bytes"
+   ]
+  },
+  {
+   "id": "EP-362",
+   "method": "GET",
+   "path": "/api/buymore/tiers",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/buymore/tiers -> HTTP 200, Status=1, 16 ms, 2626 bytes"
+   ]
+  },
+  {
+   "id": "EP-363",
+   "method": "GET",
+   "path": "/api/buymore/tiers/:ProductID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_product_actions.js",
+    "authorized GET /api/buymore/tiers/2 -> HTTP 200, Status=1, 11 ms, 23 bytes"
+   ]
+  },
+  {
+   "id": "EP-364",
+   "method": "POST",
+   "path": "/api/buymore/tiers",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-365",
+   "method": "POST",
+   "path": "/api/buymore/save-product-tiers",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_product_actions.js"
+   ]
+  },
+  {
+   "id": "EP-366",
+   "method": "PUT",
+   "path": "/api/buymore/tiers/:ID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-367",
+   "method": "PUT",
+   "path": "/api/buymore/tiers/status/:ID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-368",
+   "method": "PATCH",
+   "path": "/api/buymore/tiers/:ID/status",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-369",
+   "method": "DELETE",
+   "path": "/api/buymore/tiers/:ID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-370",
+   "method": "GET",
+   "path": "/api/restrictions/restrictions",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_product_actions.js",
+    "authorized GET /api/restrictions/restrictions -> HTTP 200, Status=1, 26 ms, 968 bytes"
+   ]
+  },
+  {
+   "id": "EP-371",
+   "method": "POST",
+   "path": "/api/restrictions/restrictions",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-372",
+   "method": "PUT",
+   "path": "/api/restrictions/restrictions/:ID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-373",
+   "method": "DELETE",
+   "path": "/api/restrictions/restrictions/:ID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-374",
+   "method": "POST",
+   "path": "/api/restrictions/save-product-restrictions",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_product_actions.js"
+   ]
+  },
+  {
+   "id": "EP-375",
+   "method": "POST",
+   "path": "/api/restrictions/restrictions/save-product-restrictions",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-376",
+   "method": "GET",
+   "path": "/api/cartoffers/offers",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/cartoffers/offers -> HTTP 200, Status=1, 12 ms, 24 bytes"
+   ]
+  },
+  {
+   "id": "EP-377",
+   "method": "POST",
+   "path": "/api/cartoffers/offers",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-378",
+   "method": "PUT",
+   "path": "/api/cartoffers/offers/:OfferID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-379",
+   "method": "PUT",
+   "path": "/api/cartoffers/offers/status/:OfferID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-380",
+   "method": "DELETE",
+   "path": "/api/cartoffers/offers/:OfferID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-381",
+   "method": "GET",
+   "path": "/api/membership/plans",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/membership/plans -> HTTP 200, Status=1, 14 ms, 623 bytes"
+   ]
+  },
+  {
+   "id": "EP-382",
+   "method": "POST",
+   "path": "/api/membership/plans/save",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js"
+   ]
+  },
+  {
+   "id": "EP-383",
+   "method": "GET",
+   "path": "/api/membership/members",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_admin.js",
+    "authorized GET /api/membership/members -> HTTP 200, Status=1, 9 ms, 25 bytes"
+   ]
+  },
+  {
+   "id": "EP-384",
+   "method": "GET",
+   "path": "/api/membership/product/:productId",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/membership/product/2 -> HTTP 200, Status=1, 6 ms, 371 bytes"
+   ]
+  },
+  {
+   "id": "EP-385",
+   "method": "POST",
+   "path": "/api/membership/product/save",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_product_actions.js"
+   ]
+  },
+  {
+   "id": "EP-386",
+   "method": "POST",
+   "path": "/api/membership/save-product-pricing",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-387",
+   "method": "POST",
+   "path": "/api/membership/product/delete",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-388",
+   "method": "DELETE",
+   "path": "/api/membership/product/:productId/:planId",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-397",
+   "method": "GET",
+   "path": "/api/product-unlocks/admin/settings",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js",
+    "authorized GET /api/product-unlocks/admin/settings -> HTTP 200, Status=1, 8 ms, 35 bytes"
+   ]
+  },
+  {
+   "id": "EP-398",
+   "method": "PUT",
+   "path": "/api/product-unlocks/admin/settings",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js"
+   ]
+  },
+  {
+   "id": "EP-399",
+   "method": "GET",
+   "path": "/api/product-unlocks/admin",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/product-unlocks/admin -> HTTP 200, Status=1, 16 ms, 2061 bytes"
+   ]
+  },
+  {
+   "id": "EP-400",
+   "method": "POST",
+   "path": "/api/product-unlocks/admin",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-401",
+   "method": "PUT",
+   "path": "/api/product-unlocks/admin/:UnlockID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js"
+   ]
+  },
+  {
+   "id": "EP-402",
+   "method": "DELETE",
+   "path": "/api/product-unlocks/admin/:UnlockID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-403",
+   "method": "GET",
+   "path": "/api/product-unlocks/unlocks",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js",
+    "authorized GET /api/product-unlocks/unlocks -> HTTP 200, Status=1, 14 ms, 2061 bytes"
+   ]
+  },
+  {
+   "id": "EP-404",
+   "method": "POST",
+   "path": "/api/product-unlocks/unlocks",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js"
+   ]
+  },
+  {
+   "id": "EP-405",
+   "method": "PUT",
+   "path": "/api/product-unlocks/unlocks/:UnlockID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-406",
+   "method": "DELETE",
+   "path": "/api/product-unlocks/unlocks/:UnlockID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js"
+   ]
+  },
+  {
+   "id": "EP-407",
+   "method": "GET",
+   "path": "/api/product-unlocks/list",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/product-unlocks/list -> HTTP 200, Status=1, 14 ms, 2061 bytes"
+   ]
+  },
+  {
+   "id": "EP-408",
+   "method": "GET",
+   "path": "/api/product-unlocks/deals",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_stock_and_deals.js",
+    "authorized GET /api/product-unlocks/deals -> HTTP 200, Status=1, 54 ms, 598 bytes"
+   ]
+  },
+  {
+   "id": "EP-409",
+   "method": "GET",
+   "path": "/api/home-sections/sections/category-options",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/home-sections/sections/category-options -> HTTP 200, Status=1, 14 ms, 9704 bytes"
+   ]
+  },
+  {
+   "id": "EP-410",
+   "method": "GET",
+   "path": "/api/home-sections/sections/product-options",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/home-sections/sections/product-options -> HTTP 200, Status=1, 40 ms, 29799 bytes"
+   ]
+  },
+  {
+   "id": "EP-411",
+   "method": "GET",
+   "path": "/api/home-sections/category-options",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/home-sections/category-options -> HTTP 200, Status=1, 14 ms, 9704 bytes"
+   ]
+  },
+  {
+   "id": "EP-412",
+   "method": "GET",
+   "path": "/api/home-sections/product-options",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/home-sections/product-options -> HTTP 200, Status=1, 27 ms, 29799 bytes"
+   ]
+  },
+  {
+   "id": "EP-413",
+   "method": "PUT",
+   "path": "/api/home-sections/sections/reorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-414",
+   "method": "POST",
+   "path": "/api/home-sections/sections/reorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-415",
+   "method": "PUT",
+   "path": "/api/home-sections/admin/reorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-416",
+   "method": "POST",
+   "path": "/api/home-sections/admin/reorder",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-417",
+   "method": "POST",
+   "path": "/api/home-sections/sections/:SectionID/duplicate",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-418",
+   "method": "PATCH",
+   "path": "/api/home-sections/sections/:SectionID/status",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-419",
+   "method": "PUT",
+   "path": "/api/home-sections/sections/:SectionID/status",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-420",
+   "method": "POST",
+   "path": "/api/home-sections/admin/:SectionID/duplicate",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-421",
+   "method": "PATCH",
+   "path": "/api/home-sections/admin/:SectionID/status",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-422",
+   "method": "PUT",
+   "path": "/api/home-sections/admin/:SectionID/status",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-423",
+   "method": "GET",
+   "path": "/api/home-sections/sections/:SectionID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/home-sections/sections/1 -> HTTP 200, Status=1, 21 ms, 1454 bytes"
+   ]
+  },
+  {
+   "id": "EP-424",
+   "method": "PUT",
+   "path": "/api/home-sections/sections/:SectionID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-425",
+   "method": "DELETE",
+   "path": "/api/home-sections/sections/:SectionID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-426",
+   "method": "GET",
+   "path": "/api/home-sections/admin/:SectionID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/home-sections/admin/1 -> HTTP 200, Status=1, 12 ms, 1454 bytes"
+   ]
+  },
+  {
+   "id": "EP-427",
+   "method": "PUT",
+   "path": "/api/home-sections/admin/:SectionID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-428",
+   "method": "DELETE",
+   "path": "/api/home-sections/admin/:SectionID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-429",
+   "method": "GET",
+   "path": "/api/home-sections/sections",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_audit_fixes.js",
+    "authorized GET /api/home-sections/sections -> HTTP 200, Status=1, 50 ms, 22337 bytes"
+   ]
+  },
+  {
+   "id": "EP-430",
+   "method": "POST",
+   "path": "/api/home-sections/sections",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-431",
+   "method": "GET",
+   "path": "/api/home-sections/admin",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/home-sections/admin -> HTTP 200, Status=1, 46 ms, 22337 bytes"
+   ]
+  },
+  {
+   "id": "EP-432",
+   "method": "POST",
+   "path": "/api/home-sections/admin",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-457",
+   "method": "GET",
+   "path": "/api/search-analytics/admin",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/search-analytics/admin -> HTTP 200, Status=1, 18 ms, 17188 bytes"
+   ]
+  },
+  {
+   "id": "EP-458",
+   "method": "GET",
+   "path": "/api/search-analytics/keywords",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/search-analytics/keywords -> HTTP 200, Status=1, 5 ms, 17188 bytes"
+   ]
+  },
+  {
+   "id": "EP-459",
+   "method": "GET",
+   "path": "/api/search-analytics/keyword-users",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/search-analytics/keyword-users -> HTTP 400, Status=0, 8 ms, 60 bytes, \"Keyword query parameter is required\""
+   ]
+  },
+  {
+   "id": "EP-460",
+   "method": "GET",
+   "path": "/api/cashback-admin/pending",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_cashback_review.js",
+    "authorized GET /api/cashback-admin/pending -> HTTP 200, Status=1, 13 ms, 191 bytes, \"OK\""
+   ]
+  },
+  {
+   "id": "EP-461",
+   "method": "POST",
+   "path": "/api/cashback-admin/approve",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_cashback_review.js"
+   ]
+  },
+  {
+   "id": "EP-462",
+   "method": "POST",
+   "path": "/api/cashback-admin/reject",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_cashback_review.js"
+   ]
+  },
+  {
+   "id": "EP-505",
+   "method": "POST",
+   "path": "/api/photo-orders/submit",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_customer_rewards.js, test_qa_bug_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-506",
+   "method": "GET",
+   "path": "/api/photo-orders/my-requests",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/photo-orders/my-requests -> HTTP 200, Status=1, 24 ms, 2697 bytes"
+   ]
+  },
+  {
+   "id": "EP-507",
+   "method": "GET",
+   "path": "/api/photo-orders/request/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_customer_rewards.js",
+    "authorized GET /api/photo-orders/request/1 -> HTTP 200, Status=1, 14 ms, 1029 bytes"
+   ]
+  },
+  {
+   "id": "EP-508",
+   "method": "GET",
+   "path": "/api/photo-orders/image/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/photo-orders/image/1 -> HTTP 200, Status=undefined, 15 ms, 77 bytes"
+   ]
+  },
+  {
+   "id": "EP-509",
+   "method": "POST",
+   "path": "/api/photo-orders/request/:id/confirm",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_order_safety.js"
+   ]
+  },
+  {
+   "id": "EP-510",
+   "method": "POST",
+   "path": "/api/photo-orders/request/:id/reject",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-511",
+   "method": "POST",
+   "path": "/api/photo-orders/request/:id/cancel",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_qa_bug_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-512",
+   "method": "GET",
+   "path": "/api/admin/photo-orders/list",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/admin/photo-orders/list -> HTTP 200, Status=1, 9 ms, 8695 bytes"
+   ]
+  },
+  {
+   "id": "EP-513",
+   "method": "GET",
+   "path": "/api/admin/photo-orders/detail/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/admin/photo-orders/detail/1 -> HTTP 200, Status=1, 12 ms, 1029 bytes"
+   ]
+  },
+  {
+   "id": "EP-514",
+   "method": "GET",
+   "path": "/api/admin/photo-orders/image/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/admin/photo-orders/image/1 -> HTTP 200, Status=undefined, 13 ms, 77 bytes"
+   ]
+  },
+  {
+   "id": "EP-515",
+   "method": "PUT",
+   "path": "/api/admin/photo-orders/claim/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_order_safety.js"
+   ]
+  },
+  {
+   "id": "EP-516",
+   "method": "POST",
+   "path": "/api/admin/photo-orders/prepare-proposal/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_order_safety.js"
+   ]
+  },
+  {
+   "id": "EP-517",
+   "method": "POST",
+   "path": "/api/admin/photo-orders/send-proposal/:id",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-518",
+   "method": "POST",
+   "path": "/api/admin/photo-orders/cancel/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_order_safety.js"
+   ]
+  },
+  {
+   "id": "EP-519",
+   "method": "GET",
+   "path": "/api/print/config",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /api/print/config -> HTTP 200, Status=1, 8 ms, 178 bytes"
+   ]
+  },
+  {
+   "id": "EP-520",
+   "method": "POST",
+   "path": "/api/print/upload-url",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-521",
+   "method": "POST",
+   "path": "/api/print/files",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-522",
+   "method": "POST",
+   "path": "/api/print/cart",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-523",
+   "method": "GET",
+   "path": "/api/print/cart",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/print/cart -> HTTP 200, Status=1, 10 ms, 27 bytes"
+   ]
+  },
+  {
+   "id": "EP-524",
+   "method": "PATCH",
+   "path": "/api/print/cart/:PrintJobID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-525",
+   "method": "DELETE",
+   "path": "/api/print/cart/:PrintJobID",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-526",
+   "method": "GET",
+   "path": "/api/print/admin/orders/:OrderID",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/print/admin/orders/1925 -> HTTP 200, Status=1, 15 ms, 413 bytes"
+   ]
+  },
+  {
+   "id": "EP-527",
+   "method": "GET",
+   "path": "/api/admin-stock",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js",
+    "authorized GET /api/admin-stock -> HTTP 200, Status=1, 90 ms, 420124 bytes"
+   ]
+  },
+  {
+   "id": "EP-528",
+   "method": "GET",
+   "path": "/api/admin-stock/alerts",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js",
+    "authorized GET /api/admin-stock/alerts -> HTTP 200, Status=1, 15 ms, 7463 bytes"
+   ]
+  },
+  {
+   "id": "EP-529",
+   "method": "POST",
+   "path": "/api/admin-stock/:VariantID/add",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_stock_and_deals.js"
+   ]
+  },
+  {
+   "id": "EP-530",
+   "method": "GET",
+   "path": "/api/admin-wallet-check",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "exercised by passing suite(s): test_audit_fixes.js, test_qa_bug_fixes.js",
+    "authorized GET /api/admin-wallet-check -> HTTP 200, Status=1, 47 ms, 360 bytes"
+   ]
+  },
+  {
+   "id": "EP-531",
+   "method": "POST",
+   "path": "/api/customer/enquiries",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_customer_requests_and_enquiries.js, test_features.js, test_qa_bug_fixes.js"
+   ]
+  },
+  {
+   "id": "EP-532",
+   "method": "GET",
+   "path": "/api/customer/enquiries/my",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_customer_requests_and_enquiries.js, test_features.js",
+    "authorized GET /api/customer/enquiries/my -> HTTP 200, Status=1, 11 ms, 27 bytes"
+   ]
+  },
+  {
+   "id": "EP-533",
+   "method": "GET",
+   "path": "/api/customer/enquiries/image/:id",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "authorized GET /api/customer/enquiries/image/1 -> HTTP 404, Status=undefined, 11 ms, 15 bytes"
+   ]
+  },
+  {
+   "id": "EP-534",
+   "method": "POST",
+   "path": "/api/customer/product-requests",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_customer_requests_and_enquiries.js, test_features.js"
+   ]
+  },
+  {
+   "id": "EP-535",
+   "method": "GET",
+   "path": "/api/customer/product-requests/my",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_features.js",
+    "authorized GET /api/customer/product-requests/my -> HTTP 200, Status=1, 14 ms, 26 bytes"
+   ]
+  },
+  {
+   "id": "EP-536",
+   "method": "GET",
+   "path": "/api/customer/product-requests/image/:id",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role admin -> HTTP 401",
+    "exercised by passing suite(s): test_customer_requests_and_enquiries.js",
+    "authorized GET /api/customer/product-requests/image/1 -> HTTP 404, Status=undefined, 10 ms, 15 bytes"
+   ]
+  },
+  {
+   "id": "EP-537",
+   "method": "GET",
+   "path": "/api/admin/customer-enquiries",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_customer_requests_and_enquiries.js",
+    "authorized GET /api/admin/customer-enquiries -> HTTP 200, Status=1, 11 ms, 3244 bytes"
+   ]
+  },
+  {
+   "id": "EP-538",
+   "method": "PUT",
+   "path": "/api/admin/customer-enquiries/:id/status",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_customer_requests_and_enquiries.js, test_features.js"
+   ]
+  },
+  {
+   "id": "EP-539",
+   "method": "GET",
+   "path": "/api/admin/customer-enquiries/image/:id",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/admin/customer-enquiries/image/1 -> HTTP 404, Status=undefined, 9 ms, 15 bytes"
+   ]
+  },
+  {
+   "id": "EP-540",
+   "method": "GET",
+   "path": "/api/admin/product-requests",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_customer_requests_and_enquiries.js, test_features.js",
+    "authorized GET /api/admin/product-requests -> HTTP 200, Status=1, 16 ms, 6299 bytes"
+   ]
+  },
+  {
+   "id": "EP-541",
+   "method": "PUT",
+   "path": "/api/admin/product-requests/:id/status",
+   "status": "PASS",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "exercised by passing suite(s): test_customer_requests_and_enquiries.js, test_features.js"
+   ]
+  },
+  {
+   "id": "EP-542",
+   "method": "POST",
+   "path": "/api/admin/product-requests/:id/notify",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401"
+   ]
+  },
+  {
+   "id": "EP-543",
+   "method": "GET",
+   "path": "/api/admin/product-requests/image/:id",
+   "status": "NOT TESTED",
+   "authEnforced": true,
+   "evidence": [
+    "no token -> HTTP 401 (refused)",
+    "wrong role customer -> HTTP 401",
+    "wrong role rider -> HTTP 401",
+    "authorized GET /api/admin/product-requests/image/1 -> HTTP 404, Status=undefined, 9 ms, 15 bytes"
+   ]
+  },
+  {
+   "id": "EP-600",
+   "method": "GET",
+   "path": "/health",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "exercised by passing suite(s): test_audit_fixes.js",
+    "authorized GET /health -> HTTP 200, Status=undefined, 7 ms, 321 bytes, \"ClikGett API is running\""
+   ]
+  },
+  {
+   "id": "EP-601",
+   "method": "GET",
+   "path": "/health/db",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /health/db -> HTTP 200, Status=undefined, 8 ms, 164 bytes"
+   ]
+  },
+  {
+   "id": "EP-602",
+   "method": "GET",
+   "path": "/health/redis",
+   "status": "PASS",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /health/redis -> HTTP 200, Status=undefined, 7 ms, 156 bytes"
+   ]
+  },
+  {
+   "id": "EP-603",
+   "method": "POST",
+   "path": "/health/redis/test",
+   "status": "NOT TESTED",
+   "authEnforced": null,
+   "evidence": []
+  },
+  {
+   "id": "EP-608",
+   "method": "GET",
+   "path": "/media/*",
+   "status": "NOT TESTED",
+   "authEnforced": null,
+   "evidence": [
+    "authorized GET /media/* -> HTTP 403, Status=0, 5 ms, 46 bytes, \"This link has expired\""
+   ]
+  },
+  {
+   "id": "EP-609",
+   "method": "PUT",
+   "path": "/media/*",
+   "status": "NOT TESTED",
+   "authEnforced": null,
+   "evidence": []
+  },
+  {
+   "id": "EP-610",
+   "method": "POST",
+   "path": "/api/payments/razorpay-webhook",
+   "status": "BLOCKED",
+   "authEnforced": null,
+   "evidence": [
+    "not called: would send SMS/push/payment traffic or needs provider signature"
+   ]
+  }
+ ]
+}

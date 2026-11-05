@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import navbarClasses from "./navbar.module.css";
 import { useNavigate, NavLink } from "react-router-dom";
-import { menuSections } from "./Config";
+import { menuSections, canOpen } from "./Config";
 import { HiOutlineLogout } from "react-icons/hi";
 import useStore from "../../Store";
 import Logo from "../../Assets/logo.jpeg";
@@ -74,7 +74,9 @@ function SideNav(props) {
                     </div>
 
                     <div className={navbarClasses["navlinks"]}>
-                        {menuSections.map((section) => (
+                        {menuSections.map((section) => ({ ...section, items: section.items.filter((m) => canOpen(m.area)) }))
+                            .filter((section) => section.items.length)
+                            .map((section) => (
                             <div key={section.title || "main"}>
                                 {section.title && show && (
                                     <div className={navbarClasses["section-title"]}>{section.title}</div>

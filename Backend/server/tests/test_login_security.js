@@ -104,12 +104,20 @@ const wrongCode = (code) => (code === '0000' ? '1111' : '0000');
 
         process.env.REVIEW_LOGIN_MOBILE = '9999999999';
         process.env.REVIEW_LOGIN_OTP = '4321';
+        r = await LoginOtp.verify('customer', '9999999999', '4321');
+        check('the review account is off without REVIEW_LOGIN_UNTIL', !r.ok);
+        process.env.REVIEW_LOGIN_UNTIL = '2020-01-01';
+        r = await LoginOtp.verify('customer', '9999999999', '4321');
+        check('the review account is off after REVIEW_LOGIN_UNTIL', !r.ok);
+        process.env.REVIEW_LOGIN_UNTIL = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+        check('the review shortcut never applies to rider logins', !(await LoginOtp.verify('rider', '9999999999', '4321')).ok);
         r = await LoginOtp.issue('customer', '9999999999');
         check('the review account gets no SMS code', r.ok && r.code === null);
         check('the review account logs in with its fixed code', (await LoginOtp.verify('customer', '9999999999', '4321')).ok);
         check('the review account rejects other codes', !(await LoginOtp.verify('customer', '9999999999', '1234')).ok);
         delete process.env.REVIEW_LOGIN_MOBILE;
         delete process.env.REVIEW_LOGIN_OTP;
+        delete process.env.REVIEW_LOGIN_UNTIL;
         r = await LoginOtp.verify('customer', '9999999999', '4321');
         check('without settings the review number has no shortcut', !r.ok, r.message);
 

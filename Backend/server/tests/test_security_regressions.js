@@ -41,12 +41,12 @@ const checks = [
         ['GET', '/csv/orderdetails'],
         ['POST', '/membership/plans/save'],
         ['PUT', '/productcsv/update/x.csv'],
-        ['GET', '/users/datatransfer'],
-        ['GET', '/users/updateproducts'],
         ['POST', '/adminuser/upload-url'],
         ['GET', '/carts/abandoned/trigger-notifications'],
         ['GET', '/promocodes/winback/trigger'],
     ].map(([m, p]) => ({ name: `${m} ${p} without token -> 401`, run: () => request(m, p), expect: (r) => r.status === 401 })),
+    ...[['GET', '/users/datatransfer'], ['GET', '/users/updateproducts']]
+        .map(([m, p]) => ({ name: `${m} ${p} is removed -> 404`, run: () => request(m, p), expect: (r) => r.status === 404 })),
     {
         name: 'user token cannot use admin endpoints',
         run: () => request('GET', '/adminuser/settingslist', { auth: `bearer ${user}` }),

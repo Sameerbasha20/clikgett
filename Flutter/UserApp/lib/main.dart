@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:fav_app/new/Constants/imageslist.dart';
 import 'package:fav_app/new/Dependancy_Injection/bindings.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
-import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/Auth/OnBoarding1.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Homepage.dart';
 import 'package:fav_app/new/Services/common/backend_discovery.dart';
@@ -18,7 +17,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import 'firebase_options.dart';
 import 'new/Constants/notifications.dart';
 import 'new/NewModel/push_notification.dart';
 

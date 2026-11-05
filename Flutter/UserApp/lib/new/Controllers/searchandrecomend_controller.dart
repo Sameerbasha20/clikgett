@@ -145,7 +145,7 @@ class SearchAndRecommendController extends GetxController {
     Network.networkCheck(context).then((value) => value != null
         ? {
             SearchServices.searchProducts(query)
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -184,7 +184,7 @@ class SearchAndRecommendController extends GetxController {
     Network.networkCheck(context).then((value) => value != null
         ? {
             SearchServices.recomendedProducts()
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {

@@ -57,7 +57,7 @@ class _OffersState extends State<Offers> {
   Future<void> _load() async {
     List<_Offer> offers = [];
     try {
-      final client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+      final client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
       final response = await client.get(Uri.parse('${Constants.baseUrl}/promocodes/active'));
       final data = jsonDecode(response.body);
       if (data is Map && data['PromoCodes'] is List) {

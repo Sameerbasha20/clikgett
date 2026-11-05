@@ -143,7 +143,7 @@ class AdressController extends GetxController {
     Network.networkCheck(context).then((value) async => value != null
         ? {
             await AdresseServices.addAdress(body)
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -179,7 +179,7 @@ class AdressController extends GetxController {
     Network.networkCheck(context).then((value) async => value != null
         ? {
             await AdresseServices.updateAdress(body, id)
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {

@@ -12,7 +12,7 @@ import '../../../new/NewModel/promocodes_model.dart';
 import '../../../new/NewModel/youmaylike_model.dart';
 import '../../Models/OrderResponseModel.dart';
 
-Client client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+Client client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 class OrderServices {
   static Future createOrder({required body}) {
@@ -22,7 +22,7 @@ class OrderServices {
       headers: {
         'Content-Type': 'application/json', // Make sure to set the content type
       },
-    ).then((response) {
+    ).then<void>((response) {
       // Print the raw response
       print('Raw response: ${response.body}');
 

@@ -8,7 +8,7 @@ import 'package:http_interceptor/http/intercepted_client.dart';
 import 'package:fav_app/new/Services/common/server_date.dart';
 import 'package:fav_app/new/Services/print_store_service.dart';
 
-final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+final Client _client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 /// Order status codes (Backend utils/orderStatus.js).
 class OrderStatus {

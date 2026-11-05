@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:fav_app/Models/Account/adresses.dart';
-import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/category_controller.dart';
 import 'package:fav_app/new/Controllers/config_controller.dart';
-import 'package:fav_app/new/Controllers/orders_controller.dart';
 import 'package:fav_app/new/Controllers/searchandrecomend_controller.dart';
 import 'package:fav_app/new/NewModel/promocodes_model.dart';
 import 'package:fav_app/new/NewModel/youmaylike_model.dart';
@@ -12,7 +10,6 @@ import 'package:fav_app/old/Models/Home/cart_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../old/Models/Orders/promocode_model.dart';
 import '../../old/Services/Home/cart_services.dart';
 import '../../old/Services/Orders/orders.dart';
@@ -361,7 +358,7 @@ class CartController extends GetxController {
     await Network.networkCheck(context).then((onValue) async => onValue != null
         ? {
             await CartServices.addCart(body: body)
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -433,7 +430,7 @@ class CartController extends GetxController {
     await Network.networkCheck(context).then((onValue) async => onValue != null
         ? {
             await CartServices.deleteCart(id: cartId.value)
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -510,7 +507,7 @@ class CartController extends GetxController {
         ? {
             await CartServices.deleteItemFromCart(
                     type: 1, productId: productId, variantId: variantId)
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -565,7 +562,7 @@ class CartController extends GetxController {
     await Network.networkCheck(context).then((onValue) async => onValue != null
         ? {
             await CartServices.deleteKitFromCart(type: 2, kitId: kitId)
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -835,7 +832,7 @@ class CartController extends GetxController {
     await Network.networkCheck(context).then((value) async => value != null
         ? {
             await OrderServices.validatePromo(body: body)
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -1001,7 +998,7 @@ class CartController extends GetxController {
     Network.networkCheck(context).then((value) => value != null
         ? {
             OrderServices.getActivepromoCodes()
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {
@@ -1043,7 +1040,7 @@ class CartController extends GetxController {
     Network.networkCheck(context).then((value) => value != null
         ? {
             OrderServices.getYouMayLikeProducts()
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {

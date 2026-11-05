@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:fav_app/Models/Home/cart_model.dart';
 import 'package:fav_app/Models/response_model.dart';
 import 'package:fav_app/Services/common/intercepter.dart';
 import 'package:fav_app/constants.dart';
@@ -9,7 +8,7 @@ import 'package:http_interceptor/http/intercepted_client.dart';
 
 import '../../new/NewModel/config.dart';
 
-Client client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+Client client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 class CartServices {
   static Future getConfig() {

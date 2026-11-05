@@ -3,11 +3,10 @@ import 'package:fav_app/old/Models/Users/usersDetails.dart';
 import 'package:fav_app/old/Models/response_model.dart';
 import 'package:fav_app/old/Services/common/intercepter.dart';
 import 'package:fav_app/old/constants.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
 
-Client client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+Client client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 class UsersServices {
   static Future updateeuser(body) {

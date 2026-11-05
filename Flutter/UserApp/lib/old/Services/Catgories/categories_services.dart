@@ -7,7 +7,7 @@ import 'package:http_interceptor/http/intercepted_client.dart';
 
 import '../../../new/NewModel/sub_category_model.dart';
 
-Client client = InterceptedClient.build(interceptors: [ApiInterceptor()]);
+Client client = InterceptedClient.build(interceptors: [ApiInterceptor()], requestTimeout: const Duration(seconds: 30));
 
 class CategoriesServices {
   static Future getCategories() {

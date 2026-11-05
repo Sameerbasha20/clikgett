@@ -14,6 +14,11 @@ const parser = require('body-parser');
 const app = express();
 require('dotenv').config();
 
+if (process.env.NODE_ENV === 'production' && process.env.VERBOSE_LOGS !== 'true') {
+    console.log = () => {};
+    console.info = () => {};
+}
+
 process.on('unhandledRejection', (reason, promise) => {
     console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
 });
@@ -201,6 +206,7 @@ try {
         } else {
             PaymentRecovery.start();
             require('./services/CustomerRewards').start();
+            require('./services/Housekeeping').start();
         }
         // Say in the logs why the database is unreachable (hosts hide /health until it passes).
         require('./utils/db').query('SELECT 1', (err) => {

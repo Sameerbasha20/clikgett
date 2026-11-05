@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
 
 // class CustomNetworkImage extends StatelessWidget {
 //   final String url;

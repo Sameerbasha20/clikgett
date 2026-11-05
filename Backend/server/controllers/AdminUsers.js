@@ -1,5 +1,6 @@
 const express = require('express');
 const passwords = require('../utils/password');
+const adminRoles = require('../utils/adminRoles');
 const mysql = require('mysql');
 require('dotenv').config()
 var fs = require('fs')
@@ -124,34 +125,6 @@ const usercontroller = {
 
             console.log(e)
             return resp.json({ "Status": 0, "Message": 'error' })
-        }
-    },
-
-    adminlogin: async (req, resp, next) => {
-        let emaildata; // per-request (were implicit globals)
-        try {
-            emaildata = await Verifyemail(req.body)
-            if (emaildata == 0) {
-                return resp.status(400).json({ "Status": 0, "Message": "Email doesnot exists" });
-            }
-            var userData = await Verifylogin(req.body)
-
-            if (typeof (userData) === 'object') {
-                req.userData = userData
-                console.log(req.userData)
-                next();
-
-            }
-            else if (userData == 2) {
-                return resp.status(400).json({ "Status": 0, "Message": "Incorrect password" });
-            }
-            else {
-                return resp.status(400).json({ "Status": 0, "Message": "Login failed" });
-            }
-        }
-        catch (err) {
-            console.log("exception in user login with MobileNumber ", err);
-            return resp.status(500).json({ "Status": 0, "Message": "Error in login with mobile number" });
         }
     },
 
@@ -1405,7 +1378,7 @@ const usercontroller = {
 
     adminuserslist: async (req, resp, next) => {
         try {
-            pool.query("SELECT AdminID, AdminID AS adminUserId, FirstName AS firstName, LastName AS lastName, EmailID AS emailId, Role AS role, Status AS status, ProfilePic AS profilePic, NULL AS warehouseId FROM AdminUsers WHERE Role!=2 AND Status!=0 ORDER BY CreatedAt DESC;", (err, results) => {
+            pool.query("SELECT AdminID, AdminID AS adminUserId, FirstName AS firstName, LastName AS lastName, EmailID AS emailId, Role AS role, AdminRole AS adminRole, Status AS status, ProfilePic AS profilePic, NULL AS warehouseId FROM AdminUsers WHERE Role!=2 AND Status!=0 ORDER BY CreatedAt DESC;", (err, results) => {
                 if (err) {
                     return resp.json({ "Status": 0, "Message": err.sqlMessage });
                 }
@@ -1451,6 +1424,7 @@ const usercontroller = {
                 EmailID: emailId,
                 Password: passwords.hash(password),
                 Role: 1, // this endpoint creates admins only (riders are added from the Riders page)
+                AdminRole: adminRoles.ROLES[body.adminRole] ? body.adminRole : 'operations',
                 Status: 1,
                 ProfilePic: "NA"
             };
@@ -1480,7 +1454,7 @@ const usercontroller = {
     adminuserdetail: async (req, resp, next) => {
         try {
             const AdminID = req.params.AdminID || req.params.id || req.query.AdminID;
-            pool.query("SELECT AdminID, AdminID AS adminUserId, FirstName AS firstName, LastName AS lastName, EmailID AS emailId, Role AS role, Status AS status, ProfilePic AS profilePic, NULL AS warehouseId FROM AdminUsers WHERE AdminID=?;", [AdminID], (err, results) => {
+            pool.query("SELECT AdminID, AdminID AS adminUserId, FirstName AS firstName, LastName AS lastName, EmailID AS emailId, Role AS role, AdminRole AS adminRole, Status AS status, ProfilePic AS profilePic, NULL AS warehouseId FROM AdminUsers WHERE AdminID=?;", [AdminID], (err, results) => {
                 if (err) {
                     return resp.json({ "Status": 0, "Message": err.sqlMessage });
                 }
@@ -1522,6 +1496,16 @@ const usercontroller = {
                 }
                 updates.push("EmailID = ?");
                 params.push(email);
+            }
+            if (Body.adminRole !== undefined) {
+                if (!adminRoles.ROLES[Body.adminRole]) {
+                    return resp.status(400).json({ "Status": 0, "Message": "Unknown admin role" });
+                }
+                if (String(AdminID) === String(req.AdminID) && Body.adminRole !== 'super') {
+                    return resp.status(400).json({ "Status": 0, "Message": "You can't remove your own super admin role" });
+                }
+                updates.push("AdminRole = ?");
+                params.push(Body.adminRole);
             }
             if (Body.status !== undefined) {
                 updates.push("Status = ?");
@@ -1760,58 +1744,39 @@ const usercontroller = {
                 expiryDate = exp;
             }
 
-            pool.query("SELECT WalletAmount FROM Users WHERE UserID = ?", [UserID], (uErr, uRows) => {
-                if (uErr || !uRows || uRows.length === 0) {
-                    return resp.status(404).json({ Status: 0, Message: "User not found" });
-                }
+            // One relative, conditional UPDATE (no read-then-write), so an order paid from the
+            // wallet at the same moment can't be overwritten; then the ledger row. If the ledger
+            // write fails the balance change is undone, so balance and ledger stay equal.
+            const q = (sql, params) => new Promise((resolve, reject) => pool.query(sql, params, (e, r) => (e ? reject(e) : resolve(r))));
+            const users = await q("SELECT UserID FROM Users WHERE UserID = ?", [UserID]);
+            if (!users.length) return resp.status(404).json({ Status: 0, Message: "User not found" });
 
-                const currentBal = parseFloat(uRows[0].WalletAmount || 0);
-                if (!isCredit && currentBal < amountNum) {
-                    return resp.status(400).json({
-                        Status: 0,
-                        Message: `Insufficient wallet balance. Current balance is ₹${currentBal.toFixed(2)}`
-                    });
-                }
-
-                const newBalance = isCredit ? (currentBal + amountNum) : (currentBal - amountNum);
-
-                const walletSql = `
-                    INSERT INTO Wallets (UserID, Amount, Credited_Debited, ContentType, ContentID, Description, ExpiryDate, IsExpired, CreatedAt)
-                    VALUES (?, ?, ?, 5, 0, ?, ?, 0, NOW())
-                `;
-
-                pool.query(
-                    walletSql,
-                    [
-                        UserID,
-                        amountNum,
-                        isCredit ? 1 : 2,
-                        Description || (isCredit ? 'Manual Admin Credit' : 'Manual Admin Debit'),
-                        expiryDate
-                    ],
-                    (insErr) => {
-                        if (insErr) {
-                            console.error("Error inserting wallet transaction:", insErr);
-                            return resp.status(500).json({ Status: 0, Message: "Error saving wallet transaction" });
-                        }
-
-                        pool.query(
-                            "UPDATE Users SET WalletAmount = ? WHERE UserID = ?",
-                            [newBalance, UserID],
-                            (upErr) => {
-                                if (upErr) {
-                                    console.error("Error updating user wallet:", upErr);
-                                    return resp.status(500).json({ Status: 0, Message: "Error updating user balance" });
-                                }
-                                return resp.json({
-                                    Status: 1,
-                                    Message: `Successfully ${isCredit ? 'credited' : 'debited'} ₹${amountNum.toFixed(2)}`,
-                                    NewBalance: newBalance
-                                });
-                            }
-                        );
-                    }
-                );
+            const changed = isCredit
+                ? await q("UPDATE Users SET WalletAmount = COALESCE(WalletAmount, 0) + ? WHERE UserID = ?", [amountNum, UserID])
+                : await q("UPDATE Users SET WalletAmount = WalletAmount - ? WHERE UserID = ? AND ROUND(COALESCE(WalletAmount, 0), 2) >= ?", [amountNum, UserID, amountNum]);
+            if (!changed.affectedRows) {
+                const [row] = await q("SELECT WalletAmount FROM Users WHERE UserID = ?", [UserID]);
+                return resp.status(400).json({
+                    Status: 0,
+                    Message: `Insufficient wallet balance. Current balance is ₹${parseFloat((row && row.WalletAmount) || 0).toFixed(2)}`
+                });
+            }
+            try {
+                await q(
+                    `INSERT INTO Wallets (UserID, Amount, Credited_Debited, ContentType, ContentID, Description, ExpiryDate, IsExpired, CreatedAt)
+                     VALUES (?, ?, ?, 5, 0, ?, ?, 0, NOW())`,
+                    [UserID, amountNum, isCredit ? 1 : 2, Description || (isCredit ? 'Manual Admin Credit' : 'Manual Admin Debit'), expiryDate]);
+            } catch (insErr) {
+                console.error("Error inserting wallet transaction:", insErr);
+                await q(`UPDATE Users SET WalletAmount = WalletAmount ${isCredit ? '-' : '+'} ? WHERE UserID = ?`, [amountNum, UserID]).catch(() => {});
+                return resp.status(500).json({ Status: 0, Message: "Error saving wallet transaction" });
+            }
+            const [after] = await q("SELECT WalletAmount FROM Users WHERE UserID = ?", [UserID]);
+            const newBalance = Math.round((parseFloat(after.WalletAmount) || 0) * 100) / 100;
+            return resp.json({
+                Status: 1,
+                Message: `Successfully ${isCredit ? 'credited' : 'debited'} ₹${amountNum.toFixed(2)}`,
+                NewBalance: newBalance
             });
         } catch (err) {
             console.error("Exception in creditDebitWallet:", err);
@@ -1960,27 +1925,6 @@ function Verifyemail(inputs) {
     });
 }
 
-function Verifylogin(inputs) {
-    return new Promise(function (resolve, reject) {
-        var myQuery = "select * from AdminUsers where EmailID = ? and Password = ?";
-        pool.query(myQuery, [inputs.EmailID, inputs.Password], function (err, results) {
-            if (err) {
-                console.log("error checking verify MobileNumber table: ", err);
-                reject(0)
-            }
-
-            if (results.length > 0) {
-                var data = { "AdminID": results[0]['AdminID'], "FirstName": results[0]['FirstName'], "LastName": results[0]['LastName'], "ProfilePic": "NA", "Role": results[0]['Role'] }
-                resolve(data)
-            }
-            else {
-                console.log("Entered incorrect password");
-                resolve(2);
-            }
-
-        });
-    });
-}
 
 function convertimage(AdminID, ProfilePic) {
     let image; // per-request (were implicit globals)

@@ -21,6 +21,9 @@ const MIGRATIONS = [
     require('./receiver_details_migration'),
     require('./product_chilled_migration'),
     require('./promotions_migration'),
+    require('./password_hash_upgrade_migration'),
+    require('./db_hardening_migration'),
+    require('./admin_roles_migration'),
 ];
 
 (async () => {

@@ -43,6 +43,11 @@ function Products() {
     const [filterSort, setFilterSort] = useState("latest");
     const [filterStartDate, setFilterStartDate] = useState("");
     const [filterEndDate, setFilterEndDate] = useState("");
+    // Past orders are paged on the server (they grow without limit); current orders stay local.
+    const PAST_PAGE_SIZE = 8;
+    const [pastPage, setPastPage] = useState(1);
+    const [pastTotal, setPastTotal] = useState(0);
+    const [lastQuery, setLastQuery] = useState("");
     const token = { Authorization: `token ${sessionStorage.getItem("token")}` };
     const headerstyles = {
         color: "#707275",
@@ -81,12 +86,21 @@ function Products() {
                 console.log(err);
             });
     };
-    const getorders = (status, query = "") => {
+    const getorders = (status = Navactive, query = lastQuery, page = 1) => {
         // Both tabs take the same filters (server: AdminOrders listAdminOrders).
-        const api = status === "2"
-            ? Services.getAllPastOrders("GET", null, token, query)
+        setLastQuery(query);
+        const past = status === "2";
+        const pagedQuery = past
+            ? (query ? query + "&" : "?") + `page=${page}&pageSize=${PAST_PAGE_SIZE}`
+            : query;
+        const api = past
+            ? Services.getAllPastOrders("GET", null, token, pagedQuery)
             : Services.getAllCurrentOrders("GET", null, token, query);
         api.then((res) => {
+            if (past && res.Status === 1) {
+                setPastPage(res.Page || page);
+                setPastTotal(res.Total || 0);
+            }
             console.log(res);
             setLoading(false);
             // setTabloader(false);
@@ -594,9 +608,11 @@ function Products() {
             },
         },
     ];
+    const isPast = Navactive === "2";
     const pagination = paginationFactory({
-        page: 1,
+        page: isPast ? pastPage : 1,
         sizePerPage: 8,
+        ...(isPast ? { totalSize: pastTotal } : {}),
         lastPageText: ">>",
         firstPageText: "<<",
         nextPageText: ">",
@@ -656,7 +672,7 @@ function Products() {
         setNavactive(status);
         localStorage.setItem("active", status);
         setFilterStatus("");
-        getorders(status);
+        getorders(status, "");
     };
     return (
         <>
@@ -781,6 +797,15 @@ function Products() {
                                         columns={columns}
                                         defaultSorted={defaultSorted}
                                         pagination={pagination}
+                                        {...(isPast ? {
+                                            remote: { pagination: true, filter: false, sort: false },
+                                            onTableChange: (type, { page }) => {
+                                                if (type === "pagination") {
+                                                    setLoading(true);
+                                                    getorders("2", lastQuery, page);
+                                                }
+                                            },
+                                        } : {})}
                                         wrapperClasses="table-responsive"
                                     />
                                 </div>

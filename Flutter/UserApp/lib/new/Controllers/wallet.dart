@@ -28,7 +28,7 @@ class WalletController extends GetxController {
     Network.networkCheck(context).then((value) => value != null
         ? {
             HomeServices.getWallet()
-                .then((value) => value != null
+                .then<void>((value) => value != null
                     ? {
                         if (value.status == 1)
                           {

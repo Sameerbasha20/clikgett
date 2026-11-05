@@ -14,7 +14,7 @@ router
 
 .get('/allcategoriesadmin',util.authenticate.adminAuthenticate,categorycontroller.getallCategoriesforadmin)
 .get('/detail/:CategoryID',util.authenticate.adminAuthenticate,categorycontroller.categorydetail)
-.post('/addcategory',validate.user_mandatoryfields.category_mandatoryfields,util.authenticate.adminAuthenticate,categorycontroller.addcategory)
+.post('/addcategory',util.authenticate.adminAuthenticate,validate.user_mandatoryfields.category_mandatoryfields,categorycontroller.addcategory)
 .put('/updatecategory/:CategoryID',util.authenticate.adminAuthenticate,categorycontroller.updatecategory)
 .delete('/deletecategory/:CategoryID',util.authenticate.adminAuthenticate,categorycontroller.deletecategory)
 

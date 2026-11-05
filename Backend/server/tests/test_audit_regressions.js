@@ -49,8 +49,27 @@ const runAuditRegressions = async () => {
         const DeliveryETA = require('../controllers/DeliveryETA');
         const utils = require('../utils/utils');
 
-        // Fetch test admin
-        const [admin] = await queryAsync("SELECT * FROM AdminUsers WHERE Role = 1 LIMIT 1");
+        // A temporary admin with a known password (stored passwords are hashed) and its own
+        // 2FA secret, so no real admin account is changed. Removed at the end.
+        const passwords = require('../utils/password');
+        const TEMP_PASSWORD = 'AuditTest#2026';
+        const tmpIns = await queryAsync(
+            "INSERT INTO AdminUsers (FirstName, LastName, EmailID, Password, Role, Status, ProfilePic) VALUES ('Audit', 'Test', ?, ?, 1, 1, 'NA')",
+            [`audit-test-${Date.now()}@example.com`, passwords.hash(TEMP_PASSWORD)]);
+        global.__tempAdminId = tmpIns.insertId;
+        const [admin] = await queryAsync("SELECT * FROM AdminUsers WHERE AdminID = ?", [tmpIns.insertId]);
+        admin.Password = TEMP_PASSWORD;
+        // The ETA bands are admin settings: test the documented defaults, restore afterwards.
+        const [savedRules] = await queryAsync('SELECT * FROM DeliveryETARules WHERE RuleID = 1');
+        global.__restoreEta = async () => {
+            if (!savedRules) return;
+            await queryAsync(`UPDATE DeliveryETARules SET IsEnabled = ?, Band1MaxKm = ?, Band1BaseMinutes = ?, Band2MinKm = ?, Band2MaxKm = ?,
+                Band2BaseMinutes = ?, Band3MinKm = ?, Band3BaseMinutes = ?, DefaultBaseMinutes = ? WHERE RuleID = 1`,
+                [savedRules.IsEnabled, savedRules.Band1MaxKm, savedRules.Band1BaseMinutes, savedRules.Band2MinKm, savedRules.Band2MaxKm,
+                 savedRules.Band2BaseMinutes, savedRules.Band3MinKm, savedRules.Band3BaseMinutes, savedRules.DefaultBaseMinutes]);
+        };
+        await queryAsync(`UPDATE DeliveryETARules SET IsEnabled = 1, Band1MaxKm = 3, Band1BaseMinutes = 20, Band2MinKm = 3, Band2MaxKm = 5,
+            Band2BaseMinutes = 25, Band3MinKm = 5, Band3BaseMinutes = 30, DefaultBaseMinutes = 25 WHERE RuleID = 1`);
         assert(admin !== undefined, `Found admin user ID ${admin.AdminID} for audit testing`);
 
         // Ensure test admin has TOTP configured
@@ -360,6 +379,11 @@ const runAuditRegressions = async () => {
         console.error("Fatal exception in audit regression test suite:", err);
         failed++;
     } finally {
+        if (global.__restoreEta) await global.__restoreEta().catch(() => {});
+        if (global.__tempAdminId) {
+            await queryAsync('DELETE FROM AdminAuthAuditLogs WHERE AdminID = ?', [global.__tempAdminId]).catch(() => {});
+            await queryAsync('DELETE FROM AdminUsers WHERE AdminID = ?', [global.__tempAdminId]).catch(() => {});
+        }
         console.log('\n========================================================================');
         console.log(`📊 AUDIT REGRESSION TEST SUMMARY: ${passed} PASSED, ${failed} FAILED`);
         console.log('========================================================================\n');

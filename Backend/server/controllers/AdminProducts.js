@@ -89,9 +89,20 @@ const adminproductcontroller={
         let query; // per-request (were implicit globals)
         try{
                 console.log('search product')
-                query = "select * from Products WHERE status!=0 and ProductName LIKE " + pool.escape('%' + String(req.params.SearchString) + '%') + " order by ProductName asc"
-                let results = await CommonController.products(query); 
-                resp.json({"Status":1,"Products":results})
+                const words = String(req.params.SearchString || '').trim().split(/\s+/).filter(Boolean).slice(0, 6);
+                if (!words.length) return resp.json({ "Status": 1, "Products": [], "Product": [], "data": [] });
+                const match = words.map((w) => {
+                    const like = pool.escape('%' + w + '%');
+                    return `(P.ProductName LIKE ${like} OR IFNULL(P.SearchKeywords, '') LIKE ${like})`;
+                }).join(' AND ');
+                query = `select P.*, C.CategoryName, S.SubCategoryName from Products P
+                           left join Categories C on C.CategoryID = P.CategoryID
+                           left join SubCategories S on S.SubCategoryID = P.SubCategoryID
+                          WHERE P.Status != 0 and ${match} order by P.ProductName asc limit 200`
+                // With variants (prices, stock): photo-order proposals price lines from them.
+                let results = await CommonController.getproducts(query);
+                // Callers read Products, Product (photo orders) or data (product requests).
+                resp.json({ "Status": 1, "Products": results, "Product": results, "data": results })
         }
         catch(e){
             console.log(e)

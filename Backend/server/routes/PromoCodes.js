@@ -17,7 +17,7 @@ router
 //adminapis
 .get('/admin/all',util.authenticate.adminAuthenticate,PromoCodescontroller.all_PromoCodess)
 .get('/admin/detail/:PromoCodeID',util.authenticate.adminAuthenticate,PromoCodescontroller.get_PromoCodess)
-.post('/admin/add',validate.user_mandatoryfields.promocode_mandatoryfields,util.authenticate.adminAuthenticate,PromoCodescontroller.add_promoCodess)
+.post('/admin/add',util.authenticate.adminAuthenticate,validate.user_mandatoryfields.promocode_mandatoryfields,PromoCodescontroller.add_promoCodess)
 .put('/admin/update/:PromoCodeID',util.authenticate.adminAuthenticate,PromoCodescontroller.update_PromoCodes)
 .delete('/admin/delete/:PromoCodeID',util.authenticate.adminAuthenticate,PromoCodescontroller.delete_PromoCodess)
 

@@ -71,6 +71,7 @@ router
  .delete('/deletesettings/:ID', util.authenticate.adminAuthenticate, admincontroller.deletesetting)
  .get('/list', util.authenticate.adminAuthenticate, admincontroller.adminuserslist)
  .get('/adminlist', util.authenticate.adminAuthenticate, admincontroller.adminuserslist)
+ .get('/roles', util.authenticate.adminAuthenticate, (req, resp) => resp.json({ Status: 1, Roles: Object.entries(require('../utils/adminRoles').ROLES).map(([key, r]) => ({ key, label: r.label, areas: r.areas })), MyRole: req.AdminRole }))
  .post('/addadmin', util.authenticate.adminAuthenticate, admincontroller.addadminuser)
  .get('/detail/:AdminID', util.authenticate.adminAuthenticate, admincontroller.adminuserdetail)
  .put('/updateadminuser/:AdminID', util.authenticate.adminAuthenticate, admincontroller.updateadmindata)

@@ -10,7 +10,6 @@ import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
 import '../../../../Constants/colors.dart';
-import '../Orders/Orders.dart';
 
 class SuccessCart extends StatefulWidget {
   int? orderId;
