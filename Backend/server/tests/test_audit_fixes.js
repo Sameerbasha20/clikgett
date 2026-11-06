@@ -66,6 +66,16 @@ const TEST_MOBILE = '9999900088';
         r = await call('GET', '/admin-wallet-check?days=1', SUPER);
         check('wallet check finds no mismatch for this account', r.json && !(r.json.BalanceMismatch || []).some((m) => m.UserID === userId));
 
+        // ---------- Customer profile for admins ----------
+        await q("UPDATE Users SET OTP = '9999', FCMToken = 'test-push-token', DateOfBirth = '1995-03-14' WHERE UserID = ?", [userId]).catch(() => {});
+        r = await call('GET', `/adminusers/customer-full-details/${userId}`, SUPER);
+        const prof = (r.json && r.json.Profile) || {};
+        check('customer profile never includes the login OTP or push token', r.json && r.json.Status === 1 && !('OTP' in prof) && !('FCMToken' in prof));
+        check('customer profile has birthday and app-installed flag', String(prof.DateOfBirth || '').startsWith('1995-03') && r.json.DeviceInfo.AppInstalled === true);
+        check('customer profile lists carts, requests, feedback and searches',
+            ['CurrentCart', 'AbandonedCarts', 'PhotoOrders', 'Enquiries', 'ProductRequests', 'Feedback', 'RecentSearches'].every((k) => Array.isArray(r.json[k]))
+            && 'CancelledByStore' in r.json.OrderStats && 'CancelledByCustomer' in r.json.OrderStats);
+
         // ---------- Admin roles ----------
         const mk = async (role) => {
             const ins = await q("INSERT INTO AdminUsers (FirstName, LastName, EmailID, Password, Role, Status, ProfilePic, AdminRole) VALUES ('Role', 'Test', ?, 'NA', 1, 1, 'NA', ?)",

@@ -1,0 +1,8504 @@
+{
+ "groups": [
+  {
+   "file": "Users.js",
+   "method": "POST",
+   "handler": "Sendotp_Signup",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/signup/sendotp",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "POST",
+   "handler": "Sendotp_Login",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/login/sendotp",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "POST",
+   "handler": "generateUserAuthToken",
+   "auth": "generateUserAuthToken",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/login/verifyotp",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "POST",
+   "handler": "generateUserAuthToken",
+   "auth": "userAuthenticate+generateUserAuthToken",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/signup",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "homepage",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/homepage",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "HomepageSection_Products",
+   "auth": "optionalUserAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/users/homepagesectionproducts",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "HomepageSection_Products_all",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/homepagesectionproducts_all/:HomeSectionId",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "homepage",
+   "auth": "optionalUserAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/users/webhomepage",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "PUT",
+   "handler": "updateuser",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/update",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "Userdetail",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/detail",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "getNotificationPreferences",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/notification-preferences",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "PUT",
+   "handler": "updateNotificationPreferences",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/notification-preferences",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "POST",
+   "handler": "addFeedback",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/addfeedback",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    },
+    {
+     "path": "/api/users/addfeedback",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "checkFeedbackEligibility",
+   "auth": "userAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/users/feedback/order-status/:orderId",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "checkFeedbackEligibility",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/feedback/eligibility/:orderId",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "notifications",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/notifications",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "PUT",
+   "handler": "UserNotification_Update",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/updatenotifications/:NotificationID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "getSettings",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/settings",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "GET",
+   "handler": "Wallets",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/user_wallets",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "POST",
+   "handler": "Add_Wallet_Money",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/add_wallet_money",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Users.js",
+   "method": "DELETE",
+   "handler": "deleteAccount",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/users/deleteuser",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Auth.js",
+   "method": "POST",
+   "handler": "refresh",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/auth/refresh",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Auth.js",
+   "method": "POST",
+   "handler": "logout",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/auth/logout",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "GET",
+   "handler": "appConfig",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/config",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "GET",
+   "handler": "referralInfo",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/referral",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "GET",
+   "handler": "membershipPlans",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/membership/plans",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "POST",
+   "handler": "membershipBuy",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/membership/buy",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "POST",
+   "handler": "membershipConfirm",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/membership/confirm",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "GET",
+   "handler": "summary",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/summary",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "POST",
+   "handler": "setBirthday",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/birthday",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "GET",
+   "handler": "rewardSettings",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/rewards/settings",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "PUT",
+   "handler": "updateRewardSettings",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/rewards/settings",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerAccount.js",
+   "method": "POST",
+   "handler": "runRewards",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/account/rewards/run",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Categories.js",
+   "method": "GET",
+   "handler": "categories_subcategories",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/categories/subcategories_by_category/:CategoryID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Categories.js",
+   "method": "GET",
+   "handler": "categories",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/categories/allcategoriesuser",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Categories.js",
+   "method": "GET",
+   "handler": "categories_subcategories",
+   "auth": "none",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/categories/websubcategories",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Categories.js",
+   "method": "GET",
+   "handler": "SubcategoryDetail",
+   "auth": "optionalUserAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/categories/subcategorydetail/:SubCategoryID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Categories.js",
+   "method": "GET",
+   "handler": "getallCategoriesforadmin",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/categories/allcategoriesadmin",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Categories.js",
+   "method": "GET",
+   "handler": "categorydetail",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/categories/detail/:CategoryID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Categories.js",
+   "method": "POST",
+   "handler": "addcategory",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/categories/addcategory",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Categories.js",
+   "method": "PUT",
+   "handler": "updatecategory",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/categories/updatecategory/:CategoryID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Categories.js",
+   "method": "DELETE",
+   "handler": "deletecategory",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/categories/deletecategory/:CategoryID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "productsbyCategory_subcategory",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/list",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "productsbyCategory_subcategory",
+   "auth": "optionalUserAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/products/weblist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "bulkDeals",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/bulk-deals",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "previouslyBought",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/previously-bought",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "productsby_ProductID",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/detail/:ProductID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "searchProduct",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/search/:SearchString",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "searchSuggestions",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/suggestions",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "searchSuggestions",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/suggestions/:query",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "DELETE",
+   "handler": "clearSearchHistory",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/search-history",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "RecommendedProducts_User",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/recommendedproducts",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "YouMayLikeIt_Products",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/youmaylikeit",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Products.js",
+   "method": "GET",
+   "handler": "similarProducts",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/products/similar/:ProductID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "POST",
+   "handler": "ValidateCart",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/validate_cart",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "POST",
+   "handler": "getcartbyyserid",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/mycart",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "POST",
+   "handler": "checkoutBill",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/bill",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "POST",
+   "handler": "addcart",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/addcart",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "DELETE",
+   "handler": "deletecartitem_variant",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/deletecartitem/:ProductID/:VariantID/:Type",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "DELETE",
+   "handler": "deletekit",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/deletekit/:KitID/:Type",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "DELETE",
+   "handler": "deletecart",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/deletecart/:CartID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "cronOrAdminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/abandoned/trigger-notifications",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "POST",
+   "handler": "<anonymous>",
+   "auth": "cronOrAdminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/abandoned/trigger-notifications",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/abandoned/list",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/carts/abandoned",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/abandoned/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "POST",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/abandoned/status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Carts.js",
+   "method": "POST",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/carts/abandoned/details",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "login",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/login",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/login",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/login",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "sendSmsCode",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/send-2fa-sms",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/send-2fa-sms",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/send-2fa-sms",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "verify2FA",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/verify-2fa",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/verify-2fa",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/verify-2fa",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "reset2FA",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/reset-2fa/:AdminID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/reset-2fa/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/reset-2fa/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "get2FAStatus",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/2fa-status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/2fa-status",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/2fa-status",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "createUploadUrl",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/upload-url",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/upload-url",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/upload-url",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "search",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/global-search",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/global-search",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/global-search",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "getConfig",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/referrals/config",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/referrals/config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/referrals/config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "updateConfig",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/referrals/config",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/referrals/config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/referrals/config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "getAuditHistory",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/referrals/audit-history",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/referrals/audit-history",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/referrals/audit-history",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "getClaimsList",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/referrals/claims",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/referrals/claims",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/referrals/claims",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "getRules",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/delivery-eta/rules",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/delivery-eta/rules",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery-eta/rules",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "updateRules",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/delivery-eta/rules",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/delivery-eta/rules",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery-eta/rules",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "getOrderEffectiveETA",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/delivery-eta/order/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/delivery-eta/order/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery-eta/order/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "getdeliveryboys",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/getalldeliveryboys",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/getalldeliveryboys",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/getalldeliveryboys",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "getactivedeliveryboys",
+   "auth": "adminAuthenticate",
+   "status": "OLD_ADMIN_ONLY",
+   "paths": [
+    {
+     "path": "/api/adminuser/getactivedeliveryboys",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/getactivedeliveryboys",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/getactivedeliveryboys",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "deliveryboydetail",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/deliveryboydetail",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/deliveryboydetail",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/deliveryboydetail",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "adminupdatedeliveryboy",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/updatedeliveryboy/:AdminID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/updatedeliveryboy/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/updatedeliveryboy/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "DELETE",
+   "handler": "admindeletedeliveryboy",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/deletedeliveryboy/:AdminID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/deletedeliveryboy/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/deletedeliveryboy/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "addeliveryboy",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/addeliveryboy",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/addeliveryboy",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/addeliveryboy",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "updateuser",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminuser/updateuser/:UserID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/updateuser/:UserID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/updateuser/:UserID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "Userdetail",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/userdetail/:UserID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/userdetail/:UserID",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/userdetail/:UserID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "fullCustomerDetails",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/customer-full-details/:UserID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/customer-full-details/:UserID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/customer-full-details/:UserID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "Userslist",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/userslist",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/userslist",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/userslist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "Feedbackdetail",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedbackdetail/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedbackdetail/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/feedbackdetail/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "Feedbackdetail",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/detail/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/detail/:FeedbackID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/detail/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "Feedbacklist",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedbacklist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminuser/feedbacklist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedbacklist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedbacklist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/feedbacklist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/feedbacklist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "Feedbacklist",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/list",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/list",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/list",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "updateFeedbackReply",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/reply/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/reply/:FeedbackID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/reply/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "updateFeedbackReply",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/reply/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/reply/:FeedbackID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/reply/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "reviewFeedback",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/review/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/review/:FeedbackID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/review/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "reviewFeedback",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/review/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/review/:FeedbackID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/review/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "creditFeedbackReward",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/credit-reward/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/credit-reward/:FeedbackID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/credit-reward/:FeedbackID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "getFeedbackRewardConfig",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/reward-config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/reward-config",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/reward-config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "updateFeedbackRewardConfig",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/reward-config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/reward-config",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/reward-config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "updateFeedbackRewardConfig",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/feedback/reward-config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/feedback/reward-config",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/feedback/reward-config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "adminnotification",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/sendnotifications",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/sendnotifications",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/sendnotifications",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "settingslist",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/settingslist",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/settingslist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/settingslist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "settingsdetail",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/settingdetail/:ID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/settingdetail/:ID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/settingdetail/:ID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "addsettings",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/addsettings",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/addsettings",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/addsettings",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "updatesettings",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/updatesettings/:ID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/updatesettings/:ID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/updatesettings/:ID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "DELETE",
+   "handler": "deletesetting",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/deletesettings/:ID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/deletesettings/:ID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/deletesettings/:ID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "adminuserslist",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/list",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/list",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/list",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "adminuserslist",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminuser/adminlist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/adminlist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/adminlist",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/roles",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/roles",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/roles",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "addadminuser",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/addadmin",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/addadmin",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/addadmin",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "adminuserdetail",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/detail/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/detail/:AdminID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/detail/:AdminID",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "updateadmindata",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/updateadminuser/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/updateadminuser/:AdminID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/updateadminuser/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "DELETE",
+   "handler": "deleteadmindata",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/deleteadminuser/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/deleteadminuser/:AdminID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/deleteadminuser/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "updateadmindata",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/update/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/adminusers/update/:AdminID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/update/:AdminID",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "PUT",
+   "handler": "updateuser",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/user/update/:UserID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/user/update/:UserID",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/user/update/:UserID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "DELETE",
+   "handler": "deleteUser",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/user/delete/:UserID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/user/delete/:UserID",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/user/delete/:UserID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "GET",
+   "handler": "walletTransactions",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/wallettransactions/:UserID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/wallettransactions/:UserID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/wallettransactions/:UserID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "creditDebitWallet",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/creditdebitwallet",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/creditdebitwallet",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/creditdebitwallet",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminUsers.js",
+   "method": "POST",
+   "handler": "expireCashback",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminuser/expirecashback",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/adminusers/expirecashback",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/expirecashback",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Banners.js",
+   "method": "GET",
+   "handler": "getallbanners",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/banners",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Banners.js",
+   "method": "GET",
+   "handler": "bannersdetail",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/banners/detail/:BannerID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Banners.js",
+   "method": "POST",
+   "handler": "addbanner",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/banners/addbanner",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Banners.js",
+   "method": "PUT",
+   "handler": "updateBanner",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/banners/updatebanner/:BannerID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Banners.js",
+   "method": "DELETE",
+   "handler": "deleteBanner",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/banners/deletebanner/:BannerID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "GET",
+   "handler": "subcategories_admin",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/subcategories",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "GET",
+   "handler": "subcategoriesbycategory_admin",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/subcategories/bycategory/:CategoryID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "GET",
+   "handler": "subcategorydetail_admin",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/subcategories/detail/:SubCategoryID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "POST",
+   "handler": "addsubcategory",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/subcategories/add",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "PUT",
+   "handler": "updatesubcategory",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/subcategories/update/:SubCategoryID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "DELETE",
+   "handler": "deletesubcategory",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/subcategories/delete/:SubCategoryID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "PUT",
+   "handler": "reordersubcategories",
+   "auth": "adminAuthenticate",
+   "status": "OLD_ADMIN_ONLY",
+   "paths": [
+    {
+     "path": "/api/subcategories/admin/reorder",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "PUT",
+   "handler": "reordersubcategories",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/subcategories/reorder",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "POST",
+   "handler": "reordersubcategories",
+   "auth": "adminAuthenticate",
+   "status": "OLD_ADMIN_ONLY",
+   "paths": [
+    {
+     "path": "/api/subcategories/admin/reorder",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SubCategories.js",
+   "method": "POST",
+   "handler": "reordersubcategories",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/subcategories/reorder",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "GET",
+   "handler": "getproductsbycategoryID",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/bycategory",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "GET",
+   "handler": "productsbysubcategory_admin",
+   "auth": "adminAuthenticate",
+   "status": "OLD_ADMIN_ONLY",
+   "paths": [
+    {
+     "path": "/api/adminproducts/bysubcategory",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "GET",
+   "handler": "searchProduct",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/search/:SearchString",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "GET",
+   "handler": "getproductsbyproductid",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/productdetail/:ProductID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "POST",
+   "handler": "addproduct",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/addproduct",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "POST",
+   "handler": "addvariant",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/addvariant",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "PUT",
+   "handler": "updateproduct",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/updateproduct/:ProductID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "GET",
+   "handler": "outOfStock",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/out-of-stock",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "PUT",
+   "handler": "restock",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/restock/:VariantID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "PUT",
+   "handler": "updateproductvariant",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/updateproductvariant/:VariantID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "DELETE",
+   "handler": "deleteproduct",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/deleteproduct/:ProductID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "DELETE",
+   "handler": "deletingvariant",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminproducts/deletevariant/:VariantID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "GET",
+   "handler": "buyMoreConfig",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminproducts/buy-more-config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "PUT",
+   "handler": "updateBuyMoreConfig",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminproducts/buy-more-config/:ConfigID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminProducts.js",
+   "method": "DELETE",
+   "handler": "deleteBuyMoreConfig",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminproducts/buy-more-config/:ConfigID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "PromoCodes.js",
+   "method": "GET",
+   "handler": "triggerWinbackCoupons",
+   "auth": "cronOrAdminAuthenticate",
+   "status": "INFRA_OR_SCHEDULER",
+   "paths": [
+    {
+     "path": "/api/promocodes/winback/trigger",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "PromoCodes.js",
+   "method": "POST",
+   "handler": "triggerWinbackCoupons",
+   "auth": "cronOrAdminAuthenticate",
+   "status": "INFRA_OR_SCHEDULER",
+   "paths": [
+    {
+     "path": "/api/promocodes/winback/trigger",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "PromoCodes.js",
+   "method": "GET",
+   "handler": "userallPromoCodes",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promocodes/active",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PromoCodes.js",
+   "method": "POST",
+   "handler": "userapplypromoCodes",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promocodes/user/verify",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PromoCodes.js",
+   "method": "GET",
+   "handler": "all_PromoCodess",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promocodes/admin/all",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PromoCodes.js",
+   "method": "GET",
+   "handler": "get_PromoCodess",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promocodes/admin/detail/:PromoCodeID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PromoCodes.js",
+   "method": "POST",
+   "handler": "add_promoCodess",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promocodes/admin/add",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PromoCodes.js",
+   "method": "PUT",
+   "handler": "update_PromoCodes",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promocodes/admin/update/:PromoCodeID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PromoCodes.js",
+   "method": "DELETE",
+   "handler": "delete_PromoCodess",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promocodes/admin/delete/:PromoCodeID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Address.js",
+   "method": "GET",
+   "handler": "gettaddressbyuserid",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/address/myaddress",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Address.js",
+   "method": "GET",
+   "handler": "getaddressbyaddressid",
+   "auth": "userAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/address/byaddressid/:AddressID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Address.js",
+   "method": "POST",
+   "handler": "checkServiceability",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/address/check-serviceability",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Address.js",
+   "method": "POST",
+   "handler": "checkServiceability",
+   "auth": "none",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/address/checkserviceability",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Address.js",
+   "method": "POST",
+   "handler": "addaddress",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/address/addaddress",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Address.js",
+   "method": "PUT",
+   "handler": "updateaddress",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/address/:AddressID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Address.js",
+   "method": "DELETE",
+   "handler": "deleteaddress",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/address/:AddressID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "GET",
+   "handler": "mycurrentorders",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/currentorders",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "GET",
+   "handler": "mypastorders",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/pastorders",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "GET",
+   "handler": "myorder",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/myorder/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "POST",
+   "handler": "orderpayments",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/orderpayments",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "POST",
+   "handler": "addorder",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/createorder",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "PUT",
+   "handler": "cancelorderuser",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/cancelorderuser/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "POST",
+   "handler": "reorder",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/reorder",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "GET",
+   "handler": "checkOrderTiming",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/checktiming",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "GET",
+   "handler": "getOrderStatus",
+   "auth": "userAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/orders/orderstatus/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "GET",
+   "handler": "downloadInvoice",
+   "auth": "invoiceAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/invoice/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "serverGeneratedLinks",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Orders.js",
+   "method": "GET",
+   "handler": "invoiceLink",
+   "auth": "invoiceAuthenticate+invoiceLink",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/orders/invoice/:OrderID/link",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "summary",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/dashboard",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/dashboard",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "newSince",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/new-since",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/new-since",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "currentorders",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/currentorders",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/currentorders",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastorders",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastorders",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/pastorders",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "myorder",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/orderdetail",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/orderdetail",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "invoiceAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/invoice/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "serverGeneratedLinks",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/invoice/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "invoiceLink",
+   "auth": "invoiceAuthenticate+invoiceLink",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/invoice/:OrderID/link",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "serverGeneratedLinks",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/invoice/:OrderID/link",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "getEligibleDrivers",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/eligible-drivers",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/eligible-drivers",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "PUT",
+   "handler": "assignDeliveryBoy",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/assigndeliverboy/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/assigndeliverboy/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "PUT",
+   "handler": "updatestatus",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/updatestatus/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/updatestatus/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "PUT",
+   "handler": "editedeliverytime",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/editedeliverytime/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/editedeliverytime/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "PUT",
+   "handler": "adjustorder",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/adjustorder",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/adjustorder",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "POST",
+   "handler": "adjustorder",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/adjustorder",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/adjustorder",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "PUT",
+   "handler": "adjustorder",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/adjustorder/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/adjustorder/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "POST",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/remove-item",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/remove-item",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "DELETE",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/orders/:OrderID/items/:OrderItemID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/orders/:OrderID/items/:OrderItemID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/removed-items/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/removed-items/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "getorderadjustments",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/adjustments/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/adjustments/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "getorderadjustments",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/adjustorder/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/adjustorder/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "scheduledorders",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/scheduledorders",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/scheduledorders",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "ordertimeline",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/orderdetail/timeline/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/orderdetail/timeline/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "ordertimeline",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/ordertimeline/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/ordertimeline/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastorderssort",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastorders/sort",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastorders/sort",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastorderssort",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastorderssort",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastorderssort",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastordersfilter",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastorders/filter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastorders/filter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastordersfilter",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastordersfilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastordersfilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastordersmobilefilter",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastorders/mobilefilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastorders/mobilefilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastordersmobilefilter",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastordersmobilefilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastordersmobilefilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastordersusernamefilter",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastorders/usernamefilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastorders/usernamefilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastordersusernamefilter",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastordersusernamefilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastordersusernamefilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastordersorderidfilter",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastorders/orderidfilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastorders/orderidfilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "pastordersorderidfilter",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/pastordersorderidfilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/pastordersorderidfilter",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "currentorderssort",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/currentorders/sort",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/currentorders/sort",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "currentorderssort",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/adminorders/currentorderssort",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin/delivery/currentorderssort",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "getLiveOperations",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/live-operations",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/live-operations",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "getDelayQueue",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/delays",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/delays",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "POST",
+   "handler": "reviewDelay",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/delays/:DelayID/review",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/delays/:DelayID/review",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "PUT",
+   "handler": "reassignDriver",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/reassign/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/reassign/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminOrders.js",
+   "method": "GET",
+   "handler": "calculateDynamicETA",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/adminorders/dynamic-eta/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/admin/delivery/dynamic-eta/:OrderID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "SendotpLogin",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/sendotp",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "generatedeliveryboyAuthToken",
+   "auth": "generatedeliveryboyAuthToken",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/login",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "GET",
+   "handler": "get_routes",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/getroutes",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "GET",
+   "handler": "ordersbyroute",
+   "auth": "deliveryboyAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/ordersbyroute",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "GET",
+   "handler": "myorder",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/orderdetail",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "GET",
+   "handler": "orderstatus",
+   "auth": "deliveryboyAuthenticate",
+   "status": "OLD_MOBILE_APPS_ONLY",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/orderstatus",
+     "category": "OLD_MOBILE_APPS_ONLY",
+     "usedBy": [
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "PUT",
+   "handler": "updatestatus",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/updatestatus/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "PUT",
+   "handler": "updatedeliveryboy",
+   "auth": "deliveryboyAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/update/:AdminID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "Sendotp_Orders",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/sendotp_order",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "Orders_VerifyOTP",
+   "auth": "deliveryboyAuthenticate",
+   "status": "OLD_MOBILE_APPS_ONLY",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/verifyotp_order",
+     "category": "OLD_MOBILE_APPS_ONLY",
+     "usedBy": [
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "deliverOrder",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/deliver/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "doorstepUpiQr",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/orders/:OrderID/upi-qr",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "GET",
+   "handler": "doorstepUpiStatus",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/orders/:OrderID/upi-status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "updateFcmToken",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/fcmtoken",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "GET",
+   "handler": "riderSummary",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/summary",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "PUT",
+   "handler": "updateDutyStatus",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/duty-status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "GET",
+   "handler": "getDutyStatus",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/duty-status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "recordLocationPing",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/location/ping",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "reportDelay",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/orders/report-delay",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "DeliveryBoy.js",
+   "method": "POST",
+   "handler": "reportIssue",
+   "auth": "deliveryboyAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/deliveryboy/orders/report-issue",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentRiderApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Productcsv.js",
+   "method": "PUT",
+   "handler": "updateproduct_csv",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/productcsv/update/:filename",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/csv/update/:filename",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Productcsv.js",
+   "method": "GET",
+   "handler": "pendingorders_csv",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/productcsv/pendingproductscsv",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/csv/pendingproductscsv",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Productcsv.js",
+   "method": "GET",
+   "handler": "orderdetails",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/productcsv/orderdetails",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/csv/orderdetails",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Productcsv.js",
+   "method": "GET",
+   "handler": "productdetails",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/productcsv/productdetails",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/csv/productdetails",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminTiming.js",
+   "method": "POST",
+   "handler": "addTiming",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admintiming/add",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminTiming.js",
+   "method": "PUT",
+   "handler": "updateTiming",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admintiming/update/:TimingID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminTiming.js",
+   "method": "GET",
+   "handler": "getTiming",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admintiming",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminTiming.js",
+   "method": "GET",
+   "handler": "getShopStatus",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admintiming/shopstatus",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminTiming.js",
+   "method": "PUT",
+   "handler": "toggleShopStatus",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admintiming/toggle",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminTiming.js",
+   "method": "PUT",
+   "handler": "setStoreMode",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admintiming/store-mode",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminTiming.js",
+   "method": "DELETE",
+   "handler": "deleteTiming",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admintiming/delete/:TimingID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminTiming.js",
+   "method": "PUT",
+   "handler": "updateBanner",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admintiming/updatesettings/:SettingID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "GET",
+   "handler": "getActiveSales",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/getsales",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "GET",
+   "handler": "getAllSales",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/all",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "GET",
+   "handler": "getAllSales",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "GET",
+   "handler": "getSaleDetails",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/details/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "POST",
+   "handler": "createSale",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/create",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "POST",
+   "handler": "updateSale",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/update",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "PUT",
+   "handler": "updateSale",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "currentCustomerApp",
+      "oldMobileVersions",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "POST",
+   "handler": "deleteSale",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/delete",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "DELETE",
+   "handler": "deleteSale",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "currentCustomerApp",
+      "oldMobileVersions",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "POST",
+   "handler": "addSaleItems",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/additems",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "GET",
+   "handler": "saleCatalog",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/catalog",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "POST",
+   "handler": "setItemLimit",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/item-limit",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "POST",
+   "handler": "removeSaleItem",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/removeitem",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "GET",
+   "handler": "getProductSale",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/product/:productId",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "POST",
+   "handler": "assignProductToSale",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/assign-product",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Sales.js",
+   "method": "POST",
+   "handler": "removeProductFromSale",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/sales/remove-product",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "GET",
+   "handler": "welcome",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/welcome",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "GET",
+   "handler": "priceCompareProducts",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/price-compare",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "GET",
+   "handler": "adminWelcome",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/admin/welcome",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "PUT",
+   "handler": "adminSaveWelcome",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/admin/welcome",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "GET",
+   "handler": "adminProductSearch",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/admin/products",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "GET",
+   "handler": "adminPriceCompare",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/admin/price-compare",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "POST",
+   "handler": "adminAddPriceCompare",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/admin/price-compare",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "POST",
+   "handler": "adminOrderPriceCompare",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/admin/price-compare/order",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "PUT",
+   "handler": "adminUpdatePriceCompare",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/admin/price-compare/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Promotions.js",
+   "method": "DELETE",
+   "handler": "adminDeletePriceCompare",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/promotions/admin/price-compare/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "GET",
+   "handler": "getAllRewards",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/rewards/all",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/milestones/all",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "GET",
+   "handler": "getMilestoneConfig",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/rewards/milestones",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/milestones/milestones",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "GET",
+   "handler": "getMilestoneConfig",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/rewards/config",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/milestones/config",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "GET",
+   "handler": "getUserProgress",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/rewards/userprogress",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/milestones/userprogress",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "POST",
+   "handler": "createReward",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/rewards/create",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/milestones/create",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "POST",
+   "handler": "updateReward",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/rewards/update",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/milestones/update",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "PUT",
+   "handler": "updateReward",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/rewards/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "currentCustomerApp",
+      "oldMobileVersions",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/milestones/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "POST",
+   "handler": "deleteReward",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/rewards/delete",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/milestones/delete",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "DELETE",
+   "handler": "deleteReward",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/rewards/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "currentCustomerApp",
+      "oldMobileVersions",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/milestones/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "GET",
+   "handler": "getMyMilestones",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/rewards/myMilestones",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    },
+    {
+     "path": "/api/milestones/myMilestones",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Rewards.js",
+   "method": "GET",
+   "handler": "getMyMilestones",
+   "auth": "userAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/rewards/myRewards",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/milestones/myRewards",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "BuyMore.js",
+   "method": "GET",
+   "handler": "getTiers",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/buymore/tiers",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "BuyMore.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/buymore/tiers/:ProductID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "BuyMore.js",
+   "method": "POST",
+   "handler": "addTier",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/buymore/tiers",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "BuyMore.js",
+   "method": "POST",
+   "handler": "saveProductTiers",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/buymore/save-product-tiers",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "BuyMore.js",
+   "method": "PUT",
+   "handler": "updateTier",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/buymore/tiers/:ID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "BuyMore.js",
+   "method": "PUT",
+   "handler": "toggleStatus",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/buymore/tiers/status/:ID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "BuyMore.js",
+   "method": "PATCH",
+   "handler": "toggleStatus",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/buymore/tiers/:ID/status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "BuyMore.js",
+   "method": "DELETE",
+   "handler": "deleteTier",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/buymore/tiers/:ID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductRestrictions.js",
+   "method": "GET",
+   "handler": "getRestrictions",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/restrictions/restrictions",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductRestrictions.js",
+   "method": "POST",
+   "handler": "addRestriction",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/restrictions/restrictions",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductRestrictions.js",
+   "method": "PUT",
+   "handler": "updateRestriction",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/restrictions/restrictions/:ID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductRestrictions.js",
+   "method": "DELETE",
+   "handler": "deleteRestriction",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/restrictions/restrictions/:ID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductRestrictions.js",
+   "method": "POST",
+   "handler": "saveProductRestrictions",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/restrictions/save-product-restrictions",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductRestrictions.js",
+   "method": "POST",
+   "handler": "saveProductRestrictions",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/restrictions/restrictions/save-product-restrictions",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "CartOffers.js",
+   "method": "GET",
+   "handler": "getOffers",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/cartoffers/offers",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CartOffers.js",
+   "method": "POST",
+   "handler": "createOffer",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/cartoffers/offers",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CartOffers.js",
+   "method": "PUT",
+   "handler": "updateOffer",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/cartoffers/offers/:OfferID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CartOffers.js",
+   "method": "PUT",
+   "handler": "toggleStatus",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/cartoffers/offers/status/:OfferID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "CartOffers.js",
+   "method": "DELETE",
+   "handler": "deleteOffer",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/cartoffers/offers/:OfferID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Membership.js",
+   "method": "GET",
+   "handler": "getPlans",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/membership/plans",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/membershipplans/plans",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Membership.js",
+   "method": "POST",
+   "handler": "savePlan",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/membership/plans/save",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/membershipplans/plans/save",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Membership.js",
+   "method": "GET",
+   "handler": "getMembers",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/membership/members",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/membershipplans/members",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Membership.js",
+   "method": "GET",
+   "handler": "getProductPricing",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/membership/product/:productId",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/membershipplans/product/:productId",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Membership.js",
+   "method": "POST",
+   "handler": "saveProductPricing",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/membership/product/save",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/membershipplans/product/save",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Membership.js",
+   "method": "POST",
+   "handler": "saveProductPricing",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/membership/save-product-pricing",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/membershipplans/save-product-pricing",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Membership.js",
+   "method": "POST",
+   "handler": "deleteProductPricing",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/membership/product/delete",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/membershipplans/product/delete",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Membership.js",
+   "method": "DELETE",
+   "handler": "deleteProductPricing",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/membership/product/:productId/:planId",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/membershipplans/product/:productId/:planId",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "GET",
+   "handler": "getSettings",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/admin/settings",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "PUT",
+   "handler": "updateSettings",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/admin/settings",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "GET",
+   "handler": "getUnlocks",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/admin",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "POST",
+   "handler": "createUnlock",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/admin",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "PUT",
+   "handler": "updateUnlock",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/admin/:UnlockID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "DELETE",
+   "handler": "deleteUnlock",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/admin/:UnlockID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "GET",
+   "handler": "getUnlocks",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/unlocks",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "POST",
+   "handler": "createUnlock",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/unlocks",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "PUT",
+   "handler": "updateUnlock",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/unlocks/:UnlockID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "DELETE",
+   "handler": "deleteUnlock",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/unlocks/:UnlockID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "GET",
+   "handler": "getUnlocks",
+   "auth": "none",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/list",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "ProductUnlocks.js",
+   "method": "GET",
+   "handler": "deals",
+   "auth": "optionalUserAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/product-unlocks/deals",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "GET",
+   "handler": "getCategoryOptions",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/category-options",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/category-options",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "GET",
+   "handler": "getProductOptions",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/product-options",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/product-options",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "GET",
+   "handler": "getCategoryOptions",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/category-options",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/category-options",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "GET",
+   "handler": "getProductOptions",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/product-options",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/product-options",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "PUT",
+   "handler": "reorderSections",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/reorder",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/reorder",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "POST",
+   "handler": "reorderSections",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/reorder",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/reorder",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "PUT",
+   "handler": "reorderSections",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin/reorder",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin/reorder",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "POST",
+   "handler": "reorderSections",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin/reorder",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin/reorder",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "POST",
+   "handler": "duplicateSection",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/:SectionID/duplicate",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/:SectionID/duplicate",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "PATCH",
+   "handler": "updateStatus",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/:SectionID/status",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/:SectionID/status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "PUT",
+   "handler": "updateStatus",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/:SectionID/status",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/:SectionID/status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "POST",
+   "handler": "duplicateSection",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin/:SectionID/duplicate",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin/:SectionID/duplicate",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "PATCH",
+   "handler": "updateStatus",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin/:SectionID/status",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin/:SectionID/status",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "PUT",
+   "handler": "updateStatus",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin/:SectionID/status",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin/:SectionID/status",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "GET",
+   "handler": "getSectionById",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/:SectionID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/:SectionID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "PUT",
+   "handler": "updateSection",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/:SectionID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/:SectionID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "DELETE",
+   "handler": "deleteSection",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections/:SectionID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections/:SectionID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "GET",
+   "handler": "getSectionById",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin/:SectionID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin/:SectionID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "PUT",
+   "handler": "updateSection",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin/:SectionID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin/:SectionID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "DELETE",
+   "handler": "deleteSection",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin/:SectionID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin/:SectionID",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "GET",
+   "handler": "getAllSections",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "POST",
+   "handler": "createSection",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/home-sections/sections",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/sections",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "GET",
+   "handler": "getAllSections",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminHomeSections.js",
+   "method": "POST",
+   "handler": "createSection",
+   "auth": "adminAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/home-sections/admin",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/admin-home-sections/admin",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "SearchAnalytics.js",
+   "method": "GET",
+   "handler": "getAnalytics",
+   "auth": "adminAuthenticate",
+   "status": "OLD_ADMIN_ONLY",
+   "paths": [
+    {
+     "path": "/api/search-analytics/admin",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SearchAnalytics.js",
+   "method": "GET",
+   "handler": "getAnalytics",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/search-analytics/keywords",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "SearchAnalytics.js",
+   "method": "GET",
+   "handler": "getKeywordUsers",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/search-analytics/keyword-users",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CashbackAdmin.js",
+   "method": "GET",
+   "handler": "getPendingCashback",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/cashback-admin/pending",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/cashback/pending",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CashbackAdmin.js",
+   "method": "POST",
+   "handler": "approveCashback",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/cashback-admin/approve",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/cashback/approve",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CashbackAdmin.js",
+   "method": "POST",
+   "handler": "rejectCashback",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/cashback-admin/reject",
+     "category": "OLD_ADMIN_ONLY",
+     "usedBy": [
+      "oldAdminVersions"
+     ]
+    },
+    {
+     "path": "/api/cashback/reject",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PhotoOrders.js",
+   "method": "POST",
+   "handler": "submitRequest",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/photo-orders/submit",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PhotoOrders.js",
+   "method": "GET",
+   "handler": "getMyRequests",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/photo-orders/my-requests",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PhotoOrders.js",
+   "method": "GET",
+   "handler": "getRequestDetail",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/photo-orders/request/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PhotoOrders.js",
+   "method": "GET",
+   "handler": "getSecureImage",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/photo-orders/image/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PhotoOrders.js",
+   "method": "POST",
+   "handler": "confirmProposal",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/photo-orders/request/:id/confirm",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PhotoOrders.js",
+   "method": "POST",
+   "handler": "rejectProposal",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/photo-orders/request/:id/reject",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PhotoOrders.js",
+   "method": "POST",
+   "handler": "cancelRequest",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/photo-orders/request/:id/cancel",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminPhotoOrders.js",
+   "method": "GET",
+   "handler": "adminListRequests",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/photo-orders/list",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminPhotoOrders.js",
+   "method": "GET",
+   "handler": "getRequestDetail",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/photo-orders/detail/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminPhotoOrders.js",
+   "method": "GET",
+   "handler": "getSecureImage",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/photo-orders/image/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminPhotoOrders.js",
+   "method": "PUT",
+   "handler": "adminClaimRequest",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/photo-orders/claim/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminPhotoOrders.js",
+   "method": "POST",
+   "handler": "adminPrepareProposal",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/photo-orders/prepare-proposal/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminPhotoOrders.js",
+   "method": "POST",
+   "handler": "adminSendProposal",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/photo-orders/send-proposal/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminPhotoOrders.js",
+   "method": "POST",
+   "handler": "adminCancelRequest",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/photo-orders/cancel/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PrintStore.js",
+   "method": "GET",
+   "handler": "config",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/print/config",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PrintStore.js",
+   "method": "POST",
+   "handler": "uploadUrl",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/print/upload-url",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PrintStore.js",
+   "method": "POST",
+   "handler": "addFile",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/print/files",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PrintStore.js",
+   "method": "POST",
+   "handler": "addToCart",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/print/cart",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PrintStore.js",
+   "method": "GET",
+   "handler": "cart",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/print/cart",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PrintStore.js",
+   "method": "PATCH",
+   "handler": "updateCartJob",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/print/cart/:PrintJobID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PrintStore.js",
+   "method": "DELETE",
+   "handler": "removeCartJob",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/print/cart/:PrintJobID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "PrintStore.js",
+   "method": "GET",
+   "handler": "adminOrderJobs",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/print/admin/orders/:OrderID",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "StockLevels.js",
+   "method": "GET",
+   "handler": "list",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin-stock",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "StockLevels.js",
+   "method": "GET",
+   "handler": "alerts",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin-stock/alerts",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "StockLevels.js",
+   "method": "POST",
+   "handler": "add",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin-stock/:VariantID/add",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "WalletCheck.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "cronOrAdminAuthenticate",
+   "status": "INFRA_OR_SCHEDULER",
+   "paths": [
+    {
+     "path": "/api/admin-wallet-check",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "CustomerRequests.js",
+   "method": "POST",
+   "handler": "submitEnquiry",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/customer/enquiries",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerRequests.js",
+   "method": "GET",
+   "handler": "getMyEnquiries",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/customer/enquiries/my",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerRequests.js",
+   "method": "GET",
+   "handler": "getSecureEnquiryImage",
+   "auth": "userAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/customer/enquiries/image/:id",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "CustomerRequests.js",
+   "method": "POST",
+   "handler": "submitProductRequest",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/customer/product-requests",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerRequests.js",
+   "method": "GET",
+   "handler": "getMyProductRequests",
+   "auth": "userAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/customer/product-requests/my",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "oldMobileVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "CustomerRequests.js",
+   "method": "GET",
+   "handler": "getSecureProductRequestImage",
+   "auth": "userAuthenticate",
+   "status": "NO_CLIENT_EVER",
+   "paths": [
+    {
+     "path": "/api/customer/product-requests/image/:id",
+     "category": "NO_CLIENT_EVER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "AdminCustomerRequests.js",
+   "method": "GET",
+   "handler": "adminListEnquiries",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/customer-enquiries",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminCustomerRequests.js",
+   "method": "PUT",
+   "handler": "adminUpdateEnquiryStatus",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/customer-enquiries/:id/status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminCustomerRequests.js",
+   "method": "GET",
+   "handler": "getSecureEnquiryImage",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/customer-enquiries/image/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminCustomerRequests.js",
+   "method": "GET",
+   "handler": "adminListProductRequests",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/product-requests",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminCustomerRequests.js",
+   "method": "PUT",
+   "handler": "adminUpdateProductRequestStatus",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/product-requests/:id/status",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminCustomerRequests.js",
+   "method": "POST",
+   "handler": "adminTriggerProductNotification",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/product-requests/:id/notify",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "AdminCustomerRequests.js",
+   "method": "GET",
+   "handler": "getSecureProductRequestImage",
+   "auth": "adminAuthenticate",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/api/admin/product-requests/image/:id",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentAdmin",
+      "oldAdminVersions"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Health.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "none",
+   "status": "USED_NOW",
+   "paths": [
+    {
+     "path": "/health",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/health",
+     "category": "USED_NOW",
+     "usedBy": [
+      "currentCustomerApp",
+      "currentRiderApp"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "Health.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "none",
+   "status": "INFRA_OR_SCHEDULER",
+   "paths": [
+    {
+     "path": "/health/db",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/health/db",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Health.js",
+   "method": "GET",
+   "handler": "<anonymous>",
+   "auth": "none",
+   "status": "INFRA_OR_SCHEDULER",
+   "paths": [
+    {
+     "path": "/health/redis",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/health/redis",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "Health.js",
+   "method": "POST",
+   "handler": "<anonymous>",
+   "auth": "none",
+   "status": "INFRA_OR_SCHEDULER",
+   "paths": [
+    {
+     "path": "/health/redis/test",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    },
+    {
+     "path": "/api/health/redis/test",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "server.js",
+   "method": "GET",
+   "handler": "inline",
+   "auth": "see server.js",
+   "status": "INFRA_OR_SCHEDULER",
+   "paths": [
+    {
+     "path": "/media/*",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "server.js",
+   "method": "PUT",
+   "handler": "inline",
+   "auth": "see server.js",
+   "status": "INFRA_OR_SCHEDULER",
+   "paths": [
+    {
+     "path": "/media/*",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    }
+   ]
+  },
+  {
+   "file": "server.js",
+   "method": "POST",
+   "handler": "inline",
+   "auth": "see server.js",
+   "status": "INFRA_OR_SCHEDULER",
+   "paths": [
+    {
+     "path": "/api/payments/razorpay-webhook",
+     "category": "INFRA_OR_SCHEDULER",
+     "usedBy": []
+    }
+   ]
+  }
+ ],
+ "deadAliases": [
+  {
+   "method": "POST",
+   "path": "/api/adminusers/login",
+   "usedSpelling": "/api/adminuser/login"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/login",
+   "usedSpelling": "/api/adminuser/login"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminusers/send-2fa-sms",
+   "usedSpelling": "/api/adminuser/send-2fa-sms"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/send-2fa-sms",
+   "usedSpelling": "/api/adminuser/send-2fa-sms"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminusers/verify-2fa",
+   "usedSpelling": "/api/adminuser/verify-2fa"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/verify-2fa",
+   "usedSpelling": "/api/adminuser/verify-2fa"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminusers/reset-2fa/:AdminID",
+   "usedSpelling": "/api/adminuser/reset-2fa/:AdminID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/reset-2fa/:AdminID",
+   "usedSpelling": "/api/adminuser/reset-2fa/:AdminID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/2fa-status",
+   "usedSpelling": "/api/adminuser/2fa-status"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/2fa-status",
+   "usedSpelling": "/api/adminuser/2fa-status"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminusers/upload-url",
+   "usedSpelling": "/api/adminuser/upload-url"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/upload-url",
+   "usedSpelling": "/api/adminuser/upload-url"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/global-search",
+   "usedSpelling": "/api/adminuser/global-search"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/global-search",
+   "usedSpelling": "/api/adminuser/global-search"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/referrals/config",
+   "usedSpelling": "/api/adminuser/referrals/config"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/referrals/config",
+   "usedSpelling": "/api/adminuser/referrals/config"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminusers/referrals/config",
+   "usedSpelling": "/api/adminuser/referrals/config"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/referrals/config",
+   "usedSpelling": "/api/adminuser/referrals/config"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/referrals/audit-history",
+   "usedSpelling": "/api/adminuser/referrals/audit-history"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/referrals/audit-history",
+   "usedSpelling": "/api/adminuser/referrals/audit-history"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/referrals/claims",
+   "usedSpelling": "/api/adminuser/referrals/claims"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/referrals/claims",
+   "usedSpelling": "/api/adminuser/referrals/claims"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/delivery-eta/rules",
+   "usedSpelling": "/api/adminuser/delivery-eta/rules"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery-eta/rules",
+   "usedSpelling": "/api/adminuser/delivery-eta/rules"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminusers/delivery-eta/rules",
+   "usedSpelling": "/api/adminuser/delivery-eta/rules"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/delivery-eta/rules",
+   "usedSpelling": "/api/adminuser/delivery-eta/rules"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/delivery-eta/order/:OrderID",
+   "usedSpelling": "/api/adminuser/delivery-eta/order/:OrderID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery-eta/order/:OrderID",
+   "usedSpelling": "/api/adminuser/delivery-eta/order/:OrderID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/getalldeliveryboys",
+   "usedSpelling": "/api/adminuser/getalldeliveryboys"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/getalldeliveryboys",
+   "usedSpelling": "/api/adminuser/getalldeliveryboys"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/deliveryboydetail",
+   "usedSpelling": "/api/adminuser/deliveryboydetail"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/deliveryboydetail",
+   "usedSpelling": "/api/adminuser/deliveryboydetail"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminusers/updatedeliveryboy/:AdminID",
+   "usedSpelling": "/api/adminuser/updatedeliveryboy/:AdminID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/updatedeliveryboy/:AdminID",
+   "usedSpelling": "/api/adminuser/updatedeliveryboy/:AdminID"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/adminusers/deletedeliveryboy/:AdminID",
+   "usedSpelling": "/api/adminuser/deletedeliveryboy/:AdminID"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/admin/deletedeliveryboy/:AdminID",
+   "usedSpelling": "/api/adminuser/deletedeliveryboy/:AdminID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminusers/addeliveryboy",
+   "usedSpelling": "/api/adminuser/addeliveryboy"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/addeliveryboy",
+   "usedSpelling": "/api/adminuser/addeliveryboy"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/userdetail/:UserID",
+   "usedSpelling": "/api/adminuser/userdetail/:UserID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/userdetail/:UserID",
+   "usedSpelling": "/api/adminuser/userdetail/:UserID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminuser/customer-full-details/:UserID",
+   "usedSpelling": "/api/adminusers/customer-full-details/:UserID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/customer-full-details/:UserID",
+   "usedSpelling": "/api/adminusers/customer-full-details/:UserID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/userslist",
+   "usedSpelling": "/api/adminuser/userslist"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/userslist",
+   "usedSpelling": "/api/adminuser/userslist"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminuser/feedback/detail/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/detail/:FeedbackID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/feedback/detail/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/detail/:FeedbackID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminuser/feedback/list",
+   "usedSpelling": "/api/adminusers/feedback/list"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/feedback/list",
+   "usedSpelling": "/api/adminusers/feedback/list"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminuser/feedback/reply/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/reply/:FeedbackID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/feedback/reply/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/reply/:FeedbackID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminuser/feedback/reply/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/reply/:FeedbackID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/feedback/reply/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/reply/:FeedbackID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminuser/feedback/review/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/review/:FeedbackID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/feedback/review/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/review/:FeedbackID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminuser/feedback/review/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/review/:FeedbackID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/feedback/review/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/review/:FeedbackID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminuser/feedback/credit-reward/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/credit-reward/:FeedbackID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/feedback/credit-reward/:FeedbackID",
+   "usedSpelling": "/api/adminusers/feedback/credit-reward/:FeedbackID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminuser/feedback/reward-config",
+   "usedSpelling": "/api/adminusers/feedback/reward-config"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/feedback/reward-config",
+   "usedSpelling": "/api/adminusers/feedback/reward-config"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminuser/feedback/reward-config",
+   "usedSpelling": "/api/adminusers/feedback/reward-config"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/feedback/reward-config",
+   "usedSpelling": "/api/adminusers/feedback/reward-config"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminuser/feedback/reward-config",
+   "usedSpelling": "/api/adminusers/feedback/reward-config"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/feedback/reward-config",
+   "usedSpelling": "/api/adminusers/feedback/reward-config"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminusers/sendnotifications",
+   "usedSpelling": "/api/adminuser/sendnotifications"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/sendnotifications",
+   "usedSpelling": "/api/adminuser/sendnotifications"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/settingslist",
+   "usedSpelling": "/api/adminuser/settingslist"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/settingslist",
+   "usedSpelling": "/api/adminuser/settingslist"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/settingdetail/:ID",
+   "usedSpelling": "/api/adminuser/settingdetail/:ID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/settingdetail/:ID",
+   "usedSpelling": "/api/adminuser/settingdetail/:ID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminusers/addsettings",
+   "usedSpelling": "/api/adminuser/addsettings"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/addsettings",
+   "usedSpelling": "/api/adminuser/addsettings"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminusers/updatesettings/:ID",
+   "usedSpelling": "/api/adminuser/updatesettings/:ID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/updatesettings/:ID",
+   "usedSpelling": "/api/adminuser/updatesettings/:ID"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/adminusers/deletesettings/:ID",
+   "usedSpelling": "/api/adminuser/deletesettings/:ID"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/admin/deletesettings/:ID",
+   "usedSpelling": "/api/adminuser/deletesettings/:ID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminuser/list",
+   "usedSpelling": "/api/adminusers/list"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/list",
+   "usedSpelling": "/api/adminusers/list"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminusers/roles",
+   "usedSpelling": "/api/adminuser/roles"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/roles",
+   "usedSpelling": "/api/adminuser/roles"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminuser/addadmin",
+   "usedSpelling": "/api/adminusers/addadmin"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/addadmin",
+   "usedSpelling": "/api/adminusers/addadmin"
+  },
+  {
+   "method": "GET",
+   "path": "/api/adminuser/detail/:AdminID",
+   "usedSpelling": "/api/adminusers/detail/:AdminID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/detail/:AdminID",
+   "usedSpelling": "/api/adminusers/detail/:AdminID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminuser/updateadminuser/:AdminID",
+   "usedSpelling": "/api/adminusers/updateadminuser/:AdminID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/updateadminuser/:AdminID",
+   "usedSpelling": "/api/adminusers/updateadminuser/:AdminID"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/adminuser/deleteadminuser/:AdminID",
+   "usedSpelling": "/api/adminusers/deleteadminuser/:AdminID"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/admin/deleteadminuser/:AdminID",
+   "usedSpelling": "/api/adminusers/deleteadminuser/:AdminID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminuser/update/:AdminID",
+   "usedSpelling": "/api/adminusers/update/:AdminID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/update/:AdminID",
+   "usedSpelling": "/api/adminusers/update/:AdminID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/adminusers/user/update/:UserID",
+   "usedSpelling": "/api/adminuser/user/update/:UserID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/user/update/:UserID",
+   "usedSpelling": "/api/adminuser/user/update/:UserID"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/adminusers/user/delete/:UserID",
+   "usedSpelling": "/api/adminuser/user/delete/:UserID"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/admin/user/delete/:UserID",
+   "usedSpelling": "/api/adminuser/user/delete/:UserID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/wallettransactions/:UserID",
+   "usedSpelling": "/api/adminuser/wallettransactions/:UserID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/creditdebitwallet",
+   "usedSpelling": "/api/adminuser/creditdebitwallet"
+  },
+  {
+   "method": "POST",
+   "path": "/api/adminuser/expirecashback",
+   "usedSpelling": "/api/adminusers/expirecashback"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/expirecashback",
+   "usedSpelling": "/api/adminusers/expirecashback"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/dashboard",
+   "usedSpelling": "/api/adminorders/dashboard"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/new-since",
+   "usedSpelling": "/api/adminorders/new-since"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/currentorders",
+   "usedSpelling": "/api/adminorders/currentorders"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/pastorders",
+   "usedSpelling": "/api/adminorders/pastorders"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/orderdetail",
+   "usedSpelling": "/api/adminorders/orderdetail"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/invoice/:OrderID",
+   "usedSpelling": "/api/adminorders/invoice/:OrderID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/invoice/:OrderID/link",
+   "usedSpelling": "/api/adminorders/invoice/:OrderID/link"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/eligible-drivers",
+   "usedSpelling": "/api/adminorders/eligible-drivers"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/delivery/assigndeliverboy/:OrderID",
+   "usedSpelling": "/api/adminorders/assigndeliverboy/:OrderID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/delivery/updatestatus/:OrderID",
+   "usedSpelling": "/api/adminorders/updatestatus/:OrderID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/delivery/editedeliverytime/:OrderID",
+   "usedSpelling": "/api/adminorders/editedeliverytime/:OrderID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/delivery/adjustorder",
+   "usedSpelling": "/api/adminorders/adjustorder"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/delivery/adjustorder",
+   "usedSpelling": "/api/adminorders/adjustorder"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/delivery/adjustorder/:OrderID",
+   "usedSpelling": "/api/adminorders/adjustorder/:OrderID"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/delivery/remove-item",
+   "usedSpelling": "/api/adminorders/remove-item"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/removed-items/:OrderID",
+   "usedSpelling": "/api/adminorders/removed-items/:OrderID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/adjustments/:OrderID",
+   "usedSpelling": "/api/adminorders/adjustments/:OrderID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/adjustorder/:OrderID",
+   "usedSpelling": "/api/adminorders/adjustorder/:OrderID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/ordertimeline/:OrderID",
+   "usedSpelling": "/api/adminorders/ordertimeline/:OrderID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/live-operations",
+   "usedSpelling": "/api/adminorders/live-operations"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/delays",
+   "usedSpelling": "/api/adminorders/delays"
+  },
+  {
+   "method": "POST",
+   "path": "/api/admin/delivery/delays/:DelayID/review",
+   "usedSpelling": "/api/adminorders/delays/:DelayID/review"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/admin/delivery/reassign/:OrderID",
+   "usedSpelling": "/api/adminorders/reassign/:OrderID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/admin/delivery/dynamic-eta/:OrderID",
+   "usedSpelling": "/api/adminorders/dynamic-eta/:OrderID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/csv/update/:filename",
+   "usedSpelling": "/api/productcsv/update/:filename"
+  },
+  {
+   "method": "GET",
+   "path": "/api/productcsv/pendingproductscsv",
+   "usedSpelling": "/api/csv/pendingproductscsv"
+  },
+  {
+   "method": "GET",
+   "path": "/api/productcsv/orderdetails",
+   "usedSpelling": "/api/csv/orderdetails"
+  },
+  {
+   "method": "GET",
+   "path": "/api/productcsv/productdetails",
+   "usedSpelling": "/api/csv/productdetails"
+  },
+  {
+   "method": "GET",
+   "path": "/api/milestones/all",
+   "usedSpelling": "/api/rewards/all"
+  },
+  {
+   "method": "GET",
+   "path": "/api/rewards/config",
+   "usedSpelling": "/api/milestones/config"
+  },
+  {
+   "method": "GET",
+   "path": "/api/milestones/userprogress",
+   "usedSpelling": "/api/rewards/userprogress"
+  },
+  {
+   "method": "POST",
+   "path": "/api/milestones/create",
+   "usedSpelling": "/api/rewards/create"
+  },
+  {
+   "method": "POST",
+   "path": "/api/milestones/update",
+   "usedSpelling": "/api/rewards/update"
+  },
+  {
+   "method": "POST",
+   "path": "/api/milestones/delete",
+   "usedSpelling": "/api/rewards/delete"
+  },
+  {
+   "method": "GET",
+   "path": "/api/milestones/myMilestones",
+   "usedSpelling": "/api/rewards/myMilestones"
+  },
+  {
+   "method": "GET",
+   "path": "/api/membershipplans/plans",
+   "usedSpelling": "/api/membership/plans"
+  },
+  {
+   "method": "POST",
+   "path": "/api/membershipplans/plans/save",
+   "usedSpelling": "/api/membership/plans/save"
+  },
+  {
+   "method": "GET",
+   "path": "/api/membershipplans/members",
+   "usedSpelling": "/api/membership/members"
+  },
+  {
+   "method": "GET",
+   "path": "/api/membershipplans/product/:productId",
+   "usedSpelling": "/api/membership/product/:productId"
+  },
+  {
+   "method": "POST",
+   "path": "/api/membershipplans/product/save",
+   "usedSpelling": "/api/membership/product/save"
+  },
+  {
+   "method": "POST",
+   "path": "/api/membershipplans/product/delete",
+   "usedSpelling": "/api/membership/product/delete"
+  },
+  {
+   "method": "GET",
+   "path": "/api/home-sections/sections/category-options",
+   "usedSpelling": "/api/admin-home-sections/sections/category-options"
+  },
+  {
+   "method": "GET",
+   "path": "/api/home-sections/sections/product-options",
+   "usedSpelling": "/api/admin-home-sections/sections/product-options"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/home-sections/sections/reorder",
+   "usedSpelling": "/api/admin-home-sections/sections/reorder"
+  },
+  {
+   "method": "POST",
+   "path": "/api/home-sections/sections/reorder",
+   "usedSpelling": "/api/admin-home-sections/sections/reorder"
+  },
+  {
+   "method": "POST",
+   "path": "/api/home-sections/sections/:SectionID/duplicate",
+   "usedSpelling": "/api/admin-home-sections/sections/:SectionID/duplicate"
+  },
+  {
+   "method": "PATCH",
+   "path": "/api/home-sections/sections/:SectionID/status",
+   "usedSpelling": "/api/admin-home-sections/sections/:SectionID/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/home-sections/sections/:SectionID/status",
+   "usedSpelling": "/api/admin-home-sections/sections/:SectionID/status"
+  },
+  {
+   "method": "GET",
+   "path": "/api/home-sections/sections/:SectionID",
+   "usedSpelling": "/api/admin-home-sections/sections/:SectionID"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/home-sections/sections/:SectionID",
+   "usedSpelling": "/api/admin-home-sections/sections/:SectionID"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/home-sections/sections/:SectionID",
+   "usedSpelling": "/api/admin-home-sections/sections/:SectionID"
+  },
+  {
+   "method": "GET",
+   "path": "/api/home-sections/sections",
+   "usedSpelling": "/api/admin-home-sections/sections"
+  },
+  {
+   "method": "POST",
+   "path": "/api/home-sections/sections",
+   "usedSpelling": "/api/admin-home-sections/sections"
+  },
+  {
+   "method": "GET",
+   "path": "/api/cashback-admin/pending",
+   "usedSpelling": "/api/cashback/pending"
+  },
+  {
+   "method": "POST",
+   "path": "/api/cashback-admin/approve",
+   "usedSpelling": "/api/cashback/approve"
+  },
+  {
+   "method": "POST",
+   "path": "/api/cashback-admin/reject",
+   "usedSpelling": "/api/cashback/reject"
+  },
+  {
+   "method": "GET",
+   "path": "/health",
+   "usedSpelling": "/api/health"
+  }
+ ]
+}

@@ -217,6 +217,16 @@ function Warehouse() {
             dataField: "FirstName",
             text: "NAME",
             sort: false,
+            // The name opens the full customer profile (orders, addresses, carts, wallet, requests).
+            formatter: (cell, row) => (
+                <button
+                    type="button"
+                    onClick={() => Navigate(`/customers/${row.UserID}`)}
+                    title="Open customer profile"
+                    style={{ background: "none", border: "none", padding: 0, color: "#15803d", fontWeight: 700, textAlign: "left", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>
+                    {`${row.FirstName || ""} ${row.LastName && row.LastName !== "NA" ? row.LastName : ""}`.trim() || `Customer #${row.UserID}`}
+                </button>
+            ),
             headerStyle: (colum, colIndex) => {
                 return { ...headerstyles };
             },

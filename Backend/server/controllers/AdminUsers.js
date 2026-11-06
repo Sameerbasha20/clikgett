@@ -351,7 +351,11 @@ const usercontroller = {
             if (!userRows || userRows.length === 0) {
                 return resp.status(404).json({ Status: 0, Message: "User not found" });
             }
-            const profile = userRows[0];
+            const profile = { ...userRows[0] };
+            const hasPushToken = !!profile.FCMToken;
+            delete profile.OTP;
+            delete profile.FCMToken;
+            const q = (sql, params) => new Promise((r) => pool.query(sql, params, (e, rows) => r(e ? [] : (rows || []))));
 
             // 2. Saved Addresses
             const addressQuery = "SELECT * FROM Address WHERE UserID = ? ORDER BY CreatedAt DESC";
@@ -359,22 +363,72 @@ const usercontroller = {
 
             // 3. Orders Breakdown & Summary
             const ordersQuery = `
-                SELECT OrderID, LPAD(OrderID, 4, '0') as OrderSequence, SubTotal, GrandTotal, DeliverCharges, 
-                       PaymentMethod, OrderStatus, ScheduleStatus, ScheduledDateTime, deliveredDateTime, CreatedAt
-                FROM Orders 
-                WHERE UserID = ? 
-                ORDER BY CreatedAt DESC
+                SELECT o.OrderID, LPAD(o.OrderID, 4, '0') as OrderSequence, o.SubTotal, o.GrandTotal, o.DeliverCharges,
+                       o.WalletAmount, o.PromoAmount, o.WelcomeDiscount, o.PaymentMethod, o.OrderStatus, o.ScheduleStatus,
+                       o.ScheduledDateTime, o.deliveredDateTime, o.Delivered_Cancelled_datetime, o.CancellationReason,
+                       o.Address, o.FlatNo, o.ReceiverName, o.CreatedAt,
+                       (SELECT COALESCE(SUM(oi.Quantity), 0) FROM OrderItems oi WHERE oi.OrderID = o.OrderID) AS ItemCount
+                FROM Orders o
+                WHERE o.UserID = ?
+                ORDER BY o.CreatedAt DESC
             `;
-            const orders = await new Promise(r => pool.query(ordersQuery, [UserID], (e, rows) => r(rows || [])));
+            const { STATUS_LABELS } = require('../utils/orderStatus');
+            const orders = (await q(ordersQuery, [UserID])).map((o) => ({ ...o, StatusLabel: STATUS_LABELS[o.OrderStatus] || `Status ${o.OrderStatus}` }));
 
+            const delivered = orders.filter(o => o.OrderStatus === 1);
+            const totalSpend = delivered.reduce((sum, o) => sum + parseFloat(o.GrandTotal || 0) + parseFloat(o.WalletAmount || 0), 0);
             const orderStats = {
                 Total: orders.length,
-                Completed: orders.filter(o => o.OrderStatus === 1).length,
-                Cancelled: orders.filter(o => o.OrderStatus === 4).length,
-                Pending: orders.filter(o => [2, 5].includes(o.OrderStatus)).length,
+                Completed: delivered.length,
+                Cancelled: orders.filter(o => [3, 4].includes(o.OrderStatus)).length,
+                CancelledByCustomer: orders.filter(o => o.OrderStatus === 4).length,
+                CancelledByStore: orders.filter(o => o.OrderStatus === 3).length,
+                Returned: orders.filter(o => o.OrderStatus === 6).length,
+                Pending: orders.filter(o => ![1, 3, 4, 6].includes(o.OrderStatus)).length,
                 Scheduled: orders.filter(o => o.ScheduleStatus === 'Scheduled').length,
-                TotalSpend: orders.filter(o => o.OrderStatus === 1).reduce((sum, o) => sum + parseFloat(o.GrandTotal || 0), 0)
+                TotalSpend: Math.round(totalSpend * 100) / 100,
+                AverageOrderValue: delivered.length ? Math.round((totalSpend / delivered.length) * 100) / 100 : 0,
+                FirstOrderAt: orders.length ? orders[orders.length - 1].CreatedAt : null,
+                LastOrderAt: orders.length ? orders[0].CreatedAt : null,
             };
+
+            // Cart right now, and carts left without ordering.
+            const currentCart = await q(`
+                SELECT ci.ProductID, ci.VariantID, ci.Quantity, p.ProductName, v.metricvalue, v.metrictype,
+                       v.OfferPrice, v.Price AS MRP, ci.UpdatedAt
+                  FROM Carts c
+                  JOIN CartItems ci ON ci.CartID = c.CartID
+                  LEFT JOIN Products p ON p.ProductID = ci.ProductID
+                  LEFT JOIN ProductVariants v ON v.VariantID = ci.VariantID
+                 WHERE c.UserID = ? AND c.isOrderLinked = 1
+                 ORDER BY ci.UpdatedAt DESC`, [UserID]);
+            const abandonedCarts = (await q(`
+                SELECT LogID, CartID, TotalAmount, ItemCount, Status, ReminderCount, ReminderSentAt, RecoveredAt, CreatedAt, CartSnapshot
+                  FROM AbandonedCartLogs WHERE UserID = ? ORDER BY CreatedAt DESC LIMIT 50`, [UserID]))
+                .map((a) => {
+                    let items = [];
+                    try {
+                        const snap = typeof a.CartSnapshot === 'string' ? JSON.parse(a.CartSnapshot) : a.CartSnapshot;
+                        items = (Array.isArray(snap) ? snap : (snap && snap.items) || []).slice(0, 20)
+                            .map((i) => ({ ProductName: i.ProductName || i.name || '', Quantity: i.Quantity || i.quantity || 0 }));
+                    } catch (e) { /* unreadable snapshot */ }
+                    const { CartSnapshot, ...rest } = a;
+                    return { ...rest, Items: items };
+                });
+
+            // Requests and messages from this customer.
+            const photoOrders = await q(`
+                SELECT RequestID, RequestCode, RequestStatus, GrandTotal, CreatedOrderID, CreatedAt
+                  FROM PhotoOrderRequests WHERE UserID = ? ORDER BY CreatedAt DESC LIMIT 50`, [UserID]);
+            const enquiries = await q(`
+                SELECT EnquiryID, Subject, Category, Status, CreatedAt FROM CustomerEnquiries WHERE UserID = ? ORDER BY CreatedAt DESC LIMIT 50`, [UserID]);
+            const productRequests = await q(`
+                SELECT RequestID, ProductName, Brand, SizeOrQty, Status, CreatedAt FROM ProductRequests WHERE UserID = ? ORDER BY CreatedAt DESC LIMIT 50`, [UserID]);
+            const feedback = await q(`
+                SELECT FeedbackID, OrderID, Rating, COALESCE(Message, Comments) AS Message, Status, RewardStatus, RewardAmount, CreatedAt
+                  FROM Feedback WHERE UserID = ? ORDER BY CreatedAt DESC LIMIT 50`, [UserID]);
+            const recentSearches = await q(`
+                SELECT Keyword, ResultCount, CreatedAt FROM SearchLogs WHERE UserID = ? ORDER BY CreatedAt DESC LIMIT 30`, [UserID]);
 
             // 4. Wallet Ledger with Derived Running Balance
             const walletQuery = "SELECT * FROM Wallets WHERE UserID = ? ORDER BY CreatedAt ASC";
@@ -416,8 +470,8 @@ const usercontroller = {
 
             // 7. Device & Activity signals
             const deviceInfo = {
-                AppInstalled: !!profile.FCMToken && profile.FCMToken !== '',
-                FCMTokenConfigured: !!profile.FCMToken,
+                AppInstalled: hasPushToken,
+                FCMTokenConfigured: hasPushToken,
                 LastActive: profile.NotificationLastSeen || profile.UpdatedAt || profile.CreatedAt,
                 RegisteredAt: profile.CreatedAt,
                 Status: profile.Status === 1 ? 'Active' : 'Inactive',
@@ -438,7 +492,14 @@ const usercontroller = {
                     ReferredUsers: referredUsers,
                     MyReferralCode: profile.MyReferralCode
                 },
-                DeviceInfo: deviceInfo
+                DeviceInfo: deviceInfo,
+                CurrentCart: currentCart,
+                AbandonedCarts: abandonedCarts,
+                PhotoOrders: photoOrders,
+                Enquiries: enquiries,
+                ProductRequests: productRequests,
+                Feedback: feedback,
+                RecentSearches: recentSearches
             });
         } catch (err) {
             console.error("Error in fullCustomerDetails:", err);
