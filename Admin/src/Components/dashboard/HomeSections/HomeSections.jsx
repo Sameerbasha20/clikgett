@@ -599,21 +599,21 @@ function HomeSections() {
                         border: "1px solid #E5E7EB",
                         display: "flex",
                         flexWrap: "wrap",
-                        gap: "14px",
-                        alignItems: "center",
-                        justifyContent: "space-between"
+                        gap: "12px",
+                        alignItems: "center"
                     }}>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center", flex: 1 }}>
+                        {/* One row: search grows, filters keep their size, sort sits on the right. */}
+                        <div style={{ display: "flex", flexWrap: "nowrap", gap: "12px", alignItems: "center", flex: "1 1 520px", minWidth: 0 }}>
                             {/* Search */}
-                            <div style={{ position: "relative", minWidth: "260px" }}>
-                                <FaSearch style={{ position: "absolute", left: "12px", top: "12px", color: "#9CA3AF" }} />
+                            <div style={{ position: "relative", flex: "1 1 160px", minWidth: "140px" }}>
+                                <FaSearch style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }} />
                                 <input
                                     type="text"
                                     className="form-control"
                                     placeholder="Search by section title..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    style={{ paddingLeft: "36px", borderRadius: "8px" }}
+                                    style={{ paddingLeft: "36px", borderRadius: "8px", height: "40px" }}
                                 />
                             </div>
 
@@ -622,7 +622,7 @@ function HomeSections() {
                                 className="form-select"
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                style={{ width: "170px", borderRadius: "8px" }}
+                                style={{ flex: "0 0 160px", width: "160px", height: "40px", borderRadius: "8px" }}
                             >
                                 <option value="all">All Statuses</option>
                                 <option value="1">Published & Live</option>
@@ -636,7 +636,7 @@ function HomeSections() {
                                 className="form-select"
                                 value={typeFilter}
                                 onChange={(e) => setTypeFilter(e.target.value)}
-                                style={{ width: "210px", borderRadius: "8px" }}
+                                style={{ flex: "0 0 190px", width: "190px", height: "40px", borderRadius: "8px" }}
                             >
                                 <option value="all">All Section Types</option>
                                 {Object.entries(SECTION_TYPE_CONFIG).map(([key, cfg]) => (
@@ -646,13 +646,13 @@ function HomeSections() {
                         </div>
 
                         {/* Sort Selector */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto", whiteSpace: "nowrap" }}>
                             <span style={{ fontSize: "13px", color: "#6B7280" }}>Sort by:</span>
                             <select
-                                className="form-select form-select-sm"
+                                className="form-select"
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                style={{ width: "140px", borderRadius: "6px" }}
+                                style={{ width: "160px", height: "40px", borderRadius: "8px" }}
                             >
                                 <option value="DisplayOrder">Display Order</option>
                                 <option value="Name">Section Title</option>
@@ -660,7 +660,8 @@ function HomeSections() {
                                 <option value="Status">Status</option>
                             </select>
                             <button
-                                className="btn btn-sm btn-outline-secondary"
+                                className="btn btn-outline-secondary"
+                                style={{ height: "40px", borderRadius: "8px", minWidth: "84px" }}
                                 onClick={() => setSortOrder(sortOrder === "ASC" ? "DESC" : "ASC")}
                                 title="Toggle Sort Order"
                             >

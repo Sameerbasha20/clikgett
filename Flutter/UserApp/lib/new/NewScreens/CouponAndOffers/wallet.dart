@@ -3,6 +3,7 @@ import 'package:fav_app/new/Controllers/profile_controller.dart';
 import 'package:fav_app/new/Controllers/wallet.dart';
 import 'package:fav_app/new/NewModel/wallet.dart';
 import 'package:fav_app/new/NewScreens/Account/account_widgets.dart';
+import 'package:fav_app/new/NewScreens/CouponAndOffers/wallet_balance_card.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:fav_app/new/Services/account_services.dart';
 import 'package:flutter/material.dart';
@@ -119,20 +120,7 @@ class _WalletScreenState extends State<WalletScreen> {
         child: ListView(
           padding: const EdgeInsets.all(12),
           children: [
-            Obx(() => SectionCard(
-                  color: primaryGhost,
-                  child: Row(children: [
-                    const Icon(Icons.account_balance_wallet_rounded, color: primaryDark, size: 34),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('ClikGett Cash balance', style: GoogleFonts.poppins(fontSize: 12.5, color: tColor3)),
-                        Text(rupees(wallet.walletAmount.value),
-                            style: GoogleFonts.poppins(fontSize: 26, fontWeight: FontWeight.w800, color: tColor)),
-                      ]),
-                    ),
-                  ]),
-                )),
+            Obx(() => WalletBalanceCard(balance: wallet.walletAmount.value)),
             SectionCard(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('Add money', style: GoogleFonts.poppins(fontSize: 14.5, fontWeight: FontWeight.w700, color: tColor)),

@@ -279,7 +279,13 @@ class _ProfileState extends State<Profile> {
                 ]),
               ),
               TextButton(
-                onPressed: u == null ? null : () => _push(EditProfile(users: u, profileController: profileController)),
+                onPressed: u == null
+                    ? null
+                    : () async {
+                        await Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => EditProfile(users: u, profileController: profileController)));
+                        _loadSummary(); // a birthday added there shows here straight away
+                      },
                 child: const Text('Edit'),
               ),
             ]),
