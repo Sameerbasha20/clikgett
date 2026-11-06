@@ -5,6 +5,7 @@ import 'package:fav_app/new/Controllers/config_controller.dart';
 import 'package:fav_app/new/Controllers/searchandrecomend_controller.dart';
 import 'package:fav_app/new/NewModel/promocodes_model.dart';
 import 'package:fav_app/new/NewModel/youmaylike_model.dart';
+import 'package:fav_app/new/Services/checkout_services.dart';
 import 'package:fav_app/new/Services/print_store_service.dart';
 import 'package:fav_app/old/Models/Home/cart_model.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,24 @@ import '../Services/common/network_check.dart';
 import 'home_controller.dart';
 
 class CartController extends GetxController {
+  int _billSeq = 0;
+
+  /// Items total as the checkout bill charges it (buy-more packs, flash sales, member
+  /// prices), so the "View cart" bar shows the same amount as checkout, not price x qty.
+  Future<void> syncItemsTotalFromBill() async {
+    final seq = ++_billSeq;
+    double lat = 0, lng = 0;
+    if (Get.isRegistered<HomeController>()) {
+      final home = Get.find<HomeController>();
+      lat = home.latitude.value;
+      lng = home.longitude.value;
+    }
+    final bill = await CheckoutServices.bill(latitude: lat, longitude: lng);
+    if (bill == null || seq != _billSeq || cartItems.isEmpty) return;
+    _ammount(bill.itemsTotal.toString());
+    if (bill.mrpTotal > 0) _totadisammount(bill.mrpTotal.toString());
+  }
+
   final RxBool _isLoading = false.obs;
   RxBool get isLoading => _isLoading;
   CartModel? cartModel;
@@ -165,6 +184,7 @@ class CartController extends GetxController {
 
                                     _cartId(cart?.cartId);
                                     _quantity(cartItems.length);
+                                    syncItemsTotalFromBill();
                                     productsApi(
                                         categoryController: categoryController,
                                         context: context);

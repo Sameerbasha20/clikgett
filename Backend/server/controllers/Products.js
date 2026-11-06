@@ -11,6 +11,11 @@ const Products_s3="http://clikgett-media.local/Products/"
 const Categories_s3 = "http://clikgett-media.local/Categories/"
 
 // LIKE pattern for a search term (%, _ and \ escaped). "snacks" also matches "snack".
+/** Each word of the search as its own LIKE pattern ("freedom bottle" -> both words, any order). */
+function searchWords(term) {
+    return String(term || '').toLowerCase().split(/\s+/).filter(Boolean).slice(0, 6).map(searchLike);
+}
+
 function searchLike(term) {
     const t = String(term || '').trim().replace(/s$/i, '');
     return `%${t.replace(/[\\%_]/g, (c) => '\\' + c)}%`;
@@ -158,16 +163,20 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
             // The search text is a bound parameter (quote-escaping alone let "\" break out of the string).
             const term = String(req.params.SearchString || '').trim();
             const like = searchLike(term);
+            // Every word must appear somewhere (name, other names, category), in any order.
+            const words = searchWords(term);
+            const haystack = "CONCAT_WS(' ', p.ProductName, p.SearchKeywords, c.CategoryName, sc.SubCategoryName)";
+            const wordSql = words.length ? words.map(() => haystack + ' LIKE ?').join(' AND ') : '1=0';
             // Product names first, then products in a matching category ("snacks" -> Snacks & Namkeen).
             query=`select p.*, PV.* from Products p inner join ProductVariants PV on PV.ProductID=p.ProductID
             LEFT JOIN Categories c ON c.CategoryID = p.CategoryID
             LEFT JOIN SubCategories sc ON sc.SubCategoryID = p.SubCategoryID
-            WHERE p.status=1 and PV.Status=1 and (p.ProductName LIKE ? OR p.SearchKeywords LIKE ? OR c.CategoryName LIKE ? OR sc.SubCategoryName LIKE ?)
+            WHERE p.status=1 and PV.Status=1 and (p.ProductName LIKE ? OR p.SearchKeywords LIKE ? OR c.CategoryName LIKE ? OR sc.SubCategoryName LIKE ? OR (${wordSql}))
             group by p.ProductID order by
              CASE WHEN p.ProductName LIKE ? THEN 0 WHEN p.SearchKeywords LIKE ? THEN 1 ELSE 2 END,
              CASE WHEN PV.AvailableQty = 0 THEN 1 ELSE 0 END,
              CONCAT(p.ProductName, '', PV.AvailableQty) ASC`
-            let results = await CommonController.getproducts(query, [like, like, like, like, like, like]);
+            let results = await CommonController.getproducts(query, [like, like, like, like, ...words, like, like]);
             const categories = await matchingCategories(term);
 
             // Log search query for analytics

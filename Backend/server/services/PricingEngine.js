@@ -706,7 +706,7 @@ const PricingEngine = {
                 Price: parseFloat(u.Price || 0),
                 OfferPrice: parseFloat(u.OfferPrice || u.Price || 0),
                 UnlockPrice: unlockPrice,
-                Unit: u.metrictype ? `${u.metricvalue} ${u.metrictype}` : (u.Unit || ''),
+                Unit: u.metrictype ? `${parseFloat(u.metricvalue)} ${u.metrictype}` : (u.Unit || ''),
                 IsUnlocked: isUnlocked,
                 AmountNeeded: gap,
                 MaxQtyPerOrder: Math.max(1, parseInt(u.MaxQtyPerOrder, 10) || 1),

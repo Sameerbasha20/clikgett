@@ -142,13 +142,16 @@ class _PackOptionsState extends State<PackOptions> {
         const SizedBox(height: 10),
         Obx(() {
           final inCart = cart.cartItems.firstWhereOrNull((c) => c.productId == productId && c.variantId == variantId)?.quantity ?? 0;
+          // Equal-height cards, aligned at the top, whatever each one shows.
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(children: [
+            child: IntrinsicHeight(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               for (final p in packs)
                 _card(context, p,
                     selected: (_busy ? _picked : (inCart > 0 ? inCart : _picked)) == p.quantity, disabled: maxQty > 0 && p.quantity > maxQty),
-            ]),
+              ]),
+            ),
           );
         }),
       ]),
@@ -161,9 +164,9 @@ class _PackOptionsState extends State<PackOptions> {
       onTap: disabled ? null : () => _choose(context, p),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        width: 150,
+        width: 156,
         margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
+        padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
         decoration: BoxDecoration(
           color: selected ? primaryGhost : white,
           borderRadius: BorderRadius.circular(14),
@@ -171,11 +174,20 @@ class _PackOptionsState extends State<PackOptions> {
         ),
         child: Opacity(
           opacity: disabled ? 0.45 : 1,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(p.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(
+                child: Text(p.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
+              ),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 180),
+                opacity: selected ? 1 : 0,
+                child: const Icon(Icons.check_circle_rounded, size: 18, color: primary),
+              ),
+            ]),
             const SizedBox(height: 4),
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Text(shelfPrice(p.total), style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w800, color: tColor)),

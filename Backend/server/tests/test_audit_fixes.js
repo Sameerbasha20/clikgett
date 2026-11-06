@@ -136,6 +136,12 @@ const TEST_MOBILE = '9999900088';
         check('search returns variants and the category', hit && Array.isArray(hit.ProductVariants) && hit.ProductVariants.length > 0 && 'CategoryName' in hit);
         check('search answers under Products, Product and data', r.json && r.json.Product && r.json.data && r.json.Product.length === r.json.Products.length);
 
+        // Customer search: every word, any order ("freedom bottle" finds "Freedom ... Oil Bottle").
+        r = await call('GET', `/products/search/${encodeURIComponent(`${words[1]} ${words[0]}`)}`, null);
+        check('customer search matches words in any order', r.json && (r.json.Products || []).some((p) => p.ProductID === prod.ProductID));
+        r = await call('GET', `/products/search/${encodeURIComponent(`zzqqxx ${words[0]}`)}`, null);
+        check('customer search needs every word to match', r.json && (r.json.Products || []).length === 0);
+
         // ---------- Auth before validation, clearer errors, removed endpoints ----------
         for (const p of ['/categories/addcategory', '/subcategories/add', '/adminproducts/addproduct', '/adminproducts/addvariant', '/promocodes/admin/add']) {
             r = await call('POST', p, null, {});
