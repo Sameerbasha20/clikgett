@@ -11,7 +11,7 @@ const _ink = Color(0xFF0F172A);
 String _rs(double v) => '${Constants.rupee}${v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
 
 /// ClikGett Cash balance: green card with drifting waves, a wallet with popping coins,
-/// the amount counting up, and two tiles explaining how the cash is used.
+/// and the amount counting up.
 class WalletBalanceCard extends StatefulWidget {
   final double balance;
   const WalletBalanceCard({super.key, required this.balance});
@@ -43,11 +43,7 @@ class _WalletBalanceCardState extends State<WalletBalanceCard> with SingleTicker
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Column(children: [
-        _balance(),
-        const SizedBox(height: 10),
-        _features(context),
-      ]),
+      child: _balance(),
     );
   }
 
@@ -145,143 +141,6 @@ class _WalletBalanceCardState extends State<WalletBalanceCard> with SingleTicker
 
   Widget _dash(double h) => Container(
       width: 3.5, height: h, decoration: BoxDecoration(color: const Color(0xFFFACC15), borderRadius: BorderRadius.circular(2)));
-
-  Widget _features(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: IntrinsicHeight(
-        child: Row(children: [
-          Expanded(
-            child: _FeatureTile(
-              icon: Icons.touch_app_rounded,
-              top: 'One-Tap',
-              bottom: 'Payment',
-              tint: _fresh,
-              dark: _deep,
-              bg: const [Color(0xFFF0FDF4), Color(0xFFDCFCE7)],
-              onTap: () => _explain(context, '👆', 'One-tap payment',
-                  'Use your ClikGett Cash at checkout with one tap. No UPI app, no card, no waiting. If your cash covers the order, there is nothing to pay at the door.'),
-            ),
-          ),
-          Container(width: 1, margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10), color: const Color(0xFFCBD5E1)),
-          Expanded(
-            child: _FeatureTile(
-              icon: Icons.currency_exchange_rounded,
-              top: 'Instant',
-              bottom: 'Refund',
-              tint: const Color(0xFFEA580C),
-              dark: const Color(0xFF9A3412),
-              bg: const [Color(0xFFFFF7ED), Color(0xFFFFEDD5)],
-              onTap: () => _explain(context, '⚡', 'Instant refunds',
-                  'When an order is cancelled or an item is removed, the money comes back to your ClikGett Cash straight away, ready for your next order.'),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-
-  void _explain(BuildContext context, String emoji, String title, String body) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 18),
-            Text(emoji, style: const TextStyle(fontSize: 40)),
-            const SizedBox(height: 8),
-            Text(title, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: _ink)),
-            const SizedBox(height: 6),
-            Text(body, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13.5, color: const Color(0xFF475569), height: 1.5)),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _fresh,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                child: Text('Got it', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-}
-
-class _FeatureTile extends StatelessWidget {
-  final IconData icon;
-  final String top;
-  final String bottom;
-  final Color tint;
-  final Color dark;
-  final List<Color> bg;
-  final VoidCallback onTap;
-  const _FeatureTile(
-      {required this.icon, required this.top, required this.bottom, required this.tint, required this.dark, required this.bg, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          padding: const EdgeInsets.fromLTRB(10, 12, 8, 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: bg),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: tint.withValues(alpha: 0.25)),
-          ),
-          child: Row(children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [tint.withValues(alpha: 0.85), tint]),
-                boxShadow: [BoxShadow(color: tint.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))],
-              ),
-              child: Icon(icon, color: Colors.white, size: 21),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(top, style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w600, color: _ink, height: 1.15)),
-                  Text(bottom, style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w800, color: dark, height: 1.15)),
-                ]),
-              ),
-            ),
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.8), shape: BoxShape.circle),
-              child: Icon(Icons.chevron_right_rounded, size: 18, color: dark),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
 }
 
 /// White wallet with a clasp and two gold ₹ coins bobbing out of it.
