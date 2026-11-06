@@ -12,6 +12,7 @@ const _orangeDark = Color(0xFFEA580C);
 /// Shown on a delivered order: "Delivered in just 8 mins!" when it arrived by the promised
 /// time, or "Delivered in 32 mins · Sorry for the delay!" when it was late.
 /// Returns nothing for scheduled orders or when the times are missing.
+/// Without a promised time, anything over [lateAfterMinutes] counts as late.
 class DeliveredTimeBanner extends StatefulWidget {
   final DateTime? placedAt;
   final DateTime? deliveredAt;
@@ -26,19 +27,48 @@ class DeliveredTimeBanner extends StatefulWidget {
     this.scheduled = false,
   });
 
+  static const lateAfterMinutes = 30;
+
+  /// "32 mins", "1 hr 15 mins", "5 days".
+  static String durationText(int mins) => _duration(mins).text;
+
   /// Minutes from order to delivery (at least 1), or null when unknown.
   int? get minutes {
     if (scheduled || placedAt == null || deliveredAt == null) return null;
     final m = deliveredAt!.difference(placedAt!).inSeconds / 60;
-    if (m <= 0 || m > 24 * 60) return null;
+    if (m <= 0) return null;
     return math.max(1, m.round());
   }
 
   /// Late = delivered more than a minute after the promised time.
-  bool get late => promisedBy != null && deliveredAt != null && deliveredAt!.isAfter(promisedBy!.add(const Duration(minutes: 1)));
+  bool get late {
+    final m = minutes;
+    if (m == null) return false;
+    if (promisedBy == null) return m > lateAfterMinutes;
+    return deliveredAt!.isAfter(promisedBy!.add(const Duration(minutes: 1)));
+  }
 
   @override
   State<DeliveredTimeBanner> createState() => _DeliveredTimeBannerState();
+}
+
+/// Big number and unit for the stopwatch face, plus the sentence form.
+class _Duration {
+  final int value;
+  final String unit;
+  final String text;
+  const _Duration(this.value, this.unit, this.text);
+}
+
+_Duration _duration(int mins) {
+  String plural(int n, String w) => '$n $w${n == 1 ? '' : 's'}';
+  if (mins < 60) return _Duration(mins, mins == 1 ? 'min' : 'mins', plural(mins, 'min'));
+  if (mins < 24 * 60) {
+    final h = mins ~/ 60, m = mins % 60;
+    return _Duration(h, h == 1 ? 'hr' : 'hrs', m == 0 ? plural(h, 'hr') : '${plural(h, 'hr')} ${plural(m, 'min')}');
+  }
+  final d = (mins / (24 * 60)).round();
+  return _Duration(d, d == 1 ? 'day' : 'days', plural(d, 'day'));
 }
 
 class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerProviderStateMixin {
@@ -177,7 +207,8 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
     return AnimatedBuilder(
       animation: Listenable.merge([_intro, _loop]),
       builder: (_, __) {
-        final shown = (mins * sweep.value).round();
+        final d = _duration(mins);
+        final shown = (d.value * sweep.value).round();
         final tick = math.sin(_loop.value * math.pi * 2) * 0.05;
         return Stack(clipBehavior: Clip.none, children: [
           Positioned(
@@ -195,7 +226,7 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
                     child: Center(
                       child: Column(mainAxisSize: MainAxisSize.min, children: [
                         Text('$shown', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: _ink, height: 1)),
-                        Text('mins', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic, color: _ink, height: 1.1)),
+                        Text(d.unit, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic, color: _ink, height: 1.1)),
                       ]),
                     ),
                   ),
@@ -230,7 +261,7 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
     return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
       _chip(),
       const SizedBox(height: 6),
-      Text('Delivered in $mins min${mins == 1 ? '' : 's'}',
+      Text('Delivered in ${_duration(mins).text}',
           style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, fontStyle: FontStyle.italic, color: _ink, height: 1.15)),
       const SizedBox(height: 6),
       AnimatedBuilder(

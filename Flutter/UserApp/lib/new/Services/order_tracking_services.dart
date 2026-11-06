@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fav_app/new/Constants/Constants.dart';
@@ -233,6 +234,14 @@ class TrackedOrder {
     if (s == OrderStatus.received) return createdAt;
     return null;
   }
+}
+
+/// Pinged when a push notification arrives while the app is open, so an open
+/// order screen refreshes straight away instead of waiting for its next poll.
+class OrderLiveUpdates {
+  static final StreamController<void> _pings = StreamController<void>.broadcast();
+  static Stream<void> get stream => _pings.stream;
+  static void ping() => _pings.add(null);
 }
 
 class ActionResult {

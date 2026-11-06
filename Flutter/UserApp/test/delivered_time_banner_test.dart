@@ -26,4 +26,24 @@ void main() {
     expect(DeliveredTimeBanner(placedAt: null, deliveredAt: placed, promisedBy: null).minutes, isNull);
     expect(DeliveredTimeBanner(placedAt: placed, deliveredAt: placed.subtract(const Duration(minutes: 1)), promisedBy: null).minutes, isNull);
   });
+
+  test('a delivery that took days is still shown, as late', () {
+    final b = DeliveredTimeBanner(placedAt: placed, deliveredAt: placed.add(const Duration(days: 4, hours: 23)), promisedBy: placed.add(const Duration(minutes: 20)));
+    expect(b.minutes, isNotNull);
+    expect(b.late, isTrue);
+    expect(DeliveredTimeBanner.durationText(b.minutes!), '5 days');
+  });
+
+  test('without a promised time, over 30 minutes counts as late', () {
+    expect(DeliveredTimeBanner(placedAt: placed, deliveredAt: placed.add(const Duration(minutes: 45)), promisedBy: null).late, isTrue);
+    expect(DeliveredTimeBanner(placedAt: placed, deliveredAt: placed.add(const Duration(minutes: 12)), promisedBy: null).late, isFalse);
+  });
+
+  test('durations read naturally', () {
+    expect(DeliveredTimeBanner.durationText(1), '1 min');
+    expect(DeliveredTimeBanner.durationText(32), '32 mins');
+    expect(DeliveredTimeBanner.durationText(60), '1 hr');
+    expect(DeliveredTimeBanner.durationText(75), '1 hr 15 mins');
+    expect(DeliveredTimeBanner.durationText(150), '2 hrs 30 mins');
+  });
 }

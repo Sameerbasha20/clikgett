@@ -17,6 +17,7 @@ import 'package:fav_app/new/NewScreens/Support/Support.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:fav_app/new/Services/order_tracking_services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -43,6 +44,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
   bool _busy = false;
   Timer? _poll;
   Timer? _tick;
+  StreamSubscription<void>? _pushes;
+  bool _fetching = false;
+  bool _inBackground = false;
   int _cancelLeft = 0;
   bool _showAllItems = false;
   bool _feedbackChecked = false;
@@ -51,6 +55,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _pushes = OrderLiveUpdates.stream.listen((_) {
+      // A push can arrive a moment before the server has the new status; check again shortly too.
+      _load();
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) _load();
+      });
+    });
     _load();
   }
 
@@ -59,6 +70,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
     WidgetsBinding.instance.removeObserver(this);
     _poll?.cancel();
     _tick?.cancel();
+    _pushes?.cancel();
     super.dispose();
   }
 
@@ -66,33 +78,52 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Only poll while the screen is visible.
     if (state == AppLifecycleState.resumed) {
+      _inBackground = false;
       _load();
     } else if (state == AppLifecycleState.paused) {
+      _inBackground = true;
       _poll?.cancel();
     }
   }
 
+  /// Polls every 10 s while the order is moving (5 s after a failed fetch), so each
+  /// phase shows up on its own. A failed fetch never stops the polling.
+  void _scheduleNext({bool failed = false}) {
+    _poll?.cancel();
+    final current = _order;
+    if (!mounted || _inBackground || (current != null && OrderStatus.isFinal(current.status))) return;
+    _poll = Timer(Duration(seconds: failed ? 5 : 10), _load);
+  }
+
   Future<void> _load() async {
-    final order = await OrderTrackingServices.fetch(widget.orderNo);
+    if (_fetching) return;
+    _fetching = true;
+    TrackedOrder? order;
+    try {
+      order = await OrderTrackingServices.fetch(widget.orderNo);
+    } finally {
+      _fetching = false;
+    }
     if (!mounted) return;
     final previous = _order?.status;
     setState(() {
       _loading = false;
       if (order != null) _order = order;
     });
-    if (order == null) return;
+    if (order == null) {
+      _scheduleNext(failed: true);
+      return;
+    }
 
     if (previous != null && previous != order.status) {
+      HapticFeedback.lightImpact();
       // Keep the home strip / orders list in step with this screen.
       Get.find<OrdersController>().getcurrentorder(context: context);
       if (OrderStatus.isCancelled(order.status)) Get.find<WalletController>().getWallet(context: context);
     }
 
     _startCancelCountdown(order.cancelSecondsLeft);
-    _poll?.cancel();
-    if (!OrderStatus.isFinal(order.status)) {
-      _poll = Timer(const Duration(seconds: 15), _load);
-    }
+    _scheduleNext();
     if (order.status == OrderStatus.delivered) _maybeAskFeedback(order);
   }
 

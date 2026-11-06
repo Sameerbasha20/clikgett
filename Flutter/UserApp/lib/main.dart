@@ -19,6 +19,7 @@ import 'package:provider/provider.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'new/Constants/notifications.dart';
 import 'new/NewModel/push_notification.dart';
+import 'new/Services/order_tracking_services.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -61,6 +62,8 @@ void notificationHandler() async {
   );
 
   FirebaseMessaging.onMessage.listen((event) async {
+    // Order status pushes: refresh any open tracking screen now.
+    OrderLiveUpdates.ping();
     if (event.data.isNotEmpty) {
       PushNotificationsModel pushNotificationsModel =
           PushNotificationsModel.fromJson(event.data);
