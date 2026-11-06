@@ -87,7 +87,8 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
     final mins = widget.minutes;
     if (mins == null) return const SizedBox.shrink();
     final late = widget.late;
-    return Container(
+    final enter = CurvedAnimation(parent: _intro, curve: const Interval(0, 0.35, curve: Curves.easeOutCubic));
+    final card = Container(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -100,15 +101,69 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
         border: Border.all(color: late ? const Color(0xFFFCD9A0) : const Color(0xFFBBF7D0)),
       ),
       padding: const EdgeInsets.fromLTRB(10, 14, 14, 14),
-      child: Row(children: [
-        SizedBox(width: 104, height: 96, child: late ? _stopwatch(mins) : _scooter()),
-        Container(width: 1, height: 80, margin: const EdgeInsets.symmetric(horizontal: 10), color: Colors.black.withValues(alpha: 0.08)),
-        Expanded(child: late ? _lateText(mins) : _onTimeText(mins)),
+      child: Stack(clipBehavior: Clip.none, children: [
+        if (late) Positioned(right: -2, top: -6, child: _twinkles()),
+        Row(children: [
+          SizedBox(width: 104, height: 96, child: late ? _stopwatch(mins) : _scooter()),
+          Container(width: 1, height: 80, margin: const EdgeInsets.symmetric(horizontal: 10), color: Colors.black.withValues(alpha: 0.08)),
+          Expanded(child: late ? _lateText(mins) : _onTimeText(mins)),
+        ]),
       ]),
+    );
+    return AnimatedBuilder(
+      animation: enter,
+      child: card,
+      builder: (_, child) => Opacity(
+        opacity: enter.value,
+        child: Transform.translate(offset: Offset(0, 18 * (1 - enter.value)), child: child),
+      ),
     );
   }
 
-  Widget _chip() => Container(
+  /// Fades and slides a line of text in, one after another.
+  Widget _rise(double from, Widget child) {
+    final a = CurvedAnimation(parent: _intro, curve: Interval(from, math.min(1.0, from + 0.3), curve: Curves.easeOutCubic));
+    return AnimatedBuilder(
+      animation: a,
+      child: child,
+      builder: (_, c) => Opacity(opacity: a.value, child: Transform.translate(offset: Offset(14 * (1 - a.value), 0), child: c)),
+    );
+  }
+
+  /// Three yellow dashes in the corner that flicker in turn.
+  Widget _twinkles() {
+    return AnimatedBuilder(
+      animation: _loop,
+      builder: (_, __) => SizedBox(
+        width: 30,
+        height: 30,
+        child: Stack(children: [
+          for (var i = 0; i < 3; i++)
+            Builder(builder: (_) {
+              final phase = (_loop.value + i / 3) % 1;
+              final glow = math.sin(phase * math.pi);
+              return Positioned(
+                left: 6 + i * 7.0,
+                top: 14 - i * 6.0,
+                child: Opacity(
+                  opacity: 0.35 + 0.65 * glow,
+                  child: Transform.rotate(
+                    angle: -0.9 + i * 0.6,
+                    child: Container(
+                      width: 4,
+                      height: 9 + 4 * glow,
+                      decoration: BoxDecoration(color: const Color(0xFFFBBF24), borderRadius: BorderRadius.circular(2)),
+                    ),
+                  ),
+                ),
+              );
+            }),
+        ]),
+      ),
+    );
+  }
+
+  Widget _chip() => FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         decoration: BoxDecoration(color: _green, borderRadius: BorderRadius.circular(20)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -116,7 +171,7 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
           const SizedBox(width: 4),
           Text('Delivered', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white)),
         ]),
-      );
+      ));
 
   // ---------- On time ----------
 
@@ -220,7 +275,7 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
                 width: 84,
                 height: 92,
                 child: CustomPaint(
-                  painter: _StopwatchPainter(sweep.value),
+                  painter: _StopwatchPainter(sweep.value, hand: _intro.value >= 1 ? _loop.value : sweep.value),
                   child: Padding(
                     padding: const EdgeInsets.only(top: 16),
                     child: Center(
@@ -234,12 +289,33 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
               ),
             ),
           ),
-          // The ClikGett box arriving at the corner.
+          // Orange sparks bursting from the stopwatch, as if it's ringing.
+          for (var i = 0; i < 4; i++)
+            Builder(builder: (_) {
+              final phase = (_loop.value * 1.5 + i * 0.25) % 1;
+              final a = -math.pi * 0.95 + i * 0.3 + (i > 1 ? math.pi * 0.55 : 0);
+              final r = 46 + 8 * phase;
+              return Positioned(
+                left: 48 + math.cos(a) * r - 2,
+                top: 56 + math.sin(a) * r - 5,
+                child: Opacity(
+                  opacity: ((1 - phase) * sweep.value).clamp(0.0, 1.0),
+                  child: Transform.rotate(
+                    angle: a + math.pi / 2,
+                    child: Container(width: 3.5, height: 9, decoration: BoxDecoration(color: _orangeDark, borderRadius: BorderRadius.circular(2))),
+                  ),
+                ),
+              );
+            }),
+          // The ClikGett box arriving at the corner, then hopping.
           Positioned(
             right: -2,
             bottom: -2,
             child: Transform.translate(
-              offset: Offset(0, (1 - Curves.easeOutBack.transform(((_intro.value - 0.4) / 0.6).clamp(0.0, 1.0))) * 30),
+              offset: Offset(
+                  0,
+                  (1 - Curves.easeOutBack.transform(((_intro.value - 0.4) / 0.6).clamp(0.0, 1.0))) * 30 -
+                      (_intro.value >= 1 ? math.max(0.0, math.sin(_loop.value * math.pi * 2)) * 4 : 0)),
               child: Container(
                 width: 34,
                 height: 28,
@@ -259,17 +335,37 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
 
   Widget _lateText(int mins) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-      _chip(),
+      _rise(0.15, _chip()),
       const SizedBox(height: 6),
-      Text('Delivered in ${_duration(mins).text}',
-          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, fontStyle: FontStyle.italic, color: _ink, height: 1.15)),
+      _rise(0.25, Text('Delivered in ${_duration(mins).text}',
+          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, fontStyle: FontStyle.italic, color: _ink, height: 1.15))),
       const SizedBox(height: 6),
-      AnimatedBuilder(
+      _rise(0.4, FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: AnimatedBuilder(
         animation: _loop,
         builder: (_, child) => Transform.scale(
-          scale: 1 + math.sin(_loop.value * math.pi * 2) * 0.025,
+          scale: 1 + math.sin(_loop.value * math.pi * 2) * 0.04,
           alignment: Alignment.centerLeft,
-          child: child,
+          child: Stack(children: [
+            child!,
+            // Light sweeping across the pill.
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: FractionalTranslation(
+                  translation: Offset(-1.2 + 2.4 * _loop.value, 0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [
+                        Colors.white.withValues(alpha: 0),
+                        Colors.white.withValues(alpha: 0.6),
+                        Colors.white.withValues(alpha: 0),
+                      ], stops: const [0.35, 0.5, 0.65]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ]),
         ),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
@@ -280,10 +376,10 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
             Text('Sorry for the delay!', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: _orangeDark)),
           ]),
         ),
-      ),
+      ))),
       const SizedBox(height: 6),
-      Text('We appreciate your patience and thank you for shopping with ClikGett.',
-          style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF334155), height: 1.3)),
+      _rise(0.55, Text('We appreciate your patience and thank you for shopping with ClikGett.',
+          style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF334155), height: 1.3))),
     ]);
   }
 }
@@ -291,7 +387,8 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
 /// Orange stopwatch: crown, face, and an arc that fills as the minutes count up.
 class _StopwatchPainter extends CustomPainter {
   final double t;
-  _StopwatchPainter(this.t);
+  final double hand;
+  _StopwatchPainter(this.t, {this.hand = 0});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -332,8 +429,16 @@ class _StopwatchPainter extends CustomPainter {
         ..strokeWidth = 6
         ..strokeCap = StrokeCap.round,
     );
+    // Second hand, drawn faintly behind the numbers.
+    final a = -math.pi / 2 + hand * math.pi * 2;
+    final handPaint = Paint()
+      ..color = const Color(0xFFEA580C).withValues(alpha: 0.35)
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(c, c + Offset(math.cos(a), math.sin(a)) * (r - 12), handPaint);
+    canvas.drawCircle(c, 3, handPaint);
   }
 
   @override
-  bool shouldRepaint(covariant _StopwatchPainter old) => old.t != t;
+  bool shouldRepaint(covariant _StopwatchPainter old) => old.t != t || old.hand != hand;
 }

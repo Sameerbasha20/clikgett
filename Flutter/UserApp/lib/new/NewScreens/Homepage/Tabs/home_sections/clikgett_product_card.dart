@@ -1,4 +1,6 @@
 import 'package:fav_app/new/NewScreens/Widgets/price_compare_tag.dart';
+import 'package:fav_app/new/NewScreens/Deals/unlock_price_tag.dart';
+import 'package:fav_app/new/Services/unlock_deals_service.dart';
 import 'package:fav_app/new/Constants/stock_helper.dart';
 import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/colors.dart';
@@ -402,22 +404,33 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                         ),
                       ),
                     ),
-                    if (memberPrice != null || dealPrice != null || bulkHint != null || product.priceCompareLowerPct != null) ...[
-                      const SizedBox(height: 3),
-                      SizedBox(
-                        height: 16,
-                        child: memberPrice != null
-                            ? const _MemberChip()
-                            : dealPrice != null
-                                ? _DealChip(price: dealPrice, ends: _dealEnds, limit: widget.product.deal?.maxQtyPerOrder)
-                                : bulkHint == null
-                                ? PriceCompareTag(percent: product.priceCompareLowerPct!, fontSize: 10)
-                                : Text(bulkHint,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: primaryDark)),
-                      ),
-                    ],
+                    // One offer tag: member price, flash sale, unlock deal, bulk offer, then price compare.
+                    Obx(() {
+                      UnlockDealsStore.page.value; // always watched, so Obx has something to follow
+                      final unlockChip = memberPrice == null && dealPrice == null
+                          ? UnlockPriceChip.forVariant(selectedVariant?.variantId)
+                          : null;
+                      if (memberPrice == null && dealPrice == null && unlockChip == null && bulkHint == null && product.priceCompareLowerPct == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: SizedBox(
+                          height: 16,
+                          child: memberPrice != null
+                              ? const _MemberChip()
+                              : dealPrice != null
+                                  ? _DealChip(price: dealPrice, ends: _dealEnds, limit: widget.product.deal?.maxQtyPerOrder)
+                                  : unlockChip ??
+                                      (bulkHint == null
+                                          ? PriceCompareTag(percent: product.priceCompareLowerPct!, fontSize: 10)
+                                          : Text(bulkHint,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: primaryDark))),
+                        ),
+                      );
+                    }),
                     const Spacer(),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,

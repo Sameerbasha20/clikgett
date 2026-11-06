@@ -1,3 +1,4 @@
+import 'package:fav_app/new/NewScreens/Deals/unlock_price_tag.dart';
 import 'package:fav_app/new/NewScreens/Widgets/price_compare_tag.dart';
 // ignore_for_file: prefer_const_constructors
 import 'package:fav_app/new/Constants/number_format.dart';
@@ -427,6 +428,8 @@ class _ItemDescriptionState extends State<ItemDescription> {
             padding: const EdgeInsets.only(top: 4),
             child: PriceCompareTag(percent: categoryController.productsDetails!.priceCompareLowerPct!, fontSize: 13),
           ),
+        // "Get it for ₹896 · shop for ₹599" when this pack is an unlock deal.
+        UnlockPriceCard(variantId: categoryController.varientID.value),
         if (StockHelper.isLowStock(availableQty))
           LowStockBadge(availableQty: availableQty),
       ],

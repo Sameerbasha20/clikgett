@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fav_app/new/Constants/Constants.dart';
+import 'package:fav_app/new/Controllers/cart_controller.dart';
 import 'package:fav_app/new/Services/common/intercepter.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart';
 import 'package:http_interceptor/http/intercepted_client.dart';
 
@@ -105,7 +108,7 @@ class UnlockDealsService {
           .map((e) => UnlockDeal.fromJson(Map<String, dynamic>.from(e)))
           .toList();
       final next = data['NextUnlock'];
-      return UnlockDealsPage(
+      final page = UnlockDealsPage(
         deals,
         nextAmountNeeded: next is Map ? _d(next['AmountNeeded']) : null,
         nextUnlockPrice: next is Map ? _d(next['UnlockPrice']) : null,
@@ -115,9 +118,60 @@ class UnlockDealsService {
         amountNeeded: _d(data['AmountNeeded']),
         unlocked: data['Unlocked'] == true,
       );
+      UnlockDealsStore._set(page);
+      return page;
     } catch (e) {
       debugPrint('unlock deals failed: $e');
       return null;
     }
+  }
+}
+
+/// The latest deals, shared by every product card and product page so each one can show
+/// "🔒 ₹896 · Shop for ₹599". Loaded once, refreshed when the cart changes.
+class UnlockDealsStore {
+  static final Rxn<UnlockDealsPage> page = Rxn<UnlockDealsPage>();
+  static DateTime? _loadedAt;
+  static bool _loading = false;
+  static Timer? _debounce;
+  static Worker? _cartWatch;
+
+  static void _set(UnlockDealsPage p) {
+    page.value = p;
+    _loadedAt = DateTime.now();
+  }
+
+  /// The in-stock deal on this pack, if any.
+  static UnlockDeal? forVariant(int? variantId) {
+    final p = page.value;
+    if (p == null || variantId == null || variantId <= 0) return null;
+    return p.deals.firstWhereOrNull((d) => d.variantId == variantId && d.inStock);
+  }
+
+  /// Loads the deals once (and again after 2 minutes); safe to call from build.
+  static void ensureLoaded() {
+    _watchCart();
+    final at = _loadedAt;
+    if (_loading || (at != null && DateTime.now().difference(at) < const Duration(minutes: 2))) return;
+    refresh();
+  }
+
+  static Future<void> refresh() async {
+    if (_loading) return;
+    _loading = true;
+    try {
+      await UnlockDealsService.load();
+    } finally {
+      _loading = false;
+      _loadedAt ??= DateTime.now(); // a failed load waits for the next window too
+    }
+  }
+
+  static void _watchCart() {
+    if (_cartWatch != null || !Get.isRegistered<CartController>()) return;
+    _cartWatch = ever(Get.find<CartController>().cartItems, (_) {
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 700), refresh);
+    });
   }
 }
