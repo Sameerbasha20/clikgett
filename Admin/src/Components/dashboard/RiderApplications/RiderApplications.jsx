@@ -21,12 +21,13 @@ const VEHICLE = { bike: "🛵 Bike", auto: "🛺 Auto" };
 const when = (d) => (d ? new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "");
 
 /** One private document, fetched with the admin login (it is never a public URL). */
-function DocImage({ id, doc, label, onOpen }) {
+function DocImage({ id, doc, label, onOpen, deleted }) {
     const [src, setSrc] = useState(null);
     const [failed, setFailed] = useState(false);
     useEffect(() => {
         let url = null;
         let alive = true;
+        if (deleted) return undefined;
         fetch(apiUrl(`admin/rider-applications/${id}/document/${doc}`), { headers: authHeader() })
             .then((r) => {
                 if (!r.ok) throw new Error(String(r.status));
@@ -41,11 +42,11 @@ function DocImage({ id, doc, label, onOpen }) {
             alive = false;
             if (url) URL.revokeObjectURL(url);
         };
-    }, [id, doc]);
+    }, [id, doc, deleted]);
     return (
         <button type="button" onClick={() => src && onOpen(src, label)} style={styles.docTile} title={`Open ${label}`}>
             <div style={styles.docImgBox}>
-                {src ? <img src={src} alt={label} style={styles.docImg} /> : <span style={{ color: "#94a3b8", fontSize: 12 }}>{failed ? "Could not load" : "Loading…"}</span>}
+                {src ? <img src={src} alt={label} style={styles.docImg} /> : <span style={{ color: "#94a3b8", fontSize: 12 }}>{deleted ? "Deleted" : failed ? "Could not load" : "Loading…"}</span>}
             </div>
             <div style={{ fontSize: 12, fontWeight: 600, color: "#334155", marginTop: 6 }}>{label}</div>
         </button>
@@ -160,10 +161,17 @@ export default function RiderApplications() {
                                                     {a.ReviewedByName ? ` by ${a.ReviewedByName}` : ""} · {when(a.ReviewedAt)}
                                                 </div>
                                             )}
+                                            {a.Status === "rejected" && (
+                                                <div style={{ marginTop: 4, fontSize: 12, color: "#64748b" }}>
+                                                    🔒 {a.DocumentsDeletedAt
+                                                        ? `Documents deleted on ${when(a.DocumentsDeletedAt)}`
+                                                        : `Documents will be deleted automatically on ${when(a.DocumentsDeleteOn)}`}
+                                                </div>
+                                            )}
                                         </div>
                                         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                                             {DOCS.map(([doc, label]) => (
-                                                <DocImage key={doc} id={a.ApplicationID} doc={doc} label={label} onOpen={(src, l) => setViewer({ src, label: `${a.FullName} · ${l}` })} />
+                                                <DocImage key={doc} id={a.ApplicationID} doc={doc} label={label} deleted={!!a.DocumentsDeletedAt} onOpen={(src, l) => setViewer({ src, label: `${a.FullName} · ${l}` })} />
                                             ))}
                                         </div>
                                     </div>
@@ -195,7 +203,7 @@ export default function RiderApplications() {
                 <div style={styles.overlay}>
                     <div style={styles.dialog} onClick={(e) => e.stopPropagation()}>
                         <h3 style={{ margin: "0 0 4px", fontSize: 18 }}>Reject {rejecting.FullName}?</h3>
-                        <p style={{ margin: "0 0 12px", color: "#64748b", fontSize: 13 }}>The applicant sees this reason when they try to log in, and can apply again.</p>
+                        <p style={{ margin: "0 0 12px", color: "#64748b", fontSize: 13 }}>The applicant sees this reason when they try to log in, and can apply again. Their Aadhaar, licence and selfie photos are deleted automatically 30 days after rejection.</p>
                         <textarea
                             value={reason}
                             onChange={(e) => { setReason(e.target.value); setReasonError(""); }}

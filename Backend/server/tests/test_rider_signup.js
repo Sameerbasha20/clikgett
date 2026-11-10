@@ -45,6 +45,9 @@ async function setCode(mobile) {
     return code;
 }
 const cleanup = async () => {
+    const storage = require('../utils/s3');
+    const rows = await q('SELECT SelfieKey, AadhaarKey, LicenceKey FROM RiderApplications WHERE MobileNumber IN (?, ?)', [MOBILE_A, MOBILE_B]);
+    for (const r of rows) for (const k of [r.SelfieKey, r.AadhaarKey, r.LicenceKey]) if (k) await storage.remove(k).catch(() => {});
     await q('DELETE FROM RiderApplications WHERE MobileNumber IN (?, ?)', [MOBILE_A, MOBILE_B]);
     await q('DELETE FROM AdminUsers WHERE MobileNumber IN (?, ?) AND Role = 2', [MOBILE_A, MOBILE_B]);
     await q('DELETE FROM LoginOtps WHERE MobileNumber IN (?, ?)', [MOBILE_A, MOBILE_B]);
@@ -127,6 +130,28 @@ const cleanup = async () => {
         check('rejected applicant is told why at login', r.json && /blurred/.test(r.json.Message));
         const [rejected] = await q('SELECT COUNT(*) AS n FROM AdminUsers WHERE MobileNumber = ? AND Role = 2', [MOBILE_B]);
         check('no rider account for a rejected application', rejected.n === 0);
+
+        // ---------- documents of rejected applications are erased after 30 days ----------
+        const storage = require('../utils/s3');
+        const { purgeRejectedRiderDocuments } = require('../services/Housekeeping');
+        const [bRow] = await q('SELECT * FROM RiderApplications WHERE ApplicationID = ?', [appB]);
+        const [aRow] = await q('SELECT * FROM RiderApplications WHERE ApplicationID = ?', [appA]);
+        check('rejected documents are still there right after rejection', await storage.exists(bRow.AadhaarKey));
+        await q('UPDATE RiderApplications SET ReviewedAt = NOW() - INTERVAL 5 DAY WHERE ApplicationID = ?', [appB]);
+        await purgeRejectedRiderDocuments();
+        check('documents kept 5 days after rejection', await storage.exists(bRow.AadhaarKey));
+        r = await call('GET', '/admin/rider-applications?status=rejected', SUPER);
+        const listed = r.json && r.json.Applications.find((x) => x.ApplicationID === appB);
+        check('admin list shows the deletion date', listed && listed.DocumentsDeleteOn && !listed.DocumentsDeletedAt);
+        await q('UPDATE RiderApplications SET ReviewedAt = NOW() - INTERVAL 31 DAY WHERE ApplicationID IN (?, ?)', [appA, appB]);
+        await purgeRejectedRiderDocuments();
+        const gone = !(await storage.exists(bRow.SelfieKey)) && !(await storage.exists(bRow.AadhaarKey)) && !(await storage.exists(bRow.LicenceKey));
+        check('selfie, Aadhaar and licence files deleted 30+ days after rejection', gone);
+        const [bAfter] = await q('SELECT AadhaarKey, DocumentsDeletedAt, FullName FROM RiderApplications WHERE ApplicationID = ?', [appB]);
+        check('the application row stays, marked as documents deleted', bAfter && bAfter.AadhaarKey === '' && !!bAfter.DocumentsDeletedAt && bAfter.FullName === 'Anil');
+        r = await call('GET', `/admin/rider-applications/${appB}/document/aadhaar`, SUPER);
+        check('opening a deleted document says it is gone (410)', r.status === 410);
+        check("an approved rider's documents are never deleted", await storage.exists(aRow.AadhaarKey));
     } finally {
         await cleanup();
         if (created.length) {

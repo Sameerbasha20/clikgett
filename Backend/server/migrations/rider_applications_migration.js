@@ -24,9 +24,15 @@ async function run() {
             RiderAdminID INT NULL,
             CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             UpdatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            DocumentsDeletedAt DATETIME NULL,
             KEY idx_rider_app_mobile (MobileNumber),
             KEY idx_rider_app_status (Status, CreatedAt)
         )`);
+    // Added after the first release: when the documents of a rejected application were erased.
+    const [col] = await query(
+        `SELECT COUNT(*) AS n FROM information_schema.COLUMNS
+          WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'RiderApplications' AND COLUMN_NAME = 'DocumentsDeletedAt'`);
+    if (!col.n) await query('ALTER TABLE RiderApplications ADD COLUMN DocumentsDeletedAt DATETIME NULL AFTER RiderAdminID');
 }
 
 module.exports = { run };

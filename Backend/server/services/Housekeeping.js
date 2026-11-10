@@ -25,10 +25,38 @@ async function pruneNotifications() {
     return removed;
 }
 
+// Rejected rider applications: Aadhaar, licence and selfie photos are erased this many days
+// after the rejection (the row stays, without documents, so admins still see the history).
+const REJECTED_DOCS_DAYS = 30;
+
+async function purgeRejectedRiderDocuments(days = REJECTED_DOCS_DAYS) {
+    const storage = require('../utils/s3');
+    const rows = await query(
+        `SELECT ApplicationID, SelfieKey, AadhaarKey, LicenceKey FROM RiderApplications
+          WHERE Status = 'rejected' AND DocumentsDeletedAt IS NULL AND ReviewedAt < NOW() - INTERVAL ? DAY
+          LIMIT 500`, [days]).catch(() => []);
+    let erased = 0;
+    for (const r of rows) {
+        try {
+            for (const key of [r.SelfieKey, r.AadhaarKey, r.LicenceKey]) if (key) await storage.remove(key);
+            await query("UPDATE RiderApplications SET SelfieKey = '', AadhaarKey = '', LicenceKey = '', DocumentsDeletedAt = NOW() WHERE ApplicationID = ?",
+                [r.ApplicationID]);
+            erased++;
+        } catch (e) {
+            console.error(`[Housekeeping] could not erase documents of rider application ${r.ApplicationID}:`, e.message);
+        }
+    }
+    if (erased) console.warn(`[Housekeeping] erased documents of ${erased} rejected rider application(s)`);
+    return erased;
+}
+
 function start() {
-    const runOnce = () => pruneNotifications().catch((e) => console.error('[Housekeeping] failed:', e.message));
+    const runOnce = () => Promise.all([
+        pruneNotifications(),
+        purgeRejectedRiderDocuments(),
+    ]).catch((e) => console.error('[Housekeeping] failed:', e.message));
     setTimeout(runOnce, 5 * 60 * 1000); // a few minutes after start, then daily
     setInterval(runOnce, DAY_MS).unref();
 }
 
-module.exports = { start, pruneNotifications };
+module.exports = { start, pruneNotifications, purgeRejectedRiderDocuments, REJECTED_DOCS_DAYS };

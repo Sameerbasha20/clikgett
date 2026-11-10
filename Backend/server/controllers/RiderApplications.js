@@ -26,6 +26,7 @@ const NAME = /^[A-Za-z][A-Za-z .']{1,59}$/;
 const VEHICLES = ['bike', 'auto'];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const DOCS = { selfie: 'SelfieKey', aadhaar: 'AadhaarKey', licence: 'LicenceKey' };
+const { REJECTED_DOCS_DAYS } = require('../services/Housekeeping');
 
 const bad = (resp, message, status = 400) => resp.status(status).json({ Status: 0, Message: message });
 
@@ -118,7 +119,8 @@ const RiderApplications = {
             const status = ['pending', 'approved', 'rejected'].includes(req.query.status) ? req.query.status : null;
             const rows = await q(
                 `SELECT a.ApplicationID, a.FullName, a.MobileNumber, a.VehicleType, a.Status, a.RejectReason,
-                        a.ReviewedAt, a.RiderAdminID, a.CreatedAt,
+                        a.ReviewedAt, a.RiderAdminID, a.CreatedAt, a.DocumentsDeletedAt,
+                        DATE_ADD(a.ReviewedAt, INTERVAL ${REJECTED_DOCS_DAYS} DAY) AS DocumentsDeleteOn,
                         TRIM(CONCAT(COALESCE(r.FirstName, ''), ' ', COALESCE(r.LastName, ''))) AS ReviewedByName
                    FROM RiderApplications a LEFT JOIN AdminUsers r ON r.AdminID = a.ReviewedBy
                   ${status ? 'WHERE a.Status = ?' : ''}
@@ -144,6 +146,7 @@ const RiderApplications = {
             if (!column) return resp.status(404).send('Not found');
             const [row] = await q(`SELECT ${column} AS k FROM RiderApplications WHERE ApplicationID = ?`, [req.params.id]);
             if (!row) return resp.status(404).send('Not found');
+            if (!row.k) return resp.status(410).send('Documents were deleted');
             resp.setHeader('Cache-Control', 'private, no-store');
             return customerPhotos.send(resp, row.k);
         } catch (err) {

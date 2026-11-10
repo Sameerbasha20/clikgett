@@ -44,7 +44,8 @@ function minioStore() {
             const info = await client.statObject(bucket, key);
             return { size: info.size, contentType: info.metaData && info.metaData['content-type'] };
         },
-        stream: (key) => client.getObject(bucket, key)
+        stream: (key) => client.getObject(bucket, key),
+        remove: (key) => client.removeObject(bucket, key)
     };
 }
 
@@ -74,6 +75,10 @@ function supabaseStore() {
             if (res.status === 400 || res.status === 404) throw notFound();
             if (!res.ok || !res.body) throw new Error(`Supabase download failed (${res.status})`);
             return Readable.fromWeb(res.body);
+        },
+        remove: async (k) => {
+            const res = await fetch(objectUrl(k), { method: 'DELETE', headers: auth });
+            if (!res.ok && res.status !== 400 && res.status !== 404) throw new Error(`Supabase delete failed (${res.status})`);
         }
     };
 }
@@ -112,6 +117,11 @@ const s3 = {
     stat: (key) => store.stat(key),
     stream: (key) => store.stream(key),
     exists: (key) => store.stat(key).then(() => true, () => false),
+    // Deleting a file that is already gone is not an error.
+    remove: (key) => Promise.resolve(store.remove(key)).catch((err) => {
+        if (err && (err.code === 'NotFound' || err.code === 'NoSuchKey')) return;
+        throw err;
+    }),
     put,
 
     // The admin uploads through the backend (PUT /media/<key> with a signed link), so
