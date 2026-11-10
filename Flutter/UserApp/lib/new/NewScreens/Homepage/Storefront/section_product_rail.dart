@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/home_sections/clikgett_product_card.dart';
 import 'package:fav_app/new/NewScreens/Widgets/floating_cart_bar.dart';
@@ -134,7 +135,7 @@ class _SectionProductsScreenState extends State<SectionProductsScreen> {
         future: _future,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator(color: primary));
+            return const Skeleton(kind: SkeletonKind.productGrid);
           }
           final products = snap.data ?? [];
           if (snap.hasError || products.isEmpty) {

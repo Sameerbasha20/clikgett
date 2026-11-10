@@ -1,4 +1,5 @@
 // ignore_for_file: prefer_const_constructors
+import 'package:fav_app/new/Constants/validators.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
 import 'package:fav_app/new/NewScreens/Auth/auth_shell.dart';
@@ -83,7 +84,7 @@ class _SignUpState extends State<SignUp> {
               capitalization: TextCapitalization.words,
               formatters: [LengthLimitingTextInputFormatter(25)],
               onSubmitted: (_) => mobileNumberFocus.requestFocus(),
-              validator: (v) => (v ?? '').trim().length < 2 ? 'Enter your name' : null,
+              validator: (v) => V.name(v),
             ),
             AuthField(
               controller: mobileNumber,

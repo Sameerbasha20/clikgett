@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/validators.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:fav_app/new/Constants/colors.dart';
@@ -330,10 +331,7 @@ class _ProductRequestScreenState extends State<ProductRequestScreen> {
                 controller: _nameController,
                 textInputAction: TextInputAction.next,
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return "Please enter the product name";
-                  }
-                  return null;
+                  return V.text(val, 'the product name', min: 2, max: 80);
                 },
                 decoration: _inputDecoration("e.g. Amul Butter, Surf Excel, Organic Almonds"),
               ),
@@ -352,6 +350,7 @@ class _ProductRequestScreenState extends State<ProductRequestScreen> {
               TextFormField(
                 controller: _brandController,
                 textInputAction: TextInputAction.next,
+                validator: (v) => (v ?? '').trim().length > 40 ? 'Keep the brand under 40 characters' : null,
                 decoration: _inputDecoration("e.g. Nestle, Britannia, Tata"),
               ),
               SizedBox(height: 2.2.h),
@@ -369,6 +368,7 @@ class _ProductRequestScreenState extends State<ProductRequestScreen> {
               TextFormField(
                 controller: _sizeQtyController,
                 textInputAction: TextInputAction.next,
+                validator: (v) => (v ?? '').trim().length > 30 ? 'Keep the size under 30 characters' : null,
                 decoration: _inputDecoration("e.g. 500g, 1 Litre, Pack of 3"),
               ),
               SizedBox(height: 2.2.h),
@@ -385,6 +385,7 @@ class _ProductRequestScreenState extends State<ProductRequestScreen> {
               SizedBox(height: 0.8.h),
               TextFormField(
                 controller: _descriptionController,
+                validator: (v) => (v ?? '').trim().length > 300 ? 'Keep the details under 300 characters' : null,
                 maxLines: 3,
                 minLines: 2,
                 textInputAction: TextInputAction.done,

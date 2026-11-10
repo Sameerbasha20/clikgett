@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/NewScreens/Account/account_widgets.dart';
 import 'package:fav_app/new/NewScreens/Homepage/ProductRequestScreen.dart';
@@ -99,7 +100,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
         ),
       ),
     );
-    if (items == null) return const Center(child: CircularProgressIndicator(color: primary));
+    if (items == null) return const Skeleton(kind: SkeletonKind.cards);
     return Column(children: [
       Expanded(
         child: RefreshIndicator(

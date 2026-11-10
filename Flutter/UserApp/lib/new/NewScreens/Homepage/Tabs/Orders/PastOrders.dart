@@ -33,7 +33,7 @@ class _CancelledOrdersState extends State<CancelledOrders> {
         body: GetBuilder<OrdersController>(
           id: 'orders',
           builder: (controller) => ordersController.isLoading.isTrue
-              ? CustomLoader()
+              ? const CustomLoader(kind: SkeletonKind.cards)
               : ordersController.pastorders.isEmpty
                   ? emptyWidget()
                   : RefreshIndicator(

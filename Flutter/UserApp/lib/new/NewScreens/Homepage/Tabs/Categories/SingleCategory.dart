@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
 import 'package:fav_app/new/NewScreens/Homepage/SearchScreen.dart';
@@ -307,7 +308,7 @@ class _SingleCategoryState extends State<SingleCategory> {
   /// Subcategory rail: tinted tiles, the selected one lifted onto white with a green bar.
   Widget _rail() {
     if (_loadingSubs) {
-      return const SizedBox(width: 74, child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: primary)));
+      return SizedBox(width: 74, child: Skeleton.sideRail());
     }
     final items = <SubCategoryItem?>[null, ..._subcategories];
     final categoryImage = widget.categories.imageUrl;
@@ -392,8 +393,8 @@ class _SingleCategoryState extends State<SingleCategory> {
   }
 
   Widget _grid() {
-    if (_products.isEmpty && _loadingPage) {
-      return const Center(child: CircularProgressIndicator(color: primary));
+    if (_products.isEmpty && (_loadingPage || _loadingSubs)) {
+      return const Skeleton(kind: SkeletonKind.productGrid, padding: EdgeInsets.all(8));
     }
     if (_products.isEmpty) {
       return Center(
@@ -424,7 +425,7 @@ class _SingleCategoryState extends State<SingleCategory> {
       itemCount: _products.length + (_nextOffset >= 0 ? 1 : 0),
       itemBuilder: (_, i) {
         if (i >= _products.length) {
-          return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator(strokeWidth: 2, color: primary)));
+          return Skeleton.tile();
         }
         final p = _products[i];
         return ClikgettProductCard(key: ValueKey('cat-${p.productId}'), product: p, width: null);

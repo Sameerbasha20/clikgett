@@ -1,9 +1,11 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'dart:async';
 
 import 'package:fav_app/Models/Home/TimingProvider.dart';
 import 'package:fav_app/new/Constants/Constants.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
+import 'package:fav_app/new/Constants/validators.dart';
 import 'package:fav_app/new/Controllers/adress_controller.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
 import 'package:fav_app/new/Controllers/home_controller.dart';
@@ -90,6 +92,9 @@ class _CartState extends State<Cart> {
 
   /// Online payment needs the store's Razorpay key (admin settings / server env).
   bool _onlineAvailable = false;
+
+  /// Cancel window from admin settings, so the note under the bill is always right.
+  AppConfig _config = const AppConfig();
   final Set<String> _instructions = {};
   ScheduledSlotInfo? _slot;
   List<BestItem> _suggestions = [];
@@ -115,6 +120,7 @@ class _CartState extends State<Cart> {
     AccountServices.config(refresh: true).then((c) {
       if (!mounted) return;
       setState(() {
+        _config = c;
         _onlineAvailable = c.razorpayKey.isNotEmpty;
         if (!_onlineAvailable) _payment = 'COD';
       });
@@ -145,6 +151,12 @@ class _CartState extends State<Cart> {
       if (a.addressId == id) return a;
     }
     return null;
+  }
+
+  /// Ordering for someone else but the chosen address is the customer's own Home.
+  bool get _needsReceiverAddress {
+    final a = _address;
+    return _forOther && (a == null || isHomeAddress(a));
   }
 
   void _scheduleRefresh() {
@@ -269,7 +281,7 @@ class _CartState extends State<Cart> {
         ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: primary))
+          ? const Skeleton(kind: SkeletonKind.checkout)
           : bill == null
               ? _errorState()
               : bill.isEmpty
@@ -711,9 +723,11 @@ class _CartState extends State<Cart> {
               Text(
                 applied
                     ? 'You save ${_rs(bill.couponDiscount)}'
-                    : bill.applicableCoupons.isNotEmpty
-                        ? '${bill.applicableCoupons.length} coupon${bill.applicableCoupons.length == 1 ? '' : 's'} available'
-                        : 'See offers',
+                    : bill.items.isNotEmpty && bill.couponExcludedItems.length == bill.items.length
+                        ? "Coupons don't apply to these items"
+                        : bill.applicableCoupons.isNotEmpty
+                            ? '${bill.applicableCoupons.length} coupon${bill.applicableCoupons.length == 1 ? '' : 's'} available'
+                            : 'See offers',
                 style: GoogleFonts.poppins(fontSize: 12, color: applied ? primaryDark : tColor3),
               ),
             ]),
@@ -735,7 +749,11 @@ class _CartState extends State<Cart> {
 
   Future<void> _applyCoupon(String code) async {
     final clean = code.trim().toUpperCase();
-    if (clean.isEmpty) return;
+    final problem = V.coupon(clean);
+    if (problem != null) {
+      customToast(message: problem);
+      return;
+    }
     final a = _address;
     final bill = await CheckoutServices.bill(
       promoCode: clean,
@@ -800,9 +818,21 @@ class _CartState extends State<Cart> {
                   child: const Text('Apply'),
                 ),
               ]),
+              if (bill.couponExcludedItems.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: const Color(0xFFFFF7ED), borderRadius: BorderRadius.circular(10)),
+                  child: Text(
+                    bill.couponExcludedItems.length == bill.items.length
+                        ? "Coupons can't be used on the items in your cart."
+                        : "Coupons don't apply to: ${bill.couponExcludedItems.map((i) => i.name).join(', ')}",
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFC2410C)),
+                  ),
+                ),
               if (bill.applicableCoupons.isNotEmpty) ...[
                 const SizedBox(height: 18),
-                Text('Available for this order', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor4)),
+                Text('${bill.applicableCoupons.length} coupon${bill.applicableCoupons.length == 1 ? '' : 's'} available for this order', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: tColor4)),
                 for (final c in bill.applicableCoupons) _couponTile(c, onApply: () => _applyCoupon(c.code)),
               ],
               if (bill.suggestedCoupons.isNotEmpty) ...[
@@ -1044,24 +1074,27 @@ class _CartState extends State<Cart> {
   Widget _billCard(CheckoutBill bill) => _card(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _title('Bill details', icon: Icons.receipt_long_outlined),
-          if (bill.items.isNotEmpty)
+          for (final item in bill.items) _billItemRow(item),
+          if (bill.items.isNotEmpty) ...[
+            const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(height: 1, color: cardBorder)),
             _billRow('Items total', _rs(bill.itemsTotal), strike: bill.mrpTotal > bill.itemsTotal ? _rs(bill.mrpTotal) : null),
+          ],
           if (bill.printItems.isNotEmpty) _billRow('Prints', _rs(bill.printTotal)),
           if (bill.couponDiscount > 0) _billRow('Coupon (${bill.promoCode})', '-${_rs(bill.couponDiscount)}', green: true),
           if (bill.cartOfferDiscount > 0)
             _billRow((bill.cartOfferName ?? '').isNotEmpty ? bill.cartOfferName! : 'Cart offer', '-${_rs(bill.cartOfferDiscount)}', green: true),
           if (bill.welcomeDiscount > 0)
-            _billRow('Welcome offer${bill.welcomeStep != null ? ' (order ${bill.welcomeStep})' : ''}', '-${_rs(bill.welcomeDiscount)}', green: true),
+            _billRow('🎁 Welcome offer${bill.welcomeStep != null ? ' (order ${bill.welcomeStep})' : ''}', '-${_rs(bill.welcomeDiscount)}', green: true),
           if (bill.welcomeDiscount <= 0 && bill.welcomeAmountNeeded > 0 && bill.welcomeNextDiscount > 0)
             Container(
               margin: const EdgeInsets.only(bottom: 6),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(color: const Color(0xFFECFDF5), borderRadius: BorderRadius.circular(8)),
               child: Row(children: [
-                const Icon(Icons.local_offer_rounded, size: 16, color: Color(0xFF047857)),
+                const Text('🎁', style: TextStyle(fontSize: 16)),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text('Add ${_rs(bill.welcomeAmountNeeded)} more to get ${_rs(bill.welcomeNextDiscount)} off with the welcome offer',
+                  child: Text('Add ${_rs(bill.welcomeAmountNeeded)} more to get ${_rs(bill.welcomeNextDiscount)} off with the welcome offer 🎉',
                       style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF065F46))),
                 ),
               ]),
@@ -1080,6 +1113,31 @@ class _CartState extends State<Cart> {
               child: Text('You will get ${_rs(bill.cashbackEarned)} cashback in your ClikGett Cash after delivery.',
                   style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
             ),
+        ]),
+      );
+
+  /// One product line in the bill: name, quantity x unit price, line total (and MRP struck through).
+  Widget _billItemRow(BillItem item) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(item.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 12.5, color: tColor4)),
+              Text(
+                [if (item.unit.isNotEmpty) item.unit, '${item.quantity} x ${_rs(item.quantity > 0 ? item.lineTotal / item.quantity : 0)}']
+                    .join(' · '),
+                style: GoogleFonts.poppins(fontSize: 11, color: tColor3),
+              ),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          if (item.originalTotal > item.lineTotal)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Text(_rs(item.originalTotal),
+                  style: GoogleFonts.poppins(fontSize: 11.5, color: grey70, decoration: TextDecoration.lineThrough)),
+            ),
+          Text(_rs(item.lineTotal), style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: tColor)),
         ]),
       );
 
@@ -1107,7 +1165,9 @@ class _CartState extends State<Cart> {
   Widget _policyNote() => Padding(
         padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
         child: Text(
-          'You can cancel within 2 minutes of placing the order. After that, cancellation is not possible once the store starts packing.',
+          _config.cancelWindowSeconds <= 0
+              ? 'Orders cannot be cancelled once placed.'
+              : 'You can cancel within ${_config.cancelWindowText} of placing the order. After that, cancellation is not possible once the store starts packing.',
           style: GoogleFonts.poppins(fontSize: 11.5, color: grey70),
         ),
       );
@@ -1137,8 +1197,8 @@ class _CartState extends State<Cart> {
                   const Icon(Icons.location_on_outlined, color: primaryDark, size: 22),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: address == null
-                        ? Text('Select a delivery address',
+                    child: address == null || _needsReceiverAddress
+                        ? Text(_forOther ? 'Add ${_receiverName.isEmpty ? 'their' : "$_receiverName's"} address' : 'Select a delivery address',
                             style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: red))
                         : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Text(
@@ -1154,7 +1214,7 @@ class _CartState extends State<Cart> {
                                 style: GoogleFonts.poppins(fontSize: 11.5, color: tColor3)),
                           ]),
                   ),
-                  Text(address == null ? 'Select' : 'Change',
+                  Text(address == null || _needsReceiverAddress ? (_forOther ? 'Add' : 'Select') : 'Change',
                       style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: primaryDark)),
                 ]),
               ),
@@ -1212,12 +1272,15 @@ class _CartState extends State<Cart> {
     VoidCallback? onTap;
     if (storeClosed) {
       label = 'Store is closed';
+    } else if (_forOther && !_receiverReady) {
+      label = 'Add receiver details';
+      onTap = _askReceiver;
+    } else if (_needsReceiverAddress) {
+      label = 'Add their address';
+      onTap = _chooseAddress;
     } else if (address == null) {
       label = 'Select address';
       onTap = _chooseAddress;
-    } else if (!_receiverReady) {
-      label = 'Add receiver details';
-      onTap = _askReceiver;
     } else if (_slot != null && _slot!.needsSlot) {
       label = 'Pick a delivery time slot';
     } else if (bill.stockProblems.isNotEmpty) {
@@ -1369,8 +1432,10 @@ class _CartState extends State<Cart> {
                   onPressed: () {
                     final n = name.text.trim();
                     final m = phone.text.replaceAll(RegExp(r'\D'), '');
-                    if (n.length < 2) return setSheet(() => error = 'Enter the receiver\'s name');
-                    if (!RegExp(r'^[6-9][0-9]{9}$').hasMatch(m)) return setSheet(() => error = 'Enter a valid 10-digit mobile number');
+                    final nameError = V.name(n, label: "the receiver's name");
+                    if (nameError != null) return setSheet(() => error = nameError);
+                    final phoneError = V.mobile(phone.text);
+                    if (phoneError != null) return setSheet(() => error = phoneError);
                     _receiverName = n;
                     _receiverMobile = m;
                     Navigator.pop(ctx, true);
@@ -1390,6 +1455,14 @@ class _CartState extends State<Cart> {
   }
 
   Future<void> _chooseAddress() async {
+    if (_forOther) {
+      // Their address: add a new one or pick one saved for them; the customer's Home is blocked.
+      await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => ManageAddress(forSomeoneElse: true, receiverName: _receiverName)));
+      if (mounted) await addressController.getAdresses(context: context);
+      _scheduleRefresh();
+      return;
+    }
     if (addressController.address.isEmpty) {
       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ManageAddress()));
       if (mounted) await addressController.getAdresses(context: context);

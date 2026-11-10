@@ -37,6 +37,9 @@ class AppConfig {
   final String razorpayKey;
   final List<FaqGroup> faqs;
 
+  /// How long after placing an order the customer can cancel (admin > Settings).
+  final int cancelWindowSeconds;
+
   const AppConfig({
     this.supportPhone = '',
     this.supportEmail = '',
@@ -47,7 +50,15 @@ class AppConfig {
     this.friendReward = 0,
     this.razorpayKey = '',
     this.faqs = const [],
+    this.cancelWindowSeconds = 120,
   });
+
+  /// "2 minutes", "90 seconds", "1 minute".
+  String get cancelWindowText {
+    final s = cancelWindowSeconds;
+    if (s % 60 == 0) return '${s ~/ 60} minute${s == 60 ? '' : 's'}';
+    return '$s seconds';
+  }
 
   factory AppConfig.fromJson(Map<String, dynamic> j) {
     final topups = (j['WalletTopupAmounts'] is List ? j['WalletTopupAmounts'] as List : const []).map(_i).where((v) => v > 0).toList();
@@ -60,6 +71,7 @@ class AppConfig {
       referrerReward: _d(j['ReferrerReward']),
       friendReward: _d(j['FriendReward']),
       razorpayKey: '${j['RazorpayKey'] ?? ''}',
+      cancelWindowSeconds: j['CancelWindowSeconds'] is num ? (j['CancelWindowSeconds'] as num).toInt() : 120,
       faqs: (j['FAQs'] is List ? j['FAQs'] as List : const [])
           .whereType<Map>()
           .map((g) => FaqGroup(

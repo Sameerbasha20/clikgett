@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/number_format.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -250,7 +251,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _body() {
-    if (_searching) return const Center(child: CircularProgressIndicator(color: primary));
+    if (_searching) return const Skeleton(kind: SkeletonKind.productGrid);
     if ((_suggestions.isNotEmpty || _categoryHits.isNotEmpty) && _results == null) return _suggestionList();
     if (_results != null) return _resultsView();
     return _emptyState();

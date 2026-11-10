@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/network_image.dart';
 import 'package:fav_app/new/Controllers/cart_controller.dart';
@@ -107,7 +108,7 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F5),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: _fresh))
+          ? const Skeleton(kind: SkeletonKind.productGrid)
           : RefreshIndicator(
               color: _fresh,
               onRefresh: _load,

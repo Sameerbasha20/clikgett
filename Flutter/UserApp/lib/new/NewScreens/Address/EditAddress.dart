@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/validators.dart';
 import 'dart:ffi';
 import 'package:fav_app/new/Controllers/adress_controller.dart';
 import 'package:fav_app/new/NewScreens/Address/GoogleMapSearchPlacesApi.dart';
@@ -154,6 +155,7 @@ class _EditAddressState extends State<EditAddress> {
       body: SafeArea(
         child: Form(
           key: formkey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(children: [
             Expanded(
               flex: 4,
@@ -420,6 +422,7 @@ class _EditAddressState extends State<EditAddress> {
               currentFocus: flatFocus,
               nextFocus: landmarkFocus,
               holder: flat,
+              validator: V.flatNo,
               validation: true),
           SizedBox(
             height: 2.h,
@@ -440,16 +443,13 @@ class _EditAddressState extends State<EditAddress> {
               currentFocus: landmarkFocus,
 
               onChanged: (p0) {
-    if (p0 == null || p0.isEmpty) {
-      customToast(message: 'Please enter Landmark');
-
-    }else
                 if (p0 == ' ') {
                   landmarkController.clear();
                 }
               },
               nextFocus: null,
               holder: landmark,
+              validator: V.landmark,
               validation: true),
         ],
       ),
@@ -550,6 +550,7 @@ class _EditAddressState extends State<EditAddress> {
                     currentFocus: FocusNode(),
                     nextFocus: null,
                     holder: [otherTypeController.text],
+                    validator: (v) => V.label(v),
     onChanged: (value) {
 
         // Update the type variable whenever the user enters a value
@@ -570,7 +571,7 @@ class _EditAddressState extends State<EditAddress> {
   Widget submitButton() {
     return Obx(
       () => adressController.isLoading.isTrue
-          ? const CustomLoader()
+          ? const SizedBox(height: 52, child: Center(child: CircularProgressIndicator(color: Color(0xFF16A34A))))
           : buttonWidget(
               context: context,
         onTap: () {

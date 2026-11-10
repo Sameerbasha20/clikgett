@@ -79,7 +79,8 @@ function serve(storage) {
             res.setHeader('Content-Type', stat.contentType && stat.contentType !== 'application/octet-stream'
                 ? stat.contentType : (CONTENT_TYPES[ext] || 'application/octet-stream'));
             res.setHeader('Content-Length', stat.size);
-            res.setHeader('Cache-Control', isPublicKey(key) ? 'public, max-age=86400' : 'private, no-store');
+            // Catalog file names are unique per upload, so a CDN and phones can keep them for a week.
+            res.setHeader('Cache-Control', isPublicKey(key) ? 'public, max-age=604800, stale-while-revalidate=86400' : 'private, no-store');
             const stream = await storage.stream(key);
             stream.on('error', () => res.destroy());
             stream.pipe(res);

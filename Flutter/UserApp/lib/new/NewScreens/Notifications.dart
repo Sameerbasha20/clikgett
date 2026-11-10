@@ -55,7 +55,7 @@ class _NotificationsState extends State<Notifications> {
       backgroundColor: bg,
       body: Obx(
         () => notificationController.isLoading.isTrue
-            ? CustomLoader()
+            ? const CustomLoader(kind: SkeletonKind.list)
             : notificationController.notifications.isEmpty
                 ? EmptyDataWidget(message: 'No Notifications Found')
                 : ListView.builder(

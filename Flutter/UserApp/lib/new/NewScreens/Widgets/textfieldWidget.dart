@@ -87,10 +87,10 @@ Widget textFieldWidget(
     validator: validator ??
         (String? value) {
           if (validation == true) {
-            if (value!.isEmpty) {
-              return hint;
-            } else if (isEmail && !Constants().regex.hasMatch(value)) {
-              return hint;
+            if (value!.trim().isEmpty) {
+              return 'Please enter ${hint.replaceAll(RegExp(r'^(Enter|Please enter)\s+', caseSensitive: false), '')}';
+            } else if (isEmail && !Constants().regex.hasMatch(value.trim())) {
+              return 'Enter a valid email, like name@example.com';
             } else {
               return null;
             }

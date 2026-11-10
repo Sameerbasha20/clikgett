@@ -37,8 +37,13 @@ class _AddressType {
 }
 
 class ManageAddress extends StatefulWidget {
-  const ManageAddress({super.key, this.isFromCartScreen = false});
+  const ManageAddress({super.key, this.isFromCartScreen = false, this.forSomeoneElse = false, this.receiverName = ''});
   final bool? isFromCartScreen;
+
+  /// Ordering for someone else: the customer's own Home can't be picked; they add or
+  /// choose the receiver's address.
+  final bool forSomeoneElse;
+  final String receiverName;
   @override
   State<ManageAddress> createState() => _ManageAddressState();
 }
@@ -49,7 +54,10 @@ class _ManageAddressState extends State<ManageAddress> {
   final HomeController homeController = Get.find();
 
   /// Opened from checkout / photo order to choose where to deliver.
-  bool get _picking => widget.isFromCartScreen == true;
+  bool get _picking => widget.isFromCartScreen == true || widget.forSomeoneElse;
+
+  /// Someone else's order can't go to the customer's own Home.
+  bool _blocked(Address a) => widget.forSomeoneElse && isHomeAddress(a);
 
   @override
   void initState() {
@@ -73,7 +81,7 @@ class _ManageAddressState extends State<ManageAddress> {
           slivers: [
             SliverToBoxAdapter(child: _header(active)),
             if (adressController.isLoading.isTrue && addresses.isEmpty)
-              const SliverFillRemaining(hasScrollBody: false, child: CustomLoader())
+              const SliverFillRemaining(hasScrollBody: false, child: CustomLoader(kind: SkeletonKind.cards))
             else if (addresses.isEmpty)
               SliverFillRemaining(hasScrollBody: false, child: _emptyState())
             else ...[
@@ -126,15 +134,23 @@ class _ManageAddressState extends State<ManageAddress> {
             padding: const EdgeInsets.only(left: 8),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(
-                _picking ? 'Where should we deliver?' : 'Your addresses',
+                widget.forSomeoneElse
+                    ? 'Deliver to ${widget.receiverName.isEmpty ? 'them' : widget.receiverName}'
+                    : _picking
+                        ? 'Where should we deliver?'
+                        : 'Your addresses',
                 style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.white, height: 1.2),
               ),
               const SizedBox(height: 4),
               Text(
-                _picking ? 'Tap an address to deliver there' : 'Save the places you order to most',
+                widget.forSomeoneElse
+                    ? 'Add their address, or pick one you saved for them'
+                    : _picking
+                        ? 'Tap an address to deliver there'
+                        : 'Save the places you order to most',
                 style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.white.withOpacity(0.85)),
               ),
-              if (active != null) ...[
+              if (active != null && !widget.forSomeoneElse) ...[
                 const SizedBox(height: 16),
                 _deliveringTo(active),
               ],
@@ -226,7 +242,7 @@ class _ManageAddressState extends State<ManageAddress> {
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Add a new address',
+                    Text(widget.forSomeoneElse ? 'Add their address' : 'Add a new address',
                         style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: primaryDark)),
                     Text('Use your current location or pick on the map',
                         style: GoogleFonts.poppins(fontSize: 12, color: _muted)),
@@ -260,6 +276,10 @@ class _ManageAddressState extends State<ManageAddress> {
       [a.flatNo, a.landmark, a.address].where((s) => s.trim().isNotEmpty).join(', ');
 
   void _select(Address address) {
+    if (_blocked(address)) {
+      customToast(message: "Your home can't be used for someone else's order. Add their address.");
+      return;
+    }
     adressController.storeSelectedAdress(address.addressId, address.longitude, address.latitude);
     homeController.storeLocation(address, adressController.address);
     // Opened to pick an address (checkout, photo order): return the choice to
@@ -268,7 +288,8 @@ class _ManageAddressState extends State<ManageAddress> {
   }
 
   Widget addressTile({required Address address, required int index}) {
-    final isSelected = adressController.selectedAdressId.value == address.addressId;
+    final blocked = _blocked(address);
+    final isSelected = !blocked && adressController.selectedAdressId.value == address.addressId && !widget.forSomeoneElse;
     final type = _AddressType.of(address.type);
     final details = [address.landmark, address.address].where((s) => s.trim().isNotEmpty).join(', ');
 
@@ -280,6 +301,9 @@ class _ManageAddressState extends State<ManageAddress> {
           borderRadius: BorderRadius.circular(20),
           onTap: () => _select(address),
           child: AnimatedContainer(
+            foregroundDecoration: blocked
+                ? BoxDecoration(color: Colors.white.withOpacity(0.45), borderRadius: BorderRadius.circular(20))
+                : null,
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOut,
             decoration: BoxDecoration(
@@ -296,7 +320,7 @@ class _ManageAddressState extends State<ManageAddress> {
             ),
             child: Column(children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Container(
                     width: 46,
@@ -337,38 +361,40 @@ class _ManageAddressState extends State<ManageAddress> {
                       ],
                     ]),
                   ),
-                  const SizedBox(width: 8),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                      key: ValueKey(isSelected),
-                      color: isSelected ? primary : const Color(0xFFCBD5E1),
-                    ),
-                  ),
-                ]),
-              ),
-              Container(height: 1, color: const Color(0xFFF1F5F9)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                child: Row(children: [
-                  _action(Icons.edit_outlined, 'Edit', primaryDark, () => checkLocation(context, index, address)),
+                  const SizedBox(width: 4),
+                  _iconAction(Icons.edit_outlined, 'Edit address', primaryDark, () => checkLocation(context, index, address)),
                   if (adressController.address.length > 1)
-                    _action(Icons.delete_outline_rounded, 'Delete', red, () async {
+                    _iconAction(Icons.delete_outline_rounded, 'Delete address', red, () async {
                       final yes = await alertDialogue(address);
                       if (yes == true && mounted) {
                         adressController.deleteAdresses(context: context, adressId: address.addressId);
                       }
                     }),
-                  const Spacer(),
-                  if (!isSelected)
-                    TextButton(
-                      onPressed: () => _select(address),
-                      style: TextButton.styleFrom(foregroundColor: primaryDark),
-                      child: Text('Deliver here →', style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                  if (!blocked)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 2),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                          key: ValueKey(isSelected),
+                          color: isSelected ? primary : const Color(0xFFCBD5E1),
+                        ),
+                      ),
                     ),
                 ]),
               ),
+              if (blocked)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+                  ),
+                  child: Text("Your own home can't be used when ordering for someone else",
+                      style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFFC2410C))),
+                ),
             ]),
           ),
         ),
@@ -376,12 +402,15 @@ class _ManageAddressState extends State<ManageAddress> {
     );
   }
 
-  Widget _action(IconData icon, String label, Color color, VoidCallback onTap) {
-    return TextButton.icon(
+  Widget _iconAction(IconData icon, String tooltip, Color color, VoidCallback onTap) {
+    return IconButton(
       onPressed: onTap,
-      style: TextButton.styleFrom(foregroundColor: color, padding: const EdgeInsets.symmetric(horizontal: 10)),
-      icon: Icon(icon, size: 17),
-      label: Text(label, style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600)),
+      tooltip: tooltip,
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      style: IconButton.styleFrom(backgroundColor: color.withOpacity(0.08)),
+      icon: Icon(icon, size: 18, color: color),
     );
   }
 
@@ -597,3 +626,7 @@ class _ManageAddressState extends State<ManageAddress> {
                 )));
   }
 }
+
+
+/// The customer's own home (address saved as "Home").
+bool isHomeAddress(Address a) => a.type.replaceAll(',', ' ').trim().toLowerCase() == 'home';

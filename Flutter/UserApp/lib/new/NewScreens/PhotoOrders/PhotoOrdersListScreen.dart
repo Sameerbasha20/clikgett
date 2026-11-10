@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/imageslist.dart';
@@ -96,7 +97,7 @@ class _PhotoOrdersListScreenState extends State<PhotoOrdersListScreen> {
       ),
       body: Obx(() {
         if (controller.isLoadingOrders.value) {
-          return const Center(child: CircularProgressIndicator(color: primary));
+          return const Skeleton(kind: SkeletonKind.cards);
         }
 
         if (controller.myPhotoOrders.isEmpty) {

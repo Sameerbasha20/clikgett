@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'dart:convert';
 
 import 'package:fav_app/constants.dart';
@@ -98,7 +99,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         title: Text('Notification settings', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600)),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Appprimary))
+          ? const Skeleton(kind: SkeletonKind.form)
           : ListView(
               padding: const EdgeInsets.all(12),
               children: [

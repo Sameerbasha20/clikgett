@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/delivered_time_banner.dart';
 import 'package:fav_app/new/Constants/schedule_format.dart';
 import 'dart:async';
@@ -16,6 +17,7 @@ import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/widgets/view_receipt
 import 'package:fav_app/new/NewScreens/Support/Support.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
 import 'package:fav_app/new/Services/order_tracking_services.dart';
+import 'package:fav_app/new/Constants/validators.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -186,8 +188,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
       },
     );
     if (reason == null || !mounted) return;
+    var finalReason = reason;
+    if (reason == 'Other') {
+      // "Other" needs the customer's own words.
+      final typed = await _askOtherReason();
+      if (typed == null || !mounted) return;
+      finalReason = typed;
+    }
     setState(() => _busy = true);
-    final result = await OrderTrackingServices.cancel(order.orderId, reason);
+    final result = await OrderTrackingServices.cancel(order.orderId, finalReason);
     if (!mounted) return;
     setState(() => _busy = false);
     customToast(message: result.ok ? 'Order cancelled' : result.message);
@@ -196,6 +205,40 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
       Get.find<OrdersController>().getcurrentorder(context: context);
       Get.find<WalletController>().getWallet(context: context);
     }
+  }
+
+  Future<String?> _askOtherReason() {
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text('Tell us why', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700)),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            maxLines: 3,
+            maxLength: 200,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(hintText: 'Your reason for cancelling', border: OutlineInputBorder()),
+            validator: (v) => V.text(v, 'the reason', min: 5, max: 200),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Back')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: red),
+            onPressed: () {
+              if (formKey.currentState!.validate()) Navigator.pop(ctx, controller.text.trim());
+            },
+            child: const Text('Cancel order'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _reorder(TrackedOrder order) async {
@@ -256,7 +299,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: primary))
+          ? const Skeleton(kind: SkeletonKind.orderDetail)
           : order == null
               ? _errorState()
               : RefreshIndicator(

@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/NewScreens/Account/account_widgets.dart';
 import 'package:fav_app/new/NewScreens/Account/my_requests_screen.dart';
@@ -37,7 +38,7 @@ class _SupportState extends State<Support> {
     return AccountScaffold(
       title: 'Help & support',
       body: c == null
-          ? const Center(child: CircularProgressIndicator(color: primary))
+          ? const Skeleton(kind: SkeletonKind.list)
           : ListView(
               padding: const EdgeInsets.all(12),
               children: [

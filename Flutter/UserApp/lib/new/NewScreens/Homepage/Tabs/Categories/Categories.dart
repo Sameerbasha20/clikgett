@@ -139,7 +139,7 @@ class _CategoriesState extends State<Categories> {
     return Obx(
       () {
         if (categoryController.isCategoryLoading.isTrue) {
-          return const CustomLoader();
+          return const CustomLoader(kind: SkeletonKind.categories);
         }
 
         if (categoryController.categories.isEmpty) {

@@ -71,6 +71,9 @@ const CustomerAccount = {
         try {
             const s = await settingsMap();
             const referral = await referralRewards(s);
+            // Same window the order screen counts down (admin > Settings), so the checkout note matches.
+            const [shop] = await queryAsync('SELECT CancelWindowSeconds FROM AdminShopToggleSettings LIMIT 1').catch(() => []);
+            const cancelWindow = shop && Number.isFinite(parseInt(shop.CancelWindowSeconds, 10)) ? parseInt(shop.CancelWindowSeconds, 10) : 120;
             return resp.json({
                 Status: 1,
                 Config: {
@@ -86,6 +89,7 @@ const CustomerAccount = {
                     FriendReward: referral.FriendReward,
                     FAQs: jsonSetting(s.FAQs, []),
                     RazorpayKey: process.env.RAZORPAYID || '',
+                    CancelWindowSeconds: Math.max(0, cancelWindow),
                 },
             });
         } catch (err) {

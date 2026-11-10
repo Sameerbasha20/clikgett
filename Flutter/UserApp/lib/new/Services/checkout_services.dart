@@ -27,6 +27,9 @@ class BillItem {
   final double originalTotal;
   final String? appliedRule;
 
+  /// Admin marked this product "no coupons" (Products > restrictions).
+  final bool couponExcluded;
+
   BillItem.fromJson(Map<String, dynamic> j)
       : productId = _i(j['ProductID']),
         variantId = _i(j['VariantID']),
@@ -40,7 +43,8 @@ class BillItem {
         unitPrice = _d(j['UnitPrice'] ?? j['OfferPrice']),
         lineTotal = _d(j['LineTotal']),
         originalTotal = _d(j['OriginalTotal']),
-        appliedRule = j['AppliedRule'] is String && '${j['AppliedRule']}'.isNotEmpty ? j['AppliedRule'] : null;
+        appliedRule = j['AppliedRule'] is String && '${j['AppliedRule']}'.isNotEmpty ? j['AppliedRule'] : null,
+        couponExcluded = j['IsCouponExcluded'] == true;
 
   /// The price label shown under the item, in customer words. The server's rule text
   /// is technical ("Buy More Slab (2-5 @ ...)"); the plain offer price needs no label,
@@ -160,6 +164,9 @@ class CheckoutBill {
   final double smallOrderWalletCap;
   final double cashbackEarned;
   final List<BillCoupon> applicableCoupons;
+
+  /// Items coupons don't apply to; the coupon sheet names them.
+  List<BillItem> get couponExcludedItems => items.where((i) => i.couponExcluded).toList();
   final List<BillCoupon> suggestedCoupons;
   final List<BillUnlock> unlocks;
   final String? largeCartNotice;

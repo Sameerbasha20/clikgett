@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'dart:convert';
 
 import 'package:fav_app/new/Constants/Constants.dart';
@@ -73,7 +74,7 @@ class _OffersState extends State<Offers> {
     return AccountScaffold(
       title: 'Offers & coupons',
       body: offers == null
-          ? const Center(child: CircularProgressIndicator(color: primary))
+          ? const Skeleton(kind: SkeletonKind.cards)
           : RefreshIndicator(
               color: primary,
               onRefresh: _load,

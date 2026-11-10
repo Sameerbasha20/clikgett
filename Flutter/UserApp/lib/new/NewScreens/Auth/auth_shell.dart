@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/validators.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Constants/imageslist.dart';
 import 'package:flutter/material.dart';
@@ -190,12 +191,7 @@ class AuthField extends StatelessWidget {
 }
 
 /// Indian mobile number: 10 digits starting with 6-9.
-String? validateMobile(String? v) {
-  final value = (v ?? '').trim();
-  if (value.isEmpty) return 'Enter your mobile number';
-  if (!RegExp(r'^[6-9]\d{9}$').hasMatch(value)) return 'Enter a valid 10-digit mobile number';
-  return null;
-}
+String? validateMobile(String? v) => V.mobile(v);
 
 /// Full-width gradient button with a trailing arrow and a loading state.
 class AuthButton extends StatelessWidget {

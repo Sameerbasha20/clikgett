@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/number_format.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fav_app/constants.dart';
@@ -141,7 +142,7 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
       ),
       body: Obx(() {
         if (controller.isLoadingDetail.value) {
-          return const Center(child: CircularProgressIndicator(color: primary));
+          return const Skeleton(kind: SkeletonKind.orderDetail);
         }
 
         final req = controller.currentDetail.value;

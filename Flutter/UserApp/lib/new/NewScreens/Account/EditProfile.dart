@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/validators.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/profile_controller.dart';
 import 'package:fav_app/new/NewScreens/Account/account_widgets.dart';
@@ -166,7 +167,7 @@ class _EditProfileState extends State<EditProfile> {
                             hint: 'Enter your name',
                             capitalization: TextCapitalization.words,
                             formatters: [LengthLimitingTextInputFormatter(25)],
-                            validator: (v) => (v ?? '').trim().isEmpty ? 'Please enter your name' : null,
+                            validator: (v) => V.name(v),
                           ),
                           _label('Mobile number'),
                           _field(
@@ -182,6 +183,7 @@ class _EditProfileState extends State<EditProfile> {
                             icon: Icons.mail_outline_rounded,
                             hint: 'name@example.com',
                             keyboard: TextInputType.emailAddress,
+                            validator: (v) => V.email(v),
                           ),
                           _label('Birthday'),
                           _birthdayTile(),

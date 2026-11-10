@@ -1,3 +1,5 @@
+import 'package:fav_app/new/Constants/validators.dart';
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'dart:convert';
 import 'package:fav_app/new/NewScreens/Homepage/Homepage.dart';
 import 'package:fav_app/new/NewScreens/Widgets/buttonWidget.dart';
@@ -156,7 +158,11 @@ print("MMMMMMMMMMMMMMMMMMMMMM");
   }
 
   // When confirm button is pressed
+  final _formKey = GlobalKey<FormState>();
+
   void _confirmLocation() {
+    // Each empty or invalid field shows its own message under it.
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     if (flatController.text.isEmpty) {
       customToast(message: 'please Enter House / Flat / Block No');
     } else if (landmarkController.text.isEmpty) {
@@ -184,7 +190,7 @@ print("MMMMMMMMMMMMMMMMMMMMMM");
       body: Stack(
         children: [
           _currentPosition == null
-              ? const Center(child: CircularProgressIndicator())
+              ? const Skeleton(kind: SkeletonKind.form)
               : GoogleMap(
                   onMapCreated: _onMapCreated,
                   initialCameraPosition: CameraPosition(
@@ -288,7 +294,7 @@ print("MMMMMMMMMMMMMMMMMMMMMM");
                           ),
                     ],
                   ),
-                  textWidgets(),
+                  Form(key: _formKey, autovalidateMode: AutovalidateMode.onUserInteraction, child: textWidgets()),
                   const SizedBox(height: 16),
                   buttonWidget(
                     onTap: _confirmLocation,
@@ -379,6 +385,7 @@ print("MMMMMMMMMMMMMMMMMMMMMM");
               },
               nextFocus: landmarkFocus,
               holder: flat,
+              validator: V.flatNo,
               validation: true),
           SizedBox(
             height: 2.h,
@@ -404,6 +411,7 @@ print("MMMMMMMMMMMMMMMMMMMMMM");
               },
               nextFocus: null,
               holder: landmark,
+              validator: V.landmark,
               validation: true),
         ],
       ),

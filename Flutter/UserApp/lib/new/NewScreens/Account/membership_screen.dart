@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/profile_controller.dart';
 import 'package:fav_app/new/NewScreens/Account/account_widgets.dart';
@@ -102,7 +103,7 @@ class _MembershipScreenState extends State<MembershipScreen> {
     return AccountScaffold(
       title: 'Membership',
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: primary))
+          ? const Skeleton(kind: SkeletonKind.cards)
           : page == null
               ? EmptyState(
                   icon: Icons.wifi_off_rounded,

@@ -9,7 +9,6 @@ import '../../old/Services/Auth/login_services.dart';
 import '../NewScreens/Auth/OtpVerify.dart';
 import '../NewScreens/Homepage/Homepage.dart';
 import '../NewScreens/Widgets/customToast.dart';
-import '../NewScreens/location/grantlocation.dart';
 
 class AuthController extends GetxController {
   final RxBool _isLoading = false.obs;
@@ -202,7 +201,7 @@ class AuthController extends GetxController {
                                     // Logged in: drop Login / OTP so back can't return to them.
                                     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
                                         builder: (context) =>
-                                        const GrantLocation()), (route) => false);
+                                        const Homepage()), (route) => false); // location is asked at checkout
 
                                 }
                               })
@@ -221,7 +220,7 @@ class AuthController extends GetxController {
                                     //         )));
                                     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
                                         builder: (context) =>
-                                        const GrantLocation()), (route) => false);
+                                        const Homepage()), (route) => false); // location is asked at checkout
                                   }
                                 }
                               })

@@ -166,57 +166,81 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
-      padding: EdgeInsets.all(3.5.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
+  /// "Deliver now" / "Schedule" choice: filled green when selected, white otherwise.
+  Widget _modeTile({required bool selected, required String emoji, required String title, required String subtitle, required VoidCallback onTap}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          decoration: BoxDecoration(
+            gradient: selected ? const LinearGradient(colors: [Color(0xFFDCFCE7), Color(0xFFBBF7D0)]) : null,
+            color: selected ? null : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: selected ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0), width: selected ? 1.8 : 1.2),
+            boxShadow: selected ? [BoxShadow(color: const Color(0xFF16A34A).withOpacity(0.18), blurRadius: 10, offset: const Offset(0, 4))] : null,
           ),
-        ],
+          child: Row(children: [
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: selected ? Colors.white : const Color(0xFFF1F5F9), shape: BoxShape.circle),
+              child: Text(emoji, style: const TextStyle(fontSize: 17)),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: selected ? const Color(0xFF14532D) : const Color(0xFF334155))),
+                Text(subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(fontSize: 11, color: selected ? const Color(0xFF15803D) : const Color(0xFF64748B))),
+              ]),
+            ),
+            if (selected) const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF16A34A)),
+          ]),
+        ),
       ),
+    );
+  }
+
+  Widget build(BuildContext context) {
+    // Sits inside the checkout card, so no second border or margin here.
+    return Padding(
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(7),
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  gradient: const LinearGradient(colors: [Color(0xFF22C55E), Color(0xFF15803D)]),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.access_time_filled, color: primary, size: 20),
+                child: const Icon(Icons.schedule_rounded, color: Colors.white, size: 22),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Delivery Schedule",
-                      style: GoogleFonts.poppins(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
+                    Text('When should we deliver?',
+                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
                     Text(
                       isScheduled
-                          ? "Delivering on ${DateFormat('EEE, MMM d').format(availableDates[selectedDateIndex])}"
-                          : "Express Delivery (Arriving in 15-30 mins)",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.sp,
-                        color: isScheduled ? primary : Colors.grey.shade600,
-                        fontWeight: isScheduled ? FontWeight.w500 : FontWeight.normal,
-                      ),
+                          ? 'Scheduled for ${DateFormat('EEE, d MMM').format(availableDates[selectedDateIndex])}'
+                          : 'Express delivery · arriving in 15-30 min',
+                      style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF15803D)),
                     ),
                   ],
                 ),
@@ -224,71 +248,31 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
             ],
           ),
           const SizedBox(height: 14),
-
-          // Option Tabs: Deliver Now vs Schedule for Later
           Row(
             children: [
               Expanded(
-                child: GestureDetector(
+                child: _modeTile(
+                  selected: !isScheduled,
+                  emoji: '⚡',
+                  title: 'Deliver now',
+                  subtitle: '15-30 min',
                   onTap: () {
-                    setState(() {
-                      isScheduled = false;
-                    });
+                    setState(() => isScheduled = false);
                     _notifyChange();
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: !isScheduled ? primary.withOpacity(0.1) : Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: !isScheduled ? primary : Colors.grey.shade300,
-                        width: !isScheduled ? 1.8 : 1.0,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "⚡ Deliver Now",
-                        style: GoogleFonts.poppins(
-                          fontSize: 13.sp,
-                          fontWeight: !isScheduled ? FontWeight.w600 : FontWeight.w500,
-                          color: !isScheduled ? primary : Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: GestureDetector(
+                child: _modeTile(
+                  selected: isScheduled,
+                  emoji: '📅',
+                  title: 'Schedule',
+                  subtitle: 'Pick a day & slot',
                   onTap: () {
-                    setState(() {
-                      isScheduled = true;
-                    });
+                    setState(() => isScheduled = true);
                     _notifyChange();
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isScheduled ? primary.withOpacity(0.1) : Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isScheduled ? primary : Colors.grey.shade300,
-                        width: isScheduled ? 1.8 : 1.0,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "📅 Schedule Later",
-                        style: GoogleFonts.poppins(
-                          fontSize: 13.sp,
-                          fontWeight: isScheduled ? FontWeight.w600 : FontWeight.w500,
-                          color: isScheduled ? primary : Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ],

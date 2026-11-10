@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:fav_app/new/Constants/skeletons.dart';
 
 // class CustomNetworkImage extends StatelessWidget {
 //   final String url;
@@ -154,11 +155,9 @@ class CustomNetworkImage extends StatelessWidget {
       memCacheHeight: cacheHeight,
       maxWidthDiskCache: cacheWidth,
       maxHeightDiskCache: cacheHeight,
-      placeholder: (context, url) => Container(
-        height: height,
-        width: width,
-        color: Colors.grey[200],
-      ),
+      fadeInDuration: const Duration(milliseconds: 220),
+      // Shimmer while the image downloads (cached on the phone after the first time).
+      placeholder: (context, url) => SizedBox(height: height, width: width, child: Skeleton.image()),
       errorWidget: (context, url, error) => Container(
         height: height,
         width: width,

@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/NewScreens/Account/account_widgets.dart';
 import 'package:fav_app/new/NewScreens/Widgets/customToast.dart';
@@ -48,7 +49,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
     return AccountScaffold(
       title: 'Refer & earn',
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: primary))
+          ? const Skeleton(kind: SkeletonKind.cards)
           : info == null || info.code == null
               ? EmptyState(
                   icon: Icons.card_giftcard_rounded,

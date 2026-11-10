@@ -102,7 +102,7 @@ class _HomeTabState extends State<Home> {
       backgroundColor: bg,
       body: Obx(() {
         if (homeController.isLoading.isTrue && homeController.homepagesectionList.isEmpty) {
-          return Center(child: CustomLoader());
+          return SafeArea(child: CustomLoader(kind: SkeletonKind.home));
         }
         // The status bar keeps a green strip and the page scrolls below it, so the
         // pinned search bar stops under the status bar instead of behind it.
@@ -132,14 +132,6 @@ class _HomeTabState extends State<Home> {
                     products: _previouslyBought,
                   ),
                 ),
-              if (_cheaperHere.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: SectionProductRail(
-                    title: 'Lower than other apps',
-                    subtitle: 'Same items, better prices on ClikGett',
-                    products: _cheaperHere,
-                  ),
-                ),
               SliverList(delegate: SliverChildListDelegate(_sections())),
               const SliverToBoxAdapter(child: SizedBox(height: 120)), // room for the floating cart bar
             ],
@@ -162,8 +154,19 @@ class _HomeTabState extends State<Home> {
             SectionProductRail(title: 'Bestsellers', products: homeController.bestItems),
           ]
         : sections.map(_section).toList();
-    // A running flash sale is always the 3rd section (it hides itself when there is none).
-    list.insert(list.length < 2 ? list.length : 2, const FlashSaleSection());
+    // Snacks sell the most, so they sit third (admin order) and "Lower than other apps"
+    // comes right after them; a running flash sale follows (it hides itself when there is none).
+    final snacks = sections.indexWhere((s) => (s.name ?? '').toLowerCase().contains('snack'));
+    var at = snacks >= 0 ? snacks + 1 : (list.length < 2 ? list.length : 2);
+    if (_cheaperHere.isNotEmpty) {
+      list.insert(at, SectionProductRail(
+        title: 'Lower than other apps',
+        subtitle: 'Same items, better prices on ClikGett',
+        products: _cheaperHere,
+      ));
+      at++;
+    }
+    list.insert(at.clamp(0, list.length), const FlashSaleSection());
     return list;
   }
 

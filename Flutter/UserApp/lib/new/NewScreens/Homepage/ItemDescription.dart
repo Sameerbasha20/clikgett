@@ -117,7 +117,7 @@ class _ItemDescriptionState extends State<ItemDescription> {
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
                 child: Obx(
                   () => categoryController.isProductDetialLoading.isTrue
-                      ? const CustomLoader()
+                      ? const CustomLoader(kind: SkeletonKind.productDetail)
                       : categoryController.productsDetails == null
                           ? const EmptyDataWidget(message: 'No Product Details Found')
                           : SingleChildScrollView(

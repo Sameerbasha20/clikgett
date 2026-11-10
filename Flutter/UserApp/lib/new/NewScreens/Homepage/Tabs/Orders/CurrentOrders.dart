@@ -124,7 +124,7 @@ class _CurrentOrdersState extends State<CurrentOrders> {
         body: GetBuilder<OrdersController>(
           id: 'orders',
           builder: (controller) => ordersController.isLoading.isTrue
-              ? CustomLoader()
+              ? const CustomLoader(kind: SkeletonKind.cards)
               : ordersController.orders.isEmpty && _photoRequests.isEmpty
                   ? emptyWidget()
                   : RefreshIndicator(

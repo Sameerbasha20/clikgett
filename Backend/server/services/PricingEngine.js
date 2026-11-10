@@ -520,7 +520,8 @@ const PricingEngine = {
         // Generate dynamic coupon suggestions
         const applicableCoupons = [];
         const suggestedCoupons = [];
-        for (const c of (allActivePromos || [])) {
+        // Nothing in the cart can take a coupon (all items marked "no coupon", or prints only): list none.
+        for (const c of (couponEligibleSubTotal > 0 ? (allActivePromos || []) : [])) {
             const minOrder = parseFloat(c.MinOrderValue || 0);
             if (couponEligibleSubTotal >= minOrder) {
                 applicableCoupons.push({

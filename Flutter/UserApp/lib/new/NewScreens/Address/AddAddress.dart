@@ -1,3 +1,4 @@
+import 'package:fav_app/new/Constants/validators.dart';
 import 'dart:ffi';
 import 'dart:typed_data';
 import 'package:fav_app/new/Constants/static_loader.dart';
@@ -130,6 +131,7 @@ class _AddAddressState extends State<AddAddress> {
       body: SafeArea(
         child: Form(
           key: formkey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(children: [
             Expanded(
               flex: 4,
@@ -366,6 +368,7 @@ class _AddAddressState extends State<AddAddress> {
               },
               nextFocus: landmarkFocus,
               holder: flat,
+              validator: V.flatNo,
               validation: true),
           SizedBox(
             height: 2.h,
@@ -391,6 +394,7 @@ class _AddAddressState extends State<AddAddress> {
               },
               nextFocus: null,
               holder: landmark,
+              validator: V.landmark,
               validation: true),
 
         ],
@@ -514,6 +518,7 @@ class _AddAddressState extends State<AddAddress> {
                   currentFocus: FocusNode(),
                   nextFocus: null,
                   holder: [otherTypeController.text],
+                  validator: (v) => V.label(v),
                 ),
               ],
             ),
@@ -525,14 +530,14 @@ class _AddAddressState extends State<AddAddress> {
   Widget submitButton() {
     return Obx(
       () => adressController.isLoading.isTrue
-          ? const CustomLoader()
+          ? const SizedBox(height: 52, child: Center(child: CircularProgressIndicator(color: Color(0xFF16A34A))))
           : buttonWidget(
               context: context,
               onTap: () {
                 if (formkey.currentState!.validate()) {
                   var adressType = type;
                   if (selectedLocation == null) {
-                    customToast(message: 'Please select address');
+                    customToast(message: 'Pick your location on the map first');
                   } else if (flatController.text.isEmpty) {
                     customToast(
                         message: 'please Enter House / Flat / Block No');

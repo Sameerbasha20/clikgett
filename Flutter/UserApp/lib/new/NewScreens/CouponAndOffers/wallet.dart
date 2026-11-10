@@ -1,3 +1,5 @@
+import 'package:fav_app/new/Constants/validators.dart';
+import 'package:fav_app/new/Constants/skeletons.dart';
 import 'package:fav_app/new/Constants/colors.dart';
 import 'package:fav_app/new/Controllers/profile_controller.dart';
 import 'package:fav_app/new/Controllers/wallet.dart';
@@ -48,11 +50,12 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Future<void> _topUp() async {
-    final amount = int.tryParse(_amount.text.trim()) ?? 0;
-    if (amount < 1) {
-      customToast(message: 'Enter an amount to add');
+    final problem = V.amount(_amount.text, min: 1, max: _maxTopup, label: 'an amount to add');
+    if (problem != null) {
+      customToast(message: problem);
       return;
     }
+    final amount = int.parse(_amount.text.trim());
     if (amount > _maxTopup) {
       customToast(message: 'You can add up to ${rupees(_maxTopup)} at a time');
       return;
@@ -170,7 +173,7 @@ class _WalletScreenState extends State<WalletScreen> {
             Obx(() {
               final list = wallet.walletList.toList();
               if (wallet.isLoading.value && list.isEmpty) {
-                return const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator(color: primary)));
+                return const Skeleton(kind: SkeletonKind.list, shrinkWrap: true, padding: EdgeInsets.zero);
               }
               if (list.isEmpty) {
                 return const EmptyState(
