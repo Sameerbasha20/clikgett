@@ -29,6 +29,7 @@ const RULES = [
     ['finance', /^\/api\/(csv|productcsv)\/(orderdetails|productdetails|pendingproductscsv)/],
     // People.
     ['riders', new RegExp(`^${ADMIN}/(addeliveryboy|updatedeliveryboy|deletedeliveryboy|deliveryboydetail|getactivedeliveryboys|getalldeliveryboys|delivery-eta/order)`)],
+    ['riders', /^\/api\/admin\/rider-applications(\/|$)/],
     ['customers', new RegExp(`^${ADMIN}/(userslist|userdetail|user/|updateuser|customer-full-details|feedback)`)],
     ['marketing', new RegExp(`^${ADMIN}/sendnotifications`)],
     // Orders.

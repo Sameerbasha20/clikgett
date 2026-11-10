@@ -81,7 +81,17 @@ const deliveryboycontroller = {
             }
 
             else {
-                return resp.status(200).json({ "Status": 0, "Message": "Account doesnot exists" });
+                // Signed up in the app but not approved yet: say so instead of "no account".
+                const apps = await new Promise((res) => pool.query(
+                    "SELECT Status, RejectReason FROM RiderApplications WHERE MobileNumber = ? ORDER BY CreatedAt DESC LIMIT 1",
+                    [String(req.body.MobileNumber || '').trim()], (e, r) => res(e ? [] : r)));
+                if (apps[0] && apps[0].Status === 'pending') {
+                    return resp.status(200).json({ "Status": 0, "Message": "Your application is under review. We will call you once it is approved." });
+                }
+                if (apps[0] && apps[0].Status === 'rejected') {
+                    return resp.status(200).json({ "Status": 0, "Message": `Your application was not approved${apps[0].RejectReason ? ': ' + apps[0].RejectReason : ''}. You can sign up again.` });
+                }
+                return resp.status(200).json({ "Status": 0, "Message": "No account with this number. Tap 'Become a delivery partner' to sign up." });
             }
 
         }

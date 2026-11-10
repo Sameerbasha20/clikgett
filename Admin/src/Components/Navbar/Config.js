@@ -5,7 +5,7 @@ import { CgShoppingCart } from "react-icons/cg";
 import { IoPricetagsOutline } from "react-icons/io5";
 import { FiSettings, FiDownload } from "react-icons/fi";
 import {
-    FaUserFriends, FaPercent, FaSearch, FaCommentDots, FaStore, FaUnlockAlt, FaCoins,
+    FaUserFriends, FaIdCard, FaPercent, FaSearch, FaCommentDots, FaStore, FaUnlockAlt, FaCoins,
     FaCamera, FaClipboardList, FaCrown, FaUserShield, FaBell, FaClock, FaGift, FaBalanceScale, FaQuestionCircle,
 } from "react-icons/fa";
 
@@ -69,6 +69,7 @@ export const menuSections = [
         items: [
             { name: "Customers", menuLink: "/customers", area: "customers", active: "customers", icon: FaUserFriends },
             { name: "Riders", menuLink: "/DeliveryBoy", area: "riders", active: "Deliveryboy", icon: MdOutlineDeliveryDining },
+            { name: "Rider applications", menuLink: "/rider-applications", area: "riders", active: "riderApplications", icon: FaIdCard },
             { name: "Admin Users", menuLink: "/admin-users", area: "admins", active: "user", icon: FaUserShield },
         ],
     },

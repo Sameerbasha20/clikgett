@@ -41,6 +41,8 @@ Button sentotp_bt;
 
         phonenumber_edt= findViewById(R.id.phonenumber_edt);
         sentotp_bt= findViewById(R.id.sentotp_bt);
+        findViewById(R.id.signup_bt).setOnClickListener(v ->
+                startActivity(new Intent(getApplicationContext(), RiderSignupActivity.class)));
         sentotp_bt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

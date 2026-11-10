@@ -25,6 +25,7 @@ const MIGRATIONS = [
     require('./db_hardening_migration'),
     require('./admin_roles_migration'),
     require('./home_snacks_third_migration'),
+    require('./rider_applications_migration'),
 ];
 
 (async () => {

@@ -61,6 +61,7 @@ const cashbackAdminRouter = require('./routes/CashbackAdmin');
 const healthRouter = require('./routes/Health');
 const photoOrdersRouter = require('./routes/PhotoOrders');
 const adminPhotoOrdersRouter = require('./routes/AdminPhotoOrders');
+const riderApplications = require('./routes/RiderApplications');
 const customerRequestsRouter = require('./routes/CustomerRequests');
 const adminCustomerRequestsRouter = require('./routes/AdminCustomerRequests');
 const printStoreRouter = require('./routes/PrintStore');
@@ -178,6 +179,8 @@ try {
     app.use('/api/admin/delivery', AdminOrdersrouter);
     app.use('/api/photo-orders', photoOrdersRouter);
     app.use('/api/admin/photo-orders', adminPhotoOrdersRouter);
+    app.use('/api/rider-signup', riderApplications.signup);
+    app.use('/api/admin/rider-applications', riderApplications.admin);
     app.use('/api/print', printStoreRouter);
     app.use('/api/admin-stock', stockLevelsRouter);
     app.use('/api/admin-wallet-check', require('./routes/WalletCheck'));

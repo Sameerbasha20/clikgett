@@ -18,13 +18,13 @@ const LOCK_HOURS = 24;
 const MAX_SENDS_PER_HOUR = 5;
 const RESEND_SECONDS = 30;
 
-const AUDIENCES = ['customer', 'rider'];
+const AUDIENCES = ['customer', 'rider', 'rider_signup'];
 
 const query = (sql, params = []) => new Promise((resolve, reject) =>
     pool.query(sql, params, (err, rows) => (err ? reject(err) : resolve(rows))));
 
 const digitsFor = (audience) => {
-    const raw = audience === 'rider' ? process.env.RIDER_OTP_DIGITS : process.env.LOGIN_OTP_DIGITS;
+    const raw = audience === 'rider' || audience === 'rider_signup' ? process.env.RIDER_OTP_DIGITS : process.env.LOGIN_OTP_DIGITS;
     return String(raw) === '6' ? 6 : 4;
 };
 

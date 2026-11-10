@@ -34,6 +34,7 @@ import ProductUnlocks from "./Components/dashboard/ProductUnlocks/ProductUnlocks
 import CashbackReview from "./Components/dashboard/Cashback/CashbackReview";
 import LiveOperations from "./Components/dashboard/LiveOperations/LiveOperations";
 import PhotoOrders from "./Components/dashboard/photoOrders/PhotoOrders";
+import RiderApplications from "./Components/dashboard/RiderApplications/RiderApplications";
 import PhotoOrderDetail from "./Components/dashboard/photoOrders/PhotoOrderDetail";
 import CustomerEnquiries from "./Components/dashboard/CustomerEnquiries/CustomerEnquiries";
 import ProductRequests from "./Components/dashboard/ProductRequests/ProductRequests";
@@ -60,6 +61,7 @@ const pages = [
     ["/orders/:id", <OrderDetails />],
     ["/live-operations", <LiveOperations />],
     ["/photo-orders", <PhotoOrders />],
+    ["/rider-applications", <RiderApplications />],
     ["/photo-orders/:id", <PhotoOrderDetail />],
     ["/customer-enquiries", <CustomerEnquiries />],
     ["/product-requests", <ProductRequests />],
