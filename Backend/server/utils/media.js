@@ -12,6 +12,9 @@
 const crypto = require('crypto');
 
 const TOKEN = 'http://clikgett-media.local/';
+// Upload links (PUT) always point at this backend's own /media/, never at PUBLIC_MEDIA_BASE_URL:
+// a CDN in front of the bucket (CloudFront) serves reads only.
+const UPLOAD_TOKEN = 'http://clikgett-media-upload.local/';
 const PUBLIC_PREFIXES = ['Products/', 'Categories/', 'SubCategories/', 'Banners/', 'Sections/', 'Users/', 'deliveryboys/'];
 const SIGNED_LINK_MINUTES = 60;
 
@@ -35,7 +38,7 @@ function uploadUrlFor(key, contentType, expiresSeconds = 300) {
     const path = String(key).split('/').map(encodeURIComponent).join('/');
     const exp = Math.floor(Date.now() / 1000) + expiresSeconds;
     const ct = encodeURIComponent(contentType || '');
-    return `${TOKEN}${path}?exp=${exp}&ct=${ct}&sig=${sign(`put:${key}:${contentType || ''}`, exp)}`;
+    return `${UPLOAD_TOKEN}${path}?exp=${exp}&ct=${ct}&sig=${sign(`put:${key}:${contentType || ''}`, exp)}`;
 }
 
 const validSig = (payload, exp, sig) => {
@@ -44,18 +47,19 @@ const validSig = (payload, exp, sig) => {
     return exp > Date.now() / 1000 && expected.length === given.length && crypto.timingSafeEqual(expected, given);
 };
 
+const ownMediaBase = (req) => `${req.protocol}://${req.get('host')}/media/`;
 const baseFor = (req) => process.env.PUBLIC_MEDIA_BASE_URL
     ? process.env.PUBLIC_MEDIA_BASE_URL.replace(/\/?$/, '/')
-    : `${req.protocol}://${req.get('host')}/media/`;
+    : ownMediaBase(req);
 
 /** Middleware: swaps TOKEN for this server's /media/ address in JSON responses. */
 function rewriteResponses(req, res, next) {
     const json = res.json.bind(res);
     res.json = (body) => {
         const text = JSON.stringify(body);
-        if (text === undefined || !text.includes(TOKEN)) return json(body);
+        if (text === undefined || (!text.includes(TOKEN) && !text.includes(UPLOAD_TOKEN))) return json(body);
         if (!res.get('Content-Type')) res.type('application/json');
-        return res.send(text.split(TOKEN).join(baseFor(req)));
+        return res.send(text.split(UPLOAD_TOKEN).join(ownMediaBase(req)).split(TOKEN).join(baseFor(req)));
     };
     next();
 }

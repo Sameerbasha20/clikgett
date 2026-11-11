@@ -8,7 +8,7 @@ No secret values are written here; it only says where each one lives.
 | Part | Host | Address |
 |---|---|---|
 | Backend API (Node/Express, Docker) | Render, service `clikgett-backend` | https://clikgett-backend.onrender.com |
-| Admin panel (React) | Vercel | https://clikgett.vercel.app (forwards `/api` and `/media` to Render) |
+| Admin panel (React) | Vercel | https://clikgett.vercel.app (forwards `/api` and `/media` to the AWS backend, api.clikgett.com, since 11 Nov 2026) |
 | Database (MySQL 8) | Aiven | settings in `deploy/aiven.env`, CA cert `deploy/aiven-ca.pem` |
 | Images and customer photos | Supabase Storage | settings in `deploy/supabase.env` |
 | Push notifications | Firebase | `FIREBASE_SERVICE_ACCOUNT_JSON` on Render |
