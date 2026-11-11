@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ClikGett production server - one Ubuntu 24.04 EC2 instance running the backend in Docker behind nginx
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Same Availability Zone as RDS (ap-south-1a)
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: clikgett
+  InstanceType:
+    Type: String
+    Default: t3.micro
+    Description: t3.micro for launch; move to t3.small after client approval if memory runs short
+  SshCidr1:
+    Type: String
+    Description: Office or developer public IP, /32
+  SshCidr2:
+    Type: String
+    Description: Second office or developer public IP, /32
+  UbuntuAmi:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+
+Resources:
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: clikgett-web
+      GroupDescription: ClikGett server - HTTP and HTTPS from anywhere, SSH from the office only
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0, Description: http-redirect-and-certbot }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0, Description: https }
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIpv6: '::/0', Description: http-ipv6 }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIpv6: '::/0', Description: https-ipv6 }
+        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: !Ref SshCidr1, Description: ssh-office-1 }
+        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: !Ref SshCidr2, Description: ssh-office-2 }
+      Tags:
+        - { Key: Name, Value: clikgett-web }
+
+  ServerLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: clikgett-server
+      LaunchTemplateData:
+        MetadataOptions:
+          HttpTokens: required
+          HttpEndpoint: enabled
+          HttpPutResponseHopLimit: 2
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: 20
+              VolumeType: gp3
+              Encrypted: true
+              DeleteOnTermination: true
+
+  Server:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref UbuntuAmi
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds: [!Ref WebSecurityGroup]
+      DisableApiTermination: true
+      LaunchTemplate:
+        LaunchTemplateId: !Ref ServerLaunchTemplate
+        Version: !GetAtt ServerLaunchTemplate.LatestVersionNumber
+      Tags:
+        - { Key: Name, Value: clikgett-v2 }
+        - { Key: app, Value: clikgett }
+
+Outputs:
+  InstanceId:
+    Value: !Ref Server
+  SecurityGroupId:
+    Value: !Ref WebSecurityGroup
+  TemporaryPublicIp:
+    Value: !GetAtt Server.PublicIp

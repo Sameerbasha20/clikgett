@@ -61,3 +61,6 @@ Backend/images/*_33.png
 Backend/server/images/photo_orders/
 Backend/server/images/product_requests/
 Backend/server/images/*.pdf
+
+# Admin build for the AWS server (made with REACT_APP_BASE_URL=https://api.clikgett.com/api)
+Admin/build-aws/

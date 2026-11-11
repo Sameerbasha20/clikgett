@@ -1,7 +1,6 @@
-# 20 · New AWS server: fresh, new-build only (plan)
+# 20 · New AWS server: fresh, new-build only
 
-**Status: plan only. Nothing in AWS has been changed. Every console step needs the owner's
-approval on the day.**
+**Status: DONE on 11 Nov 2026. What was built is in `deploy/aws/README.md`; differences from this plan: t3.micro, no Redis, CloudFront kept (private bucket + OAC). The old server is stopped, not yet terminated.** Original plan text below:
 
 There are no active users, so the old server (old Node 18 backend, old admin, the v1/v2
 side-by-side setup in `docs/RUNBOOK.md`) is **not** carried over. The new server runs only
