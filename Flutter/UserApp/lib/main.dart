@@ -109,8 +109,16 @@ class _MyAppState extends State<MyApp> {
         initialBinding: AppBindings(),
         navigatorKey: appNavigatorKey,
         debugShowCheckedModeBanner: false,
+        // Brand green for Material defaults (buttons, switches, dialogs, progress). Without a colour
+        // scheme Material 3 used its purple defaults and a pink-tinted page background.
         theme: ThemeData(
-            primaryColor: primary,
+            primaryColor: const Color(0xFF26A860),
+            colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF26A860)).copyWith(
+              primary: const Color(0xFF26A860),
+              surface: Colors.white,
+              surfaceTint: Colors.transparent,
+            ),
+            scaffoldBackgroundColor: Colors.white,
             appBarTheme: AppBarTheme(
                 centerTitle: true,
                 titleTextStyle:

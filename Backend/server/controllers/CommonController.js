@@ -1140,7 +1140,7 @@ CommonController.sendSms = async (number, otp) => {
 
     const url1 = `https://sms.textspeed.in/vb/apikey.php?apikey=${process.env.TEXTSPEED_APIKEY}&senderid=CLKGET&templateid=1777178973707336049&number=${number}&message=${message}`
 
-    const response = await axios.post(url1);
+    const response = await axios.post(url1, null, { timeout: 10000 });
     console.log("balance", response.data?.description, "status", response.data?.status);
     const sent = response.data?.status == "Success";
     if (sent)
@@ -1158,7 +1158,7 @@ CommonController.sendSmsForNewOrder = async (orderId) => {
 
     const url1 = `https://sms.textspeed.in/vb/apikey.php?apikey=${process.env.TEXTSPEED_APIKEY}&senderid=CLKGET&templateid=1777179228622362064&number=${alertNumber}&message=${message}`
 
-    const response = await axios.post(url1);
+    const response = await axios.post(url1, null, { timeout: 10000 });
     console.log("balance", response.data?.description, "status", response.data?.status);
     if(response.data?.status=="Success")
        await updateOTPs_sent()

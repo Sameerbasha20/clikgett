@@ -613,7 +613,8 @@ const ordercontroller = {
                 }
             }
             else {
-                return resp.json({ "Status": 0, "Message": "Order doesnot exists" });
+                // The order is the customer's (checked above); nothing in it can be bought right now.
+                return resp.json({ "Status": 0, "Message": "All the products you're trying to reorder are out of stock." });
             }
 
         }
@@ -990,11 +991,15 @@ function checkOrderReceiptID(OrderReceiptID) {
 function getorderitems(OrderID) {
     var queryString = "";
 
-    queryString = `SELECT oi.*
+    // Items that can go back in the cart: product and size still on sale and in stock. The quantity is
+    // capped at the stock and the per-order maximum (it used to drop any item ordered at the maximum,
+    // so buying the allowed 2 of a "max 2" item made reorder fail).
+    queryString = `SELECT oi.ProductID, oi.VariantID,
+                       LEAST(oi.Quantity, pv.AvailableQty, CASE WHEN pv.maxQty > 0 THEN pv.maxQty ELSE oi.Quantity END) AS Quantity
                 FROM OrderItems oi
-                INNER JOIN Products p ON oi.ProductID = p.ProductID
-                INNER JOIN ProductVariants pv ON oi.VariantID = pv.VariantID
-                WHERE oi.OrderID =? and pv.AvailableQty>0 and oi.Quantity<pv.maxQty`;
+                INNER JOIN Products p ON oi.ProductID = p.ProductID AND p.Status = 1
+                INNER JOIN ProductVariants pv ON oi.VariantID = pv.VariantID AND pv.Status = 1
+                WHERE oi.OrderID = ? AND pv.AvailableQty > 0 AND oi.Quantity > 0`;
 
     return new Promise(function (resolve, reject) {
         pool.query(queryString, [OrderID], function (err, results, fields) {
@@ -1099,7 +1104,7 @@ function createcartItems(body, CartID) {
     try {
         return new Promise(function (resolve, reject) {
 
-            let InsertcartItems = { CartID: CartID, ProductID: body.ProductID, VariantId: body.VariantID, Quantity: body.Quantity }
+            let InsertcartItems = { CartID: CartID, ProductID: body.ProductID, VariantId: body.VariantID, Quantity: body.Quantity, Type: 1 }
             let sql = "INSERT INTO CartItems set ?";
             console.log('InsertcartItems :', InsertcartItems)
             pool.query(sql, InsertcartItems, (err, results) => {

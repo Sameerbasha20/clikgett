@@ -336,6 +336,11 @@ const PromoCodecontroller = {
             else
                 MaxDiscount = "MaxDiscount = MaxDiscount,";
 
+            // The edit form sends the minimum order too; it was never saved.
+            let MinOrderValue = "";
+            if (Body.MinOrderValue !== undefined && Body.MinOrderValue !== null && Body.MinOrderValue !== '')
+                MinOrderValue = "MinOrderValue=" + pool.escape(Body.MinOrderValue) + ",";
+
             if (Body.Status != null || Body.Status != undefined)
                 Status = "Status=" + pool.escape(Body.Status)
             else
@@ -344,7 +349,7 @@ const PromoCodecontroller = {
 
 
 
-            queryString = "UPDATE PromoCodes SET " + PromoCode + Description + StartDate + EndDate + Is_Secret + Type + OfferValue + MaxDiscount + Status + " WHERE PromoCodeID=" + pool.escape(req.params.PromoCodeID) + ";";
+            queryString = "UPDATE PromoCodes SET " + PromoCode + Description + StartDate + EndDate + Is_Secret + Type + OfferValue + MaxDiscount + MinOrderValue + Status + " WHERE PromoCodeID=" + pool.escape(req.params.PromoCodeID) + ";";
             console.log(queryString)
             return new Promise(function (resolve, reject) {
                 pool.query(queryString, function (err, result, fields) {

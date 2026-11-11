@@ -383,7 +383,7 @@ class _UnlockDealsScreenState extends State<UnlockDealsScreen> {
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        child: Text('ADD', style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w800, color: white)),
+        child: const Icon(Icons.add_rounded, size: 24, color: white),
       );
     }
     return Container(

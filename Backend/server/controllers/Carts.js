@@ -281,6 +281,9 @@ const cartcontroller = {
             if (body.Quantity <= 0) {
                 return resp.json({ 'Status': 0, "Message": "Quantity need to be greater that 0" })
             }
+            if (Number(body.Type) !== 2 && (!body.ProductID || !body.VariantID)) {
+                return resp.status(400).json({ 'Status': 0, "Message": "Choose a product and size to add" })
+            }
 
 
             getproduct_availablestock = await getproductstock(body.VariantID, body.ProductID)
@@ -537,8 +540,9 @@ function createCartItems(body, CartID) {
             if (body.VariantID == null || body.VariantID == undefined)
                 body.VariantID = 'NA'
 
-            if (body.Type == null || body.Type == undefined)
-                body.Type = 'NA'
+            // Type is a number column: 1 = product (the default), 2 = kit. 'NA' made MySQL refuse the row.
+            if (body.Type == null || body.Type == undefined || body.Type === '')
+                body.Type = 1
 
             if (body.Type == 2) {
                 body.ProductID = body.KitID

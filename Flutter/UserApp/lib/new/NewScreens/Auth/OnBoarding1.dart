@@ -1,4 +1,5 @@
 import 'package:fav_app/new/NewScreens/Auth/Login.dart';
+import 'package:fav_app/new/Services/account_services.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -22,15 +23,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> onboardingContent = [
     {
       "title": "Groceries delivered to your doorstep",
-      "description":
-          "Free delivery on orders over ₹ 499",
+      // Filled from admin Settings (free delivery threshold) once the config loads.
+      "description": "Fast delivery from your local store",
       "image": 'Assets/Images/Auth/onboardimgone.png',
       "buttonText": "Next"
     },
     {
-      "title": "Browse  our wide range of products with ease and enjoy fast, hassle-free delivery!",
-      "description":
-          "",
+      "title": "Everything for your home, in one app",
+      "description": "Browse our wide range of products with ease and enjoy fast, hassle-free delivery",
       "image":
           'Assets/Images/Auth/onboardimgtwo.png', // Replace with your second image
       "buttonText": "Get Started"
@@ -44,6 +44,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     //   "buttonText": "Get Started"
     // }
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFreeDelivery();
+  }
+
+  /// The free delivery amount is an admin setting; never promise a fixed number here.
+  Future<void> _loadFreeDelivery() async {
+    final above = (await AccountServices.config()).freeDeliveryAbove;
+    if (!mounted || above <= 0) return;
+    final amount = above == above.roundToDouble() ? above.toStringAsFixed(0) : above.toStringAsFixed(2);
+    setState(() => onboardingContent[0]["description"] = "Free delivery on orders over ₹$amount");
+  }
 
   @override
   Widget build(BuildContext context) {

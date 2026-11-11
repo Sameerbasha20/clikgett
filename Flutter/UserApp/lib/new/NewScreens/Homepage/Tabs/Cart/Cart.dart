@@ -620,16 +620,21 @@ class _CartState extends State<Cart> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _title('Special prices for you', icon: Icons.lock_open_rounded),
         for (final u in unlocked)
-          _unlockRow(u, trailing: TextButton(
-            onPressed: () => cartController.updateQuantity(
-              productId: u.productId,
-              variantId: u.variantId ?? 0,
-              quantity: 1,
-              isFromCartScreen: true,
-              removeToast: true,
-              context: context,
+          _unlockRow(u, trailing: Material(
+            color: primary,
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => cartController.updateQuantity(
+                productId: u.productId,
+                variantId: u.variantId ?? 0,
+                quantity: 1,
+                isFromCartScreen: true,
+                removeToast: true,
+                context: context,
+              ),
+              child: const SizedBox(width: 30, height: 30, child: Icon(Icons.add_rounded, size: 20, color: white)),
             ),
-            child: const Text('ADD'),
           )),
         if (locked.isNotEmpty)
           _unlockRow(locked.first,
@@ -649,8 +654,11 @@ class _CartState extends State<Cart> {
                   style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: tColor)),
               Text.rich(TextSpan(children: [
                 TextSpan(text: _rs(u.unlockPrice), style: const TextStyle(fontWeight: FontWeight.w700, color: primaryDark)),
-                if (u.price > u.unlockPrice)
-                  TextSpan(text: '  ${_rs(u.price)}', style: const TextStyle(color: grey70, decoration: TextDecoration.lineThrough)),
+                // The gap stays outside the strike-through, or "₹1 ₹45" reads as a range "₹1–₹45".
+                if (u.price > u.unlockPrice) ...[
+                  const TextSpan(text: '  '),
+                  TextSpan(text: _rs(u.price), style: const TextStyle(color: grey70, decoration: TextDecoration.lineThrough)),
+                ],
                 if (subtitle != null) TextSpan(text: '  ·  $subtitle', style: const TextStyle(color: tColor3)),
               ]), style: GoogleFonts.poppins(fontSize: 12)),
             ]),

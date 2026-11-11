@@ -165,7 +165,6 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
     }
   }
 
-  @override
   /// "Deliver now" / "Schedule" choice: filled green when selected, white otherwise.
   Widget _modeTile({required bool selected, required String emoji, required String title, required String subtitle, required VoidCallback onTap}) {
     return Material(
@@ -199,7 +198,7 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(fontSize: 13.5, fontWeight: FontWeight.w700, color: selected ? const Color(0xFF14532D) : const Color(0xFF334155))),
                 Text(subtitle,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(fontSize: 11, color: selected ? const Color(0xFF15803D) : const Color(0xFF64748B))),
               ]),
@@ -255,7 +254,7 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
                   selected: !isScheduled,
                   emoji: '⚡',
                   title: 'Deliver now',
-                  subtitle: 'As soon as possible',
+                  subtitle: 'Right away',
                   onTap: () {
                     setState(() => isScheduled = false);
                     _notifyChange();

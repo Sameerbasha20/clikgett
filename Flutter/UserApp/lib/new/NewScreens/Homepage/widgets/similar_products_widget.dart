@@ -493,26 +493,17 @@ class _SimilarProductCardState extends State<_SimilarProductCard> {
     }
 
     if (currentQty <= 0) {
-      return InkWell(
-        onTap: () => _handleAddTap(variant),
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          height: 28,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: primary, width: 1.2),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            'ADD',
-            style: GoogleFonts.poppins(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: primary,
-              letterSpacing: 0.2,
-            ),
+      // Same green "+" as the main product cards.
+      return Material(
+        color: primary,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: () => _handleAddTap(variant),
+          borderRadius: BorderRadius.circular(8),
+          child: const SizedBox(
+            height: 28,
+            width: 28,
+            child: Icon(Icons.add_rounded, size: 20, color: Colors.white),
           ),
         ),
       );

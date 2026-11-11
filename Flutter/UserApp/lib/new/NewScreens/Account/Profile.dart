@@ -279,6 +279,8 @@ class _ProfileState extends State<Profile> {
                 ]),
               ),
               TextButton(
+                // Brand green, not Material's default purple.
+                style: TextButton.styleFrom(foregroundColor: primaryDark, textStyle: const TextStyle(fontWeight: FontWeight.w700)),
                 onPressed: u == null
                     ? null
                     : () async {

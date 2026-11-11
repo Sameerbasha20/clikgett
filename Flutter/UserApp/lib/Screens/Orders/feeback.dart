@@ -1,7 +1,5 @@
-import 'package:fav_app/Constants/button.dart';
 import 'package:fav_app/Constants/colors.dart';
 import 'package:fav_app/Constants/toast.dart';
-import 'package:fav_app/Screens/Widgets/appbar_widget.dart';
 import 'package:fav_app/Services/Orders/orders.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -182,7 +180,16 @@ class _FeedBackState extends State<FeedBack> {
   Widget build(BuildContext context) {
     return Material(
       child: Scaffold(
-        appBar: FavAppBar(context: context, title: 'Order Feedback'),
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          elevation: 0,
+          foregroundColor: const Color(0xFF0F172A),
+          centerTitle: true,
+          title: const Text('Rate your order',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+        ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
@@ -247,9 +254,10 @@ class _FeedBackState extends State<FeedBack> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 decoration: BoxDecoration(
-                  color: tLightGrey,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: const [BoxShadow(color: Color(0x0F0F172A), blurRadius: 16, offset: Offset(0, 6))],
                 ),
                 child: Column(
                   children: [
@@ -279,7 +287,7 @@ class _FeedBackState extends State<FeedBack> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: primaryColor,
+                        color: Color(0xFF16A34A),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -295,7 +303,7 @@ class _FeedBackState extends State<FeedBack> {
                         hintStyle: TextStyle(
                             color: Colors.grey.shade500, fontSize: 13),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: const Color(0xFFF8FAFC),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -307,7 +315,7 @@ class _FeedBackState extends State<FeedBack> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide:
-                              const BorderSide(color: primaryColor, width: 1.5),
+                              const BorderSide(color: Color(0xFF16A34A), width: 1.5),
                         ),
                       ),
                     ),
@@ -317,11 +325,21 @@ class _FeedBackState extends State<FeedBack> {
               const SizedBox(height: 30),
 
               // Submit Button
-              buttonWidget(
-                text: _isSubmitting ? 'Submitting...' : 'Submit Feedback',
-                textColor: tWhite,
-                buttonColor: _isSubmitting ? Colors.grey : tGreen,
-                onTap: _handleSubmit,
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _handleSubmit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    disabledBackgroundColor: const Color(0xFF86EFAC),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: Text(_isSubmitting ? 'Submitting...' : 'Submit feedback',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
               ),
               const SizedBox(height: 20),
             ],

@@ -153,7 +153,8 @@ class _OrderHeroCardState extends State<OrderHeroCard> with SingleTickerProvider
                 ),
               ),
             ]),
-            if (!delivered && eta != null) ...[
+            // Once the partner is at the door, an "arriving in ~N min" estimate contradicts the title.
+            if (!delivered && eta != null && o.status != OrderStatus.arrived) ...[
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -533,7 +534,7 @@ class _OrderStepperState extends State<OrderStepper> with SingleTickerProviderSt
                     color: i == current ? _deep : (i < current ? tColor : grey70),
                   )),
               if (i < current || (i == current && finished))
-                Text(o.reachedAt(steps[i]) != null && steps[i] != OrderStatus.assigned ? _hm(o.reachedAt(steps[i])!) : '',
+                Text(o.reachedAt(steps[i]) != null ? _hm(o.reachedAt(steps[i])!) : '',
                     style: GoogleFonts.poppins(fontSize: 9.5, color: tColor3))
               else if (i == current)
                 Text('In progress', style: GoogleFonts.poppins(fontSize: 9.5, fontWeight: FontWeight.w600, color: _fresh)),
