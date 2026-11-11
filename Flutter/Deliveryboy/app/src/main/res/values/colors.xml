@@ -2,10 +2,6 @@
 <resources>
     <!-- ClikGett Primary Brand Colors -->
     <color name="purple_200">#16A34A</color>
-    <color name="purple_500">#16A34A</color>
-    <color name="purple_700">#15803D</color>
-    <color name="teal_200">#22C55E</color>
-    <color name="teal_700">#15803D</color>
 
     <color name="clikgett_green_primary">#16A34A</color>
     <color name="clikgett_green_dark">#15803D</color>
@@ -34,14 +30,10 @@
     <color name="color_break_bg">#FFEDD5</color>
     <color name="color_delivery">#2563EB</color>
     <color name="color_delivery_bg">#DBEAFE</color>
-    <color name="color_card_bg">#FFFFFF</color>
-    <color name="color_border">#E2E8F0</color>
     <color name="color_danger">#DC2626</color>
     <color name="color_danger_bg">#FEE2E2</color>
     <color name="color_warning">#D97706</color>
     <color name="color_warning_bg">#FEF3C7</color>
-    <color name="color_blue_call">#2563EB</color>
-    <color name="color_blue_call_bg">#EFF6FF</color>
 
     <!-- Order screen -->
     <color name="order_header_start">#16A34A</color>
@@ -52,6 +44,5 @@
     <color name="amber_bg">#FFF7ED</color>
     <color name="amber_stroke">#FED7AA</color>
     <color name="amber_text">#C2410C</color>
-    <color name="green_stroke">#BBF7D0</color>
     <color name="checked_row_bg">#F0FDF4</color>
 </resources>

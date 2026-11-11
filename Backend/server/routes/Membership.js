@@ -9,8 +9,6 @@ router
     .get('/members', util.authenticate.adminAuthenticate, MembershipController.getMembers)
     .get('/product/:productId', util.authenticate.adminAuthenticate, MembershipController.getProductPricing)
     .post('/product/save', util.authenticate.adminAuthenticate, MembershipController.saveProductPricing)
-    .post('/save-product-pricing', util.authenticate.adminAuthenticate, MembershipController.saveProductPricing)
-    .post('/product/delete', util.authenticate.adminAuthenticate, MembershipController.deleteProductPricing)
-    .delete('/product/:productId/:planId', util.authenticate.adminAuthenticate, MembershipController.deleteProductPricing);
+    .post('/product/delete', util.authenticate.adminAuthenticate, MembershipController.deleteProductPricing);
 
 module.exports = router;

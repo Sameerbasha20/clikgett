@@ -54,42 +54,6 @@ const usercontroller = {
         }
     },
 
-    getactivedeliveryboys: async (req, resp, next) => {
-        try {
-
-
-            pool.query("select * from AdminUsers where Role=2 and Status=1", (err, results) => {
-                console.log('connecting')
-                if (err) {
-
-                    return resp.json({ "Status": 0, "Message": err.sqlMessage });
-                }
-
-                if (results.length > 0) {
-                    for (var j = 0; j < results.length; j++) {
-                        if (results[j].ProfilePic != "NA") {
-                            results[j].ProfilePic = deliveryboy_s3 + results[j].ProfilePic
-                        }
-                    }
-                    resp.json({ "Status": 1, "Deliveryboys": results })
-                }
-                else {
-                    resp.json({ "Status": 1, "Deliveryboys": [] })
-                }
-
-            });
-
-
-
-
-        }
-        catch (e) {
-
-
-            console.log(e)
-            return resp.json({ "Status": 0, "Message": 'error' })
-        }
-    },
 
     deliveryboydetail: async (req, resp, next) => {
         try {
@@ -1407,35 +1371,6 @@ const usercontroller = {
         }
     },
 
-    creditDebitWallet_old: async (req, resp, next) => {
-        try {
-            const { body: { type, amount, UserID } } = req
-            if (!UserID) return resp.json({ "status": 0, "Message": 'Please select valid user' })
-            const walletAmount = parseFloat(amount);
-            if (!amount || !Number.isFinite(walletAmount) || walletAmount <= 0) return resp.json({ "status": 0, "Message": 'Please enter valid amount' })
-            if (!type) return resp.json({ "status": 0, "Message": 'Please select payment type' })
-            let updateQuery
-            let Message
-            if (type == 1) {
-                updateQuery = `update Users set WalletAmount=WalletAmount+${pool.escape(walletAmount)} where UserID=${pool.escape(UserID)}`
-                Message = `Amount added to wallet`
-            } else {
-                updateQuery = `update Users set WalletAmount=WalletAmount-${pool.escape(walletAmount)} where UserID=${pool.escape(UserID)}`
-                Message = `Amount debited from wallet`
-            }
-
-            await CommonController.updateWalletAmount(updateQuery)
-            resp.status(200).json({ Status: 1, Message: Message })
-
-        }
-        catch (e) {
-
-
-            console.log(e)
-            return resp.json({ "status": 0, "Message": 'error' })
-        }
-
-    },
 
     adminuserslist: async (req, resp, next) => {
         try {
@@ -1641,118 +1576,9 @@ const usercontroller = {
     },
 
 
-    notifyproducts: async (req, resp, next) => {
-        try {
-            const sql = `
-                SELECT np.*, p.ProductName, pv.metrictype, pv.metricvalue, 
-                       u.FirstName, u.LastName, u.MobileNumber as UserMobile
-                FROM NotifyProducts np 
-                LEFT JOIN Products p ON np.ProductID = p.ProductID 
-                LEFT JOIN ProductVariants pv ON np.VariantID = pv.VariantID 
-                LEFT JOIN Users u ON np.UserID = u.UserID 
-                ORDER BY np.CreatedAt DESC
-            `;
-            pool.query(sql, (err, results) => {
-                if (err) {
-                    console.error("Error fetching notify products:", err);
-                    return resp.json({ "Status": 1, "Products": [] });
-                }
-                resp.json({ "Status": 1, "Products": results || [] });
-            });
-        } catch (e) {
-            console.error("Exception in notifyproducts:", e);
-            return resp.json({ "Status": 1, "Products": [] });
-        }
-    },
 
-    notifyproductupdate: async (req, resp, next) => {
-        try {
-            const id = req.params.id || req.params.ID || req.body.NotifyID || req.body.id;
-            const { Status } = req.body;
-            pool.query("UPDATE NotifyProducts SET Status=?, UpdatedAt=NOW() WHERE NotifyID=?", [Status !== undefined ? Status : 1, id], (err, results) => {
-                if (err) {
-                    console.error("Error updating notify product:", err);
-                    return resp.status(500).json({ "Status": 0, "Message": "Error updating notify product" });
-                }
-                return resp.json({ "Status": 1, "Message": "Notify product updated successfully" });
-            });
-        } catch (e) {
-            return resp.status(500).json({ "Status": 0, "Message": "Error updating notify product" });
-        }
-    },
 
-    notifyproductdetail: async (req, resp, next) => {
-        try {
-            const id = req.params.id || req.params.ID;
-            const sql = `
-                SELECT np.*, p.ProductName, pv.metrictype, pv.metricvalue, 
-                       u.FirstName, u.LastName, u.MobileNumber as UserMobile
-                FROM NotifyProducts np 
-                LEFT JOIN Products p ON np.ProductID = p.ProductID 
-                LEFT JOIN ProductVariants pv ON np.VariantID = pv.VariantID 
-                LEFT JOIN Users u ON np.UserID = u.UserID 
-                WHERE np.NotifyID = ?
-            `;
-            pool.query(sql, [id], (err, results) => {
-                if (err || !results || results.length === 0) {
-                    return resp.json({ "Status": 1, "Product": {} });
-                }
-                return resp.json({ "Status": 1, "Product": results[0] });
-            });
-        } catch (e) {
-            return resp.json({ "Status": 1, "Product": {} });
-        }
-    },
 
-    triggernotifyproduct: async (req, resp, next) => {
-        try {
-            const id = req.params.id || req.params.ID || req.body.NotifyID;
-            if (!id) return resp.status(400).json({ Status: 0, Message: "NotifyID is required" });
-
-            const sql = `
-                SELECT np.*, p.ProductName 
-                FROM NotifyProducts np
-                LEFT JOIN Products p ON np.ProductID = p.ProductID
-                WHERE np.NotifyID = ?
-            `;
-            pool.query(sql, [id], (err, rows) => {
-                if (err || !rows || rows.length === 0) {
-                    return resp.status(404).json({ Status: 0, Message: "Notification request not found" });
-                }
-                const record = rows[0];
-                const productName = record.ProductName || "Requested Product";
-                const message = `Good news! ${productName} is now back in stock. Order now before it runs out!`;
-
-                // Persist notification for user
-                if (record.UserID) {
-                    pool.query(
-                        "INSERT INTO UserNotifications (UserID, Title, Message, Status, Type, CreatedAt) VALUES (?, ?, ?, 1, 1, NOW())",
-                        [record.UserID, "Back in Stock Alert!", message],
-                        (nErr) => {
-                            if (nErr) console.error("Error creating user notification:", nErr);
-                        }
-                    );
-                }
-
-                // Update NotifyProducts status to 2 (Notified) and record timestamp
-                pool.query(
-                    "UPDATE NotifyProducts SET Status = 2, NotifiedAt = NOW(), UpdatedAt = NOW() WHERE NotifyID = ?",
-                    [id],
-                    (upErr) => {
-                        if (upErr) return resp.status(500).json({ Status: 0, Message: "Error updating notification status" });
-                        return resp.json({
-                            Status: 1,
-                            Message: `Back-in-stock alert sent for ${productName}`,
-                            NotifiedAt: new Date()
-                        });
-                    }
-                );
-            });
-        } catch (e) {
-            console.error("Exception in triggernotifyproduct:", e);
-            return resp.status(500).json({ Status: 0, Message: "Server error" });
-        }
-    },
 
     walletTransactions: async (req, resp, next) => {
         try {

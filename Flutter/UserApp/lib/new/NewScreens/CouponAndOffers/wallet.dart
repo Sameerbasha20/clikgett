@@ -71,6 +71,11 @@ class _WalletScreenState extends State<WalletScreen> {
     }
     _pendingOrderId = '$orderId';
     final key = await AccountServices.razorpayKey();
+    if (key.isEmpty) {
+      customToast(message: 'Online payment is not available right now. Please try again later.');
+      if (mounted) setState(() => _busy = false);
+      return;
+    }
     final profile = Get.find<ProfileController>().users;
     _razorpay?.clear();
     _razorpay = Razorpay()

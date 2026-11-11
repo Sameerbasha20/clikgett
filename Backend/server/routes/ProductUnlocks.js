@@ -6,15 +6,12 @@ const util = require('../utils/utils');
 router
     .get('/admin/settings', util.authenticate.adminAuthenticate, ProductUnlocksController.getSettings)
     .put('/admin/settings', util.authenticate.adminAuthenticate, ProductUnlocksController.updateSettings)
-    .get('/admin', util.authenticate.adminAuthenticate, ProductUnlocksController.getUnlocks)
-    .post('/admin', util.authenticate.adminAuthenticate, ProductUnlocksController.createUnlock)
     .put('/admin/:UnlockID', util.authenticate.adminAuthenticate, ProductUnlocksController.updateUnlock)
     .delete('/admin/:UnlockID', util.authenticate.adminAuthenticate, ProductUnlocksController.deleteUnlock)
     .get('/unlocks', util.authenticate.adminAuthenticate, ProductUnlocksController.getUnlocks)
     .post('/unlocks', util.authenticate.adminAuthenticate, ProductUnlocksController.createUnlock)
     .put('/unlocks/:UnlockID', util.authenticate.adminAuthenticate, ProductUnlocksController.updateUnlock)
     .delete('/unlocks/:UnlockID', util.authenticate.adminAuthenticate, ProductUnlocksController.deleteUnlock)
-    .get('/list', ProductUnlocksController.getUnlocks)
     .get('/deals', util.authenticate.optionalUserAuthenticate, ProductUnlocksController.deals);
 
 module.exports = router;

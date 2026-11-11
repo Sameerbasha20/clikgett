@@ -139,8 +139,6 @@ try {
     app.use(parser.urlencoded({ extended: true }));
     // Photo orders and product requests send one base64 image (a phone photo) in JSON.
     app.use(parser.json({ limit: "15mb" }));
-    app.use(express.json({ limit: "2mb" }));
-    app.use(parser.json());
     
     app.use('/api/users', userRouter);
     app.use('/api/auth', authRouter);
@@ -169,14 +167,10 @@ try {
     app.use('/api/restrictions', restrictionsRouter);
     app.use('/api/cartoffers', cartOffersRouter);
     app.use('/api/membership', membershipRouter);
-    app.use('/api/membershipplans', membershipRouter);
     app.use('/api/product-unlocks', productUnlocksRouter);
-    app.use('/api/home-sections', homeSectionsRouter);
     app.use('/api/admin-home-sections', homeSectionsRouter);
     app.use('/api/search-analytics', searchAnalyticsRouter);
-    app.use('/api/cashback-admin', cashbackAdminRouter);
     app.use('/api/cashback', cashbackAdminRouter);
-    app.use('/api/admin/delivery', AdminOrdersrouter);
     app.use('/api/photo-orders', photoOrdersRouter);
     app.use('/api/admin/photo-orders', adminPhotoOrdersRouter);
     app.use('/api/rider-signup', riderApplications.signup);
@@ -186,12 +180,23 @@ try {
     app.use('/api/admin-wallet-check', require('./routes/WalletCheck'));
     app.use('/api/customer', customerRequestsRouter);
     app.use('/api/admin', adminCustomerRequestsRouter);
-    app.use('/api/admin', adminRouter);
 
     // ── Health check endpoints (no auth required) ──────────────────────────
     // Mounted at both /health and /api/health so both paths work.
     app.use('/health', healthRouter);
     app.use('/api/health', healthRouter);
+
+    // Unknown API paths answer JSON (not Express's HTML page).
+    app.use('/api', (req, res) => res.status(404).json({ Status: 0, Message: 'Not found' }));
+    // Last stop for errors: JSON for the apps, details only in the server log.
+    // eslint-disable-next-line no-unused-vars
+    app.use((err, req, res, next) => {
+        if (err && err.type === 'entity.too.large') return res.status(413).json({ Status: 0, Message: 'The upload is too large' });
+        if (err && err.type === 'entity.parse.failed') return res.status(400).json({ Status: 0, Message: 'The request is not valid JSON' });
+        console.error(`[error] ${req.method} ${req.originalUrl}:`, err && (err.stack || err.message || err));
+        if (res.headersSent) return undefined;
+        return res.status(500).json({ Status: 0, Message: 'Something went wrong. Please try again.' });
+    });
 
     const httpServer = app.listen(PORT, () => {
         console.log('==================================================');
@@ -226,6 +231,20 @@ try {
     // just as the app sends the next request ("Connection closed before full header").
     httpServer.keepAliveTimeout = 65000;
     httpServer.headersTimeout = 66000;
+
+    // Deploys and restarts send SIGTERM: finish requests in flight, then close the database.
+    let stopping = false;
+    const shutdown = (signal) => {
+        if (stopping) return;
+        stopping = true;
+        console.log(`[shutdown] ${signal}: finishing open requests`);
+        httpServer.close(() => {
+            require('./utils/db').end(() => process.exit(0));
+        });
+        setTimeout(() => process.exit(0), 15000).unref();
+    };
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
 }
 catch (e) {
     console.log(e, 'error');

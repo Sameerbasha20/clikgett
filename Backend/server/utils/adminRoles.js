@@ -13,7 +13,7 @@ const ROLES = {
 };
 
 // First match wins. Paths are matched without the query string.
-const ADMIN = '/api/admin(?:users?)?';
+const ADMIN = '/api/adminusers?';
 const RULES = [
     // Used by every page (top bar, uploads, dashboard).
     ['common', new RegExp(`^${ADMIN}/(global-search|upload-url|2fa-status)`)],
@@ -25,7 +25,7 @@ const RULES = [
     ['settings', /^\/api\/admintiming/],
     // Money.
     ['finance', new RegExp(`^${ADMIN}/(creditdebitwallet|wallettransactions|expirecashback)`)],
-    ['finance', /^\/api\/(cashback|cashback-admin|admin-wallet-check)(\/|$)/],
+    ['finance', /^\/api\/(cashback|admin-wallet-check)(\/|$)/],
     ['finance', /^\/api\/(csv|productcsv)\/(orderdetails|productdetails|pendingproductscsv)/],
     // People.
     ['riders', new RegExp(`^${ADMIN}/(addeliveryboy|updatedeliveryboy|deletedeliveryboy|deliveryboydetail|getactivedeliveryboys|getalldeliveryboys|delivery-eta/order)`)],
@@ -33,15 +33,15 @@ const RULES = [
     ['customers', new RegExp(`^${ADMIN}/(userslist|userdetail|user/|updateuser|customer-full-details|feedback)`)],
     ['marketing', new RegExp(`^${ADMIN}/sendnotifications`)],
     // Orders.
-    ['orders', /^\/api\/(adminorders|admin\/delivery|admin\/photo-orders)(\/|$)/],
+    ['orders', /^\/api\/(adminorders|admin\/photo-orders)(\/|$)/],
     ['orders', /^\/api\/admin\/(customer-enquiries|product-requests)/],
     // Catalog and storefront (product edit tabs included).
-    ['catalog', /^\/api\/(adminproducts|categories|subcategories|admin-stock|buymore|restrictions|banners|home-sections|admin-home-sections)(\/|$)/],
+    ['catalog', /^\/api\/(adminproducts|categories|subcategories|admin-stock|buymore|restrictions|banners|admin-home-sections)(\/|$)/],
     ['catalog', /^\/api\/(productcsv|csv)\/update/],
     ['catalog', /^\/api\/sales\/(product|assign-product|remove-product)/],
-    ['catalog', /^\/api\/(membership|membershipplans)\/(product|save-product-pricing)/],
+    ['catalog', /^\/api\/membership\/product/],
     // Marketing.
-    ['marketing', /^\/api\/(promocodes|sales|promotions|cartoffers|product-unlocks|membership|membershipplans|rewards|milestones|search-analytics)(\/|$)/],
+    ['marketing', /^\/api\/(promocodes|sales|promotions|cartoffers|product-unlocks|membership|rewards|milestones|search-analytics)(\/|$)/],
     ['marketing', /^\/api\/carts\/abandoned/],
     ['marketing', /^\/api\/users\//],
 ];

@@ -22,7 +22,6 @@ router
 .get('/abandoned/trigger-notifications', util.authenticate.cronOrAdminAuthenticate, cartcontroller.triggerAbandonedCartNotifications)
 .post('/abandoned/trigger-notifications', util.authenticate.cronOrAdminAuthenticate, cartcontroller.triggerAbandonedCartNotifications)
 .get('/abandoned/list', util.authenticate.adminAuthenticate, cartcontroller.getAbandonedCarts)
-.get('/abandoned', util.authenticate.adminAuthenticate, cartcontroller.getAbandonedCarts)
 .get('/abandoned/:id', util.authenticate.adminAuthenticate, cartcontroller.getAbandonedCartDetails)
 .post('/abandoned/status', util.authenticate.adminAuthenticate, cartcontroller.updateAbandonedCartStatus)
 .post('/abandoned/details', util.authenticate.adminAuthenticate, cartcontroller.getAbandonedCartDetails)

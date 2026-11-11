@@ -5,7 +5,6 @@ const util = require('../utils/utils');
 
 router
     .get('/all', util.authenticate.adminAuthenticate, RewardsController.getAllRewards)
-    .get('/milestones', util.authenticate.adminAuthenticate, RewardsController.getMilestoneConfig)
     .get('/config', util.authenticate.adminAuthenticate, RewardsController.getMilestoneConfig)
     .get('/userprogress', util.authenticate.adminAuthenticate, RewardsController.getUserProgress)
     .post('/create', util.authenticate.adminAuthenticate, RewardsController.createReward)
@@ -15,6 +14,5 @@ router
     .delete('/:id', util.authenticate.adminAuthenticate, RewardsController.deleteReward);
 
 router.get('/myMilestones', util.authenticate.userAuthenticate, RewardsController.getMyMilestones);
-router.get('/myRewards', util.authenticate.userAuthenticate, RewardsController.getMyMilestones);
 
 module.exports = router;

@@ -9,11 +9,9 @@ const util = require('../utils/utils');
 router
     .post('/enquiries', util.authenticate.userAuthenticate, controller.submitEnquiry)
     .get('/enquiries/my', util.authenticate.userAuthenticate, controller.getMyEnquiries)
-    .get('/enquiries/image/:id', util.authenticate.userAuthenticate, controller.getSecureEnquiryImage)
 
 // Customer Product Requests (Unavailable products with optional photo)
     .post('/product-requests', util.authenticate.userAuthenticate, controller.submitProductRequest)
-    .get('/product-requests/my', util.authenticate.userAuthenticate, controller.getMyProductRequests)
-    .get('/product-requests/image/:id', util.authenticate.userAuthenticate, controller.getSecureProductRequestImage);
+    .get('/product-requests/my', util.authenticate.userAuthenticate, controller.getMyProductRequests);
 
 module.exports = router;

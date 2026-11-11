@@ -83,11 +83,15 @@ const runTests = async () => {
 
     // 8. Test Secure Image Access
     console.log('\n8. Testing Secure Image Retrieval...');
-    const imgRes = await axios.get(`${BASE_URL}/api/customer/product-requests/image/${photoReqId}`, {
-        headers: userHeaders,
+    // Only admins view request photos (the customer endpoint was unused and removed).
+    const imgRes = await axios.get(`${BASE_URL}/api/admin/product-requests/image/${photoReqId}`, {
+        headers: adminHeaders,
         responseType: 'arraybuffer'
     });
-    console.log('Image fetched successfully! Bytes length:', imgRes.data.length);
+    if (!String(imgRes.headers['content-type'] || '').startsWith('image/')) throw new Error('admin image route did not return an image');
+    const custImg = await axios.get(`${BASE_URL}/api/customer/product-requests/image/${photoReqId}`, { headers: userHeaders, validateStatus: () => true });
+    if (custImg.status !== 404) throw new Error(`removed customer image route answered ${custImg.status}`);
+    console.log('Image fetched by admin; customer route is gone. Bytes length:', imgRes.data.length);
 
     // 9. Admin List Product Requests
     console.log('\n9. Testing Admin List Product Requests...');

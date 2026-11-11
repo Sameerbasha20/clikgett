@@ -31,31 +31,6 @@ services:
       - clikgett_network
 
   # ===========================================================================
-  # 2. PostgreSQL Service (Planned Migration Target)
-  # ===========================================================================
-  postgres:
-    image: postgres:16-alpine
-    container_name: clikgett-postgres
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:5433:5432"
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-clikgett_pg_dev}
-      POSTGRES_USER: ${POSTGRES_USER:-clikgett_pg_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-clikgett_pg_dev_password}
-    volumes:
-      - clikgett_postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U clikgett_pg_user -d clikgett_pg_dev"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    networks:
-      - clikgett_network
-
-  # ===========================================================================
   # 3. Redis Service (Local Cache & Session Store)
   # ===========================================================================
   redis:
@@ -238,8 +213,6 @@ services:
 volumes:
   clikgett_mysql_data:
     name: clikgett_mysql_data
-  clikgett_postgres_data:
-    name: clikgett_postgres_data
   clikgett_redis_data:
     name: clikgett_redis_data
   clikgett_minio_data:

@@ -9,7 +9,6 @@ router
 
 .get('/list',util.authenticate.optionalUserAuthenticate,productcontroller.productsbyCategory_subcategory)
 
-.get('/weblist',util.authenticate.optionalUserAuthenticate,productcontroller.productsbyCategory_subcategory)
 
 .get('/bulk-deals',util.authenticate.optionalUserAuthenticate,productcontroller.bulkDeals)
 .get('/previously-bought',util.authenticate.optionalUserAuthenticate,productcontroller.previouslyBought)

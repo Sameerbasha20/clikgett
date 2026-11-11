@@ -1623,6 +1623,11 @@ class _CartState extends State<Cart> {
       ..on(Razorpay.EVENT_EXTERNAL_WALLET, (_) {});
     final profile = Get.find<ProfileController>().users;
     final key = await AccountServices.razorpayKey();
+    if (key.isEmpty) {
+      customToast(message: 'Online payment is not available right now. Please try again later.');
+      if (mounted) setState(() => _placing = false);
+      return;
+    }
     try {
       _razorpay!.open({
         'key': key,

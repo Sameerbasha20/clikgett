@@ -8,6 +8,9 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
 
 COPY . .
+# Run as the image's unprivileged "node" user, not root.
+RUN chown -R node:node /app
+USER node
 
 # Render sets PORT; locally docker-compose maps 5000.
 EXPOSE 5000

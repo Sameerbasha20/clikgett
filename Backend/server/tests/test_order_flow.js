@@ -125,16 +125,6 @@ const status = async (id) => (await q("SELECT OrderStatus FROM Orders WHERE Orde
         const [{ n }] = await q("SELECT COUNT(*) AS n FROM OrderStatusTimeline WHERE OrderID = ?", [A]);
         check('timeline row for every step', n >= 5, `${n} rows`);
 
-        // ---- Legacy two-step delivery used by the current delivery app
-        const L = await createTestOrder(user, variant);
-        await call('PUT', `/adminorders/assigndeliverboy/${L}`, ADMIN, { DeliveryBoyID: rider.AdminID });
-        await call('PUT', `/deliveryboy/updatestatus/${L}`, RIDER, { OrderStatus: 5 });
-        await call('PUT', `/deliveryboy/updatestatus/${L}`, RIDER, { OrderStatus: 7, Latitude: 15.8281, Longitude: 78.0373 });
-        const [{ OTP: OTP2 }] = await q("SELECT OTP FROM Orders WHERE OrderID = ?", [L]);
-        r = await call('POST', '/deliveryboy/verifyotp_order', RIDER, { OrderID: L, OTP: String(OTP2) });
-        const r2 = await call('PUT', `/deliveryboy/updatestatus/${L}`, RIDER, { OrderStatus: 1 });
-        check('legacy verify-then-deliver still works', r.json.Status === 1 && r2.json.Status === 1 && (await status(L)) === 1);
-
         // ---- Customer cancel restores stock
         const before = (await q("SELECT AvailableQty FROM ProductVariants WHERE VariantID = ?", [variant.VariantID]))[0].AvailableQty;
         const C = await createTestOrder(user, variant, 2);

@@ -39,20 +39,6 @@ const adminproductcontroller={
         }
     },
 
-    productsbysubcategory_admin : async (req, resp, next) => {
-        let query; // per-request (were implicit globals)
-        try{
-                query = "select * from Products where SubCategoryID="+pool.escape(req.params.SubCategoryID)+" and Status!=0 and Type=1 order by ProductName asc"
-                let results = await CommonController.getproducts(query); 
-                resp.json({"Status":1,"Products":results})
-    
-            
-        }
-        catch(e){
-            console.log(e)
-            return resp.json({"Status":0,"Message":'error'})
-        }
-    },
 
     Kits : async (req, resp, next) => {
         let results; // per-request (were implicit globals)
@@ -520,149 +506,9 @@ const adminproductcontroller={
     },
     
 
-    allKits : async (req, resp, next) => {
-        let query; // per-request (were implicit globals)
-        try{
-            query = "select * from Kits where Status!=0"
-            let results = await CommonController.products(query);  
-            console.log(results.length,'results')         
-            return resp.json({"Status":1,"Products":results})
-            
-        }
-        catch(e){
-            
-            
-            console.log(e)
-            return resp.json({"Status":0,"Message":'error'})
-        }
-    },
 
-    kitdetail : async (req, resp, next) => {
-        let query; // per-request (were implicit globals)
-        try{
-            query = "select * from Kits where KitID="+pool.escape(req.params.KitID)
-            let results = await CommonController.kitsanditems(query,'admin');  
-            console.log(results.length,'results')        
-            if(results.length != 0) 
-                    return resp.json({"Status":1,"Kits":results[0]})
-            else
-                    return resp.json({"Status":1,"Kits":{}})
-            
-        }
-        catch(e){
-            
-            
-            console.log(e)
-            return resp.json({"Status":0,"Message":'error'})
-        }
-    },
 
-    addkit : async (req, resp, next) => {
-        let body, imageupload, kit, kitID; // per-request (were implicit globals)
-        try {
 
-            body=req.body 
-            
-
-            if (body.Description == null || body.Description == undefined)
-                                body.Description = 'NA'
-            
-            if (body.OfferPrice == null || body.OfferPrice == undefined){
-                                body.OfferPrice = 0}
-
-            kit=await createkit(body)
-            console.log(kit)   
-            kitID=kit['ID']
-            // if(body.KitItems.length>0){
-            //         add_kititems = await addkititems(kitID,body.KitItems)}
-                    
-            
-            if(body.ImageUrl != null || body.ImageUrl != undefined){
-                    imageupload = await convertimagekit(kitID,body.ImageUrl)
-                    if (imageupload == -1){
-                                console.log("error in adding kit image")}
-                        }                   
-                
-
-            return resp.json({'Status':1,"Message":"Kit Added Successfully"})
-            
-        }
-        catch (err) {
-            console.log("exception in adding kit ", err);
-            return resp.status(500).json({ "Status": 0, "Message": "Error in adding kit" });
-        }
-    },
-
-    updatekit : async (req, resp, next) => {
-        let Body, Description, KitID, KitName, OfferPrice, Price, Status, imageupload, queryString; // per-request (were implicit globals)
-        try {
-            Body=req.body
-            console.log(Body,'Body')
-            
-             
-            if (Body.KitName != null || Body.KitName != undefined)
-            KitName = "KitName=" + pool.escape(Body.KitName) + ",";
-            else
-            KitName = "KitName = KitName,";
-
-            if (Body.Description != null || Body.Description != undefined)
-            Description = "Description=" + pool.escape(Body.Description) + ",";
-            else
-            Description = "Description = Description,";
-
-            if(Body.ImageUrl != null || Body.ImageUrl != undefined){
-                KitID=req.params.KitID
-
-                imageupload = await convertimagekit(KitID,Body.ImageUrl)
-                if (imageupload == -1){
-                                console.log("error in updating Kit image")
-                            }
-                
-                }
-
-            if (Body.Price != null || Body.Price != undefined)
-                Price = "Price=" + pool.escape(Body.Price) + ",";
-            else
-                Price = "Price = Price,";
-
-            if (Body.OfferPrice != null || Body.OfferPrice != undefined)
-                OfferPrice = "OfferPrice=" + pool.escape(Body.OfferPrice)+ ",";
-            else
-                OfferPrice = "OfferPrice = OfferPrice,";
-
-            if (Body.Status != null || Body.Status != undefined)
-                Status = "Status=" + pool.escape(Body.Status) + "";
-            else
-                Status = "Status = Status";
-
-            
-            queryString = "UPDATE Kits SET " +KitName+Description+Price+OfferPrice+Status+" WHERE KitID=" + pool.escape(req.params.KitID) + ";";
-            console.log(queryString)
-            return new Promise(function(resolve, reject) {
-            pool.query(queryString, function(err, result, fields) {
-                            if (err) {
-                                
-                                        resp.json({ "Status": 0, "Message": "Error in updating the DB" });
-                                        console.log("Error in updating the DB:" + err);
-                                
-                                    }
-                            else {
-                                            console.log("update :" + result.affectedRows);
-                                    
-                                            console.log('update successful')
-                                            resp.json({ "Status": 1, "Message": "Kit Update Successful" });
-                                    
-                                    
-                    
-                                    }
-             });
-         });
-        }
-        catch (err) {
-            console.log("exception in updating Kit ", err);
-            return resp.json({ "Status": 0, "Message": "Error in updating Kit" });
-        }
-    },
 
     deletekit : async (req, resp, next) => {
         let Kitdelete; // per-request (were implicit globals)
@@ -683,101 +529,8 @@ const adminproductcontroller={
         }
     },
 
-    addkititem : async (req, resp, next) => {
-        let body; // per-request (were implicit globals)
-        try {
 
-            body=req.body             
-            let InsertVariants = {KitID: body.KitID,ProductID: body.ProductID,VariantID:body.VariantID}
-            let sql = "INSERT INTO KitItems set ?";
-            pool.query(sql, InsertVariants, (err, results) => {
-                        if(err){
-                                console.log(err)
-                                return resp.json({ "Status": 0, "Message": "Error in adding kititem" });}
 
-                        if (results.affectedRows === 1) {
-                                return resp.json({'Status':1,"Message":"KitItem Added Successfully"})}
-
-                        else {
-                                console.log("error in adding Variant", results.affectedRows);
-                                return resp.json({ "Status": 0, "Message": "Error in adding KitItem" });}
-                                                                    
-                    }) 
-            
-        }
-        catch (err) {
-            console.log("exception in adding KitItem", err);
-            return resp.status(500).json({ "Status": 0, "Message": "Error in adding KitItem" });
-        }
-    },
-
-    updatekititems : async (req, resp, next) => {
-        let Body, ProductID, VariantID, queryString; // per-request (were implicit globals)
-        try {
-            Body=req.body
-           
-
-            if (Body.ProductID != null || Body.ProductID != undefined)
-            ProductID = "ProductID=" + pool.escape(Body.ProductID) + ",";
-            else
-            ProductID = "ProductID = ProductID,";
-
-            if (Body.VariantID != null || Body.VariantID != undefined)
-            VariantID = "VariantID=" + pool.escape(Body.VariantID)
-            else
-            VariantID = "VariantID = VariantID";
-
-          
-
-           
-            
-            queryString = "UPDATE KitItems SET " +ProductID+VariantID+" WHERE KitItemID=" + pool.escape(req.params.KitItemID) + ";";
-            console.log(queryString)
-            return new Promise(function(resolve, reject) {
-            pool.query(queryString, function(err, result, fields) {
-                            if (err) {
-                                
-                                        resp.json({ "Status": 0, "Message": "Error in updating the DB" });
-                                        console.log("Error in updating the DB:" + err);
-                                
-                                    }
-                            else {
-                                    console.log("update :" + result.affectedRows);
-                                    if (result.affectedRows > 0) {
-                                            console.log('update successful')
-                                            resp.json({ "Status": 1, "Message": "KitItem Update Successful" });
-                                    }
-                                    else {
-                                            console.log("KitItem update failed",err,queryString);
-                                            resp.json({ "Status": 0, "Message": "No changes to update" });
-                                    
-                                    }
-                    
-                                    }
-             });
-         });
-        }
-        catch (err) {
-            console.log("exception in updating KitItem ", err);
-            return resp.status(500).json({ "Status": 0, "Message": "Error in updating KitItem" });
-        }
-    },
-
-    deletekititem : async (req, resp, next) => {
-        let query, results; // per-request (were implicit globals)
-        try {
-            
-            query = "delete from KitItems where KitItemID="+pool.escape(req.params.KitItemID)
-            results=await CommonController.commondelete(query)
-            
-            resp.json({ "Status": 1, "Message": "KitItem deleted successfully" });
-        
-        }
-        catch (err) {
-            console.log("exception in deleting kititems ", err);
-            return resp.status(500).json({ "Status": 0, "Message": "Error in deleting kititems" });
-        }
-    },
 
 
     RecommendedProducts : async (req, resp, next) => {
@@ -797,53 +550,7 @@ const adminproductcontroller={
         }
     },
     
-    addRecommendedProducts : async (req, resp, next) => {
-        let RecommendedProducts, body, query; // per-request (were implicit globals)
-        try {
 
-            body=req.body 
-            query="select * from Products where Status=1 and ProductID="+pool.escape(body.ProductID)
-            let presults = await CommonController.commonget(query);   
-            if(presults.length == 0 ){
-                return resp.json({'Status':0,"Message":"Product doesnot exists"})
-            }
-
-            query = "select * from RecommendedProducts where Status=1 and ProductID="+pool.escape(body.ProductID)
-            let results = await CommonController.commonget(query); 
-            if(results.length > 0 ){
-                return resp.json({'Status':0,"Message":"Product already exists"})
-            } 
-
-            if (body.ProductID == null || body.ProductID == undefined){
-                return resp.json({'Status':0,"Message":"ProductID cannot be empty"})
-            }
-            RecommendedProducts=await createRecommendedProduct(body)            
-
-            return resp.json({'Status':1,"Message":"Recommended Product Added Successfully"})
-            
-        }
-        catch (err) {
-            console.log("exception in adding Recommended Product ", err);
-            return resp.status(500).json({ "Status": 0, "Message": "Error in adding Recommended Product" });
-        }
-    },
-
-    delete_RecommendedProducts : async (req, resp, next) => {
-        let RecommendedProductdelete; // per-request (were implicit globals)
-        try {
-            
-            RecommendedProductdelete=await deleteRecommendedProducts(req.params.RecProductID)          
-            if (RecommendedProductdelete==0){
-                resp.json({ "Status": 0, "Message": "Error in deleting Recommended Product" });}
-
-            return resp.json({ "Status": 1, "Message": "Recommended Product deleted successfully" });
-        
-        }
-        catch (err) {
-            console.log("exception in deleting Kit ", err);
-            return resp.status(500).json({ "Status": 0, "Message": "Error in deleting Kit" });
-        }
-    },
 // Buy 1 / Buy 2 / Buy More product offers
 buyMoreConfig: async (req, resp, next) => {
     try {

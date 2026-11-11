@@ -22,21 +22,6 @@ const addresscontroller={
         }
     },
     
-    getaddressbyaddressid : async (req, resp, next) => {
-        try{
-            let results = await CommonController.commonget("select * from Address where AddressID = ? and UserID = ?", [req.params.AddressID, req.UserID]); 
-            if(results.length>0){
-                resp.json({"Status":1,"Address":results[0]})
-            }
-            else{
-                resp.json({"Status":1,"Address":{}})
-            }
-        }
-        catch(e){            
-            console.log(e)
-            return resp.json({"Status":0,"Message":'error'})
-        }
-    },
 
     // addaddress : async (req, resp, next) => {
     //     try {

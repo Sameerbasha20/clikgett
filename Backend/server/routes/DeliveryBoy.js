@@ -11,17 +11,13 @@ router
 
     // Existing routes & orders
     .get('/getroutes', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.get_routes)
-    .get('/ordersbyroute', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.ordersbyroute)
     .get('/orderdetail', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.myorder)
-    .get('/orderstatus', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.orderstatus)
 
     // Order status progression & updates (now hardened with geofencing & transition validation)
     .put('/updatestatus/:OrderID', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.updatestatus)
-    .put('/update/:AdminID', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.updatedeliveryboy)
 
     // OTP confirmation (now parameterized against SQL injection)
     .post('/sendotp_order', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.Sendotp_Orders)
-    .post('/verifyotp_order', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.Orders_VerifyOTP)
     .post('/deliver/:OrderID', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.deliverOrder)
     // Cash-on-delivery paid by UPI at the door: Razorpay QR + payment status
     .post('/orders/:OrderID/upi-qr', util.authenticate.deliveryboyAuthenticate, deliveryboycontroller.doorstepUpiQr)

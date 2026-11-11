@@ -200,6 +200,7 @@ class AccountServices {
   /// Razorpay key from the server, so it always matches the server's secret.
   static Future<String> razorpayKey() async {
     final key = (await config()).razorpayKey;
+    // Empty = online payment is off on this server; callers then stop with a message.
     return key.isNotEmpty ? key : Constants.razorPayKey;
   }
 

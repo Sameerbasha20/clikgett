@@ -27,44 +27,6 @@ const deliveryboy_s3 = "http://clikgett-media.local/deliveryboys/"
 
 const deliveryboycontroller = {
 
-    getdeliveryboydetail: async (req, resp, next) => {
-        let AdminID; // per-request (were implicit globals)
-        try {
-
-            AdminID = req.AdminID
-            pool.query("select * from Adminusers where AdminID=? and Role=2", [AdminID], (err, results) => {
-                console.log('connecting')
-                if (err) {
-
-                    return resp.json({ "Status": 0, "Message": err.sqlMessage });
-                }
-
-                if (results.length > 0) {
-                    for (var j = 0; j < results.length; j++) {
-                        if (results[j].profilePic != "NA") {
-                            results[j].profilePic = deliveryboy_s3 + results[j].profilePic
-                        }
-
-                    }
-                    resp.json({ "Status": 1, "DeliveryBoy": results[0] })
-                }
-                else {
-                    resp.json({ "Status": 1, "DeliveryBoy": [] })
-                }
-
-            });
-
-
-
-
-        }
-        catch (e) {
-
-
-            console.log(e)
-            return resp.json({ "Status": 0, "Message": 'error' })
-        }
-    },
 
     SendotpLogin: async (req, resp, next) => {
         try {
@@ -163,27 +125,6 @@ const deliveryboycontroller = {
         }
     },
 
-    Orders_VerifyOTP: async (req, resp, next) => {
-        try {
-            const Body = req.body || {};
-            const OrderID = parseInt(Body.OrderID, 10);
-            const OTP = Body.OTP ? Body.OTP.toString().trim() : '';
-            if (isNaN(OrderID) || !OTP) {
-                return resp.status(400).json({ "Status": 0, "Message": "OrderID and OTP required" });
-            }
-            const order = await riderOrder(OrderID, req.AdminID);
-            if (!order) return resp.status(403).json({ "Status": 0, "Message": "This order is not assigned to you" });
-            if (Number(order.OrderStatus) !== ORDER_STATUS.ARRIVED || String(order.OTP) !== OTP) {
-                return resp.json({ "Status": 0, "Message": "Invalid OTP" });
-            }
-            verifiedDeliveries.set(OrderID, { riderId: req.AdminID, at: Date.now() });
-            return resp.status(200).json({ "Status": 1, "Message": "OTP verified successfully" });
-        }
-        catch (err) {
-            console.log("exception in verify otp userorder ", err);
-            return resp.status(200).json({ "Status": 0, "Message": "Error in verify otpuser" });
-        }
-    },
 
     // Verifies the customer's OTP and marks the order delivered in one step.
     // POST /deliveryboy/deliver/:OrderID  { OTP, Latitude, Longitude }
@@ -360,32 +301,6 @@ const deliveryboycontroller = {
         }
     },
 
-    ordersbyroute: async (req, resp, next) => {
-        let orderresult, results; // per-request (were implicit globals)
-        try {
-            results = await getroutes(req.query.RouteID, 'byid')
-            console.log(results, req.query.RouteID)
-            if (results.length > 0) {
-                results[0].OrderIDs = JSON.parse(results[0].OrderIDs);
-                console.log(results[0].OrderIDs)
-                const orders = []
-                for (var j = 0; j < results[0].OrderIDs.length; j++) {
-                    console.log(results[0].OrderIDs, results[0].OrderIDs[j])
-                    orderresult = await getorder(results[0].OrderIDs[j])
-                    orders.push(orderresult)
-                }
-                results[0]['Orders'] = orders
-                resp.json({ "Status": 1, "Orders": results })
-            }
-            else {
-                resp.json({ "Status": 1, "Orders": [] })
-            }
-        }
-        catch (e) {
-            console.log(e)
-            return resp.json({ "Status": 0, "Message": 'error' })
-        }
-    },
 
     myorder: async (req, resp, next) => {
         let cartitems, orderitems; // per-request (were implicit globals)
@@ -512,68 +427,7 @@ const deliveryboycontroller = {
         }
     },
 
-    updatedeliveryboy: async (req, resp, next) => {
-        try {
-            const Body = req.body || {}
-            const AdminID = req.AdminID
 
-            if (Body.profilePic != null || Body.profilePic != undefined) {
-                await convertimage(AdminID, Body.profilePic)
-            }
-
-            const sets = [];
-            const params = [];
-            if (Body.firstName != null || Body.firstName != undefined) { sets.push('firstName = ?'); params.push(Body.firstName); }
-            if (Body.lastName != null || Body.lastName != undefined) { sets.push('lastName = ?'); params.push(Body.lastName); }
-            if (sets.length === 0) {
-                if (Body.profilePic != null || Body.profilePic != undefined) {
-                    return resp.json({ "Status": 1, "Message": "Delivery boy Updated Successfully" });
-                }
-                return resp.json({ "Status": 0, "Message": "No changes to update" });
-            }
-            const queryString = "UPDATE AdminUsers SET " + sets.join(', ') + " WHERE AdminID = ?";
-            params.push(AdminID);
-            return new Promise(function (resolve, reject) {
-                pool.query(queryString, params, function (err, result, fields) {
-                    if (err) {
-
-                        resp.json({ "Status": 0, "Message": "Error in updating the DB" });
-                        console.log("Error in updating the DB:" + err);
-
-                    }
-                    else {
-                        console.log("update :" + result.affectedRows);
-                        if (result.affectedRows > 0) {
-                            console.log('update successful')
-                            resp.json({ "Status": 1, "Message": "Delivery boy Updated Successfully" });
-                        }
-                        else {
-                            console.log("Deliveryboy update failed", err, queryString);
-                            resp.json({ "Status": 0, "Message": "No changes to update" });
-
-                        }
-
-                    }
-                });
-            });
-        }
-        catch (err) {
-            console.log("exception in updating Products ", err);
-            return resp.status(500).json({ "Status": 0, "Message": "Error in updating Products" });
-        }
-    },
-
-    orderstatus: async (req, resp, next) => {
-        let results; // per-request (were implicit globals)
-        try {
-            results = await getdeliveredstatus(req.AdminID)
-            resp.json({ "Status": 1, "OrdersStatus": results })
-        }
-        catch (e) {
-            console.log(e)
-            return resp.json({ "Status": 0, "Message": 'error' })
-        }
-    },
 }
 
 function Verifyemail(inputs) {

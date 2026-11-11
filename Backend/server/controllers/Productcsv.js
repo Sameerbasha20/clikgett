@@ -152,55 +152,6 @@ const adminproductcontroller={
         }
     },
 
-    warehousedetails : async (req, resp, next) => {
-        let getrecords, image, location, newlist, records; // per-request (were implicit globals)
-        try {
-
-            getrecords = await getpendingorders()
-
-            records = [{
-                "OrderID": "Order No","MobileNumber": "Phone Number","Address": "Address","City": "Area","OrderDetails": "Order Details",
-                
-            }]
-            const results = getrecords
-            
-            const csvStringifier = createCsvStringifier({
-                header: [
-                    {id: 'OrderID', title: 'Order No'},
-                    {id: 'MobileNumber', title: 'Phone Number'},
-                    {id: 'Address', title: 'Mobile Number'},
-                    {id: 'City', title: 'Area'},
-                    {id: 'OrderDetails', title: 'OrderDetails'}
-                ]
-            });
-            newlist = records.concat(results)
-            // console.log(newlist)
-            const csv = csvStringifier.stringifyRecords(newlist);
-            image = Date.now()+".csv"
-            const params = {
-                Bucket: process.env.bucketname, // pass your bucket name
-                Key: "csv/warehouse_"+image, // file will be saved as testBucket/contacts.csv
-                ACL: "public-read",
-                Body: csv,
-                ContentType: "text/csv",
-            };
-
-            s3.upload(params, function (s3Err, data) {
-                if (s3Err) throw s3Err;
-                else {
-                    console.log(data.Location)
-                    location = data.Location
-                    return resp.json({'Status':1,"File":location})
-                
-                }
-            });
-
-        } 
-        catch(e){
-            console.log(e)
-            return resp.json({"Status":0,"Message":'error'})
-        }
-    },
 
     pendingorders_csv : async (req, resp, next) => {
         let image, location, newlist, query, records; // per-request (were implicit globals)

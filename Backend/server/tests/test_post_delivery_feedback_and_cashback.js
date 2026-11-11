@@ -230,7 +230,7 @@ const runTests = async () => {
         // =========================================================================
         console.log('\n--- TEST 6: Check Feedback Eligibility Endpoint ---');
         const eligRes = await axios.get(
-            `${baseUrl}/api/users/feedback/order-status/${testOrderIdDelivered}`,
+            `${baseUrl}/api/users/feedback/eligibility/${testOrderIdDelivered}`,
             { headers: userHeaders }
         );
         assert.strictEqual(eligRes.status, 200);

@@ -5,13 +5,9 @@ class Constants {
       r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
   late RegExp regex = RegExp(pattern);
 
-  static String razorPayTestKey = 'rzp_live_jcwTqWSYgMpFK0';
-  static String razorPayLiveKey = 'rzp_live_jcwTqWSYgMpFK0';
-
-  static String razorPayKey = const String.fromEnvironment('RAZORPAY_KEY').isNotEmpty
-      ? const String.fromEnvironment('RAZORPAY_KEY')
-      : razorPayLiveKey;
-  // static String razorPayKey = razorPayTestKey;
+  // The Razorpay key comes from the server (/account/config) so test and live servers
+  // can never be mixed up. A build may pin one with --dart-define=RAZORPAY_KEY=...
+  static const String razorPayKey = String.fromEnvironment('RAZORPAY_KEY');
 
   static String baseUrlDev = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.9:5001/api");
   static String baseUrlProd = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.9:5001/api");

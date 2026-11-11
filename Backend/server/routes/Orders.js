@@ -15,8 +15,8 @@ router
 .put('/cancelorderuser/:OrderID',util.authenticate.userAuthenticate,ordercontroller.cancelorderuser)
 .post('/reorder',util.authenticate.userAuthenticate,ordercontroller.reorder)
 .get('/checktiming',TimingController.checkOrderTiming)
-.get('/orderstatus/:OrderID', util.authenticate.userAuthenticate, ordercontroller.getOrderStatus)
 .get('/invoice/:OrderID', util.authenticate.invoiceAuthenticate, ordercontroller.downloadInvoice)
+// Used by the app's "Open in browser" (URL built as invoice URL + '/link').
 .get('/invoice/:OrderID/link', util.authenticate.invoiceAuthenticate, util.authenticate.invoiceLink);
 
 

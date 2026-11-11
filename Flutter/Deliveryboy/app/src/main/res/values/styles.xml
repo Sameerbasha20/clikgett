@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="Theme.Deliveryparent">
-        <item name="colorPrimary">@color/clikgett_green_primary</item>
-        <item name="colorPrimaryDark">@color/clikgett_green_dark</item>
-        <item name="android:statusBarColor">@color/clikgett_green_dark</item>
-    </style>
     <!-- Numbered step label on the partner sign-up form. -->
     <style name="SignupStep">
         <item name="android:layout_width">wrap_content</item>

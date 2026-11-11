@@ -47,23 +47,6 @@ const categoriescontroller = {
     },
 
 
-    SubcategoryDetail: async (req, resp, next) => {
-        try {
-            let query = "select * from SubCategories where SubCategoryID=" + pool.escape(req.params.SubCategoryID) + " and Status=1"
-            let subcategories = await CommonController.commonget(query);
-
-            if (subcategories.length > 0) {
-                return resp.json({ "Status": 1, "SubCategories": subcategories[0] })
-            }
-            else {
-                return resp.json({ "Status": 1, "SubCategories": {} })
-            }
-        }
-        catch (e) {
-            console.log(e)
-            return resp.json({ "Status": 0, "Message": 'error' })
-        }
-    },
 
     categories: async (req, resp, next) => {
         let query; // per-request (were implicit globals)

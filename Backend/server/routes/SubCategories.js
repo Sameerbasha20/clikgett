@@ -21,9 +21,7 @@ router
 .delete('/delete/:SubCategoryID',util.authenticate.adminAuthenticate,subcategorycontroller.deletesubcategory)
 
 
-router.put('/admin/reorder', util.authenticate.adminAuthenticate, subcategorycontroller.reordersubcategories);
 router.put('/reorder', util.authenticate.adminAuthenticate, subcategorycontroller.reordersubcategories);
-router.post('/admin/reorder', util.authenticate.adminAuthenticate, subcategorycontroller.reordersubcategories);
 router.post('/reorder', util.authenticate.adminAuthenticate, subcategorycontroller.reordersubcategories);
 
 module.exports=router

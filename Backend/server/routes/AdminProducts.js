@@ -10,7 +10,6 @@ router
 
 
 .get('/bycategory',util.authenticate.adminAuthenticate,adminproductscontroller.getproductsbycategoryID)
-.get('/bysubcategory',util.authenticate.adminAuthenticate,adminproductscontroller.productsbysubcategory_admin)
 .get('/search/:SearchString',util.authenticate.adminAuthenticate,adminproductscontroller.searchProduct)
 
 .get('/productdetail/:ProductID',util.authenticate.adminAuthenticate,adminproductscontroller.getproductsbyproductid)
@@ -29,9 +28,6 @@ router
 
 
 // Buy 1 / Buy 2 / Buy More product offers
-.get('/buy-more-config',util.authenticate.adminAuthenticate,adminproductscontroller.buyMoreConfig)
-.put('/buy-more-config/:ConfigID',util.authenticate.adminAuthenticate,adminproductscontroller.updateBuyMoreConfig)
-.delete('/buy-more-config/:ConfigID',util.authenticate.adminAuthenticate,adminproductscontroller.deleteBuyMoreConfig)
 
 
 

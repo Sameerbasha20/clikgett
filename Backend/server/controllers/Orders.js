@@ -623,25 +623,6 @@ const ordercontroller = {
         }
     },
 
-    getOrderStatus: async (req, resp, next) => {
-        try {
-            const OrderID = req.params.OrderID; // Get OrderID from request parameters
-
-            // Query the database for the order status
-            let orderResult = await CommonController.commonget("SELECT OrderStatus FROM Orders WHERE OrderID = ? AND UserID = ?", [OrderID, req.UserID]);
-
-            // Check if order exists
-            if (orderResult.length === 0) {
-                return resp.json({ "Status": 0, "Message": "Order not found" });
-            }
-
-            // Successful response with the order status
-            return resp.status(200).json({ "Status": 1, "OrderStatus": orderResult[0].OrderStatus });
-        } catch (err) {
-            console.error("Exception in getOrderStatus", err);
-            return resp.status(500).json({ "Status": 0, "Message": "Error retrieving order status" });
-        }
-    },
 
 }
 

@@ -12,7 +12,6 @@ router
     .post('/tiers', util.authenticate.adminAuthenticate, BuyMoreController.addTier)
     .post('/save-product-tiers', util.authenticate.adminAuthenticate, BuyMoreController.saveProductTiers)
     .put('/tiers/:ID', util.authenticate.adminAuthenticate, BuyMoreController.updateTier)
-    .put('/tiers/status/:ID', util.authenticate.adminAuthenticate, BuyMoreController.toggleStatus)
     .patch('/tiers/:ID/status', util.authenticate.adminAuthenticate, BuyMoreController.toggleStatus)
     .delete('/tiers/:ID', util.authenticate.adminAuthenticate, BuyMoreController.deleteTier);
 

@@ -5,9 +5,6 @@ class Constants {
       r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
   late RegExp regex = RegExp(pattern);
 
-  static String razorPayTestKey = 'rzp_test_LAGwiygvDQZ32a';
-  static String razorPayLiveKey = 'rzp_live_9FPNRUvl1wCmD3';
-  static String razorPayKey = razorPayTestKey;
 
   static String baseUrlDev = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.9:5001/api");
   static String baseUrlProd = const String.fromEnvironment('API_BASE_URL', defaultValue: "http://192.168.1.9:5001/api");

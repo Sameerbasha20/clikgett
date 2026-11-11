@@ -195,61 +195,7 @@ const ordercontroller = {
         }
     },
 
-    assignordertodeliveryboy: async (req, resp, next) => {
-        const deliveryOperations = require("./DeliveryOperations");
-        return deliveryOperations.assignDeliveryBoy(req, resp);
-    },
 
-    pendingorders: async (req, resp, next) => {
-        let image, location, newlist, query, records; // per-request (were implicit globals)
-        try {
-
-
-            query = "SELECT I.ProductName,I.ProductID,I.VariantID,sum(I.Quantity) as Quantity,I.metrictype,I.metricvalue\
-            FROM Orders O inner join OrderItems I on O.OrderID=I.OrderID  where O.OrderStatus=2 \
-            group by I.VariantID order by I.ProductName asc"
-            let results = await CommonController.commonget(query);
-            records = [{
-                "ProductName": "Product Name", "metrictype": "Metric Type", "metricvalue": "Metric Value", "Quantity": "Quantity",
-
-            }]
-
-            const csvStringifier = createCsvStringifier({
-                header: [
-                    { id: 'ProductName', title: 'Product Name' },
-                    { id: 'metrictype', title: 'Metric Type' },
-                    { id: 'metricvalue', title: 'Metric Value' },
-                    { id: 'Quantity', title: 'Quantity' }
-                ]
-            });
-            newlist = records.concat(results)
-            // console.log(newlist)
-            const csv = csvStringifier.stringifyRecords(newlist);
-            image = Date.now() + ".csv"
-            const params = {
-                Bucket: process.env.bucketname, // pass your bucket name
-                Key: "csv/pendingorders_" + image, // file will be saved as testBucket/contacts.csv
-                ACL: "public-read",
-                Body: csv,
-                ContentType: "text/csv",
-            };
-
-            s3.upload(params, function (s3Err, data) {
-                if (s3Err) throw s3Err;
-                else {
-                    console.log(data.Location)
-                    location = data.Location
-                    return resp.json({ 'Status': 1, "File": location })
-
-                }
-            });
-
-        }
-        catch (e) {
-            console.log(e)
-            return resp.json({ "Status": 0, "Message": 'error' })
-        }
-    },
 
 
 }

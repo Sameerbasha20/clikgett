@@ -12,6 +12,7 @@ import 'package:fav_app/old/ViewModels/Auth/login_view_model.dart';
 import 'package:fav_app/old/constants.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -23,7 +24,18 @@ import 'new/Services/order_tracking_services.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
-void main() async {
+void main() {
+  // Release builds write nothing to the phone's log (prints may carry phone numbers,
+  // addresses or order details). Debug builds keep logging.
+  if (kReleaseMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+    runZoned(_start, zoneSpecification: ZoneSpecification(print: (self, parent, zone, line) {}));
+  } else {
+    _start();
+  }
+}
+
+Future<void> _start() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   // options: DefaultFirebaseOptions.currentPlatform);

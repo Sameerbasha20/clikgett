@@ -58,6 +58,11 @@ class _MembershipScreenState extends State<MembershipScreen> {
     }
     _pendingOrderId = '$orderId';
     final key = await AccountServices.razorpayKey();
+    if (key.isEmpty) {
+      customToast(message: 'Online payment is not available right now. Please try again later.');
+      if (mounted) setState(() => _buyingPlan = null);
+      return;
+    }
     final profile = Get.find<ProfileController>().users;
     _razorpay?.clear();
     _razorpay = Razorpay()

@@ -446,15 +446,6 @@ const usercontroller = {
     },
 
 
-    HomepageSection_Products: async (req, resp, next) => {
-        try {
-            const FinalProducts = await fetchDynamicHomeSections(req.UserID);
-            resp.json({ "status": 1, "Sections": FinalProducts, "HomePageSectionProducts": FinalProducts })
-        } catch (error) {
-            logger.info(error)
-            return resp.json({ "status": 0, "Message": 'error' })
-        }
-    },
 
     Add_Wallet_Money: async (req, resp, next) => {
         try {

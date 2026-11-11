@@ -36,22 +36,18 @@ router
   .get('/delivery-eta/order/:OrderID', util.authenticate.adminAuthenticate, DeliveryETA.getOrderEffectiveETA)
 
   .get('/getalldeliveryboys', util.authenticate.adminAuthenticate, admincontroller.getdeliveryboys)
-  .get('/getactivedeliveryboys', util.authenticate.adminAuthenticate, admincontroller.getactivedeliveryboys)
   .get('/deliveryboydetail', util.authenticate.adminAuthenticate, admincontroller.deliveryboydetail)
 
   .put('/updatedeliveryboy/:AdminID', util.authenticate.adminAuthenticate, admincontroller.adminupdatedeliveryboy)
   .delete('/deletedeliveryboy/:AdminID', util.authenticate.adminAuthenticate, admincontroller.admindeletedeliveryboy)
   .post('/addeliveryboy', util.authenticate.adminAuthenticate, admincontroller.addeliveryboy)
 
- .put('/updateuser/:UserID', util.authenticate.adminAuthenticate, admincontroller.updateuser)
  .get('/userdetail/:UserID', util.authenticate.adminAuthenticate, admincontroller.Userdetail)
   .get('/customer-full-details/:UserID', util.authenticate.adminAuthenticate, admincontroller.fullCustomerDetails)
  .get('/userslist', util.authenticate.adminAuthenticate, admincontroller.Userslist)
 
- .get('/feedbackdetail/:FeedbackID', util.authenticate.adminAuthenticate, admincontroller.Feedbackdetail)
  .get('/feedback/detail/:FeedbackID', util.authenticate.adminAuthenticate, admincontroller.Feedbackdetail)
  .get('/feedbacklist/', util.authenticate.adminAuthenticate, admincontroller.Feedbacklist)
- .get('/feedbacklist', util.authenticate.adminAuthenticate, admincontroller.Feedbacklist)
  .get('/feedback/list', util.authenticate.adminAuthenticate, admincontroller.Feedbacklist)
  .put('/feedback/reply/:FeedbackID', util.authenticate.adminAuthenticate, admincontroller.updateFeedbackReply)
  .post('/feedback/reply/:FeedbackID', util.authenticate.adminAuthenticate, admincontroller.updateFeedbackReply)
@@ -70,7 +66,6 @@ router
  .put('/updatesettings/:ID', util.authenticate.adminAuthenticate, admincontroller.updatesettings)
  .delete('/deletesettings/:ID', util.authenticate.adminAuthenticate, admincontroller.deletesetting)
  .get('/list', util.authenticate.adminAuthenticate, admincontroller.adminuserslist)
- .get('/adminlist', util.authenticate.adminAuthenticate, admincontroller.adminuserslist)
  .get('/roles', util.authenticate.adminAuthenticate, (req, resp) => resp.json({ Status: 1, Roles: Object.entries(require('../utils/adminRoles').ROLES).map(([key, r]) => ({ key, label: r.label, areas: r.areas })), MyRole: req.AdminRole }))
  .post('/addadmin', util.authenticate.adminAuthenticate, admincontroller.addadminuser)
  .get('/detail/:AdminID', util.authenticate.adminAuthenticate, admincontroller.adminuserdetail)

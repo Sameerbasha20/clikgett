@@ -320,57 +320,8 @@ where p.Status=1 and ${req.query.SubCategoryID ? 'p.SubCategoryID=' + pool.escap
         }
     },
     
-    kits : async (req, resp, next) => {
-        let query; // per-request (were implicit globals)
-        try{
-                query="select * from Products where Status=1 and Type=2 order by ProductName asc"
-                let results = await CommonController.getproducts(query);                 
-                resp.json({"Status":1,"Products":results})
-            
-        }
-        catch(e){
-            
-            console.log(e)
-            return resp.json({"Status":0,"Message":'error'})
-        }
-    },
     
-    allKits : async (req, resp, next) => {
-        let query; // per-request (were implicit globals)
-        try{
-            query = "select * from Kits where Status=1"
-            let results = await CommonController.products(query);  
-            console.log(results.length,'results')         
-            return resp.json({"Status":1,"Products":results})
-            
-        }
-        catch(e){
-            
-            
-            console.log(e)
-            return resp.json({"Status":0,"Message":'error'})
-        }
-    },
 
-    kitdetail : async (req, resp, next) => {
-        let query; // per-request (were implicit globals)
-        try{
-            query = "select * from Kits where KitID="+pool.escape(req.params.KitID)
-            let results = await CommonController.kitsanditems(query,'user');  
-            console.log(results.length,'results')        
-            if(results.length != 0) 
-                    return resp.json({"Status":1,"Kits":results[0]})
-            else
-                    return resp.json({"Status":1,"Kits":{}})
-            
-        }
-        catch(e){
-            
-            
-            console.log(e)
-            return resp.json({"Status":0,"Message":'error'})
-        }
-    },
 
 
     RecommendedProducts_User : async (req, resp, next) => {

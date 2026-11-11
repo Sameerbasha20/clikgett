@@ -19,11 +19,9 @@ router
 
  .get('/homepage', util.authenticate.optionalUserAuthenticate, usercontroller.homepage)
 
- .get('/homepagesectionproducts', util.authenticate.optionalUserAuthenticate, usercontroller.HomepageSection_Products)
 
  .get('/homepagesectionproducts_all/:HomeSectionId', util.authenticate.optionalUserAuthenticate, usercontroller.HomepageSection_Products_all)
 
- .get('/webhomepage', util.authenticate.optionalUserAuthenticate, usercontroller.homepage)
 
  .put('/update', util.authenticate.userAuthenticate, usercontroller.updateuser)
 
@@ -33,7 +31,6 @@ router
 
  .post('/addfeedback/', util.authenticate.userAuthenticate, usercontroller.addFeedback)
  .post('/addfeedback', util.authenticate.userAuthenticate, usercontroller.addFeedback)
- .get('/feedback/order-status/:orderId', util.authenticate.userAuthenticate, usercontroller.checkFeedbackEligibility)
  .get('/feedback/eligibility/:orderId', util.authenticate.userAuthenticate, usercontroller.checkFeedbackEligibility)
 
  .get('/notifications', util.authenticate.userAuthenticate, usercontroller.notifications)
