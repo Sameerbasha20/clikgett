@@ -59,12 +59,13 @@ void main() {
 
   testWidgets('shows the bulk offer when there is no sale', (tester) async {
     await _pump(tester, _product(tiers: [BulkTier(minQuantity: 2, maxQuantity: 2, price: 356)]));
-    expect(find.text('Buy 2 for ₹356'), findsOneWidget);
+    expect(find.text('MAX SAVER · 2 for ₹356'), findsOneWidget);
     expect(find.textContaining('₹179'), findsOneWidget);
   });
 
   testWidgets('ignores a bulk offer that is not cheaper', (tester) async {
     await _pump(tester, _product(tiers: [BulkTier(minQuantity: 2, maxQuantity: 2, price: 400)]));
     expect(find.textContaining('Buy 2'), findsNothing);
+    expect(find.textContaining('MAX SAVER'), findsNothing);
   });
 }

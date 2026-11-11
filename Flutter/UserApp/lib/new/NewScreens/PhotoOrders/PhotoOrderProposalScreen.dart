@@ -7,6 +7,8 @@ import 'package:fav_app/new/Constants/imageslist.dart';
 import 'package:fav_app/new/Controllers/photo_orders_controller.dart';
 import 'package:fav_app/new/Services/common/common_services.dart';
 import 'package:fav_app/new/NewScreens/Homepage/Tabs/Orders/OrderDetails.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -28,6 +30,7 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
 
   String selectedPaymentMethod = 'COD';
   bool isImageExpanded = false;
+  Timer? _poll;
 
   @override
   void initState() {
@@ -37,6 +40,19 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
       if (mounted) setState(() => _token = t);
     });
     controller.fetchDetail(widget.requestId);
+    // Keep the tracker live while the store works on the list.
+    _poll = Timer.periodic(const Duration(seconds: 15), (_) {
+      final st = controller.currentDetail.value?.requestStatus;
+      if (st == 'PENDING' || st == 'UNDER_REVIEW' || st == 'PROPOSAL_DRAFT') {
+        controller.fetchDetail(widget.requestId, silent: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    super.dispose();
   }
 
   void _showRejectDialog(BuildContext context) {
@@ -162,71 +178,13 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Status Alert
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(3.w),
-                decoration: BoxDecoration(
-                  color: isAwaiting
-                      ? const Color(0xFFFEF3C7)
-                      : (isCreated
-                          ? const Color(0xFFDCFCE7)
-                          : (isDeclined ? const Color(0xFFFEE2E2) : const Color(0xFFE0F2FE))),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isAwaiting
-                        ? const Color(0xFFFDE047)
-                        : (isCreated
-                            ? const Color(0xFF86EFAC)
-                            : (isDeclined ? const Color(0xFFFCA5A5) : const Color(0xFFBAE6FD))),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isAwaiting
-                          ? Icons.pending_actions
-                          : (isCreated ? Icons.check_circle : (isDeclined ? Icons.cancel : Icons.hourglass_top)),
-                      color: isAwaiting
-                          ? const Color(0xFFB45309)
-                          : (isCreated
-                              ? const Color(0xFF15803D)
-                              : (isDeclined ? const Color(0xFFB91C1C) : const Color(0xFF0369A1))),
-                    ),
-                    SizedBox(width: 3.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isAwaiting
-                                ? "Proposal Ready for Confirmation!"
-                                : (isCreated
-                                    ? "Order Placed Successfully! (#${req.createdOrderID ?? ''})"
-                                    : (isDeclined
-                                        ? (req.requestStatus == 'CANCELLED' ? "Request Cancelled" : "Proposal Declined by You")
-                                        : "We are preparing your matching items")),
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13.5.sp,
-                              color: black,
-                            ),
-                          ),
-                          Text(
-                            isAwaiting
-                                ? "Please review the proposed items and pricing below before confirming."
-                                : (isCreated
-                                    ? "Your order has been created in ClikGett and is being prepared for delivery."
-                                    : (isDeclined
-                                        ? "No order was placed for this request."
-                                        : "Our store team is checking stock and prices. You'll usually get a proposal within 15 minutes during store hours, and we'll notify you.")),
-                            style: GoogleFonts.poppins(fontSize: 11.5.sp, color: Colors.grey[800]),
-                          ),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
+              // Where the photo order is, step by step.
+              _PhotoOrderTracker(
+                status: req.requestStatus ?? 'PENDING',
+                orderId: req.createdOrderID,
+                onTrackOrder: req.createdOrderID == null
+                    ? null
+                    : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => OrderDetailsScreen(orderNo: req.createdOrderID!))),
               ),
 
               SizedBox(height: 2.h),
@@ -378,7 +336,7 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
                   child: Center(
                     child: Text(
                       isPending
-                          ? "Our store team is currently picking matching items for you. Please check back shortly!"
+                          ? "Items and prices will show here once the store has checked your list."
                           : "No proposed items available.",
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey[600]),
@@ -632,6 +590,140 @@ class _PhotoOrderProposalScreenState extends State<PhotoOrderProposalScreen> {
           ),
         );
       }),
+    );
+  }
+}
+
+/// Photo order progress: list received → checking items → prices ready → order placed.
+class _PhotoOrderTracker extends StatelessWidget {
+  final String status;
+  final int? orderId;
+  final VoidCallback? onTrackOrder;
+  const _PhotoOrderTracker({required this.status, this.orderId, this.onTrackOrder});
+
+  static const _icons = ['📝', '🔍', '🧾', '🛍️'];
+  static const _labels = ['List received', 'Checking items', 'Prices ready', 'Order placed'];
+
+  int get _step {
+    switch (status) {
+      case 'UNDER_REVIEW':
+      case 'PROPOSAL_DRAFT':
+        return 1;
+      case 'AWAITING_CUSTOMER_CONFIRMATION':
+        return 2;
+      case 'ORDER_CREATED':
+        return 3;
+      default:
+        return 0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final declined = status == 'CUSTOMER_REJECTED' || status == 'CANCELLED';
+    final step = _step;
+    final String title;
+    final String body;
+    if (declined) {
+      title = status == 'CANCELLED' ? 'Request cancelled' : 'You declined the prices';
+      body = 'No order was placed for this list.';
+    } else if (step == 0) {
+      title = 'We have your list';
+      body = 'The store will check each item for stock and price. You will get a notification when prices are ready.';
+    } else if (step == 1) {
+      title = 'Checking your items';
+      body = 'The store is matching your list with items in stock and adding today\'s prices.';
+    } else if (step == 2) {
+      title = 'Prices are ready';
+      body = 'Review the items and total below, then confirm to place the order.';
+    } else {
+      title = 'Order placed${orderId != null ? ' · #$orderId' : ''}';
+      body = 'Your items are on the way. Track the delivery for live updates.';
+    }
+    final accent = declined ? const Color(0xFFDC2626) : (step == 2 ? const Color(0xFFEA580C) : const Color(0xFF16A34A));
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withOpacity(0.35)),
+        boxShadow: [BoxShadow(color: accent.withOpacity(0.08), blurRadius: 14, offset: const Offset(0, 6))],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A))),
+        const SizedBox(height: 2),
+        Text(body, style: GoogleFonts.poppins(fontSize: 12.5, color: const Color(0xFF475569), height: 1.4)),
+        if (!declined) ...[
+          const SizedBox(height: 14),
+          Row(children: [
+            for (var i = 0; i < _labels.length; i++) ...[
+              if (i > 0)
+                Expanded(
+                  child: Container(
+                    height: 3,
+                    margin: const EdgeInsets.only(bottom: 32),
+                    decoration: BoxDecoration(
+                      color: i <= step ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              _dot(i, step),
+            ],
+          ]),
+        ],
+        if (onTrackOrder != null && step == 3) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onTrackOrder,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: const Icon(Icons.delivery_dining_rounded),
+              label: Text('Track delivery', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+            ),
+          ),
+        ],
+      ]),
+    );
+  }
+
+  Widget _dot(int i, int step) {
+    final done = i < step;
+    final current = i == step;
+    return SizedBox(
+      width: 62,
+      child: Column(children: [
+        SizedBox(height: 38, child: Center(child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: current ? 38 : 32,
+          height: current ? 38 : 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: done ? const Color(0xFF16A34A) : (current ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9)),
+            border: Border.all(color: current ? const Color(0xFF16A34A) : Colors.transparent, width: 2),
+          ),
+          child: done
+              ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+              : Text(_icons[i], style: TextStyle(fontSize: current ? 17 : 14)),
+        ))),
+        const SizedBox(height: 4),
+        SizedBox(height: 28, child: Text(_labels[i],
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            style: GoogleFonts.poppins(
+                fontSize: 10.5,
+                height: 1.2,
+                fontWeight: current ? FontWeight.w700 : FontWeight.w500,
+                color: i <= step ? const Color(0xFF14532D) : const Color(0xFF94A3B8)))),
+      ]),
     );
   }
 }

@@ -1,4 +1,5 @@
 const adminproductscontroller=require("../controllers/AdminProducts")
+const { requireStoredImages } = require('../utils/productImageCheck');
 const adminStock=require("../controllers/AdminStock")
 const express = require('express'); 
 const router = express.Router();
@@ -14,9 +15,9 @@ router
 
 .get('/productdetail/:ProductID',util.authenticate.adminAuthenticate,adminproductscontroller.getproductsbyproductid)
 
-.post('/addproduct',util.authenticate.adminAuthenticate,validate.user_mandatoryfields.product_mandatoryfields,adminproductscontroller.addproduct)
+.post('/addproduct',util.authenticate.adminAuthenticate,validate.user_mandatoryfields.product_mandatoryfields,requireStoredImages,adminproductscontroller.addproduct)
 .post('/addvariant',util.authenticate.adminAuthenticate,validate.user_mandatoryfields.variant_mandatoryfields,adminproductscontroller.addvariant)
-.put('/updateproduct/:ProductID',util.authenticate.adminAuthenticate,adminproductscontroller.updateproduct)
+.put('/updateproduct/:ProductID',util.authenticate.adminAuthenticate,requireStoredImages,adminproductscontroller.updateproduct)
 .get('/out-of-stock',util.authenticate.adminAuthenticate,adminStock.outOfStock)
 .put('/restock/:VariantID',util.authenticate.adminAuthenticate,adminStock.restock)
 .put('/updateproductvariant/:VariantID',util.authenticate.adminAuthenticate,adminproductscontroller.updateproductvariant)

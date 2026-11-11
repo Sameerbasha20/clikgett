@@ -381,15 +381,9 @@ function AddCategory(props) {
                         if (i === files.length - 1) setUploadSpinner(false);
                     })
                     .catch((err) => {
-                        console.error("S3 Upload error:", err);
-                        // Fallback local preview path
-                        setPaths((prev) => [
-                            ...prev,
-                            {
-                                location: URL.createObjectURL(files[i]),
-                                path: `${timestamp}_${files[i].name}`,
-                            },
-                        ]);
+                        // Never save a picture that is not on the server: customers would see a broken image.
+                        console.error("Image upload failed:", err);
+                        toast.error(`"${files[i].name}" did not upload (${err.message}). Please try again.`);
                         setUploadSpinner(false);
                     });
             } else {

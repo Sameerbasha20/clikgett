@@ -293,7 +293,7 @@ class _CartState extends State<Cart> {
                         padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                         children: [
                           _storeStatus(),
-                          _deliveryHeader(bill),
+                          // No delivery time before ordering; it is shown once the order is placed.
                           if (bill.items.isNotEmpty) _itemsCard(bill),
                           if (bill.printItems.isNotEmpty) _printsCard(bill),
                           if (!bill.minOrderMet) _minOrderBanner(bill),
@@ -394,34 +394,6 @@ class _CartState extends State<Cart> {
           ]),
         );
       });
-
-  Widget _deliveryHeader(CheckoutBill bill) {
-    final eta = bill.etaMinutes ?? homeController.etaMinutes.value;
-    final scheduled = _slot != null && _slot!.isScheduled;
-    return _card(
-      child: Row(children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: const BoxDecoration(color: primaryGhost, shape: BoxShape.circle),
-          child: const Icon(Icons.timer_outlined, color: primaryDark),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(
-              scheduled ? (_slot!.needsSlot ? 'Pick a delivery time slot' : 'Scheduled: ${_slot!.slotLabel ?? ''}') : (eta != null ? 'Delivery in $eta minutes' : 'Fast delivery'),
-              style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: tColor),
-            ),
-            Text('${bill.itemCount} item${bill.itemCount == 1 ? '' : 's'} in this order',
-                style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
-            if (bill.largeCartNotice != null && !scheduled)
-              Text(bill.largeCartNotice!, style: GoogleFonts.poppins(fontSize: 11.5, color: amberWarning)),
-          ]),
-        ),
-      ]),
-    );
-  }
 
   Widget _itemsCard(CheckoutBill bill) {
     final problems = bill.stockProblems.length;

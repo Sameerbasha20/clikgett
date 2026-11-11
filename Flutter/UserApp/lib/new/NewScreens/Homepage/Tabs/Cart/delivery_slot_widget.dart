@@ -239,7 +239,7 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
                     Text(
                       isScheduled
                           ? 'Scheduled for ${DateFormat('EEE, d MMM').format(availableDates[selectedDateIndex])}'
-                          : 'Express delivery · arriving in 15-30 min',
+                          : 'Express delivery · arrival time shown after you order',
                       style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF15803D)),
                     ),
                   ],
@@ -255,7 +255,7 @@ class _DeliverySlotWidgetState extends State<DeliverySlotWidget> {
                   selected: !isScheduled,
                   emoji: '⚡',
                   title: 'Deliver now',
-                  subtitle: '15-30 min',
+                  subtitle: 'As soon as possible',
                   onTap: () {
                     setState(() => isScheduled = false);
                     _notifyChange();

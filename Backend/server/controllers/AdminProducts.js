@@ -188,7 +188,7 @@ const adminproductcontroller={
 
 
             if (Body.ProductImages != null || Body.ProductImages != undefined){
-                ProductImages = "ProductImages='" + JSON.stringify(Body.ProductImages) + "',";
+                ProductImages = "ProductImages=" + pool.escape(JSON.stringify(Body.ProductImages)) + ",";
             }
                 else{
                     ProductImages = "ProductImages = ProductImages,";

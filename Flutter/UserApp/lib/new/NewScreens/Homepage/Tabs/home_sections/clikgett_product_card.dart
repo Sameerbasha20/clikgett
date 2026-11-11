@@ -104,6 +104,121 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     return null;
   }
 
+  /// Max saver: the normal single price, then every buy-more quantity with its total
+  /// (e.g. 1 = 150, 2 = 280, 3 = 400). Empty when the pack has no buy-more price.
+  List<_SaverOption> get _saverOptions {
+    final v = selectedVariant;
+    if (v == null) return const [];
+    final single = _sellingPrice;
+    final mrp = _mrp > single ? _mrp : single;
+    final byQty = <int, _SaverOption>{1: _SaverOption(1, single, mrp)};
+    for (final t in widget.product.bulkTiers) {
+      if (t.variantId != null && t.variantId != v.variantId) continue;
+      final n = t.minQuantity;
+      if (n < 2) continue;
+      final total = t.isBundle ? t.price : t.price * n;
+      if (total >= single * n) continue;
+      if (byQty[n] == null || total < byQty[n]!.total) byQty[n] = _SaverOption(n, total, mrp * n, perItem: !t.isBundle);
+    }
+    final b2 = v.buy2Price;
+    if (b2 != null && b2 > 0 && b2 < single && byQty[2] == null) byQty[2] = _SaverOption(2, b2 * 2, mrp * 2);
+    final list = byQty.values.where((o) => o.quantity <= (_maxAllowed > 0 ? _maxAllowed : 99)).toList()
+      ..sort((a, b) => a.quantity.compareTo(b.quantity));
+    return list.length < 2 ? const [] : list;
+  }
+
+  /// Bottom sheet: pick how many; the cart is set to that quantity.
+  Future<void> _openMaxSaver() async {
+    final options = _saverOptions;
+    if (options.isEmpty) return;
+    final inCart = cartController.cartItems
+            .firstWhereOrNull((c) => c.productId == widget.product.productId && c.variantId == selectedVariant?.variantId)
+            ?.quantity ??
+        0;
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(
+              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: cardBorder, borderRadius: BorderRadius.circular(2))),
+            ),
+            const SizedBox(height: 12),
+            Row(children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFFF97316), Color(0xFFEA580C)]),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text('MAX SAVER', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w800, color: white)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(widget.product.productName ?? '',
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: tColor)),
+              ),
+            ]),
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 10),
+              child: Text('Buy more, pay less per pack${_packSize.isNotEmpty ? ' · $_packSize each' : ''}',
+                  style: GoogleFonts.poppins(fontSize: 12, color: tColor3)),
+            ),
+            for (final o in options)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Material(
+                  color: o.quantity == inCart ? primaryGhost : white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(color: o.quantity == inCart ? primary : cardBorder, width: o.quantity == inCart ? 1.6 : 1),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => Navigator.pop(ctx, o.quantity),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: Row(children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(color: bg3, borderRadius: BorderRadius.circular(10)),
+                          child: Text('×${o.quantity}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w800, color: tColor)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text('Buy ${o.quantity}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: tColor)),
+                            Text('${shelfPrice(o.total / o.quantity)} each',
+                                style: GoogleFonts.poppins(fontSize: 11.5, color: tColor3)),
+                          ]),
+                        ),
+                        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                          Text(shelfPrice(o.total), style: GoogleFonts.poppins(fontSize: 15.5, fontWeight: FontWeight.w800, color: tColor)),
+                          if (o.quantity > 1 && options.first.total * o.quantity - o.total > 0.5)
+                            Text('Save ${shelfPrice(options.first.total * o.quantity - o.total)}',
+                                style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: primaryDark)),
+                        ]),
+                        if (o.quantity == inCart) ...[
+                          const SizedBox(width: 8),
+                          const Icon(Icons.check_circle_rounded, color: primary, size: 20),
+                        ],
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+          ]),
+        ),
+      ),
+    );
+    if (picked != null && picked != inCart && mounted) await _setQuantity(picked);
+  }
+
   /// "till 12 AM" today/tonight, otherwise "till 20 Oct".
   String get _dealEnds {
     final end = widget.product.deal?.endsAt;
@@ -273,6 +388,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
     final memberPrice = _isOutOfStock ? null : _memberPrice;
     final dealPrice = _isOutOfStock || memberPrice != null ? null : _dealPrice;
     final bulkHint = _isOutOfStock || dealPrice != null || memberPrice != null ? null : (_bulkHint ?? _memberHint);
+    final saverOptions = _isOutOfStock || dealPrice != null || memberPrice != null ? const <_SaverOption>[] : _saverOptions;
 
     return Container(
       width: widget.width,
@@ -410,7 +526,7 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                       final unlockChip = memberPrice == null && dealPrice == null
                           ? UnlockPriceChip.forVariant(selectedVariant?.variantId)
                           : null;
-                      if (memberPrice == null && dealPrice == null && unlockChip == null && bulkHint == null && product.priceCompareLowerPct == null) {
+                      if (memberPrice == null && dealPrice == null && unlockChip == null && saverOptions.isEmpty && bulkHint == null && product.priceCompareLowerPct == null) {
                         return const SizedBox.shrink();
                       }
                       return Padding(
@@ -422,12 +538,14 @@ class _ClikgettProductCardState extends State<ClikgettProductCard> {
                               : dealPrice != null
                                   ? _DealChip(price: dealPrice, ends: _dealEnds, limit: widget.product.deal?.maxQtyPerOrder)
                                   : unlockChip ??
-                                      (bulkHint == null
-                                          ? PriceCompareTag(percent: product.priceCompareLowerPct!, fontSize: 10)
-                                          : Text(bulkHint,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: primaryDark))),
+                                      (saverOptions.isNotEmpty
+                                          ? _MaxSaverChip(onTap: _openMaxSaver, best: saverOptions.last)
+                                          : bulkHint == null
+                                              ? PriceCompareTag(percent: product.priceCompareLowerPct!, fontSize: 10)
+                                              : Text(bulkHint,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: primaryDark))),
                         ),
                       );
                     }),
@@ -500,28 +618,35 @@ class _CartButton extends StatelessWidget {
     if (disabled) {
       return Container(
         height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        width: height,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: bg3, borderRadius: BorderRadius.circular(8)),
-        child: Text('ADD', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: grey70)),
+        decoration: BoxDecoration(color: bg3, borderRadius: BorderRadius.circular(10)),
+        child: const Icon(Icons.add_rounded, size: 20, color: grey70),
       );
     }
     if (quantity <= 0) {
-      return InkWell(
-        onTap: busy ? null : onAdd,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          height: height,
-          width: 64,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: primaryGhost,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: primary, width: 1.3),
+      // A single green "+": one tap adds one to the cart.
+      return Semantics(
+        button: true,
+        label: 'Add to cart',
+        child: Material(
+          color: primary,
+          borderRadius: BorderRadius.circular(10),
+          elevation: 1.5,
+          shadowColor: primary.withOpacity(0.4),
+          child: InkWell(
+            onTap: busy ? null : onAdd,
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              height: height,
+              width: height,
+              child: Center(
+                child: busy
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: white))
+                    : const Icon(Icons.add_rounded, size: 22, color: white),
+              ),
+            ),
           ),
-          child: busy
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: primary))
-              : Text('ADD', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: primaryDark)),
         ),
       );
     }
@@ -607,6 +732,49 @@ class _DealChip extends StatelessWidget {
             ),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+class _SaverOption {
+  final int quantity;
+  final double total;
+  final double mrpTotal;
+  final bool perItem;
+  const _SaverOption(this.quantity, this.total, this.mrpTotal, {this.perItem = false});
+}
+
+/// "MAX SAVER ▾" chip on the card; opens the quantity picker.
+class _MaxSaverChip extends StatelessWidget {
+  final VoidCallback onTap;
+  final _SaverOption best;
+  const _MaxSaverChip({required this.onTap, required this.best});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.only(left: 6, right: 2),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFFF97316), Color(0xFFEA580C)]),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Flexible(
+              child: Text(
+                'MAX SAVER · ${best.quantity} for ${shelfPrice(best.total)}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(fontSize: 9.5, height: 1.6, fontWeight: FontWeight.w800, color: Colors.white),
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down_rounded, size: 15, color: Colors.white),
+          ]),
+        ),
       ),
     );
   }

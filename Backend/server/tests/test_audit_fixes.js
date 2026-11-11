@@ -136,6 +136,12 @@ const TEST_MOBILE = '9999900088';
         check('search returns variants and the category', hit && Array.isArray(hit.ProductVariants) && hit.ProductVariants.length > 0 && 'CategoryName' in hit);
         check('search answers under Products, Product and data', r.json && r.json.Product && r.json.data && r.json.Product.length === r.json.Products.length);
 
+        // A product can't be saved with a picture that never reached storage.
+        const [before] = await q('SELECT ProductImages FROM Products WHERE ProductID = ?', [prod.ProductID]);
+        r = await call('PUT', `/adminproducts/updateproduct/${prod.ProductID}`, SUPER, { ProductImages: ['1793466854391_never_uploaded.jpg'] });
+        const [after] = await q('SELECT ProductImages FROM Products WHERE ProductID = ?', [prod.ProductID]);
+        check('saving a product with a missing picture is refused', r.status === 400 && /did not upload/.test(r.json.Message) && after.ProductImages === before.ProductImages);
+
         // Customer search: every word, any order ("freedom bottle" finds "Freedom ... Oil Bottle").
         r = await call('GET', `/products/search/${encodeURIComponent(`${words[1]} ${words[0]}`)}`, null);
         check('customer search matches words in any order', r.json && (r.json.Products || []).some((p) => p.ProductID === prod.ProductID));

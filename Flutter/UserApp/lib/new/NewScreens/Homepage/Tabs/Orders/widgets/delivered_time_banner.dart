@@ -169,7 +169,11 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           const Icon(Icons.check_rounded, size: 14, color: Colors.white),
           const SizedBox(width: 4),
-          Text('Delivered', style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white)),
+          Text(
+              widget.deliveredAt == null
+                  ? 'Delivered'
+                  : 'Delivered · ${TimeOfDay.fromDateTime(widget.deliveredAt!.toLocal()).format(context)}',
+              style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white)),
         ]),
       ));
 
@@ -251,7 +255,7 @@ class _DeliveredTimeBannerState extends State<DeliveredTimeBanner> with TickerPr
         ),
       ),
       const SizedBox(height: 6),
-      Text('Your groceries are at your doorstep.', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF334155))),
+      Text('Enjoy! Thanks for shopping with ClikGett.', style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF334155))),
     ]);
   }
 

@@ -120,13 +120,14 @@ class PhotoOrdersController extends GetxController {
   }
 
   /// Fetch single request detail
-  Future<void> fetchDetail(int requestId) async {
+  /// [silent]: refresh in the background (status polling) without the loading skeleton.
+  Future<void> fetchDetail(int requestId, {bool silent = false}) async {
     try {
-      isLoadingDetail.value = true;
+      if (!silent) isLoadingDetail.value = true;
       // Don't show the previously opened request if this one fails to load.
       if (currentDetail.value?.requestID != requestId) currentDetail.value = null;
       final detail = await PhotoOrdersService.getPhotoOrderDetail(requestId);
-      currentDetail.value = detail;
+      if (!silent || detail != null) currentDetail.value = detail;
       isLoadingDetail.value = false;
     } catch (e) {
       isLoadingDetail.value = false;

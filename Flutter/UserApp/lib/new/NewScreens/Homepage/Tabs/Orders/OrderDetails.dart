@@ -308,14 +308,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                     children: [
-                      if (order.status == OrderStatus.delivered)
-                        DeliveredTimeBanner(
-                          placedAt: order.createdAt,
-                          deliveredAt: order.deliveredAt ?? order.reachedAt(OrderStatus.delivered),
-                          promisedBy: order.estimate,
-                          scheduled: order.scheduled,
-                        ),
-                      if (OrderStatus.isCancelled(order.status)) _statusCard(order) else OrderHeroCard(order: order),
+                      // Delivered: one card (how fast it came + when). Otherwise the live status card.
+                      if (OrderStatus.isCancelled(order.status))
+                        _statusCard(order)
+                      else if (order.status == OrderStatus.delivered && _deliveredBanner(order).minutes != null)
+                        _deliveredBanner(order)
+                      else
+                        OrderHeroCard(order: order),
                       if (!OrderStatus.isFinal(order.status)) DeliveryRouteCard(order: order),
                       if (order.status == OrderStatus.arrived && order.otp != null) _otpCard(order),
                       if (order.riderName != null && [OrderStatus.assigned, OrderStatus.outForDelivery, OrderStatus.arrived].contains(order.status))
@@ -341,6 +340,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> with WidgetsBin
                 ),
     );
   }
+
+  DeliveredTimeBanner _deliveredBanner(TrackedOrder order) => DeliveredTimeBanner(
+        placedAt: order.createdAt,
+        deliveredAt: order.deliveredAt ?? order.reachedAt(OrderStatus.delivered),
+        promisedBy: order.estimate,
+        scheduled: order.scheduled,
+      );
 
   Widget _card({required Widget child, EdgeInsets padding = const EdgeInsets.all(14), Color? color}) => Container(
         margin: const EdgeInsets.only(bottom: 12),
