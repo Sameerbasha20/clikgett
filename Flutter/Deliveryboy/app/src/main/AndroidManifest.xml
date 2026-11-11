@@ -68,7 +68,7 @@
         <activity
             android:name=".RiderSignupActivity"
             android:exported="false"
-            android:theme="@style/Theme.Deliveryparent"
+            android:theme="@style/Theme.RiderSignup"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".SentotpActivity"

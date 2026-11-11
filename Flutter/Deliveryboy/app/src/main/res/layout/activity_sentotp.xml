@@ -137,6 +137,7 @@
             android:layout_marginTop="16dp"
             android:text="🛵  New here? Become a delivery partner"
             android:textAllCaps="false"
+            android:letterSpacing="0"
             android:textColor="@color/clikgett_green_dark"
             android:textSize="15sp"
             app:cornerRadius="14dp"

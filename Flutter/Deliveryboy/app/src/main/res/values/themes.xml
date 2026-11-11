@@ -18,4 +18,24 @@
     </style>
     
     <style name="Theme.NutriproDeliveryBoy" parent="Theme.Deliveryparent" />
+
+    <!-- Rider sign-up: always light (no values-night override), so phones in dark mode
+         don't turn the input text, hints and cards dark on the light page. -->
+    <style name="Theme.RiderSignup" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/clikgett_green_primary</item>
+        <item name="colorPrimaryVariant">@color/clikgett_green_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/clikgett_green_accent</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSurface">@color/clikgett_card_surface</item>
+        <item name="colorOnSurface">@color/clikgett_text_primary</item>
+        <item name="android:textColorPrimary">@color/clikgett_text_primary</item>
+        <item name="android:textColorSecondary">@color/clikgett_text_secondary</item>
+        <item name="android:textColorHint">@color/clikgett_text_secondary</item>
+        <item name="android:statusBarColor" tools:targetApi="l">@color/clikgett_surface_bg</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:windowBackground">@color/clikgett_surface_bg</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
+    </style>
 </resources>

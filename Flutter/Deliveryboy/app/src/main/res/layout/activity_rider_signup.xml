@@ -24,22 +24,44 @@
             android:contentDescription="Back"
             android:src="@drawable/arrow_left" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Become a delivery partner"
-            android:textColor="@color/clikgett_text_primary"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Fill in your details. We verify every partner before the first delivery."
-            android:textColor="@color/clikgett_text_secondary"
-            android:textSize="14sp" />
+            app:cardBackgroundColor="@color/clikgett_green_light"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/clikgett_green_primary"
+            app:strokeWidth="1dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛵  Become a delivery partner"
+                    android:textColor="@color/clikgett_text_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Takes about 2 minutes. We check every partner before the first delivery."
+                    android:textColor="@color/clikgett_text_secondary"
+                    android:textSize="14sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="1. Apply    2. We verify    3. Start delivering"
+                    android:textColor="@color/clikgett_green_dark"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- 1. Name -->
         <TextView style="@style/SignupStep" android:text="1  ·  Your full name" />
@@ -53,10 +75,13 @@
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
+            android:textColorHint="@color/clikgett_text_secondary"
+            app:boxBackgroundColor="@color/clikgett_card_surface"
             app:boxStrokeColor="@color/clikgett_green_primary"
             app:hintTextColor="@color/clikgett_green_primary">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/name_edt"
+                android:textColor="@color/clikgett_text_primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName|textCapWords"
@@ -81,11 +106,15 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
+                android:textColorHint="@color/clikgett_text_secondary"
+                app:boxBackgroundColor="@color/clikgett_card_surface"
                 app:boxStrokeColor="@color/clikgett_green_primary"
                 app:hintTextColor="@color/clikgett_green_primary"
-                app:prefixText="+91 ">
+                app:prefixText="+91 "
+                app:prefixTextColor="@color/clikgett_text_primary">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/mobile_edt"
+                android:textColor="@color/clikgett_text_primary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="phone"
@@ -100,7 +129,9 @@
                 android:layout_marginTop="4dp"
                 android:text="Send OTP"
                 android:textAllCaps="false"
+                android:letterSpacing="0"
                 android:textColor="@color/clikgett_green_dark"
+                app:backgroundTint="@color/clikgett_card_surface"
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/clikgett_green_primary" />
         </LinearLayout>
@@ -116,10 +147,13 @@
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
+            android:textColorHint="@color/clikgett_text_secondary"
+            app:boxBackgroundColor="@color/clikgett_card_surface"
             app:boxStrokeColor="@color/clikgett_green_primary"
             app:hintTextColor="@color/clikgett_green_primary">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/otp_edt"
+                android:textColor="@color/clikgett_text_primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
@@ -150,6 +184,7 @@
                 android:focusable="true"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/clikgett_card_surface"
                 app:strokeColor="@color/clikgett_card_stroke"
                 app:strokeWidth="1dp">
                 <LinearLayout
@@ -157,8 +192,8 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🛵" android:textSize="32sp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Bike" android:textColor="@color/clikgett_text_primary" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🛵" android:textSize="34sp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Bike" android:textColor="@color/clikgett_text_primary" android:textSize="15sp" android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
             <com.google.android.material.card.MaterialCardView
@@ -171,6 +206,7 @@
                 android:focusable="true"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/clikgett_card_surface"
                 app:strokeColor="@color/clikgett_card_stroke"
                 app:strokeWidth="1dp">
                 <LinearLayout
@@ -178,8 +214,8 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🛺" android:textSize="32sp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto" android:textColor="@color/clikgett_text_primary" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🛺" android:textSize="34sp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Auto" android:textColor="@color/clikgett_text_primary" android:textSize="15sp" android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
@@ -200,6 +236,8 @@
             android:backgroundTint="@color/clikgett_green_primary"
             android:text="Submit application"
             android:textAllCaps="false"
+            android:letterSpacing="0"
+            android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
             app:cornerRadius="16dp" />
