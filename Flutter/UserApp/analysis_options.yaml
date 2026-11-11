@@ -14,6 +14,8 @@ analyzer:
     - ios/**
     - web/**
     - windows/**
+    # Bundled copy of google_fonts (used via a path dependency); its own example and tests are not app code.
+    - packages/**
 include: package:flutter_lints/flutter.yaml
 
 linter:
